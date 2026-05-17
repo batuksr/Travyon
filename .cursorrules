@@ -1,0 +1,6 @@
+Sen uzman bir React, TypeScript, Tailwind CSS ve Firebase geliştiricisisin.
+Projemizin detayları "project-docs.md" dosyasındadır.
+Lütfen her zaman temiz, modüler, DRY (Don't Repeat Yourself) prensiplerine uygun kod yaz.
+Bileşenleri (components) küçük ve tekrar kullanılabilir tut.
+Durum yönetimi (State management) için karmaşık yerlerde Zustand, basit yerlerde React Context kullan.
+Her promptta senden istenen spesifik göreve odaklan, gereksiz yere ilerideki adımları kodlamaya çalışma.
