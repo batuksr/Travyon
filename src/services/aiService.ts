@@ -41,17 +41,16 @@ const executeWithFallback = async (prompt: string): Promise<string> => {
         console.warn(`[AI] ❌ ${modelName} (Deneme ${attempt + 1}) başarısız: ${error.message}`);
         lastError = error;
 
-        // Kritik hatalarda veya JSON çözülemediğinde boşuna tekrar deneme yapıp zaman kaybetme
         if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('invalid_api_key') || msg.includes('json parse')) {
           throw error;
         }
 
         if (msg.includes('503') || msg.includes('429') || msg.includes('overloaded')) {
-          const waitMs = (attempt + 1) * 4000; // 4s, 8s, 12s
+          const waitMs = (attempt + 1) * 4000;
           console.log(`[AI] ⏳ ${waitMs / 1000}s bekleniyor...`);
           await new Promise(resolve => setTimeout(resolve, waitMs));
         } else {
-          break; // Bilinmeyen başka bir hataysa döngüyü kır
+          break;
         }
       }
     }
@@ -59,14 +58,14 @@ const executeWithFallback = async (prompt: string): Promise<string> => {
   throw lastError;
 };
 
-// Kırılmaz (Fragile-Free) JSON Ayrıştırıcı
+// Kırılmaz JSON Ayrıştırıcı
 const extractAndParseJSON = <T>(rawText: string): T => {
   let extractedJson = rawText;
   try {
     extractedJson = extractedJson.replace(/```json/gi, "").replace(/```/g, "").trim();
     const firstCurly = extractedJson.indexOf('{');
     const firstBracket = extractedJson.indexOf('[');
-    
+
     let startIndex = -1;
     if (firstCurly !== -1 && firstBracket !== -1) {
       startIndex = Math.min(firstCurly, firstBracket);
@@ -80,7 +79,7 @@ const extractAndParseJSON = <T>(rawText: string): T => {
       const isArray = extractedJson[startIndex] === '[';
       const openChar = isArray ? '[' : '{';
       const closeChar = isArray ? ']' : '}';
-      
+
       extractedJson = extractedJson.substring(startIndex);
       let openCount = 0;
       for (let i = 0; i < extractedJson.length; i++) {
@@ -113,13 +112,13 @@ const getStartPeriodIndex = (
 ): number => {
   if (dayDate === arrivalDate && arrivalTime) {
     const hour = parseInt(arrivalTime.split(':')[0]);
-    if (hour < 9) return 0; // Sabah
-    if (hour < 12) return 1; // Öğle
-    if (hour < 17) return 2; // Öğleden Sonra
-    if (hour < 21) return 3; // Akşam
-    return 4; // Gece
+    if (hour < 9) return 0;
+    if (hour < 12) return 1;
+    if (hour < 17) return 2;
+    if (hour < 21) return 3;
+    return 4;
   }
-  return 0; // Normal gün ve dönüş günü sabahtan başlar
+  return 0;
 };
 
 const reassignPeriods = (
@@ -174,9 +173,7 @@ const searchNominatimQuery = async (
     });
 
     if (!response.ok) {
-      console.warn(
-        `[Geocoding] Nominatim HTTP ${response.status} — sorgu: "${query}"`
-      );
+      console.warn(`[Geocoding] Nominatim HTTP ${response.status} — sorgu: "${query}"`);
       return null;
     }
 
@@ -234,9 +231,7 @@ const fetchNominatimCoordinates = async (
     const coordinates = await searchNominatimQuery(query);
 
     if (coordinates) {
-      console.log(
-        `[Geocoding] ✅ "${query}" → ${coordinates.lat}, ${coordinates.lng}`
-      );
+      console.log(`[Geocoding] ✅ "${query}" → ${coordinates.lat}, ${coordinates.lng}`);
       return coordinates;
     }
 
@@ -279,20 +274,14 @@ const validateCoordinates = async (
             lng: verifiedCoordinates.lng,
           },
         });
-        console.log(
-          `[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng}`
-        );
+        console.log(`[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng}`);
       } else {
         validatedActivities.push(activity);
-        console.log(
-          `[Geocoding] ⚠️ Orijinal koordinat korundu: ${activity.placeName}`
-        );
+        console.log(`[Geocoding] ⚠️ Orijinal koordinat korundu: ${activity.placeName}`);
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Geocoding] Aktivite atlandı, orijinal koordinat korundu (${activity.placeName}): ${message}`
-      );
+      console.warn(`[Geocoding] Aktivite atlandı, orijinal koordinat korundu (${activity.placeName}): ${message}`);
       validatedActivities.push(activity);
     }
   }
@@ -312,15 +301,10 @@ const validateDayCoordinatesInBackground = (
         return;
       }
 
-      console.log(
-        `[Geocoding] Gün ${day.dayNumber} için arka plan koordinat doğrulaması başladı...`
-      );
+      console.log(`[Geocoding] Gün ${day.dayNumber} için arka plan koordinat doğrulaması başladı...`);
 
       const activities = await validateCoordinates(day.activities, trimmedDestination);
-      const dayCost = activities.reduce(
-        (sum, act) => sum + (act.estimatedCost || 0),
-        0
-      );
+      const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
 
       onDayUpdate({
         ...day,
@@ -328,14 +312,10 @@ const validateDayCoordinatesInBackground = (
         totalEstimatedCost: dayCost,
       });
 
-      console.log(
-        `[Geocoding] Gün ${day.dayNumber} arka plan koordinat doğrulaması tamamlandı.`
-      );
+      console.log(`[Geocoding] Gün ${day.dayNumber} arka plan koordinat doğrulaması tamamlandı.`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Geocoding] Gün ${day.dayNumber} arka plan doğrulama başarısız, orijinal koordinatlar korunuyor: ${message}`
-      );
+      console.warn(`[Geocoding] Gün ${day.dayNumber} arka plan doğrulama başarısız, orijinal koordinatlar korunuyor: ${message}`);
     }
   })();
 };
@@ -359,10 +339,7 @@ export const validateAllCoordinatesInBackground = (
       for (let dayIndex = 0; dayIndex < plan.dailyPlans.length; dayIndex++) {
         const day = plan.dailyPlans[dayIndex];
         const activities = await validateCoordinates(day.activities, destination);
-        const dayCost = activities.reduce(
-          (sum, act) => sum + (act.estimatedCost || 0),
-          0
-        );
+        const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
 
         updatedDailyPlans.push({
           ...day,
@@ -374,10 +351,7 @@ export const validateAllCoordinatesInBackground = (
           ...updatedDailyPlans,
           ...plan.dailyPlans.slice(dayIndex + 1),
         ];
-        const partialTotalCost = partialDailyPlans.reduce(
-          (sum, d) => sum + d.totalEstimatedCost,
-          0
-        );
+        const partialTotalCost = partialDailyPlans.reduce((sum, d) => sum + d.totalEstimatedCost, 0);
 
         onPlanUpdate({
           ...plan,
@@ -386,10 +360,7 @@ export const validateAllCoordinatesInBackground = (
         });
       }
 
-      const finalTotalCost = updatedDailyPlans.reduce(
-        (sum, d) => sum + d.totalEstimatedCost,
-        0
-      );
+      const finalTotalCost = updatedDailyPlans.reduce((sum, d) => sum + d.totalEstimatedCost, 0);
 
       onPlanUpdate({
         ...plan,
@@ -400,9 +371,7 @@ export const validateAllCoordinatesInBackground = (
       console.log('[Geocoding] Arka plan koordinat doğrulaması tamamlandı.');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[Geocoding] Arka plan doğrulama başarısız, orijinal plan korunuyor: ${message}`
-      );
+      console.warn(`[Geocoding] Arka plan doğrulama başarısız, orijinal plan korunuyor: ${message}`);
     }
   })();
 };
@@ -410,63 +379,51 @@ export const validateAllCoordinatesInBackground = (
 const CITY_MAP: Array<{ keywords: string[]; context: string }> = [
   {
     keywords: ['floransa', 'florence', 'firenze'],
-    context:
-      'Floransa için: Uffizi Galerisi, Duomo, Ponte Vecchio, Piazzale Michelangelo kesinlikle dahil edilmelidir.',
+    context: 'Floransa için: Uffizi Galerisi, Duomo, Ponte Vecchio, Piazzale Michelangelo kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['milano', 'milan'],
-    context:
-      'Milano için: Duomo, Galleria Vittorio Emanuele, Son Akşam Yemeği, Brera kesinlikle dahil edilmelidir.',
+    context: 'Milano için: Duomo, Galleria Vittorio Emanuele, Son Akşam Yemeği, Brera kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['roma', 'rome', 'rom '],
-    context:
-      'Roma için: Kolezyum, Trevi Çeşmesi (Aşk Çeşmesi), Pantheon, Vatikan kesinlikle dahil edilmelidir.',
+    context: 'Roma için: Kolezyum, Trevi Çeşmesi (Aşk Çeşmesi), Pantheon, Vatikan kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['paris'],
-    context:
-      'Paris için: Eyfel Kulesi, Louvre Müzesi, Notre Dame, Montmartre kesinlikle dahil edilmelidir.',
+    context: 'Paris için: Eyfel Kulesi, Louvre Müzesi, Notre Dame, Montmartre kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['istanbul'],
-    context:
-      'İstanbul için: Ayasofya, Sultanahmet Camii, Topkapı Sarayı, Kapalıçarşı, Boğaz Turu kesinlikle dahil edilmelidir.',
+    context: 'İstanbul için: Ayasofya, Sultanahmet Camii, Topkapı Sarayı, Kapalıçarşı, Boğaz Turu kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['londra', 'london'],
-    context:
-      'Londra için: Big Ben, London Eye, Tower Bridge, British Museum kesinlikle dahil edilmelidir.',
+    context: 'Londra için: Big Ben, London Eye, Tower Bridge, British Museum kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['tokyo', 'tokio'],
-    context:
-      'Tokyo için: Senso-ji, Shibuya Crossing, Fushimi Inari, teamLab kesinlikle dahil edilmelidir.',
+    context: 'Tokyo için: Senso-ji, Shibuya Crossing, Fushimi Inari, teamLab kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['barcelona'],
-    context:
-      'Barcelona için: Sagrada Familia, Park Güell, La Boqueria, Gothic Quarter kesinlikle dahil edilmelidir.',
+    context: 'Barcelona için: Sagrada Familia, Park Güell, La Boqueria, Gothic Quarter kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['new york', 'nyc', 'manhattan'],
-    context:
-      'New York için: Central Park, Met Museum, Brooklyn Bridge, Times Square kesinlikle dahil edilmelidir.',
+    context: 'New York için: Central Park, Met Museum, Brooklyn Bridge, Times Square kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['dubai'],
-    context:
-      'Dubai için: Burj Khalifa, Dubai Mall, Gold Souk, Desert Safari kesinlikle dahil edilmelidir.',
+    context: 'Dubai için: Burj Khalifa, Dubai Mall, Gold Souk, Desert Safari kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['amsterdam'],
-    context:
-      'Amsterdam için: Rijksmuseum, Anne Frank Huis, Canal Tour, Van Gogh Museum kesinlikle dahil edilmelidir.',
+    context: 'Amsterdam için: Rijksmuseum, Anne Frank Huis, Canal Tour, Van Gogh Museum kesinlikle dahil edilmelidir.',
   },
   {
     keywords: ['prag', 'prague', 'praha'],
-    context:
-      'Prag için: Charles Bridge, Old Town Square, Prague Castle, Kafka Museum kesinlikle dahil edilmelidir.',
+    context: 'Prag için: Charles Bridge, Old Town Square, Prague Castle, Kafka Museum kesinlikle dahil edilmelidir.',
   },
 ];
 
@@ -498,7 +455,6 @@ DÖNÜŞ GÜNÜ (${departureDate}, saat ${departureTime}):
 - Ayrılış 16:00 ve sonrası → "Sabah" + "Öğle" 3 aktivite
 NORMAL GÜNLER: "Sabah"tan başla, tam 5-6 aktivite üret.`;
 
-// Şehirlere Özel İçerik (Must-See Context)
 const getCityContext = (destination: string): string => {
   const dest = destination.toLowerCase();
 
@@ -548,6 +504,204 @@ export interface TravelPlanResponse {
   dailyPlans: DailyPlan[];
 }
 
+// --- PROMPT OLUŞTURUCU ---
+
+const calculateTripDays = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffMs = Math.abs(end.getTime() - start.getTime());
+  return Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+};
+
+const buildPrompt = (data: OnboardingData): string => {
+  const tripDays = calculateTripDays(data.startDate, data.endDate);
+  const dailyBudget = Math.round(data.budget / tripDays);
+  const perPersonBudget = Math.round(data.budget / Math.max(data.peopleCount, 1));
+  const cityMustSee = getCityContext(data.destination);
+
+  const mealBudgetLabels: Record<string, string> = {
+    low: 'Düşük ($) — sokak lezzetleri, ekonomik mekanlar',
+    medium: 'Orta ($$) — dengeli restoranlar',
+    high: 'Yüksek ($$$) — fine dining ve özel mekanlar',
+  };
+  const mealBudgetLabel = mealBudgetLabels[data.mealBudget] || data.mealBudget || 'Belirtilmedi';
+
+  const purposeMap: Record<string, string> = {
+    culture: 'Kültür ve Tarih odaklı (müzeler, anıtlar, tarihi yerler)',
+    relax: 'Dinlenme ve Spa odaklı (yavaş tempo, manzaralı kafeler, parklar)',
+    nightlife: 'Gece Hayatı odaklı (barlar, kulüpler, canlı müzik, gece aktiviteleri)',
+    nature: 'Doğa ve Macera odaklı (trekking, doğa yürüyüşü, açık hava)',
+  };
+
+  const paceMap: Record<string, string> = {
+    yavaş: 'YAVAŞ tempo (günde 3-4 aktivite, uzun molalar)',
+    orta: 'ORTA tempo (günde 5-6 aktivite, dengeli)',
+    yoğun: 'YOĞUN tempo (günde 6-7 aktivite, hızlı geçişler)',
+  };
+
+  const accommodationMap: Record<string, string> = {
+    hotel: 'Otel (konforlu, tam servis tercihi)',
+    airbnb: 'Airbnb/Ev (yerel deneyim tercihi)',
+    hostel: 'Hostel (ekonomik, sosyal tercih)',
+    resort: 'Tatil Köyü (her şey dahil tercih)',
+  };
+
+  const transportMap: Record<string, string> = {
+    public: 'Toplu taşıma (metro, otobüs, tramvay)',
+    walk: 'Yürüyüş (yürünebilir mesafeli rotalar tercih)',
+    taxi: 'Taksi/Uber (konfor odaklı)',
+  };
+
+  return `
+[ROL TANIMI]
+Sen ${data.destination} şehrini bizzat yaşamış, yerel rehber seviyesinde tanıyan bir seyahat planlayıcısısın. Kullanıcının profiline göre TUTARLI bir plan üreteceksin — lüks ile sokak lezzetlerini, dinlenme ile maceraya, hızlı ile yavaşı birbirine karıştırmayacaksın.
+
+[ÇIKTI FORMATI]
+SADECE geçerli JSON. Markdown, açıklama, kod bloğu YOK.
+
+═══════════════════════════════════════════════
+KULLANICI PROFİLİ
+═══════════════════════════════════════════════
+🌍 Destinasyon: ${data.destination}
+📅 Tarihler: ${data.startDate} → ${data.endDate} (${tripDays} gün)
+🛬 Varış: ${data.startDate} saat ${data.arrivalTime}
+🛫 Dönüş: ${data.endDate} saat ${data.departureTime}
+👥 Grup: ${data.peopleCount} kişi
+💰 Toplam Bütçe: ${data.budget} ${data.currencyCode}
+   ↳ Kişi başı: ~${perPersonBudget} ${data.currencyCode}
+   ↳ Günlük tavsiye: ~${dailyBudget} ${data.currencyCode}/gün
+
+🎯 Seyahat Amacı: ${purposeMap[data.tripPurpose] || data.tripPurpose}
+⚡ Tempo: ${paceMap[data.pace] || data.pace}
+🌅 Erken Kalkma: ${data.earlyBird ? 'EVET — sabah 7-8 başlayabilir' : 'HAYIR — sabah 9-10 başlanmalı'}
+🍽️ Beslenme: ${data.dietaryRestrictions.join(', ') || 'Kısıtlama yok'}
+💵 Öğün Bütçesi: ${mealBudgetLabel}
+🏨 Konaklama: ${accommodationMap[data.accommodation] || data.accommodation}
+🚇 Ulaşım: ${transportMap[data.transport] || data.transport}
+
+═══════════════════════════════════════════════
+TUTARLILIK PRENSİPLERİ (EN ÖNEMLİ)
+═══════════════════════════════════════════════
+
+Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
+
+✅ DOĞRU EŞLEŞMELER:
+- mealBudget=low + tripPurpose=culture → Sokak lezzetleri + ücretsiz/ucuz müzeler
+- mealBudget=high + accommodation=hotel → Fine dining + Michelin önerileri
+- tripPurpose=relax + pace=yavaş → Sahil kafeleri, spa, parklar
+- tripPurpose=nightlife + pace=yoğun → Bar tour, gece kulüpleri
+- transport=walk → Birbirine yakın mekanlar seçilmeli
+- earlyBird=true → İlk aktivite 08:00-09:00 (Sabah)
+- earlyBird=false → İlk aktivite 10:00 sonrası (Öğle)
+
+❌ ASLA YAPMA:
+- mealBudget=low için Michelin restoran önerme
+- mealBudget=high için fastfood/sokak yemeği önerme
+- transport=walk seçildiyse şehrin uzak ucuna mekan koyma
+- tripPurpose=relax için yoğun müze maratonu yapma
+- tripPurpose=nightlife için tüm gün kapanış 21:00 olan yer önerme
+
+═══════════════════════════════════════════════
+ZORUNLU İÇERİK KURALLARI
+═══════════════════════════════════════════════
+
+1️⃣ İKONİK MEKANLAR (atlanmaz):
+${cityMustSee}
+Bu mekanları MUTLAKA listele. Bütçe yetmezse "Dışarıdan fotoğraf molası" olarak ekle, estimatedCost=0.
+
+2️⃣ AKTİVİTE TÜRLERİ (sadece şunlar):
+✅ KABUL: Müze, Restoran, Park, Tarihi mekan, Çarşı, Galeri, Kilise/Cami, Meydan, Manzara noktası, Plaj, Bar/Kafe, Tema park, Bahçe, Kale, Köprü
+❌ RED: Otele dönüş, Dinlenme, Çıkış, Taksi/Metro/Yürüyüş transferi, Hazırlık, Paketleme, Uçuş
+
+3️⃣ AÇIKLAMA YAZIM KURALLARI:
+- Her description: 2-3 cümle, 150-250 karakter
+- "Sonra şuraya geç" gibi sıralama referansı YOK
+- "İnsider tip" stilinde: "Sabah erken git, kuyruğa girme", "Mutlaka X menüsünü dene", "İkinci kat manzarayı kaçırma"
+- Spesifik detay ver: oda numarası, kat, hangi sokakta vs
+
+4️⃣ MALİYET KURALLARI:
+- ${data.peopleCount} kişilik grup TOPLAM maliyeti
+- Müze/aktivite girişi + yiyecek varsa içecek dahil
+- Günlük hedef: ~${dailyBudget} ${data.currencyCode}
+- Toplam bütçe ${data.budget} ${data.currencyCode} sınırını GEÇMEMELI
+- Bütçeyi günler arası DENGELI dağıt (1. gün %50 yığma!)
+
+5️⃣ GÜN İÇİ AKTİVİTE SAYISI:
+${getFlexiblePeriodSchedulingRule(data.startDate, data.arrivalTime, data.endDate, data.departureTime)}
+
+⚠️ ÖNEMLİ: Eğer varış akşam 18:00+ ise SADECE 1-2 aktivite üret, "günde 3 öğün" kuralı o gün uygulanmaz.
+
+6️⃣ ÖĞÜN DAĞILIMI (varış/dönüş günü hariç):
+- Sabah/Öğle periyodunda: 1 kahvaltı yeri (kafe/fırın)
+- Öğle/Öğleden Sonra: 1 öğle yemeği yeri (restoran)
+- Akşam: 1 akşam yemeği yeri (restoran)
+- mealBudget tercihine göre sınıf seç
+
+7️⃣ COĞRAFI MANTIK:
+- Aynı gün içinde mekanlar 5km yarıçap içinde olsun
+- Şehrin doğu/batı uçlarını aynı güne KOYMA
+- Lat/Lng GERÇEK koordinatlar (denizde nokta olmaz)
+- Bilmediğin mekanlar için ünlü gerçek mekanlar tercih et
+
+═══════════════════════════════════════════════
+ÇIKTI YAPISI (EXACT FORMAT)
+═══════════════════════════════════════════════
+
+{
+  "destination": "${data.destination}",
+  "overallSummary": "EXACT 2 cümle. Şehri ve plan temasını özetle.",
+  "totalEstimatedCost": 0,
+  "currencySymbol": "${data.currencySymbol}",
+  "cityGuide": {
+    "transportationTips": "3-4 cümle. Ulaşım kartı/bilet fiyatı, en kullanışlı hat, taksi tavsiyesi",
+    "localCustoms": "3-4 cümle. Bahşiş, selamlama, restoran adabı, yapılmaması gerekenler",
+    "generalAdvice": "3-4 cümle. Su, prizler, sim kart, güvenlik, geleneksel ipuçları"
+  },
+  "dailyPlans": [
+    {
+      "dayNumber": 1,
+      "date": "YYYY-MM-DD",
+      "daySummary": "EXACT 1 cümle. O günün ana teması.",
+      "totalEstimatedCost": 0,
+      "activities": [
+        {
+          "period": "Sabah | Öğle | Öğleden Sonra | Akşam | Gece",
+          "placeName": "Gerçek tam isim (yerel dil + parantez içinde Türkçe varsa)",
+          "description": "2-3 cümle, insider tip içerir",
+          "coordinates": { "lat": 0.0, "lng": 0.0 },
+          "estimatedCost": 0
+        }
+      ]
+    }
+  ]
+}
+
+═══════════════════════════════════════════════
+İYİ vs KÖTÜ ÖRNEKLER
+═══════════════════════════════════════════════
+
+✅ İYİ Açıklama Örneği:
+"Demir leydinin gerçek hissini yakalamak için 2. kata çıkın (3. kat genelde uzun kuyruk yapar). Trocadero tarafından çekilen fotoğraflar her zaman en iyisidir. Akşam 21:00'de ışıklandırma şovu kaçırılmamalı."
+
+❌ KÖTÜ Açıklama Örneği:
+"Eyfel Kulesi Paris'in sembolüdür. Eğlenceli bir aktivite."
+
+✅ İYİ Mekan Adı:
+"Le Comptoir de la Tour (Eyfel manzaralı bistro)"
+
+❌ KÖTÜ Mekan Adı:
+"Eyfel yakınında bir restoran"
+
+✅ İYİ daySummary:
+"Tarihi yarımadanın kalbinde Bizans ve Osmanlı miraslarını keşif."
+
+❌ KÖTÜ daySummary:
+"Bugün çok güzel olacak ve Roma şehrinde birçok güzel mekanı gezerek tarihi atmosferin tadını çıkaracaksınız."
+
+ŞIMDI BU KURALLARA HARFİYEN UYAN PLANI ÜRET.
+`;
+};
+
 // --- ANA SERVİSLER ---
 
 export const generateTravelPlan = async (
@@ -556,85 +710,7 @@ export const generateTravelPlan = async (
 ): Promise<TravelPlanResponse> => {
   if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
 
-  const cityMustSee = getCityContext(data.destination);
-  const perPersonBudget = Math.round(data.budget / Math.max(data.peopleCount, 1));
-  const mealBudgetLabels: Record<string, string> = {
-    low: 'Düşük ($) — sokak lezzetleri, ekonomik mekanlar',
-    medium: 'Orta ($$) — dengeli restoranlar',
-    high: 'Yüksek ($$$) — fine dining ve özel mekanlar',
-  };
-  const mealBudgetLabel = mealBudgetLabels[data.mealBudget] || data.mealBudget || 'Belirtilmedi';
-
-  const prompt = `
-[PERSONA & GÖREV]
-Sen dünya çapında ödüllü, lüks ve butik seyahatler tasarlayan elit bir seyahat danışmanı yapay zekasısın. 
-Amacın kullanıcılara unutulmaz, dengeli ve kültürel olarak zengin bir seyahat deneyimi tasarlamaktır.
-Sıradan turist tuzakları yerine aralara yerel halkın bildiği gizli kalmış mekanları (hidden gems) da mantıklı bir coğrafi sırayla yedirmelisin. Sadece rastgele kafeler önerme.
-
-UYARI: Çıktı sadece ve sadece geçerli bir JSON olmalıdır. Markdown veya açıklayıcı metin İÇERMEMELİDİR.
-
-KULLANICI PROFİLİ:
-- Destinasyon: ${data.destination}
-- Tarihler: ${data.startDate} ile ${data.endDate}
-- Varış: ${data.startDate} (Saat: ${data.arrivalTime})
-- Dönüş: ${data.endDate} (Saat: ${data.departureTime})
-- Toplam Bütçe: ${data.budget} ${data.currencyCode}
-- Kişi Sayısı: ${data.peopleCount} kişi
-- Kişi Başı Bütçe: ${perPersonBudget} ${data.currencyCode}
-- Seyahat Amacı: ${data.tripPurpose}
-- Temposu: ${data.pace}
-- Erken Kalkma: ${data.earlyBird ? "Evet, erken kalkabilir" : "Hayır, uykusunu almalı"}
-- Beslenme Kısıtlamaları: ${data.dietaryRestrictions.join(', ') || "Yok"}
-- Öğün Başı Bütçe Tercihi: ${mealBudgetLabel}
-- Konaklama Tercihi: ${data.accommodation || "Belirtilmedi"}
-- Şehir İçi Ulaşım: ${data.transport}
-
-KURALLAR:
-1. MUST-SEE / İKONİK SİMGELER ÖNCELİĞİ (ÇOK KRİTİK): ${cityMustSee} Kullanıcının tatili kaç gün olursa olsun, bu ikonik simgeleri atlayıp sadece yerel/gizli mekanlardan oluşan bir plan YAPAMAZSIN. Eğer kullanıcının bütçesi bu ikonik mekanlara çıkmaya yetmiyorsa bile, mekanı listeye ekle ve açıklamasında "Dışarıdan izleme/Fotoğraf molası - €0" olarak belirt. Şehrin imza mekanlarını plana koymamak KABUL EDİLEMEZ.
-2. GERÇEKÇİ MALİYETLER: Aktivite maliyetlerini ${data.peopleCount} kişilik grup için gerçekçi hesapla (bilet, yemek vb. toplam grup maliyeti). Toplam plan bütçesi ${data.budget} ${data.currencyCode} ve kişi başı ~${perPersonBudget} ${data.currencyCode} sınırına uy. Öğün başı bütçe tercihine (${mealBudgetLabel}) göre restoran seç.
-3. OTEL VE KONAKLAMA KISITLAMASI (KRİTİK): Kullanıcının otel/konaklama konumu bilinmemektedir. Bu yüzden GÜNLÜK PLANA (activities) ASLA "Otele dönüş", "Otelde dinlenme", "Otelden çıkış" gibi maddeler EKLEME. Tüm aktiviteler gerçek, ziyaret edilebilir POI (Point of Interest - Müze, Restoran, Park vb.) olmalıdır.
-4. BAĞLAMSIZ AÇIKLAMA METİNLERİ (ZORUNLU): Aktivite açıklamalarını (description) yazarken ASLA bir önceki veya bir sonraki mekana atıfta bulunma. (Örn: "Eyfel'den sonra buraya geçin" YAZMA!). Çünkü mekanların sırası daha sonra algoritmik olarak değiştirilecektir. Sadece o anki mekanın güzelliğini, ne yenileceğini veya ne yapılacağını bağımsız bir şekilde anlat. Uzman tur rehberi gibi samimi, "insider tips" (tüyolar) veren cümleler kur.
-5. ULAŞIM KISITI (TEKRAR KRİTİK): Günlük planın (activities) içine ASLA "Taksi Transferi", "Metro Yolculuğu", "Yürüyüş" gibi ulaşım eylemlerini bir koordinat/mekan gibi ekleme. Aktiviteler sadece varış noktaları olmalıdır. Şehir içi ulaşım biletleri, metro kartları, günlük pass'ler veya genel ulaşım tavsiyeleri ASLA plana koordinatlı bir mekan olarak girmemeli; bu bilgiler sadece "cityGuide" objesinde kalmalıdır. Haritaya ulaşım aracı iğneleme!
-6. BİYOLOJİK İHTİYAÇLAR: Günde 3 öğün yemek ZORUNLUDUR. Fırınlar, kafeler veya lüks restoranlar ile öğünleri mutlaka belirle.
-7. KESİNTİSİZ GÜN: Günler (varış/dönüş hariç) en az 5-6 aktivite olmalı. Gün içinde büyük boşluklar bırakma.
-8. KOORDİNAT DOĞRULUĞU: Lat/Lng koordinatları GERÇEK DÜNYA verileriyle eşleşmeli. Kara yapılarını denizin ortasına koyma.
-9. ESNEK ZAMANLAMA VE AKTİVİTE SAYISI KURALI (KRİTİK):
-${getFlexiblePeriodSchedulingRule(data.startDate, data.arrivalTime, data.endDate, data.departureTime)}
-10. ŞEHİR REHBERİ (CITY GUIDE): Seyahat edilen şehirle ilgili ulaşım tüyoları, yerel adetler ve genel faydalı bilgiler içeren doyurucu bir rehber hazırla.
-
-ÖRNEK AKTİVİTE ÇIKTISI (BİREBİR UYULACAK): 
-{ "period": "Sabah", "placeName": "Eyfel Kulesi", "description": "Demir leydinin ihtişamı...", "coordinates": { "lat": 48.8584, "lng": 2.2945 }, "estimatedCost": 28 }
-
-BEKLENEN JSON YAPISI:
-{
-  "destination": "Şehrin Tam Adı",
-  "overallSummary": "2-3 cümlelik motive edici şık özet",
-  "totalEstimatedCost": 1500,
-  "currencySymbol": "${data.currencySymbol}",
-  "cityGuide": {
-    "transportationTips": "Paris'te metro ağı en hızılı ulaşım aracıdır. Günlük 'Navigo' kartı alarak tasarruf edebilirsiniz (14€).",
-    "localCustoms": "Restoranlarda bahşiş hesaba dahildir ancak küçük bir üstü bırakmak nezakettir. 'Bonjour' demeden söze başlamayın.",
-    "generalAdvice": "Çeşme suyu içilebilir ve temizdir. Montmartre bölgesinde yankesiciliğe karşı dikkatli olun."
-  },
-  "dailyPlans": [
-    {
-      "dayNumber": 1,
-      "date": "YYYY-MM-DD",
-      "daySummary": "Bugünün teması",
-      "totalEstimatedCost": 150,
-      "activities": [
-        {
-          "period": "Sabah",
-          "placeName": "Gerçek Mekan Adı",
-          "description": "Rehber tadında detaylı açıklama.",
-          "coordinates": { "lat": 41.9028, "lng": 12.4964 },
-          "estimatedCost": 25
-        }
-      ]
-    }
-  ]
-}
-`;
+  const prompt = buildPrompt(data);
 
   try {
     const textResult = await executeWithFallback(prompt);
@@ -642,7 +718,7 @@ BEKLENEN JSON YAPISI:
 
     // Matematiksel Güvenlik Katmanı: Yapay zekanın maliyet verisine güvenme, yeniden hesapla.
     let finalTotalCost = 0;
-    
+
     const processedDailyPlans: DailyPlan[] = [];
 
     for (const day of parsedData.dailyPlans) {
@@ -706,22 +782,22 @@ export const regenerateDayWithVibe = async (
   const cityMustSee = getCityContext(destination);
 
   const prompt = `
-Sen uzman bir seyahat danışmanısın. Kullanıcı ${destination} şehrinde. 
+Sen uzman bir seyahat danışmanısın. Kullanıcı ${destination} şehrinde.
 Aşağıdaki 1 günlük seyahat planını "${vibeMap[vibeId] || vibeId}" moduna göre tamamen yeniden yaz.
 
 KURAL 1: Mekanları yeni moda uygun olarak tamamen değiştir.
 KURAL 2: MUST-SEE / İKONİK SİMGELER ÖNCELİĞİ (ÇOK KRİTİK): Eğer o şehirde dünyaca ünlü ikonik bir simge varsa ve plana uygunsa mutlaka ekle. Bütçe yetmiyorsa dışarıdan fotoğraf molası olarak ekle (0€). ${cityMustSee}
 KURAL 3: GERÇEKÇİ MALİYETLER: Aktivite maliyetlerini mantıklı belirle.
-KURAL 4: OTEL VE KONAKLAMA EKLENEMEZ! Plan içine "Otele dönüş", "Dinlenme", "Otelden çıkış" gibi maddeler ASLA EKLEME. Bütün maddeler gerçek POI (Point of Interest) olmalıdır.
-KURAL 5: ULAŞIM EKLENEMEZ! Günlük planın (activities) içine ASLA "Taksi Transferi", "Yürüyüş", "Metro" gibi yolculuk adımları ekleme. Ulaşım araçlarını haritaya iğneleme.
-KURAL 6: BAĞLAMSIZ AÇIKLAMALAR ZORUNLU! Aktivite açıklamalarında ASLA bir önceki veya bir sonraki mekana atıfta bulunma. Sıralamalar algoritmik olarak değişecektir. Sadece o anki mekanı anlat.
+KURAL 4: OTEL VE KONAKLAMA EKLENEMEZ! Plan içine "Otele dönüş", "Dinlenme", "Otelden çıkış" gibi maddeler ASLA EKLEME.
+KURAL 5: ULAŞIM EKLENEMEZ! Günlük planın (activities) içine ASLA "Taksi Transferi", "Yürüyüş", "Metro" gibi yolculuk adımları ekleme.
+KURAL 6: BAĞLAMSIZ AÇIKLAMALAR ZORUNLU! Aktivite açıklamalarında ASLA bir önceki veya bir sonraki mekana atıfta bulunma.
 KURAL 7: ESNEK ZAMANLAMA VE AKTİVİTE SAYISI (KRİTİK):
 ${getFlexiblePeriodSchedulingRule(arrivalDate, arrivalTime, departureDate, departureTime)}
 - Günde 3 öğün şarttır. Sandviççiler, fırınlar, sokak lezzetleri ekle.
 KURAL 8: Koordinatlar (Lat/Lng) GERÇEĞİ yansıtmalı.
 KURAL 9: SADECE JSON ÇIKTISI VER. Mevcut JSON formatının BİREBİR aynısını (tek bir DailyPlan objesi) döndür.
 
-ÖRNEK AKTİVİTE ÇIKTISI (BİREBİR UYULACAK): 
+ÖRNEK AKTİVİTE ÇIKTISI:
 { "period": "Sabah", "placeName": "Eyfel Kulesi", "description": "Demir leydinin ihtişamı...", "coordinates": { "lat": 48.8584, "lng": 2.2945 }, "estimatedCost": 28 }
 
 MEVCUT PLAN:
@@ -732,7 +808,6 @@ ${JSON.stringify(dayPlan, null, 2)}
     const textResult = await executeWithFallback(prompt);
     const newDayPlan = extractAndParseJSON<DailyPlan>(textResult);
 
-    // Yeni mekanları mesafeye göre TSP ile yeniden optimize et ve periyotları senkronize et
     let activities = optimizeRouteTSP(newDayPlan.activities);
     activities = reassignPeriods(
       activities,
@@ -742,7 +817,6 @@ ${JSON.stringify(dayPlan, null, 2)}
       departureDate,
       departureTime
     );
-    // Matematiksel güvenlik
     const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
 
     const resultDay: DailyPlan = {

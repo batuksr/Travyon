@@ -47,7 +47,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden">
       {/* Sol Panel — Fotoğraf */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
         <img

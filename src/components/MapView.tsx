@@ -1,10 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
 import type { DailyActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 
+// Stable reference — prevents SDK reload on every render
+const LIBRARIES: ('places')[] = ['places'];
+
 interface MapViewProps {
   activities: DailyActivity[];
+  onActivityClick?: (place: { placeName: string; lat: number; lng: number }) => void;
 }
 
 const containerStyle = {
@@ -20,14 +24,14 @@ const mapOptions = {
   streetViewControl: false,
 };
 
-const MapView: React.FC<MapViewProps> = ({ activities }) => {
+const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries: LIBRARIES,
   });
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<DailyActivity | null>(null);
 
   const onLoad = useCallback(function callback(map: google.maps.Map) {
     setMap(map);
@@ -37,7 +41,7 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
     setMap(null);
   }, []);
 
-  // Odaklanma (FitBounds) Algoritması
+  // FitBounds — tüm aktiviteleri görünür yap
   useEffect(() => {
     if (map && activities.length > 0) {
       const bounds = new window.google.maps.LatLngBounds();
@@ -45,17 +49,15 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
         bounds.extend({ lat: activity.coordinates.lat, lng: activity.coordinates.lng });
       });
       map.fitBounds(bounds);
-      
-      // Tek aktivite varsa veya tüm aktiviteler aynı noktadaysa (çok dar kalıyorsa) yaklaştırmayı kısıtla
-      const listener = window.google.maps.event.addListener(map, 'idle', function() { 
-        if (map.getZoom() && map.getZoom()! > 16) { 
-          map.setZoom(16); 
-        } 
-        window.google.maps.event.removeListener(listener); 
+
+      const listener = window.google.maps.event.addListener(map, 'idle', function () {
+        if (map.getZoom() && map.getZoom()! > 16) {
+          map.setZoom(16);
+        }
+        window.google.maps.event.removeListener(listener);
       });
     }
   }, [map, activities]);
-
 
   if (!isLoaded) {
     return (
@@ -65,7 +67,6 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
     );
   }
 
-  // Sadece Polyline çizimi için koordinat arrayi
   const path = activities.map(act => ({
     lat: act.coordinates.lat,
     lng: act.coordinates.lng
@@ -81,12 +82,12 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
         onLoad={onLoad}
         onUnmount={onUnmount}
       >
-        {/* Rota Çizgisi (TSP Optimizasyonu) */}
+        {/* Rota çizgisi (TSP optimize) */}
         {path.length > 1 && (
           <PolylineF
             path={path}
             options={{
-              strokeColor: '#2563eb', // Blue-600
+              strokeColor: '#2563eb',
               strokeOpacity: 0.8,
               strokeWeight: 4,
               geodesic: true,
@@ -98,7 +99,7 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
           />
         )}
 
-        {/* Hedef Noktaları (Markers) */}
+        {/* Marker'lar */}
         {activities.map((act, index) => (
           <MarkerF
             key={index}
@@ -109,34 +110,28 @@ const MapView: React.FC<MapViewProps> = ({ activities }) => {
               fontWeight: 'bold',
               fontSize: '14px'
             }}
-            onClick={() => setSelectedActivity(act)}
+            options={{ cursor: 'pointer' }}
+            onClick={() => {
+              if (onActivityClick) {
+                onActivityClick({
+                  placeName: act.placeName,
+                  lat: act.coordinates.lat,
+                  lng: act.coordinates.lng,
+                });
+              } else {
+                // Fallback: konsola yaz
+                console.log('[MapView] Tıklanan mekan:', act.placeName);
+                console.log('[MapView] Detay:', usePlanStore.getState().plan?.currencySymbol,
+                  act.actualCost !== undefined ? act.actualCost : act.estimatedCost);
+              }
+            }}
           />
         ))}
-
-        {/* Info Penceresi */}
-        {selectedActivity && (
-          <InfoWindowF
-            position={{ 
-              lat: selectedActivity.coordinates.lat, 
-              lng: selectedActivity.coordinates.lng 
-            }}
-            onCloseClick={() => setSelectedActivity(null)}
-          >
-            <div className="p-1 max-w-[200px]">
-              <h3 className="font-bold text-slate-800 text-sm mb-1">{selectedActivity.placeName}</h3>
-              <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold mb-2">
-                <span>🗓️ {selectedActivity.period}</span>
-                <span>💵 {usePlanStore.getState().plan?.currencySymbol}{selectedActivity.actualCost !== undefined ? selectedActivity.actualCost : selectedActivity.estimatedCost}</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-snug">{selectedActivity.description}</p>
-            </div>
-          </InfoWindowF>
-        )}
       </GoogleMap>
-      
-      {/* Harita Etiketi (Görsel Güven) */}
+
+      {/* Optimize edildi etiketi */}
       <div className="absolute top-4 right-14 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm border border-slate-100 text-xs font-semibold text-slate-700 z-10 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
         Coğrafi Olarak Optimize Edildi
       </div>
     </div>

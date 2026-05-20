@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
-import Layout from "./components/Layout";
+import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -17,7 +17,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const { setUser, setLoading, loading } = useAuthStore();
+  const { user, setUser, setLoading, loading } = useAuthStore();
 
   useEffect(() => {
     if (!auth || Object.keys(auth).length === 0) {
@@ -42,17 +42,26 @@ function App() {
     );
   }
 
+  const isAuthenticated = !!user;
+
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        </Routes>
-      </Layout>
+      <div className="flex min-h-screen bg-slate-50">
+
+        {/* Sidebar — sadece giriş yapmış kullanıcılar için */}
+        {isAuthenticated && <Sidebar />}
+
+        {/* Ana içerik */}
+        <main className={`flex-1 ${isAuthenticated ? 'ml-16' : ''}`}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }
