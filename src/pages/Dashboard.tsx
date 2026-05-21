@@ -1,6 +1,8 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { usePlanStore } from '../store/usePlanStore';
+import { useOnboardingStore } from '../store/useOnboardingStore';
+import { useSavedPlansStore } from '../store/useSavedPlansStore';
 import { useNavigate } from 'react-router-dom';
 import {
   Navigation,
@@ -12,6 +14,8 @@ import {
   AlertTriangle,
   ArrowLeft,
   X,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
@@ -19,12 +23,15 @@ import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 
 const Dashboard: React.FC = () => {
   const { plan } = usePlanStore();
+  const { addPlan } = useSavedPlansStore();
+  const { data: onboardingData } = useOnboardingStore();
   const navigate = useNavigate();
 
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [guideOpen, setGuideOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<{
     placeName: string;
     lat: number;
@@ -77,6 +84,13 @@ const Dashboard: React.FC = () => {
   const handleConfirmNewPlan = () => {
     setShowConfirm(false);
     navigate('/onboarding');
+  };
+
+  const handleSavePlan = () => {
+    if (!plan) return;
+    addPlan(plan, onboardingData);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2500);
   };
 
   const activeDay = plan.dailyPlans[activeDayIndex];
@@ -251,6 +265,19 @@ const Dashboard: React.FC = () => {
               {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString()}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={handleSavePlan}
+            disabled={justSaved}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
+              justSaved
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+            {justSaved ? 'Kaydedildi' : 'Planı Kaydet'}
+          </button>
           <button
             type="button"
             onClick={handleNewPlanClick}

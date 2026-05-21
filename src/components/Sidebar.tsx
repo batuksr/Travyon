@@ -4,14 +4,13 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
 import {
-  Home, LayoutDashboard,
-  Sparkles, LogOut, ChevronRight,
+  Home, Sparkles, Bookmark, LogOut, ChevronRight,
 } from 'lucide-react';
 
 const mainNavItems = [
-  { icon: Home,            label: 'Ana Sayfa',   path: '/' },
-  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard' },
-  { icon: Sparkles,        label: 'Plan Oluştur', path: '/onboarding' },
+  { icon: Home,     label: 'Ana Sayfa',   path: '/' },
+  { icon: Sparkles, label: 'Plan Oluştur', path: '/onboarding' },
+  { icon: Bookmark, label: 'Planlarım',   path: '/saved-plans' },
 ];
 
 const Sidebar: React.FC = () => {
