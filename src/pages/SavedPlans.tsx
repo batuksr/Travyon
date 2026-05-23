@@ -6,7 +6,7 @@ import {
   StarOff, Pencil, Plus, Search,
   MapPin, ArrowRight, Sparkles,
 } from 'lucide-react';
-import { useSavedPlansStore, type SavedPlan } from '../store/useSavedPlansStore';
+import { useSavedPlansStore, useUserPlans, type SavedPlan } from '../store/useSavedPlansStore';
 import { usePlanStore } from '../store/usePlanStore';
 
 const getCityImage = (cityName: string): string => {
@@ -25,7 +25,8 @@ const formatDate = (timestamp: number): string => {
 
 const SavedPlans: React.FC = () => {
   const navigate = useNavigate();
-  const { plans, removePlan, toggleFavorite, renamePlan } = useSavedPlansStore();
+  const plans = useUserPlans();
+  const { removePlan, toggleFavorite, renamePlan } = useSavedPlansStore();
   const { setPlan } = usePlanStore();
 
   const [search, setSearch] = useState('');

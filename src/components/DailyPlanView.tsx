@@ -88,7 +88,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       )}
 
       {/* ── TİMLİNE ── */}
-      <div className="flex-1 px-5 pt-4 pb-2">
+      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-2">
         {day.activities.map((activity, index) => {
           const isLast = index === day.activities.length - 1;
           const nextActivity = !isLast ? day.activities[index + 1] : null;
@@ -137,7 +137,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                       <h3 className="text-sm font-semibold text-slate-900 group-hover:text-[#187fe7] transition-colors leading-tight">
                         {activity.placeName}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                         {activity.description}
                       </p>
                     </div>

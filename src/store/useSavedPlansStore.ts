@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useAuthStore } from './useAuthStore';
 import type { TravelPlanResponse } from '../services/aiService';
 import type { OnboardingData } from './useOnboardingStore';
 
@@ -13,7 +14,7 @@ export interface SavedPlan {
 }
 
 interface SavedPlansState {
-  plans: SavedPlan[];
+  plansByUser: Record<string, SavedPlan[]>;
   addPlan: (plan: TravelPlanResponse, onboardingData: OnboardingData) => string;
   removePlan: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -23,57 +24,85 @@ interface SavedPlansState {
 }
 
 const generateId = (): string =>
-  `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  `plan_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
+const getUid = (): string =>
+  useAuthStore.getState().user?.uid ?? 'anonymous';
 
 export const useSavedPlansStore = create<SavedPlansState>()(
   persist(
     (set, get) => ({
-      plans: [],
+      plansByUser: {},
 
       addPlan: (plan, onboardingData) => {
+        const uid = getUid();
         const id = generateId();
-        const newPlan: SavedPlan = {
-          id,
-          createdAt: Date.now(),
-          isFavorite: false,
-          plan,
-          onboardingData,
-        };
-        set((state) => ({ plans: [newPlan, ...state.plans] }));
+        const newPlan: SavedPlan = { id, createdAt: Date.now(), isFavorite: false, plan, onboardingData };
+        set((state) => ({
+          plansByUser: {
+            ...state.plansByUser,
+            [uid]: [newPlan, ...(state.plansByUser[uid] ?? [])],
+          },
+        }));
         return id;
       },
 
       removePlan: (id) => {
+        const uid = getUid();
         set((state) => ({
-          plans: state.plans.filter((p) => p.id !== id),
+          plansByUser: {
+            ...state.plansByUser,
+            [uid]: (state.plansByUser[uid] ?? []).filter((p) => p.id !== id),
+          },
         }));
       },
 
       toggleFavorite: (id) => {
+        const uid = getUid();
         set((state) => ({
-          plans: state.plans.map((p) =>
-            p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
-          ),
+          plansByUser: {
+            ...state.plansByUser,
+            [uid]: (state.plansByUser[uid] ?? []).map((p) =>
+              p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
+            ),
+          },
         }));
       },
 
       renamePlan: (id, name) => {
+        const uid = getUid();
         set((state) => ({
-          plans: state.plans.map((p) =>
-            p.id === id ? { ...p, customName: name } : p
-          ),
+          plansByUser: {
+            ...state.plansByUser,
+            [uid]: (state.plansByUser[uid] ?? []).map((p) =>
+              p.id === id ? { ...p, customName: name } : p
+            ),
+          },
         }));
       },
 
       getPlanById: (id) => {
-        return get().plans.find((p) => p.id === id);
+        const uid = getUid();
+        return (get().plansByUser[uid] ?? []).find((p) => p.id === id);
       },
 
-      clearAll: () => set({ plans: [] }),
+      clearAll: () => {
+        const uid = getUid();
+        set((state) => ({
+          plansByUser: { ...state.plansByUser, [uid]: [] },
+        }));
+      },
     }),
     {
-      name: 'travyon-saved-plans',
+      name: 'travyon-saved-plans-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )
 );
+
+// Sadece giriş yapan kullanıcının planlarını döner
+export const useUserPlans = (): SavedPlan[] => {
+  const user = useAuthStore((s) => s.user);
+  const plansByUser = useSavedPlansStore((s) => s.plansByUser);
+  return plansByUser[user?.uid ?? ''] ?? [];
+};

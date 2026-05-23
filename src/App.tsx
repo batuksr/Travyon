@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import SavedPlans from "./pages/SavedPlans";
+import Settings from "./pages/Settings";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -61,6 +62,7 @@ function App() {
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/saved-plans" element={<ProtectedRoute><SavedPlans /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

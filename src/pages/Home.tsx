@@ -4,11 +4,13 @@ import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
 import { Wallet, ArrowRight, Sparkles, Calendar } from 'lucide-react';
 import GlobeAnimation from '../components/GlobeAnimation';
+import SamplePlanModal from '../components/SamplePlanModal';
 
 const HERO_VIDEOS = [
-  '/videos/video1.mp4',
-  '/videos/video2.mp4',
-  '/videos/video3.mp4',
+  '/videos/334716.mp4',
+  'https://videos.pexels.com/video-files/1437396/1437396-uhd_2560_1440_24fps.mp4',
+  'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4',
+  'https://videos.pexels.com/video-files/3044534/3044534-hd_1920_1080_25fps.mp4',
 ];
 
 const HERO_FALLBACK_IMAGE =
@@ -138,6 +140,7 @@ const Home: React.FC = () => {
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
+  const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
 
   const handleCTA = () => {
     navigate(user ? '/onboarding' : '/register');
@@ -231,7 +234,7 @@ const Home: React.FC = () => {
               <motion.h1
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-[1.1] tracking-tight mt-5"
+                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mt-5"
               >
                 Hayalindeki<br />Seyahati<br />
                 <span className="text-[#f8981d]">Planla.</span>
@@ -241,7 +244,7 @@ const Home: React.FC = () => {
               <motion.p
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="mt-4 text-base text-white/70 leading-relaxed max-w-md"
+                className="mt-4 text-lg text-white/70 leading-relaxed max-w-md"
               >
                 Bütçen, tempon ve zevklerine göre yapay zeka saniyeler içinde coğrafi olarak optimize edilmiş, kişisel seyahat planını oluşturur.
               </motion.p>
@@ -254,14 +257,14 @@ const Home: React.FC = () => {
               >
                 <button
                   type="button" onClick={handleCTA}
-                  className="group inline-flex items-center gap-2 px-6 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-semibold rounded-xl text-sm transition-all shadow-xl shadow-[#f8981d]/30 hover:-translate-y-0.5"
+                  className="group inline-flex items-center gap-2 px-7 py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-semibold rounded-xl text-base transition-all shadow-xl shadow-[#f8981d]/30 hover:-translate-y-0.5"
                 >
                   Ücretsiz Plan Oluştur
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   type="button" onClick={scrollToHowItWorks}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 border border-white/30 text-white/90 hover:text-white hover:border-white/50 font-medium rounded-xl text-sm transition-all backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 px-7 py-3 border border-white/30 text-white/90 hover:text-white hover:border-white/50 font-medium rounded-xl text-base transition-all backdrop-blur-sm"
                 >
                   Nasıl Çalışır?
                 </button>
@@ -275,8 +278,8 @@ const Home: React.FC = () => {
               >
                 {[['50+', 'Desteklenen Şehir'], ['15sn', 'Ortalama Plan Süresi'], ['%100', 'Kişiselleştirilmiş']].map(([val, label]) => (
                   <div key={label}>
-                    <p className="text-xl font-bold text-[#f8981d]">{val}</p>
-                    <p className="text-xs text-white/60 mt-0.5">{label}</p>
+                    <p className="text-2xl font-bold text-[#f8981d]">{val}</p>
+                    <p className="text-sm text-white/60 mt-0.5">{label}</p>
                   </div>
                 ))}
               </motion.div>
@@ -333,7 +336,7 @@ const Home: React.FC = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07, duration: 0.4 }}
                 className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-300 cursor-pointer"
-                onClick={handleCTA}
+                onClick={() => setSelectedSampleId(plan.id)}
               >
                 {/* Görsel */}
                 <div className="relative h-40 overflow-hidden">
@@ -400,10 +403,10 @@ const Home: React.FC = () => {
 
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleCTA(); }}
+                      onClick={(e) => { e.stopPropagation(); setSelectedSampleId(plan.id); }}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#187fe7] hover:text-[#156bc2] transition-colors group/btn"
                     >
-                      Benzerini Planla
+                      Planı Gör
                       <ArrowRight size={11} className="group-hover/btn:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
@@ -420,53 +423,151 @@ const Home: React.FC = () => {
          ══════════════════════════════════════════ */}
       <section
         id="nasil-calisir"
-        className="relative bg-white overflow-hidden"
-        style={{ minHeight: 600 }}
+        className="relative bg-white overflow-x-hidden"
+        style={{ minHeight: 780 }}
       >
 
-        {/* Globe — arka planda, dikey ortada */}
+        {/* Globe — yatayda ve dikeyde ortalı */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div style={{ width: 580, height: 580 }}>
+          <div style={{ width: 500, height: 500 }}>
             <GlobeAnimation />
           </div>
         </div>
 
-        {/* İçerik — globe ortasında dikey hizalı */}
+        {/* İçerik */}
         <div
-          className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center justify-center gap-12"
-          style={{ minHeight: 600 }}
+          className="relative z-10 w-full mx-auto px-8 flex flex-col"
+          style={{ minHeight: 780, maxWidth: 1280 }}
         >
 
-          {/* Başlık */}
-          <div className="text-center">
-           
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-3000 mt-2">
+          {/* Başlık — sol üst */}
+          <div className="pt-1 pb-6">
+            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">SÜREÇ</span>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
               Nasıl Çalışır?
             </h2>
-            <p className="text-sm text-slate-1200 mt-2 max-w-sm mx-auto leading-relaxed">
+            <p className="text-sm text-slate-700 mt-1.5 max-w-xs leading-relaxed">
               Hesap oluşturmaktan mükemmel seyahat planına dört adımda ulaşın.
             </p>
           </div>
 
-          {/* 4 adım — yatay */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
-            {STEPS.map((step) => (
-              <div key={step.num}>
-                <div className="text-slate-900 text-4xl font-bold mb-2 leading-none">
-                  {step.num}
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 mb-1.5">
-                  {step.title}
-                </h3>
-                <p className="text-xs text-slate-1200 leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
+          {/* 3 sütun: sol adımlar | boş merkez (dünya) | sağ adımlar */}
+          {/* Merkez sütun tam globe genişliği → yazılar asla üstüne gelmiyor */}
+          <div
+            className="flex-1 grid pb-10"
+            style={{ gridTemplateColumns: '1fr 520px 1fr' }}
+          >
 
+            {/* Sol — 01 ve 02 */}
+            <div className="flex flex-col justify-start pt-35 gap-10 pr-7">
+              {STEPS.slice(0, 2).map((step) => (
+                <div key={step.num}>
+                  <div className="text-[#f8981d] text-3xl font-bold mb-2 leading-none">{step.num}</div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Merkez — boş, sadece dünya görünür */}
+            <div />
+
+            {/* Sağ — 03 ve 04 */}
+            <div className="flex flex-col justify-start pt-35 gap-10 pl-15">
+              {STEPS.slice(2, 4).map((step) => (
+                <div key={step.num}>
+                  <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+
+          </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════
+          BÖLÜM 4 — FINAL CTA
+         ══════════════════════════════════════════ */}
+      <section className="relative bg-white overflow-hidden py-24">
+
+        {/* Grid arka plan */}
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+              linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)
+            `,
+            backgroundSize: '48px 48px',
+          }}
+        />
+
+        {/* Kenar soluklaştırma */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white" />
+
+        {/* İçerik */}
+        <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight"
+          >
+            Hayalindeki seyahate<br />hazır mısınız?
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mt-4 text-sm text-slate-500 leading-relaxed max-w-md mx-auto"
+          >
+            Travyon kullanan gezginlere katılın, bütçenizi aşmadan ve zaman kaybetmeden mükemmel rotanızı oluşturun.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-8 flex items-center justify-center gap-3"
+          >
+            <button
+              type="button"
+              onClick={handleCTA}
+              className="group inline-flex items-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm transition-all"
+            >
+              Ücretsiz Başla
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="group inline-flex items-center gap-2 px-6 py-2.5 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-semibold rounded-xl text-sm transition-all"
+            >
+              Giriş Yap
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          ÖRNEK PLAN MODAL
+         ══════════════════════════════════════════ */}
+      <SamplePlanModal
+        planId={selectedSampleId}
+        onClose={() => setSelectedSampleId(null)}
+        cityMeta={selectedSampleId ? (() => {
+          const p = SAMPLE_PLANS.find((s) => s.id === selectedSampleId);
+          return p ? { city: p.city, country: p.country, flag: p.flag, days: p.days, budget: p.budget, currency: p.currency, image: p.image } : null;
+        })() : null}
+      />
 
     </div>
   );

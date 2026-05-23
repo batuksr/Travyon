@@ -94,23 +94,6 @@ const DotGlobe: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
   const radius = 2.5;
 
-  const dotsGeometry = useMemo(() => {
-    const points: THREE.Vector3[] = [];
-    const dotCount = 500;
-    for (let i = 0; i < dotCount; i++) {
-      const phi = Math.acos(-1 + (2 * i) / dotCount);
-      const theta = Math.sqrt(dotCount * Math.PI) * phi;
-      points.push(new THREE.Vector3(
-        radius * Math.cos(theta) * Math.sin(phi),
-        radius * Math.sin(theta) * Math.sin(phi),
-        radius * Math.cos(phi)
-      ));
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setFromPoints(points);
-    return geo;
-  }, []);
-
   const cityPositions = useMemo(
     () => CITIES.map((c) => latLngToVector3(c.lat, c.lng, radius)),
     []
@@ -128,22 +111,11 @@ const DotGlobe: React.FC = () => {
   });
 
   return (
-    <group ref={groupRef} position={[0, -0.00002, 0]}>
+    <group ref={groupRef} position={[-0.001, 0.02, 0]}>
       {/* Dünya haritası — yüklenene kadar mavi küre fallback */}
       <Suspense fallback={<FallbackSphere radius={radius} />}>
         <EarthSphere radius={radius} />
       </Suspense>
-
-      {/* Nokta grid overlay */}
-      <points geometry={dotsGeometry}>
-        <pointsMaterial
-          size={0.015}
-          color="#cbd5e1"
-          sizeAttenuation
-          transparent
-          opacity={0.2}
-        />
-      </points>
 
       {/* Şehir noktaları */}
       {cityPositions.map((pos, i) => (
