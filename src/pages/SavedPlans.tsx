@@ -94,7 +94,7 @@ const SavedPlans: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/onboarding')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#187fe7] hover:bg-[#156bc2] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#187fe7]/20 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px"
             >
               <Plus size={16} />
               Yeni Plan
@@ -111,7 +111,7 @@ const SavedPlans: React.FC = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Şehir veya plan adı ara..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-[#187fe7] focus:ring-2 focus:ring-[#187fe7]/10 outline-none text-sm placeholder:text-slate-400 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none text-sm placeholder:text-slate-400 transition-all"
                 />
               </div>
 
@@ -151,8 +151,8 @@ const SavedPlans: React.FC = () => {
         {/* Boş durum */}
         {plans.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto">
-            <div className="w-20 h-20 bg-[#187fe7]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Map size={32} className="text-[#187fe7]" />
+            <div className="w-20 h-20 bg-[#f8981d]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Map size={32} className="text-[#f8981d]" />
             </div>
             <h2 className="text-xl font-black text-slate-900 mb-2">
               Henüz Kayıtlı Plan Yok
@@ -163,7 +163,7 @@ const SavedPlans: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/onboarding')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#187fe7] hover:bg-[#156bc2] text-white font-bold rounded-xl text-sm transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all"
             >
               <Sparkles size={15} />
               İlk Planı Oluştur
@@ -238,7 +238,7 @@ const SavedPlans: React.FC = () => {
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-3 text-xs text-slate-500">
                       <div className="flex items-center gap-1">
-                        <Calendar size={11} className="text-[#187fe7]" />
+                        <Calendar size={11} className="text-[#f8981d]" />
                         <span className="font-semibold text-slate-700">
                           {savedPlan.plan.dailyPlans.length}
                         </span>
@@ -286,7 +286,7 @@ const SavedPlans: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenPlan(savedPlan)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#187fe7] hover:bg-[#156bc2] text-white font-bold text-xs rounded-lg transition-all"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-xs rounded-lg transition-all"
                       >
                         Aç
                         <ArrowRight size={11} />
@@ -388,7 +388,7 @@ const SavedPlans: React.FC = () => {
                 onKeyDown={(e) => e.key === 'Enter' && saveRename()}
                 placeholder="Plan adı"
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[#187fe7] focus:ring-2 focus:ring-[#187fe7]/10 outline-none text-sm font-medium mb-4"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none text-sm font-medium mb-4"
               />
               <div className="flex gap-3">
                 <button
@@ -401,7 +401,7 @@ const SavedPlans: React.FC = () => {
                 <button
                   type="button"
                   onClick={saveRename}
-                  className="flex-1 py-2.5 bg-[#187fe7] hover:bg-[#156bc2] text-white text-sm font-bold rounded-xl transition-all"
+                  className="flex-1 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white text-sm font-bold rounded-xl transition-all"
                 >
                   Kaydet
                 </button>

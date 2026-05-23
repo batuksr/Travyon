@@ -1,8 +1,8 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
-import { Wallet, ArrowRight, Sparkles, Calendar } from 'lucide-react';
+import { Wallet, ArrowRight, Calendar } from 'lucide-react';
 import GlobeAnimation from '../components/GlobeAnimation';
 import SamplePlanModal from '../components/SamplePlanModal';
 
@@ -141,13 +141,21 @@ const Home: React.FC = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
   const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
+  const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 40) setScrollStage(0);
+      else if (y < 120) setScrollStage(1);
+      else setScrollStage(2);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleCTA = () => {
     navigate(user ? '/onboarding' : '/register');
-  };
-
-  const scrollToHowItWorks = () => {
-    document.getElementById('nasil-calisir')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const goToVideo = useCallback((index: number) => {
@@ -174,6 +182,48 @@ const Home: React.FC = () => {
 
   return (
     <div className="bg-[#fafaf9] text-[#1a1a1a] overflow-x-hidden">
+
+      {/* ══════════════════════════════════════════
+          NAVBAR — Floating Island
+         ══════════════════════════════════════════ */}
+      <div className={`fixed inset-x-0 z-50 flex justify-center transition-all duration-500 ease-out
+        ${scrollStage === 0 ? 'top-5' : scrollStage === 1 ? 'top-3' : 'top-1.5'}`}>
+        <nav className={`flex items-center justify-between bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-xl shadow-slate-900/8 rounded-2xl transition-all duration-500 ease-out
+          ${scrollStage === 0 ? 'w-[92%] max-w-6xl px-6 py-3.5' : scrollStage === 1 ? 'w-[82%] max-w-5xl px-5 py-2.5' : 'w-[72%] max-w-4xl px-4 py-2'}`}>
+
+          {/* Logo */}
+          <div className="flex items-center gap-2.5">
+            <div className={`bg-[#f8981d] rounded-xl flex items-center justify-center shadow-md shadow-[#f8981d]/30 transition-all duration-500
+              ${scrollStage === 0 ? 'w-8 h-8' : 'w-7 h-7'}`}>
+              <span className={`text-white font-black transition-all duration-500 ${scrollStage === 0 ? 'text-base' : 'text-sm'}`}>T</span>
+            </div>
+            <span className={`text-slate-900 font-black tracking-tight transition-all duration-500 ${scrollStage === 0 ? 'text-lg' : 'text-base'}`}>
+              Travyon
+            </span>
+          </div>
+
+          {/* Auth butonları */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className={`text-slate-600 hover:text-slate-900 font-semibold transition-all duration-500
+                ${scrollStage === 0 ? 'text-sm px-4 py-2' : 'text-xs px-3 py-1.5'}`}
+            >
+              Giriş Yap
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className={`inline-flex items-center gap-1.5 font-bold text-white bg-[#f8981d] hover:bg-[#e08518] rounded-xl transition-all duration-500 shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px
+                ${scrollStage === 0 ? 'text-sm px-5 py-2.5' : 'text-xs px-4 py-2'}`}
+            >
+              Ücretsiz Başla
+              <ArrowRight size={scrollStage === 0 ? 13 : 11} />
+            </button>
+          </div>
+        </nav>
+      </div>
 
       {/* ══════════════════════════════════════════
           BÖLÜM 1 — HERO (Video)
@@ -224,12 +274,6 @@ const Home: React.FC = () => {
             <div className="max-w-xl">
 
               {/* Badge */}
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f8981d] rounded-full text-white text-xs font-semibold uppercase tracking-widest shadow-lg shadow-[#f8981d]/30">
-                  <Sparkles size={11} /> Yapay Zeka Destekli
-                </span>
-              </motion.div>
-
               {/* Başlık */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -261,12 +305,6 @@ const Home: React.FC = () => {
                 >
                   Ücretsiz Plan Oluştur
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button
-                  type="button" onClick={scrollToHowItWorks}
-                  className="inline-flex items-center gap-2 px-7 py-3 border border-white/30 text-white/90 hover:text-white hover:border-white/50 font-medium rounded-xl text-base transition-all backdrop-blur-sm"
-                >
-                  Nasıl Çalışır?
                 </button>
               </motion.div>
 
@@ -310,7 +348,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════════
           BÖLÜM 2 — ÖRNEK PLANLAR
          ══════════════════════════════════════════ */}
-      <section className="bg-slate-50 py-16">
+      <section id="ornek-planlar" className="bg-slate-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Başlık */}
@@ -462,7 +500,7 @@ const Home: React.FC = () => {
             <div className="flex flex-col justify-start pt-35 gap-10 pr-7">
               {STEPS.slice(0, 2).map((step) => (
                 <div key={step.num}>
-                  <div className="text-[#f8981d] text-3xl font-bold mb-2 leading-none">{step.num}</div>
+                  <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
                   <h3 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">{step.desc}</p>
                 </div>
@@ -487,75 +525,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          BÖLÜM 4 — FINAL CTA
-         ══════════════════════════════════════════ */}
-      <section className="relative bg-white overflow-hidden py-24">
-
-        {/* Grid arka plan */}
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-              linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)
-            `,
-            backgroundSize: '48px 48px',
-          }}
-        />
-
-        {/* Kenar soluklaştırma */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white" />
-
-        {/* İçerik */}
-        <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight"
-          >
-            Hayalindeki seyahate<br />hazır mısınız?
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-4 text-sm text-slate-500 leading-relaxed max-w-md mx-auto"
-          >
-            Travyon kullanan gezginlere katılın, bütçenizi aşmadan ve zaman kaybetmeden mükemmel rotanızı oluşturun.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-8 flex items-center justify-center gap-3"
-          >
-            <button
-              type="button"
-              onClick={handleCTA}
-              className="group inline-flex items-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm transition-all"
-            >
-              Ücretsiz Başla
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="group inline-flex items-center gap-2 px-6 py-2.5 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-semibold rounded-xl text-sm transition-all"
-            >
-              Giriş Yap
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </motion.div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════
           ÖRNEK PLAN MODAL

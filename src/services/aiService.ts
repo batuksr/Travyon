@@ -150,19 +150,49 @@ interface NominatimSearchResult {
   lat: string;
   lon: string;
   display_name?: string;
+  class?: string;
+  type?: string;
 }
 
 const nominatimDelay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s1 = Math.sin(dLat / 2);
+  const s2 = Math.sin(dLng / 2);
+  const a2 = s1 * s1 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * s2 * s2;
+  return R * 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1 - a2));
+};
+
+const MAX_GEOCODE_DEVIATION_KM = 4;
+
+const WATER_CLASSES = new Set(['natural', 'waterway', 'water']);
+const WATER_TYPES = new Set(['water', 'sea', 'bay', 'strait', 'river', 'lake', 'coastline', 'wetland']);
+
+/* Destination merkez koordinatı önbelleği */
+const destinationCenterCache = new Map<string, { lat: number; lng: number } | null>();
+
 const searchNominatimQuery = async (
-  query: string
+  query: string,
+  viewbox?: { minLat: number; maxLat: number; minLng: number; maxLng: number }
 ): Promise<{ lat: number; lng: number } | null> => {
   try {
     const url = new URL(NOMINATIM_SEARCH_URL);
     url.searchParams.set('q', query);
     url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '1');
+    url.searchParams.set('limit', '5');
+
+    if (viewbox) {
+      /* Nominatim viewbox: left,top,right,bottom (west,north,east,south) */
+      url.searchParams.set(
+        'viewbox',
+        `${viewbox.minLng},${viewbox.maxLat},${viewbox.maxLng},${viewbox.minLat}`
+      );
+      url.searchParams.set('bounded', '1');
+    }
 
     const response = await fetch(url.toString(), {
       method: 'GET',
@@ -183,9 +213,13 @@ const searchNominatimQuery = async (
       return null;
     }
 
-    const firstResult = results[0];
-    const lat = parseFloat(firstResult.lat);
-    const lng = parseFloat(firstResult.lon);
+    /* Su/deniz sonuçlarını filtrele; yoksa ilk sonucu kullan */
+    const landResult = results.find(
+      (r) => !WATER_CLASSES.has(r.class ?? '') && !WATER_TYPES.has(r.type ?? '')
+    ) ?? results[0];
+
+    const lat = parseFloat(landResult.lat);
+    const lng = parseFloat(landResult.lon);
 
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
       console.warn(`[Geocoding] Geçersiz koordinat döndü: "${query}"`);
@@ -200,6 +234,29 @@ const searchNominatimQuery = async (
   }
 };
 
+/** Destination şehrinin merkez koordinatını al (önbellekli) */
+const getDestinationCenter = async (
+  destination: string
+): Promise<{ lat: number; lng: number } | null> => {
+  if (destinationCenterCache.has(destination)) {
+    return destinationCenterCache.get(destination)!;
+  }
+  const center = await searchNominatimQuery(destination);
+  destinationCenterCache.set(destination, center);
+  return center;
+};
+
+/** ±delta derece bounding box oluştur (~0.5° ≈ 50 km) */
+const buildViewbox = (
+  center: { lat: number; lng: number },
+  delta = 0.5
+) => ({
+  minLat: center.lat - delta,
+  maxLat: center.lat + delta,
+  minLng: center.lng - delta,
+  maxLng: center.lng + delta,
+});
+
 const fetchNominatimCoordinates = async (
   placeName: string,
   destination: string
@@ -207,37 +264,49 @@ const fetchNominatimCoordinates = async (
   const trimmedPlace = placeName.trim();
   const trimmedDestination = destination.trim();
 
-  if (!trimmedPlace) {
-    return null;
-  }
+  if (!trimmedPlace) return null;
 
-  const queries: string[] = [];
+  /* Şehrin merkezini al → viewbox oluştur */
+  const center = trimmedDestination
+    ? await getDestinationCenter(trimmedDestination)
+    : null;
+  const viewbox = center ? buildViewbox(center) : undefined;
 
+  /* 1. Şehir adıyla birlikte, viewbox içinde ara */
   if (trimmedDestination) {
-    queries.push(`${trimmedPlace}, ${trimmedDestination}`);
-  }
-  queries.push(trimmedPlace);
-
-  const uniqueQueries = [...new Set(queries.filter((q) => q.length > 0))];
-
-  let isFirstQuery = true;
-
-  for (const query of uniqueQueries) {
-    if (!isFirstQuery) {
-      await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
+    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
+    const result = await searchNominatimQuery(
+      `${trimmedPlace}, ${trimmedDestination}`,
+      viewbox
+    );
+    if (result) {
+      console.log(`[Geocoding] ✅ "${trimmedPlace}" (bounded) → ${result.lat}, ${result.lng}`);
+      return result;
     }
-    isFirstQuery = false;
-
-    const coordinates = await searchNominatimQuery(query);
-
-    if (coordinates) {
-      console.log(`[Geocoding] ✅ "${query}" → ${coordinates.lat}, ${coordinates.lng}`);
-      return coordinates;
-    }
-
-    console.warn(`[Geocoding] Sonuç bulunamadı: "${query}"`);
   }
 
+  /* 2. Sadece viewbox içinde adıyla ara */
+  if (viewbox) {
+    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
+    const result = await searchNominatimQuery(trimmedPlace, viewbox);
+    if (result) {
+      console.log(`[Geocoding] ✅ "${trimmedPlace}" (viewbox-only) → ${result.lat}, ${result.lng}`);
+      return result;
+    }
+  }
+
+  /* 3. Bounded olmadan, şehir adıyla birlikte küresel ara */
+  if (trimmedDestination) {
+    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
+    const result = await searchNominatimQuery(`${trimmedPlace}, ${trimmedDestination}`);
+    if (result) {
+      console.log(`[Geocoding] ✅ "${trimmedPlace}" (unbounded+dest) → ${result.lat}, ${result.lng}`);
+      return result;
+    }
+  }
+
+  /* 4. Hiçbir şekilde bulunamadı — AI'nın orijinal koordinatını koru */
+  console.warn(`[Geocoding] ⚠️ "${trimmedPlace}" bulunamadı — AI koordinatı korunuyor`);
   return null;
 };
 
@@ -267,14 +336,17 @@ const validateCoordinates = async (
       );
 
       if (verifiedCoordinates) {
-        validatedActivities.push({
-          ...activity,
-          coordinates: {
-            lat: verifiedCoordinates.lat,
-            lng: verifiedCoordinates.lng,
-          },
-        });
-        console.log(`[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng}`);
+        const distKm = haversineKm(activity.coordinates, verifiedCoordinates);
+        if (distKm <= MAX_GEOCODE_DEVIATION_KM) {
+          validatedActivities.push({
+            ...activity,
+            coordinates: { lat: verifiedCoordinates.lat, lng: verifiedCoordinates.lng },
+          });
+          console.log(`[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng} (${distKm.toFixed(1)} km)`);
+        } else {
+          validatedActivities.push(activity);
+          console.warn(`[Geocoding] ⚠️ ${activity.placeName} Nominatim sonucu ${distKm.toFixed(1)} km uzakta — AI koordinatı korunuyor`);
+        }
       } else {
         validatedActivities.push(activity);
         console.log(`[Geocoding] ⚠️ Orijinal koordinat korundu: ${activity.placeName}`);

@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import SavedPlans from "./pages/SavedPlans";
 import Settings from "./pages/Settings";
+import Hub from "./pages/Hub";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -56,7 +57,8 @@ function App() {
         {/* Ana içerik */}
         <main className={`flex-1 ${isAuthenticated ? 'ml-16' : ''}`}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={isAuthenticated ? <Navigate to="/hub" replace /> : <Home />} />
+            <Route path="/hub" element={<ProtectedRoute><Hub /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,6 +9,7 @@ import {
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
 import { generateTravelPlan } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
+import { searchCities, type CityOption } from '../data/cities';
 
 const today = new Date().toISOString().split('T')[0];
 const ALL_EATER_OPTION = 'Her Şeyi Yerim';
@@ -156,6 +157,36 @@ const Onboarding: React.FC = () => {
   const [loadingIdx, setLoadingIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [hints, setHints] = useState<FieldHints>(EMPTY_HINTS);
+  const [allCompleted, setAllCompleted] = useState(false);
+
+  /* Destination autocomplete */
+  const [citySuggestions, setCitySuggestions] = useState<CityOption[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const destinationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (destinationRef.current && !destinationRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleDestinationChange = (val: string) => {
+    updateData({ destination: val });
+    setHints((h) => ({ ...h, destination: false }));
+    setCitySuggestions(searchCities(val));
+    setShowSuggestions(val.trim().length > 0);
+  };
+
+  const handleCitySelect = (c: CityOption) => {
+    updateData({ destination: `${c.city}, ${c.country}` });
+    setHints((h) => ({ ...h, destination: false }));
+    setShowSuggestions(false);
+    setCitySuggestions([]);
+  };
 
   useEffect(() => { setError(null); setHints(EMPTY_HINTS); }, [currentStep]);
 
@@ -178,7 +209,7 @@ const Onboarding: React.FC = () => {
     const err = validateAll(data);
     if (err) { setError(err); setHints(hintsForStep(currentStep, data)); return; }
     try {
-      setError(null); setHints(EMPTY_HINTS); setIsGenerating(true);
+      setError(null); setHints(EMPTY_HINTS); setAllCompleted(true); setIsGenerating(true);
       let applied = false;
       const plan = await generateTravelPlan(data, (partial) => { if (applied) setPlan(partial); });
       setPlan(plan); applied = true;
@@ -276,8 +307,8 @@ const Onboarding: React.FC = () => {
           <div className="flex items-center max-w-2xl">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
-              const active    = currentStep === step.id;
-              const completed = currentStep > step.id;
+              const active    = currentStep === step.id && !allCompleted;
+              const completed = currentStep > step.id || allCompleted;
               return (
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center gap-1.5 shrink-0">
@@ -392,15 +423,33 @@ const Onboarding: React.FC = () => {
 
                     <div>
                       <label className="text-xs font-medium text-slate-500 mb-1.5 block">Destinasyon</label>
-                      <div className="relative">
-                        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <div className="relative" ref={destinationRef}>
+                        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                         <input
                           type="text"
                           value={data.destination}
-                          onChange={(e) => { updateData({ destination: e.target.value }); setHints((h) => ({ ...h, destination: false })); }}
+                          onChange={(e) => handleDestinationChange(e.target.value)}
+                          onFocus={() => { if (data.destination.trim().length > 0) setShowSuggestions(true); }}
                           placeholder="Örn. Roma, İtalya"
                           className={inputCls(hints.destination) + ' pl-10'}
+                          autoComplete="off"
                         />
+                        {showSuggestions && citySuggestions.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            {citySuggestions.map((c, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onMouseDown={(e) => { e.preventDefault(); handleCitySelect(c); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left"
+                              >
+                                <MapPin size={13} className="text-[#f8981d] shrink-0" />
+                                <span className="text-sm font-semibold text-slate-800">{c.city}</span>
+                                <span className="text-xs text-slate-400 ml-auto shrink-0">{c.country}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <FieldError msg={hints.destination ? 'Destinasyon girmelisin.' : undefined} />
                     </div>
@@ -666,8 +715,8 @@ const Onboarding: React.FC = () => {
           <button
             type="button"
             onClick={handleBack}
-            disabled={currentStep === 1}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-slate-600 hover:text-slate-900 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            disabled={currentStep === 1 || isGenerating}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-slate-600 hover:text-slate-900 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
           >
             <ArrowLeft size={14} />
             Geri

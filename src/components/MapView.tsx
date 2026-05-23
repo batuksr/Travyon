@@ -129,11 +129,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
         ))}
       </GoogleMap>
 
-      {/* Optimize edildi etiketi */}
-      <div className="absolute top-4 right-14 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm border border-slate-100 text-xs font-semibold text-slate-700 z-10 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-        Coğrafi Olarak Optimize Edildi
-      </div>
+
     </div>
   );
 };

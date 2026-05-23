@@ -19,7 +19,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/onboarding');
+      navigate('/hub');
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string };
       if (firebaseErr.code === 'auth/user-not-found') setError('Bu e-posta ile kayıtlı hesap bulunamadı.');
@@ -36,7 +36,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/onboarding');
+      navigate('/hub');
     } catch {
       setError('Google ile giriş yapılamadı.');
     } finally {

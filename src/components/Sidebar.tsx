@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const mainNavItems = [
-  { icon: Home,     label: 'Ana Sayfa',   path: '/' },
+  { icon: Home,     label: 'Ana Sayfa',   path: '/hub' },
   { icon: Sparkles, label: 'Plan Oluştur', path: '/onboarding' },
   { icon: Bookmark, label: 'Planlarım',   path: '/saved-plans' },
 ];
