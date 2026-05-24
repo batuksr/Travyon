@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
+import { useThemeStore } from '../store/useThemeStore';
 import { CITIES } from '../data/cities';
 import { Plane, MapPin, Wind, LayoutGrid, Wallet, Globe, Trophy,
          Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
@@ -84,8 +85,8 @@ const LEVELS: GamificationLevel[] = [
 const getLevel = (cityCount: number): GamificationLevel =>
   [...LEVELS].reverse().find(l => cityCount >= l.minCities) ?? LEVELS[0];
 
-/* ── Map styles ── */
-const WORLD_MAP_STYLES = [
+/* ── Map styles — Light ── */
+const WORLD_MAP_STYLES_LIGHT = [
   { featureType: 'all' as const,       elementType: 'labels.text.fill',   stylers: [{ color: '#94a3b8' }] },
   { featureType: 'water' as const,      stylers: [{ color: '#dbeafe' }] },
   { featureType: 'landscape' as const,  stylers: [{ color: '#f8fafc' }] },
@@ -95,11 +96,29 @@ const WORLD_MAP_STYLES = [
   { featureType: 'administrative' as const, elementType: 'geometry.stroke', stylers: [{ color: '#cbd5e1' }, { weight: 0.8 }] },
 ];
 
-const WORLD_MAP_OPTIONS = {
-  disableDefaultUI: true, scrollwheel: false, draggable: true,
-  zoomControl: false, mapTypeControl: false, streetViewControl: false,
-  styles: WORLD_MAP_STYLES,
+/* ── Map styles — Dark ── */
+const WORLD_MAP_STYLES_DARK = [
+  { featureType: 'all' as const,        elementType: 'labels.text.fill',   stylers: [{ color: '#64748b' }] },
+  { featureType: 'all' as const,        elementType: 'labels.text.stroke',  stylers: [{ color: '#0f172a' }] },
+  { featureType: 'water' as const,       stylers: [{ color: '#0f2744' }] },
+  { featureType: 'landscape' as const,   stylers: [{ color: '#1e293b' }] },
+  { featureType: 'road' as const,        stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi' as const,         stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit' as const,     stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative' as const, elementType: 'geometry.stroke', stylers: [{ color: '#334155' }, { weight: 0.8 }] },
+];
+
+const BASE_MAP_OPTIONS = {
+  disableDefaultUI: true,
+  scrollwheel: true,
+  draggable: true,
+  zoomControl: true,
+  mapTypeControl: false,
+  streetViewControl: false,
 };
+
+const MAP_INIT_CENTER = { lat: 30, lng: 20 };
+const MAP_INIT_ZOOM   = 2;
 
 interface WeatherData { temp: number; code: number; windspeed: number }
 interface DestPin { lat: number; lng: number; name: string }
@@ -148,6 +167,8 @@ const Hub: React.FC = () => {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [mapInstance, setMapInstance]       = useState<google.maps.Map | null>(null);
   const [hoveredPin, setHoveredPin]         = useState<string | null>(null);
+  const [selectedPin, setSelectedPin]       = useState<DestPin | null>(null);
+  const { dark } = useThemeStore();
 
   /* ── Social state (paylaş butonu için) ── */
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
@@ -199,7 +220,8 @@ const Hub: React.FC = () => {
   const [displayCity, setDisplayCity] = useState('');
   const [showVibe, setShowVibe]           = useState(false);
   const [activitiesShowAll, setActivitiesShowAll] = useState(false);
-  const spinRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spinRef       = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasFitRef     = useRef(false);
 
   useEffect(() => () => { if (spinRef.current) clearInterval(spinRef.current); }, []);
 
@@ -346,8 +368,10 @@ const Hub: React.FC = () => {
   const greeting  = getGreeting();
   const todayStr  = new Date().toISOString().split('T')[0];
 
-  const onMapLoad   = useCallback((m: google.maps.Map) => setMapInstance(m), []);
-  const onMapUnmount = useCallback(() => setMapInstance(null), []);
+  const onMapLoad = useCallback((m: google.maps.Map) => {
+    setMapInstance(m);
+  }, []);
+  const onMapUnmount = useCallback(() => { setMapInstance(null); hasFitRef.current = false; }, []);
 
   /* ── Next trip ── */
   const nextTrip = plans
@@ -507,9 +531,18 @@ const Hub: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityName]);
 
-  /* FitBounds on pins */
+  /* Dark mode değişince harita stilini güncelle */
+  useEffect(() => {
+    if (!mapInstance) return;
+    mapInstance.setOptions({ styles: dark ? WORLD_MAP_STYLES_DARK : WORLD_MAP_STYLES_LIGHT });
+  }, [dark, mapInstance]);
+
+  /* FitBounds — mapInstance hazır olunca sadece bir kez çalışır */
   useEffect(() => {
     if (!mapInstance || !isLoaded || destPins.length === 0) return;
+    if (hasFitRef.current) return;
+    hasFitRef.current = true;
+
     if (destPins.length === 1) {
       mapInstance.setCenter({ lat: destPins[0].lat, lng: destPins[0].lng });
       mapInstance.setZoom(5);
@@ -522,7 +555,8 @@ const Hub: React.FC = () => {
       if ((mapInstance.getZoom() ?? 0) > 10) mapInstance.setZoom(10);
       window.google.maps.event.removeListener(listener);
     });
-  }, [mapInstance, isLoaded, destPins]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapInstance]);
 
   const maxCount = stats.topCountries[0]?.[1] ?? 1;
 
@@ -1035,11 +1069,12 @@ const Hub: React.FC = () => {
                 ) : (
                   <GoogleMap
                     mapContainerStyle={{ width: '100%', height: '100%' }}
-                    center={destPins.length > 0 ? { lat: destPins[0].lat, lng: destPins[0].lng } : { lat: 30, lng: 20 }}
-                    zoom={destPins.length === 0 ? 2 : 3}
-                    options={WORLD_MAP_OPTIONS}
+                    center={MAP_INIT_CENTER}
+                    zoom={MAP_INIT_ZOOM}
+                    options={{ ...BASE_MAP_OPTIONS, styles: dark ? WORLD_MAP_STYLES_DARK : WORLD_MAP_STYLES_LIGHT }}
                     onLoad={onMapLoad}
                     onUnmount={onMapUnmount}
+                    onClick={() => setSelectedPin(null)}
                   >
                     {destPins.map((pin) => (
                       <MarkerF
@@ -1048,10 +1083,11 @@ const Hub: React.FC = () => {
                         title={pin.name}
                         onMouseOver={() => setHoveredPin(pin.name)}
                         onMouseOut={() => setHoveredPin(null)}
+                        onClick={() => setSelectedPin(pin)}
                         icon={isLoaded ? {
                           url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
                             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-                              <circle cx="14" cy="14" r="${hoveredPin === pin.name ? 11 : 8}" fill="${hoveredPin === pin.name ? '#e08518' : '#f8981d'}" stroke="white" stroke-width="2.5"/>
+                              <circle cx="14" cy="14" r="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? 11 : 8}" fill="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? '#e08518' : '#f8981d'}" stroke="white" stroke-width="2.5"/>
                             </svg>`
                           )}`,
                           scaledSize: new window.google.maps.Size(28, 28),
@@ -1059,6 +1095,26 @@ const Hub: React.FC = () => {
                         } : undefined}
                       />
                     ))}
+
+                    {selectedPin && (
+                      <InfoWindowF
+                        position={{ lat: selectedPin.lat, lng: selectedPin.lng }}
+                        onCloseClick={() => setSelectedPin(null)}
+                        options={{ pixelOffset: new window.google.maps.Size(0, -22), disableAutoPan: true }}
+                      >
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '5px',
+                          background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(8px)',
+                          color: '#f1f5f9', fontSize: '12px', fontWeight: 700,
+                          fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
+                          padding: '5px 10px', borderRadius: '20px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                        }}>
+                          <span style={{ color: '#f8981d', fontSize: '13px' }}>📍</span>
+                          {selectedPin.name}
+                        </div>
+                      </InfoWindowF>
+                    )}
                   </GoogleMap>
                 )}
               </div>

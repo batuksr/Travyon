@@ -1,88 +1,32 @@
-import React, { useRef, useMemo, Suspense } from 'react';
+import React, { useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
-const CITIES = [
-  { name: 'Istanbul',    lat: 41.0082,  lng: 28.9784  },
-  { name: 'Paris',       lat: 48.8566,  lng: 2.3522   },
-  { name: 'New York',    lat: 40.7128,  lng: -74.0060 },
-  { name: 'Tokyo',       lat: 35.6762,  lng: 139.6503 },
-  { name: 'London',      lat: 51.5074,  lng: -0.1278  },
-  { name: 'Dubai',       lat: 25.2048,  lng: 55.2708  },
-  { name: 'Rome',        lat: 41.9028,  lng: 12.4964  },
-  { name: 'Barcelona',   lat: 41.3851,  lng: 2.1734   },
-  { name: 'Sydney',      lat: -33.8688, lng: 151.2093 },
-  { name: 'Singapore',   lat: 1.3521,   lng: 103.8198 },
-  { name: 'Mexico City', lat: 19.4326,  lng: -99.1332 },
-  { name: 'Cairo',       lat: 30.0444,  lng: 31.2357  },
-];
-
-const CONNECTION_PAIRS = [
-  [0, 1],  // Istanbul → Paris
-  [1, 4],  // Paris → London
-  [1, 2],  // Paris → New York
-  [2, 10], // New York → Mexico City
-  [0, 5],  // Istanbul → Dubai
-  [5, 3],  // Dubai → Tokyo
-  [3, 9],  // Tokyo → Singapore
-  [8, 9],  // Sydney → Singapore
-  [11, 5], // Cairo → Dubai
-  [6, 7],  // Rome → Barcelona
-];
-
-const latLngToVector3 = (lat: number, lng: number, radius: number): THREE.Vector3 => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
-  return new THREE.Vector3(
-    -(radius * Math.sin(phi) * Math.cos(theta)),
-    radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.sin(theta)
-  );
-};
-
-const ArcLine: React.FC<{ start: THREE.Vector3; end: THREE.Vector3 }> = ({ start, end }) => {
-  const geometry = useMemo(() => {
-    const distance = start.distanceTo(end);
-    const mid = new THREE.Vector3()
-      .addVectors(start, end)
-      .multiplyScalar(0.5);
-    mid.normalize().multiplyScalar(2.5 + distance * 0.35);
-
-    const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-    const geo = new THREE.BufferGeometry();
-    geo.setFromPoints(curve.getPoints(48));
-    return geo;
-  }, [start, end]);
-
-  return (
-    // @ts-expect-error — three.js <line> not in R3F intrinsic types
-    <line geometry={geometry}>
-      <lineBasicMaterial color="#f8981d" transparent opacity={0.7} linewidth={1} />
-    </line>
-  );
-};
-
-// Texture'lı dünya küresi — useTexture suspend eder, Suspense ile sarılır
+/* ── Texture'lı dünya küresi — bump map ile kabartmalı ── */
 const EarthSphere: React.FC<{ radius: number }> = ({ radius }) => {
-  const earthTexture = useTexture(
-    'https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg'
-  );
+  const [earthTexture, bumpTexture] = useTexture([
+    'https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg',
+    'https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png',
+  ]);
+
   return (
     <mesh>
-      <sphereGeometry args={[radius, 64, 64]} />
+      <sphereGeometry args={[radius, 88, 88]} />
       <meshStandardMaterial
         map={earthTexture}
-        transparent
-        opacity={0.75}
-        emissive="#187fe7"
-        emissiveIntensity={0.08}
+        bumpMap={bumpTexture}
+        bumpScale={0.65}
+        roughness={0.8}
+        metalness={0.05}
+        emissive="#1a5fa8"
+        emissiveIntensity={0.20}
       />
     </mesh>
   );
 };
 
-// Texture yüklenene kadar gösterilecek sade küre
+/* ── Texture yüklenene kadar fallback ── */
 const FallbackSphere: React.FC<{ radius: number }> = ({ radius }) => (
   <mesh>
     <sphereGeometry args={[radius, 32, 32]} />
@@ -90,49 +34,27 @@ const FallbackSphere: React.FC<{ radius: number }> = ({ radius }) => (
   </mesh>
 );
 
-const DotGlobe: React.FC = () => {
+/* ── Dönen dünya grubu ── */
+const RotatingGlobe: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
   const radius = 2.5;
 
-  const cityPositions = useMemo(
-    () => CITIES.map((c) => latLngToVector3(c.lat, c.lng, radius)),
-    []
-  );
-
-  const connections = useMemo(
-    () => CONNECTION_PAIRS.map(([i, j]) => ({ start: cityPositions[i], end: cityPositions[j] })),
-    [cityPositions]
-  );
-
   useFrame(({ clock }) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = clock.getElapsedTime() * 0.08;
+      groupRef.current.rotation.y = clock.getElapsedTime() * 0.40;
     }
   });
 
   return (
-    <group ref={groupRef} position={[-0.001, 0.02, 0]}>
-      {/* Dünya haritası — yüklenene kadar mavi küre fallback */}
+    <group ref={groupRef}>
       <Suspense fallback={<FallbackSphere radius={radius} />}>
         <EarthSphere radius={radius} />
       </Suspense>
-
-      {/* Şehir noktaları */}
-      {cityPositions.map((pos, i) => (
-        <mesh key={i} position={pos}>
-          <sphereGeometry args={[0.035, 10, 10]} />
-          <meshBasicMaterial color="#f8981d" />
-        </mesh>
-      ))}
-
-      {/* Bağlantı yayları */}
-      {connections.map((conn, i) => (
-        <ArcLine key={i} start={conn.start} end={conn.end} />
-      ))}
     </group>
   );
 };
 
+/* ── Ana sahne ── */
 const GlobeAnimation: React.FC = () => {
   return (
     <Canvas
@@ -140,9 +62,13 @@ const GlobeAnimation: React.FC = () => {
       gl={{ antialias: true, alpha: true }}
       style={{ background: 'transparent' }}
     >
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 3, 5]} intensity={0.5} />
-      <DotGlobe />
+      {/* Düşük ambient — kontrastı artırır */}
+      <ambientLight intensity={1.1} />
+      {/* Ana güçlü ışık — karaların gölgesini oluşturur */}
+      <directionalLight position={[6, 4, 5]} intensity={1.8} />
+      {/* Arka dolgu ışığı — tamamen kararmayı önler */}
+      <directionalLight position={[-4, -2, -3]} intensity={0.6} />
+      <RotatingGlobe />
     </Canvas>
   );
 };

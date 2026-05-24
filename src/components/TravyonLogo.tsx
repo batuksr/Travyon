@@ -1,4 +1,5 @@
 import React from 'react';
+import { useThemeStore } from '../store/useThemeStore';
 
 /* ══════════════════════════════════════════════
    Travyon Animated Logo
@@ -22,13 +23,15 @@ interface TravyonLogoProps {
 const TravyonLogo: React.FC<TravyonLogoProps> = ({
   size = 40,
   showText = true,
-  dark = false,
+  dark: darkProp,
   className = '',
 }) => {
   /* Unique IDs so multiple logo instances don't clash */
   const uid = React.useId().replace(/:/g, '');
+  const { dark: darkStore } = useThemeStore();
+  const isDark = darkProp ?? darkStore;
 
-  const textColor = dark ? '#f8fafc' : '#0f172a';
+  const textColor = isDark ? '#f8fafc' : '#0f172a';
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>

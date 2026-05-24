@@ -45,6 +45,7 @@ const Sidebar: React.FC = () => {
         <TravyonLogo
           size={64}
           showText={expanded}
+          dark={dark}
         />
       </div>
 

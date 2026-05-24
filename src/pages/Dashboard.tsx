@@ -67,9 +67,13 @@ const Dashboard: React.FC = () => {
     document.addEventListener('mouseup', onUp);
   }, [leftWidthPct]);
 
+  // Sadece gerçekten farklı bir plan yüklenince gün 0'a sıfırla
+  // plan referansı değil, içeriği değişince (destination + gün sayısı)
+  const planKey = plan ? `${plan.destination}__${plan.dailyPlans.length}` : null;
   useEffect(() => {
     setActiveDayIndex(0);
-  }, [plan]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planKey]);
 
   /* ── Browser back button → intercept ── */
   useEffect(() => {

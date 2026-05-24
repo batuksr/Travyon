@@ -79,6 +79,28 @@ html.dark .hover\:bg-slate-100:hover { background-color: #334155 !important; }
 html.dark ::-webkit-scrollbar-track  { background: #1e293b; }
 html.dark ::-webkit-scrollbar-thumb  { background: #475569; }
 
+/* ── Google Maps InfoWindow — kutu ve ok kaldırıldı ── */
+.gm-style .gm-style-iw-c {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.gm-style .gm-style-iw-d {
+  overflow: visible !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+/* Alt ok / üçgen kaldır */
+.gm-style .gm-style-iw-t::after,
+.gm-style .gm-style-iw-tc {
+  display: none !important;
+}
+/* Kapat butonu kaldır */
+.gm-style .gm-ui-hover-effect {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;

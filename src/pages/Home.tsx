@@ -144,15 +144,16 @@ const Home: React.FC = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
   const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
-  const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3
+  const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       if (y < 40)       setScrollStage(0);
-      else if (y < 100) setScrollStage(1);
-      else if (y < 200) setScrollStage(2);
-      else              setScrollStage(3);
+      else if (y < 90)  setScrollStage(1);
+      else if (y < 160) setScrollStage(2);
+      else if (y < 260) setScrollStage(3);
+      else              setScrollStage(4);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -191,20 +192,22 @@ const Home: React.FC = () => {
           NAVBAR — Floating Island
          ══════════════════════════════════════════ */}
       <div className={`fixed inset-x-0 z-50 flex justify-center transition-all duration-500 ease-out
-        ${scrollStage === 0 ? 'top-3' : scrollStage === 1 ? 'top-2' : scrollStage === 2 ? 'top-2' : 'top-1'}`}>
+        ${scrollStage === 0 ? 'top-3' : scrollStage <= 2 ? 'top-2' : 'top-1'}`}>
         <nav className={`flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 transition-all duration-500 ease-out
           ${scrollStage === 0
             ? 'w-[97%] max-w-[1300px] px-6 h-[72px] rounded-2xl'
             : scrollStage === 1
-            ? 'w-[91%] max-w-[1150px] px-5 h-[60px] rounded-xl'
+            ? 'w-[94%] max-w-[1230px] px-6 h-[64px] rounded-2xl'
             : scrollStage === 2
-            ? 'w-[83%] max-w-[1000px] px-5 h-[50px] rounded-xl'
-            : 'w-[73%] max-w-[850px] px-4 h-[42px] rounded-lg'
+            ? 'w-[88%] max-w-[1100px] px-5 h-[56px] rounded-xl'
+            : scrollStage === 3
+            ? 'w-[80%] max-w-[980px] px-5 h-[48px] rounded-xl'
+            : 'w-[72%] max-w-[850px] px-4 h-[42px] rounded-lg'
           }`}>
 
           {/* Logo */}
           <TravyonLogo
-            size={scrollStage === 0 ? 56 : scrollStage === 1 ? 46 : scrollStage === 2 ? 38 : 30}
+            size={scrollStage === 0 ? 56 : scrollStage === 1 ? 50 : scrollStage === 2 ? 44 : scrollStage === 3 ? 37 : 30}
           />
 
           {/* Auth butonları */}
@@ -215,7 +218,7 @@ const Home: React.FC = () => {
               type="button"
               onClick={toggleTheme}
               className={`relative flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95
-                ${scrollStage === 0 ? 'w-9 h-9' : 'w-8 h-8'}
+                ${scrollStage === 0 ? 'w-9 h-9' : scrollStage <= 2 ? 'w-8 h-8' : 'w-7 h-7'}
                 ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
               aria-label="Tema değiştir"
             >
@@ -228,7 +231,7 @@ const Home: React.FC = () => {
               type="button"
               onClick={() => navigate('/login')}
               className={`text-slate-600 hover:text-slate-900 font-semibold transition-all duration-500
-                ${scrollStage === 0 ? 'text-sm px-4 py-2' : scrollStage <= 2 ? 'text-xs px-3 py-1.5' : 'text-[11px] px-2.5 py-1'}`}
+                ${scrollStage === 0 ? 'text-sm px-4 py-2' : scrollStage <= 1 ? 'text-sm px-4 py-1.5' : scrollStage <= 3 ? 'text-xs px-3 py-1.5' : 'text-[11px] px-2.5 py-1'}`}
             >
               Giriş Yap
             </button>
@@ -236,10 +239,10 @@ const Home: React.FC = () => {
               type="button"
               onClick={() => navigate('/register')}
               className={`inline-flex items-center gap-1.5 font-bold text-white bg-[#f8981d] hover:bg-[#e08518] rounded-xl transition-all duration-500 shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px
-                ${scrollStage === 0 ? 'text-sm px-5 py-2' : scrollStage <= 2 ? 'text-xs px-4 py-1.5' : 'text-[11px] px-3 py-1'}`}
+                ${scrollStage === 0 ? 'text-sm px-5 py-2' : scrollStage <= 1 ? 'text-sm px-5 py-1.5' : scrollStage <= 3 ? 'text-xs px-4 py-1.5' : 'text-[11px] px-3 py-1'}`}
             >
               Ücretsiz Başla
-              <ArrowRight size={scrollStage === 0 ? 13 : 11} />
+              <ArrowRight size={scrollStage <= 1 ? 13 : 11} />
             </button>
           </div>
         </nav>
