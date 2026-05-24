@@ -1,24 +1,29 @@
-import React, { useState } from 'react';
+﻿import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
 import {
-  Home, Sparkles, Bookmark, LogOut, ChevronRight, Settings,
+  Home, Sparkles, Bookmark, LogOut, ChevronRight, Settings, Sun, Moon, Users, Bell,
 } from 'lucide-react';
 import TravyonLogo from './TravyonLogo';
+import { useThemeStore } from '../store/useThemeStore';
+import { useSidebarStore } from '../store/useSidebarStore';
 
 const mainNavItems = [
   { icon: Home,     label: 'Ana Sayfa',   path: '/hub' },
   { icon: Sparkles, label: 'Plan Oluştur', path: '/onboarding' },
   { icon: Bookmark, label: 'Planlarım',   path: '/saved-plans' },
+  { icon: Users,    label: 'Topluluk',     path: '/community' },
+  { icon: Bell,     label: 'Bildirimler',  path: '/notifications' },
 ];
 
 const Sidebar: React.FC = () => {
-  const [expanded, setExpanded] = useState(false);
+  const { expanded, setExpanded } = useSidebarStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
+  const { dark, toggle: toggleTheme } = useThemeStore();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -30,7 +35,7 @@ const Sidebar: React.FC = () => {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       className={`fixed left-0 top-0 bottom-0 z-50
-                 bg-white border-r border-slate-200
+                 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
                  flex flex-col transition-all duration-300 ease-out
                  ${expanded ? 'w-60' : 'w-[84px]'}`}
     >
@@ -101,6 +106,25 @@ const Sidebar: React.FC = () => {
 
       {/* KULLANICI + ALT BUTONLAR */}
       <div className="border-t border-slate-100 px-2 py-3 space-y-1 shrink-0">
+
+        {/* Dark mode toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all
+            ${dark
+              ? 'bg-slate-800 text-yellow-300 hover:bg-slate-700'
+              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          aria-label="Tema değiştir"
+        >
+          <span key={dark ? 'sun' : 'moon'} className="theme-icon-in shrink-0">
+            {dark ? <Sun size={16} /> : <Moon size={16} />}
+          </span>
+          <span className={`text-xs font-semibold whitespace-nowrap transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
+            {dark ? 'Aydınlık Mod' : 'Gece Modu'}
+          </span>
+        </button>
 
         {/* Kullanıcı avatarı */}
         {user && (

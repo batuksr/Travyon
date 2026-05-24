@@ -8,17 +8,12 @@ import { CITIES } from '../data/cities';
 import { Plane, MapPin, Wind, LayoutGrid, Wallet, Globe, Trophy,
          Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
          Clock, CheckCheck, FileText, Users, Loader2,
-         Bell, BellRing, X as XIcon } from 'lucide-react';
-import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
+         X as XIcon } from 'lucide-react';
 import { relativeTime } from '../utils/timeUtils';
 import {
-  getPublicFeed, getMySharedPlanIds, getFollowingList,
-  shareplan, unshareplan, ratePlan, getUserRatings,
-  followUser, unfollowUser,
-  type PublicPlan,
+  getMySharedPlanIds,
+  shareplan, unshareplan,
 } from '../services/socialService';
-import { PublicPlanCard } from '../components/PublicPlanCard';
-import SharedPlanModal from '../components/SharedPlanModal';
 import { AiAssistantWidget } from '../components/AiAssistantWidget';
 
 const LIBRARIES: ('places')[] = ['places'];
@@ -154,55 +149,22 @@ const Hub: React.FC = () => {
   const [mapInstance, setMapInstance]       = useState<google.maps.Map | null>(null);
   const [hoveredPin, setHoveredPin]         = useState<string | null>(null);
 
-  /* ── Social state ── */
-  const [publicFeed, setPublicFeed]       = useState<PublicPlan[]>([]);
-  const [feedLoading, setFeedLoading]     = useState(false);
-  const [feedError, setFeedError]         = useState(false);
-  const [shareError, setShareError]       = useState<string | null>(null);
-  const [feedTab, setFeedTab]             = useState<'all' | 'following'>('all');
-  const [followingSet, setFollowingSet]   = useState<Set<string>>(new Set());
+  /* ── Social state (paylaş butonu için) ── */
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
-  const [userRatings, setUserRatings]     = useState<Record<string, number>>({});
-  const [savingShare, setSavingShare]         = useState<string | null>(null);
-  const [savingRating, setSavingRating]       = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan]       = useState<PublicPlan | null>(null);
-
-  /* ── Notification state ── */
-  const [dismissedNotifs, setDismissedNotifs] = useState<Set<string>>(new Set());
-  const [showNotifs, setShowNotifs]           = useState(true);
+  const [savingShare, setSavingShare]     = useState<string | null>(null);
+  const [shareError, setShareError]       = useState<string | null>(null);
 
   /* Timeout yardımcısı */
   const withTimeout = <T,>(p: Promise<T>, ms = 5000): Promise<T> =>
     Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
-  /* Load social data — max 5 sn bekle */
+  /* Shared plan IDs yükle */
   useEffect(() => {
     if (!user) return;
-    setFeedLoading(true);
-    setFeedError(false);
-    withTimeout(
-      Promise.all([
-        getPublicFeed(12),
-        getFollowingList(user.uid),
-        getMySharedPlanIds(user.uid),
-      ]),
-      5000,
-    )
-    .then(async ([feed, following, shared]) => {
-      setPublicFeed(feed);
-      setFollowingSet(new Set(following));
-      setSharedPlanIds(shared);
-      const planIds = feed.map(p => p.id);
-      if (planIds.length) {
-        getUserRatings(user.uid, planIds).then(setUserRatings).catch(() => {});
-      }
-    })
-    .catch(() => setFeedError(true))
-    .finally(() => setFeedLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    getMySharedPlanIds(user.uid).then(s => setSharedPlanIds(s)).catch(() => {});
   }, [user]);
 
-  /* Social handlers */
+  /* Paylaş / geri al */
   const handleShare = useCallback(async (planId: string) => {
     if (!user) return;
     setSavingShare(planId);
@@ -211,7 +173,6 @@ const Hub: React.FC = () => {
       if (sharedPlanIds.has(planId)) {
         await withTimeout(unshareplan(planId));
         setSharedPlanIds(prev => { const n = new Set(prev); n.delete(planId); return n; });
-        setPublicFeed(prev => prev.filter(p => p.id !== planId));
       } else {
         const savedPlan = plans.find(p => p.id === planId);
         if (!savedPlan) return;
@@ -221,63 +182,23 @@ const Hub: React.FC = () => {
           })
         );
         setSharedPlanIds(prev => new Set([...prev, planId]));
-        setPublicFeed(prev => [{
-          id: planId,
-          userId:          user.uid,
-          userDisplayName: user.displayName ?? 'Gezgin',
-          userPhotoURL:    user.photoURL ?? null,
-          destination:     savedPlan.plan.destination,
-          dailyPlanCount:  savedPlan.plan.dailyPlans.length,
-          budget:          savedPlan.onboardingData.budget,
-          currencySymbol:  savedPlan.onboardingData.currencySymbol ?? '₺',
-          tripPurpose:     savedPlan.onboardingData.tripPurpose ?? '',
-          createdAt: Date.now(), avgRating: 0, ratingCount: 0,
-        }, ...prev]);
       }
-    } catch (err) {
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'Bağlantı zaman aşımı — Firebase kurallarını kontrol et'
-        : 'Paylaşım başarısız';
-      setShareError(msg);
-      setTimeout(() => setShareError(null), 4000);
+    } catch {
+      setShareError('Paylaşım başarısız');
+      setTimeout(() => setShareError(null), 3000);
     } finally {
       setSavingShare(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, sharedPlanIds, plans]);
 
-  const handleRate = useCallback(async (planId: string, rating: number) => {
-    if (!user) return;
-    setSavingRating(planId);
-    try {
-      const { newAvg, newCount } = await ratePlan(planId, user.uid, rating);
-      setUserRatings(prev => ({ ...prev, [planId]: rating }));
-      setPublicFeed(prev => prev.map(p =>
-        p.id === planId ? { ...p, avgRating: newAvg, ratingCount: newCount } : p
-      ));
-    } catch { /* hata */ }
-    finally { setSavingRating(null); }
-  }, [user]);
-
-  const handleToggleFollow = useCallback(async (targetUid: string) => {
-    if (!user) return;
-    try {
-      if (followingSet.has(targetUid)) {
-        await unfollowUser(user.uid, targetUid);
-        setFollowingSet(prev => { const n = new Set(prev); n.delete(targetUid); return n; });
-      } else {
-        await followUser(user.uid, targetUid);
-        setFollowingSet(prev => new Set([...prev, targetUid]));
-      }
-    } catch { /* hata */ }
-  }, [user, followingSet]);
-
   /* ── Quick Actions state ── */
   type RandState = 'idle' | 'spinning' | 'revealed';
   const [randState, setRandState]     = useState<RandState>('idle');
   const [randCity, setRandCity]       = useState<{ city: string; country: string } | null>(null);
   const [displayCity, setDisplayCity] = useState('');
-  const [showVibe, setShowVibe]       = useState(false);
+  const [showVibe, setShowVibe]           = useState(false);
+  const [activitiesShowAll, setActivitiesShowAll] = useState(false);
   const spinRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => { if (spinRef.current) clearInterval(spinRef.current); }, []);
@@ -605,33 +526,11 @@ const Hub: React.FC = () => {
 
   const maxCount = stats.topCountries[0]?.[1] ?? 1;
 
-  /* ── Displayed feed (tab filter) ── */
-  const displayedFeed = useMemo(() =>
-    feedTab === 'all'
-      ? publicFeed.filter(p => p.userId !== user?.uid)
-      : publicFeed.filter(p => followingSet.has(p.userId)),
-  [publicFeed, feedTab, followingSet, user?.uid]);
-
-  /* ── Notifications ── */
-  const allNotifications = useMemo(() =>
-    buildNotifications(plans, weather, todayStr, cityName),
-  [plans, weather, todayStr, cityName]);
-
-  const notifications: AppNotification[] = useMemo(() =>
-    allNotifications.filter(n => !dismissedNotifs.has(n.id)),
-  [allNotifications, dismissedNotifs]);
-
-  const dismissNotif = useCallback((id: string) =>
-    setDismissedNotifs(prev => new Set([...prev, id])),
-  []);
-
-  const urgentCount = notifications.filter(n => n.level === 'urgent').length;
-  const notifBadge  = notifications.length;
 
   return (
     <>
-    <div className="min-h-screen bg-[#fafaf9]">
-      <div className="max-w-[1280px] mx-auto px-8 py-10">
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-slate-900">
+      <div className="max-w-[1280px] mx-auto px-8 py-10 pl-12">
 
         {/* ── Greeting ── */}
         <div className="mb-8">
@@ -648,60 +547,7 @@ const Hub: React.FC = () => {
               </div>
             </div>
 
-            {/* ── Bell button ── */}
-            {notifBadge > 0 && (
-              <button
-                onClick={() => setShowNotifs(v => !v)}
-                className="relative flex-shrink-0 mt-1 w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
-                aria-label="Bildirimler"
-              >
-                {urgentCount > 0
-                  ? <BellRing size={18} className="text-red-500" />
-                  : <Bell     size={18} className="text-slate-600" />
-                }
-                <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[10px] font-black text-white flex items-center justify-center px-1 ${
-                  urgentCount > 0 ? 'bg-red-500' : 'bg-[#f8981d]'
-                }`}>
-                  {notifBadge}
-                </span>
-              </button>
-            )}
           </div>
-
-          {/* ── Notification cards ── */}
-          {notifBadge > 0 && showNotifs && (
-            <div className="mt-5 flex flex-col gap-2">
-              {notifications.map(n => {
-                const styles = n.level === 'urgent'
-                  ? { wrap: 'bg-red-50 border-red-200',    bar: 'bg-red-500',    title: 'text-red-800',   body: 'text-red-600',   dismiss: 'text-red-300 hover:text-red-500'  }
-                  : n.level === 'warning'
-                  ? { wrap: 'bg-amber-50 border-amber-200', bar: 'bg-amber-400',  title: 'text-amber-900', body: 'text-amber-700', dismiss: 'text-amber-300 hover:text-amber-500' }
-                  : { wrap: 'bg-blue-50 border-blue-200',   bar: 'bg-blue-400',   title: 'text-blue-800',  body: 'text-blue-600',  dismiss: 'text-blue-300 hover:text-blue-500'  };
-
-                return (
-                  <div key={n.id} className={`flex items-start gap-3 rounded-xl border pl-0 pr-3 py-3 overflow-hidden ${styles.wrap}`}>
-                    {/* Level bar */}
-                    <div className={`w-1 self-stretch rounded-r-full flex-shrink-0 ${styles.bar}`} />
-                    {/* Icon */}
-                    <span className="text-lg leading-none flex-shrink-0 mt-0.5">{n.icon}</span>
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold leading-tight ${styles.title}`}>{n.title}</p>
-                      <p className={`text-[11px] mt-0.5 leading-relaxed ${styles.body}`}>{n.body}</p>
-                    </div>
-                    {/* Dismiss */}
-                    <button
-                      onClick={() => dismissNotif(n.id)}
-                      className={`flex-shrink-0 mt-0.5 transition-colors ${styles.dismiss}`}
-                      aria-label="Kapat"
-                    >
-                      <XIcon size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* ── Next Trip + Weather ── */}
@@ -931,120 +777,6 @@ const Hub: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Topluluk Akışı ── */}
-        <div className="mb-8">
-          {/* Header + tabs */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Users size={12} /> Topluluk
-            </p>
-
-            {/* Tabs */}
-            <div className="flex bg-slate-100 rounded-xl p-0.5 gap-0.5">
-              {(['all', 'following'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setFeedTab(tab)}
-                  className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
-                    feedTab === tab ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  {tab === 'all' ? 'Herkes' : (
-                    <span className="flex items-center gap-1">
-                      Takip Ettiklerim
-                      {followingSet.size > 0 && (
-                        <span className="bg-blue-500 text-white text-[9px] font-black px-1 rounded-full">
-                          {followingSet.size}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Feed content */}
-          {feedLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse">
-                  <div className="flex gap-3">
-                    <div className="w-9 h-9 rounded-full bg-slate-100 flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-28 bg-slate-100 rounded" />
-                      <div className="h-3 w-44 bg-slate-100 rounded" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : feedError ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3">
-              <span className="text-xl mt-0.5">⚠️</span>
-              <div>
-                <p className="text-sm font-bold text-red-700">Topluluk verisi yüklenemedi</p>
-                <p className="text-xs text-red-500 mt-0.5 leading-relaxed">
-                  Firebase Firestore kuralları okumayı engelliyor olabilir.
-                  Console'dan <span className="font-bold">test modunu</span> veya izin kurallarını kontrol et.
-                </p>
-                <button
-                  onClick={() => { setFeedError(false); setFeedLoading(true);
-                    withTimeout(Promise.all([getPublicFeed(12), getFollowingList(user!.uid), getMySharedPlanIds(user!.uid)]))
-                      .then(([f, fl, s]) => { setPublicFeed(f); setFollowingSet(new Set(fl)); setSharedPlanIds(s); })
-                      .catch(() => setFeedError(true))
-                      .finally(() => setFeedLoading(false));
-                  }}
-                  className="mt-2 text-xs font-bold text-red-600 hover:text-red-800 transition-colors"
-                >
-                  Tekrar dene →
-                </button>
-              </div>
-            </div>
-          ) : displayedFeed.length > 0 ? (
-            <div className="space-y-3">
-              {displayedFeed.map(plan => (
-                <PublicPlanCard
-                  key={plan.id}
-                  plan={plan}
-                  currentUserId={user?.uid}
-                  isFollowing={followingSet.has(plan.userId)}
-                  userRating={userRatings[plan.id]}
-                  isSavingRating={savingRating === plan.id}
-                  onRate={handleRate}
-                  onToggleFollow={handleToggleFollow}
-                  onOpen={setSelectedPlan}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center">
-              {feedTab === 'following' ? (
-                <>
-                  <p className="text-2xl mb-2">👥</p>
-                  <p className="text-sm font-bold text-slate-700">Henüz kimseyi takip etmiyorsun</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    "Herkes" sekmesinde gezginleri keşfet ve takip et
-                  </p>
-                  <button
-                    onClick={() => setFeedTab('all')}
-                    className="mt-3 text-xs font-bold text-blue-500 hover:text-blue-700 transition-colors"
-                  >
-                    Herkese bak →
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl mb-2">🌍</p>
-                  <p className="text-sm font-bold text-slate-700">Henüz paylaşılan plan yok</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Aktivite akışındaki planlarını topluluğa paylaş
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </div>
 
         {/* ── İstatistikler ── */}
         {plans.length > 0 && (
@@ -1159,7 +891,7 @@ const Hub: React.FC = () => {
                   <div className="absolute left-[43px] top-5 bottom-5 w-px bg-slate-100 pointer-events-none" />
 
                   <div className="divide-y divide-slate-50">
-                    {activities.map((item) => {
+                    {(activitiesShowAll ? activities : activities.slice(0, 2)).map((item) => {
                       const isActive    = item.type === 'active';
                       const isUpcoming  = item.type === 'upcoming';
                       const isCompleted = item.type === 'completed';
@@ -1255,6 +987,20 @@ const Hub: React.FC = () => {
                       );
                     })}
                   </div>
+
+                  {/* Daha Fazla / Daha Az butonu */}
+                  {activities.length > 2 && (
+                    <button
+                      onClick={() => setActivitiesShowAll(v => !v)}
+                      className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                    >
+                      {activitiesShowAll ? (
+                        <>Daha Az Göster <ChevronRight size={13} className="rotate-[-90deg]" /></>
+                      ) : (
+                        <>Daha Fazla Göster ({activities.length - 2} plan daha) <ChevronRight size={13} className="rotate-90" /></>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1262,68 +1008,22 @@ const Hub: React.FC = () => {
             {/* ── Dünya Haritası ── */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
-              {/* Harita başlık + gamification */}
-              <div className="px-6 pt-5 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 bg-[#f8981d]/15 rounded-md flex items-center justify-center">
-                      <Globe size={11} className="text-[#f8981d]" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dünya Haritam</span>
+              {/* Harita başlık */}
+              <div className="px-6 pt-5 pb-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 bg-[#f8981d]/15 rounded-md flex items-center justify-center">
+                    <Globe size={11} className="text-[#f8981d]" />
                   </div>
-                  <p className="text-lg font-black text-slate-900">
-                    Şu ana kadar{' '}
-                    <span className="text-[#f8981d]">{stats.uniqueCities} şehir</span>{' '}
-                    keşfettin!
-                  </p>
-                  <p className="text-slate-400 text-xs mt-0.5">
-                    {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
-                  </p>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dünya Haritam</span>
                 </div>
-
-                {/* Level badge */}
-                <div className={`flex-shrink-0 flex flex-col items-center gap-2 px-5 py-3 rounded-2xl border ${currentLevel.bg} ${currentLevel.border}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl leading-none">{currentLevel.icon}</span>
-                    <div>
-                      <p className={`text-sm font-black leading-none ${currentLevel.color}`}>{currentLevel.label}</p>
-                      {nextLevel && (
-                        <p className="text-slate-400 text-[10px] mt-0.5">
-                          Sonraki: {nextLevel.label} {nextLevel.icon} ({nextLevel.minCities - stats.uniqueCities} şehir)
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {nextLevel && (
-                    <div className="w-full h-1.5 bg-white/60 rounded-full overflow-hidden">
-                      <div className="h-full bg-current rounded-full transition-all duration-700"
-                        style={{ width: `${progress}%`, color: 'inherit', backgroundColor: 'currentColor' }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Level yolu */}
-              <div className="px-6 pb-4 flex items-center gap-1 overflow-x-auto scrollbar-none">
-                {LEVELS.map((lvl, i) => {
-                  const reached = stats.uniqueCities >= lvl.minCities;
-                  return (
-                    <React.Fragment key={lvl.label}>
-                      <div title={`${lvl.label} (${lvl.minCities}+ şehir)`}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all whitespace-nowrap flex-shrink-0 border
-                          ${reached
-                            ? `${lvl.bg} ${lvl.border} ${lvl.color}`
-                            : 'bg-slate-50 border-slate-100 text-slate-300'}`}>
-                        <span>{lvl.icon}</span>
-                        <span className="hidden sm:inline">{lvl.label}</span>
-                      </div>
-                      {i < LEVELS.length - 1 && (
-                        <div className={`h-px w-4 flex-shrink-0 ${stats.uniqueCities >= LEVELS[i + 1].minCities ? 'bg-[#f8981d]/40' : 'bg-slate-200'}`} />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                <p className="text-lg font-black text-slate-900">
+                  Şu ana kadar{' '}
+                  <span className="text-[#f8981d]">{stats.uniqueCities} şehir</span>{' '}
+                  keşfettin!
+                </p>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
+                </p>
               </div>
 
               {/* Harita */}
@@ -1375,14 +1075,6 @@ const Hub: React.FC = () => {
 
       </div>
     </div>
-
-    {/* ── Shared Plan Modal ── */}
-    {selectedPlan && (
-      <SharedPlanModal
-        plan={selectedPlan}
-        onClose={() => setSelectedPlan(null)}
-      />
-    )}
 
     {/* ── AI Assistant Widget ── */}
     <AiAssistantWidget />

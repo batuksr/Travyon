@@ -16,6 +16,7 @@ export interface SavedPlan {
 interface SavedPlansState {
   plansByUser: Record<string, SavedPlan[]>;
   addPlan: (plan: TravelPlanResponse, onboardingData: OnboardingData) => string;
+  updatePlan: (id: string, plan: TravelPlanResponse, onboardingData: OnboardingData) => void;
   removePlan: (id: string) => void;
   toggleFavorite: (id: string) => void;
   renamePlan: (id: string, name: string) => void;
@@ -45,6 +46,18 @@ export const useSavedPlansStore = create<SavedPlansState>()(
           },
         }));
         return id;
+      },
+
+      updatePlan: (id, plan, onboardingData) => {
+        const uid = getUid();
+        set((state) => ({
+          plansByUser: {
+            ...state.plansByUser,
+            [uid]: (state.plansByUser[uid] ?? []).map((p) =>
+              p.id === id ? { ...p, plan, onboardingData } : p
+            ),
+          },
+        }));
       },
 
       removePlan: (id) => {

@@ -1,17 +1,174 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Map, Calendar, Wallet, Users, Trash2, Star,
+  Map as MapIcon, Calendar, Wallet, Users, Trash2, Star,
   StarOff, Pencil, Plus, Search,
   MapPin, ArrowRight, Sparkles,
 } from 'lucide-react';
 import { useSavedPlansStore, useUserPlans, type SavedPlan } from '../store/useSavedPlansStore';
 import { usePlanStore } from '../store/usePlanStore';
 
-const getCityImage = (cityName: string): string => {
-  const query = encodeURIComponent(cityName.split(',')[0].trim());
-  return `https://source.unsplash.com/800x600/?${query},city,travel`;
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
+
+// Modül seviyesi önbellek — bileşen yeniden render edilse bile istek tekrarlanmaz
+const photoCache = new Map<string, string>();
+
+const useCityPhoto = (destination: string): string => {
+  const city = destination.split(',')[0].trim();
+  const [url, setUrl] = useState<string>(photoCache.get(city) ?? FALLBACK_IMG);
+
+  useEffect(() => {
+    if (photoCache.has(city)) {
+      setUrl(photoCache.get(city)!);
+      return;
+    }
+    let cancelled = false;
+
+    const fetchPhoto = async () => {
+      try {
+        // generator=search ile hem arama hem resim tek istekte — "Roma" → "Rome" gibi redirect'leri otomatik çözer
+        const res = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(city)}&gsrlimit=5&prop=pageimages&pithumbsize=1000&format=json&origin=*`
+        );
+        const data = await res.json();
+        const pages: Record<string, { thumbnail?: { source: string } }> = data?.query?.pages ?? {};
+
+        // İlk resmi olan sayfayı al
+        const photo = Object.values(pages)
+          .map((p) => p?.thumbnail?.source)
+          .find(Boolean);
+
+        const finalPhoto = photo ?? FALLBACK_IMG;
+        if (!cancelled) { photoCache.set(city, finalPhoto); setUrl(finalPhoto); }
+      } catch {
+        if (!cancelled) setUrl(FALLBACK_IMG);
+      }
+    };
+
+    fetchPhoto();
+    return () => { cancelled = true; };
+  }, [city]);
+
+  return url;
+};
+
+interface PlanCardProps {
+  savedPlan: SavedPlan;
+  onOpen: (p: SavedPlan) => void;
+  onToggleFavorite: (id: string) => void;
+  onRename: (p: SavedPlan) => void;
+  onDelete: (id: string) => void;
+}
+
+const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite, onRename, onDelete }) => {
+  const coverPhoto = useCityPhoto(savedPlan.plan.destination);
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/60 transition-all"
+    >
+      {/* Görsel */}
+      <div
+        className="relative aspect-[16/10] bg-slate-100 cursor-pointer overflow-hidden"
+        onClick={() => onOpen(savedPlan)}
+      >
+        <img
+          src={coverPhoto}
+          alt={savedPlan.plan.destination}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+        {/* Favori butonu */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite(savedPlan.id); }}
+          className="absolute top-3 right-3 w-9 h-9 bg-white/95 backdrop-blur rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg"
+        >
+          {savedPlan.isFavorite
+            ? <Star size={15} className="fill-amber-400 text-amber-400" />
+            : <StarOff size={15} className="text-slate-400" />}
+        </button>
+
+        {/* Şehir adı */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <MapPin size={11} className="text-white/80" />
+            <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Destinasyon</span>
+          </div>
+          <h3 className="text-xl font-black text-white leading-tight truncate">
+            {savedPlan.customName || savedPlan.plan.destination}
+          </h3>
+        </div>
+      </div>
+
+      {/* Detaylar */}
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-3 text-xs text-slate-500">
+          <div className="flex items-center gap-1">
+            <Calendar size={11} className="text-[#f8981d]" />
+            <span className="font-semibold text-slate-700">{savedPlan.plan.dailyPlans.length}</span>
+            <span>gün</span>
+          </div>
+          <div className="w-px h-3 bg-slate-200" />
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-slate-700">
+              {savedPlan.plan.dailyPlans.reduce((s, d) => s + d.activities.length, 0)}
+            </span>
+            <span>aktivite</span>
+          </div>
+          <div className="w-px h-3 bg-slate-200" />
+          <div className="flex items-center gap-1">
+            <Users size={11} className="text-slate-400" />
+            <span className="font-semibold text-slate-700">{savedPlan.onboardingData.peopleCount}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div className="flex items-center gap-1.5">
+            <Wallet size={12} className="text-[#f8981d]" />
+            <span className="text-xs font-semibold text-slate-500">Toplam Bütçe</span>
+          </div>
+          <span className="text-sm font-black text-slate-900">
+            {savedPlan.plan.currencySymbol}{savedPlan.plan.totalEstimatedCost.toLocaleString()}
+          </span>
+        </div>
+
+        <p className="text-[10px] text-slate-400 mb-3">{formatDate(savedPlan.createdAt)} tarihinde oluşturuldu</p>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onOpen(savedPlan)}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-xs rounded-lg transition-all"
+          >
+            Aç <ArrowRight size={11} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onRename(savedPlan)}
+            className="w-9 h-8 border border-slate-200 rounded-lg hover:border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all"
+            title="Yeniden adlandır"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(savedPlan.id)}
+            className="w-9 h-8 border border-slate-200 rounded-lg hover:border-red-300 hover:bg-red-50 flex items-center justify-center text-slate-500 hover:text-red-600 transition-all"
+            title="Sil"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
 const formatDate = (timestamp: number): string => {
@@ -27,7 +184,7 @@ const SavedPlans: React.FC = () => {
   const navigate = useNavigate();
   const plans = useUserPlans();
   const { removePlan, toggleFavorite, renamePlan } = useSavedPlansStore();
-  const { setPlan } = usePlanStore();
+  const { setPlan, setSavedPlanId } = usePlanStore();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'favorites'>('all');
@@ -51,6 +208,7 @@ const SavedPlans: React.FC = () => {
 
   const handleOpenPlan = (savedPlan: SavedPlan) => {
     setPlan(savedPlan.plan);
+    setSavedPlanId(savedPlan.id);
     navigate('/dashboard');
   };
 
@@ -152,7 +310,7 @@ const SavedPlans: React.FC = () => {
         {plans.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto">
             <div className="w-20 h-20 bg-[#f8981d]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Map size={32} className="text-[#f8981d]" />
+              <MapIcon size={32} className="text-[#f8981d]" />
             </div>
             <h2 className="text-xl font-black text-slate-900 mb-2">
               Henüz Kayıtlı Plan Yok
@@ -180,138 +338,14 @@ const SavedPlans: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <AnimatePresence>
               {filteredPlans.map((savedPlan) => (
-                <motion.div
+                <PlanCard
                   key={savedPlan.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/60 transition-all"
-                >
-                  {/* Görsel */}
-                  <div
-                    className="relative aspect-[16/10] bg-slate-100 cursor-pointer overflow-hidden"
-                    onClick={() => handleOpenPlan(savedPlan)}
-                  >
-                    <img
-                      src={getCityImage(savedPlan.plan.destination)}
-                      alt={savedPlan.plan.destination}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-                    {/* Favori butonu */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(savedPlan.id);
-                      }}
-                      className="absolute top-3 right-3 w-9 h-9 bg-white/95 backdrop-blur rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg"
-                    >
-                      {savedPlan.isFavorite ? (
-                        <Star size={15} className="fill-amber-400 text-amber-400" />
-                      ) : (
-                        <StarOff size={15} className="text-slate-400" />
-                      )}
-                    </button>
-
-                    {/* Şehir adı */}
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <MapPin size={11} className="text-white/80" />
-                        <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">
-                          Destinasyon
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-black text-white leading-tight truncate">
-                        {savedPlan.customName || savedPlan.plan.destination}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Detaylar */}
-                  <div className="p-4">
-                    <div className="flex items-center gap-3 mb-3 text-xs text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={11} className="text-[#f8981d]" />
-                        <span className="font-semibold text-slate-700">
-                          {savedPlan.plan.dailyPlans.length}
-                        </span>
-                        <span>gün</span>
-                      </div>
-
-                      <div className="w-px h-3 bg-slate-200" />
-
-                      <div className="flex items-center gap-1">
-                        <span className="font-semibold text-slate-700">
-                          {savedPlan.plan.dailyPlans.reduce((s, d) => s + d.activities.length, 0)}
-                        </span>
-                        <span>aktivite</span>
-                      </div>
-
-                      <div className="w-px h-3 bg-slate-200" />
-
-                      <div className="flex items-center gap-1">
-                        <Users size={11} className="text-slate-400" />
-                        <span className="font-semibold text-slate-700">
-                          {savedPlan.onboardingData.peopleCount}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bütçe */}
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                      <div className="flex items-center gap-1.5">
-                        <Wallet size={12} className="text-[#f8981d]" />
-                        <span className="text-xs font-semibold text-slate-500">Toplam Bütçe</span>
-                      </div>
-                      <span className="text-sm font-black text-slate-900">
-                        {savedPlan.plan.currencySymbol}
-                        {savedPlan.plan.totalEstimatedCost.toLocaleString()}
-                      </span>
-                    </div>
-
-                    {/* Tarih */}
-                    <p className="text-[10px] text-slate-400 mb-3">
-                      {formatDate(savedPlan.createdAt)} tarihinde oluşturuldu
-                    </p>
-
-                    {/* Aksiyonlar */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenPlan(savedPlan)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-xs rounded-lg transition-all"
-                      >
-                        Aç
-                        <ArrowRight size={11} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => startRename(savedPlan)}
-                        className="w-9 h-8 border border-slate-200 rounded-lg hover:border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all"
-                        title="Yeniden adlandır"
-                      >
-                        <Pencil size={12} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirm(savedPlan.id)}
-                        className="w-9 h-8 border border-slate-200 rounded-lg hover:border-red-300 hover:bg-red-50 flex items-center justify-center text-slate-500 hover:text-red-600 transition-all"
-                        title="Sil"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
+                  savedPlan={savedPlan}
+                  onOpen={handleOpenPlan}
+                  onToggleFavorite={toggleFavorite}
+                  onRename={startRename}
+                  onDelete={setDeleteConfirm}
+                />
               ))}
             </AnimatePresence>
           </div>

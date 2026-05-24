@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
 import type { DailyActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 // Stable reference — prevents SDK reload on every render
 const LIBRARIES: ('places')[] = ['places'];
@@ -17,7 +18,30 @@ const containerStyle = {
   borderRadius: '1rem'
 };
 
-const mapOptions = {
+const darkMapStyles: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry',                                        stylers: [{ color: '#1a1f2e' }] },
+  { elementType: 'labels.text.fill',                               stylers: [{ color: '#8a9bb0' }] },
+  { elementType: 'labels.text.stroke',                             stylers: [{ color: '#1a1f2e' }] },
+  { elementType: 'labels.icon',                                    stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative',        elementType: 'geometry', stylers: [{ color: '#2d3a4a' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#9fb3c8' }] },
+  { featureType: 'poi',                   elementType: 'labels.text.fill', stylers: [{ color: '#6b7f96' }] },
+  { featureType: 'poi.park',              elementType: 'geometry',         stylers: [{ color: '#1a2e1f' }] },
+  { featureType: 'poi.park',              elementType: 'labels.text.fill', stylers: [{ color: '#3d6b4a' }] },
+  { featureType: 'road',                  elementType: 'geometry.fill',    stylers: [{ color: '#2d3a50' }] },
+  { featureType: 'road',                  elementType: 'geometry.stroke',  stylers: [{ color: '#1a2435' }] },
+  { featureType: 'road',                  elementType: 'labels.text.fill', stylers: [{ color: '#7a8fa8' }] },
+  { featureType: 'road.arterial',         elementType: 'geometry',         stylers: [{ color: '#38475e' }] },
+  { featureType: 'road.highway',          elementType: 'geometry',         stylers: [{ color: '#4a6080' }] },
+  { featureType: 'road.highway',          elementType: 'labels.text.fill', stylers: [{ color: '#a0b8d0' }] },
+  { featureType: 'road.highway.controlled_access', elementType: 'geometry', stylers: [{ color: '#3d5570' }] },
+  { featureType: 'transit',               elementType: 'geometry',         stylers: [{ color: '#2d3d50' }] },
+  { featureType: 'transit.station',       elementType: 'labels.text.fill', stylers: [{ color: '#6b8faa' }] },
+  { featureType: 'water',                 elementType: 'geometry',         stylers: [{ color: '#0d1b2a' }] },
+  { featureType: 'water',                 elementType: 'labels.text.fill', stylers: [{ color: '#3d6080' }] },
+];
+
+const baseMapOptions = {
   disableDefaultUI: true,
   zoomControl: true,
   mapTypeControl: false,
@@ -25,6 +49,8 @@ const mapOptions = {
 };
 
 const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
+  const { dark } = useThemeStore();
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
@@ -32,6 +58,13 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
   });
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  // Dark mod değişince harita stilini güncelle
+  useEffect(() => {
+    if (map) {
+      map.setOptions({ styles: dark ? darkMapStyles : [] });
+    }
+  }, [dark, map]);
 
   const onLoad = useCallback(function callback(map: google.maps.Map) {
     setMap(map);
@@ -78,7 +111,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
         mapContainerStyle={containerStyle}
         center={path[0] || { lat: 41.0082, lng: 28.9784 }}
         zoom={12}
-        options={mapOptions}
+        options={{ ...baseMapOptions, styles: dark ? darkMapStyles : [] }}
         onLoad={onLoad}
         onUnmount={onUnmount}
       >

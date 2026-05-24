@@ -50,8 +50,8 @@ const Login: React.FC = () => {
       {/* Sol Panel — Fotoğraf */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop"
-          alt="Travel"
+          src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=100&w=3840&auto=format&fit=crop"
+          alt="İstanbul Galata Kulesi"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/75" />
@@ -138,7 +138,7 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#187fe7] hover:bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-50 shadow-lg shadow-blue-500/20"
+              className="w-full py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-50 shadow-lg shadow-[#f8981d]/30"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
               {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}

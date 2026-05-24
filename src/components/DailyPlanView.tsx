@@ -119,7 +119,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                     <span className={`text-[10px] font-bold ${colors.text}`}>{index + 1}</span>
                   </div>
                   {!isLast && (
-                    <div className="w-px flex-1 min-h-[20px] bg-slate-200 mt-0.5" />
+                    <div className="w-px flex-1 min-h-[20px] bg-slate-200 dark:bg-slate-600 mt-0.5" />
                   )}
                 </div>
 
@@ -134,7 +134,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                         lng: activity.coordinates.lng,
                       })}
                     >
-                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-[#187fe7] transition-colors leading-tight">
+                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-[#f8981d] transition-colors leading-tight">
                         {activity.placeName}
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
@@ -196,7 +196,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       </div>
 
       {/* ── STİCKY VİBE BAR ── */}
-      <div className="sticky bottom-0 border-t border-slate-100 bg-white/95 backdrop-blur-sm px-5 py-2.5 flex items-center gap-2 shrink-0">
+      <div className="sticky bottom-0 border-t border-slate-100 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-5 py-2.5 flex items-center gap-2 shrink-0">
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Vibe:</span>
         <div className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {(Object.keys(vibeConfig) as Array<keyof typeof vibeConfig>).map((key) => {
@@ -208,9 +208,9 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                 type="button"
                 onClick={() => handleVibeSelect(key as VibeType)}
                 disabled={isRegenerating}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-md border text-xs font-semibold transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isActive
-                    ? 'bg-[#187fe7] text-white border-[#187fe7]'
+                    ? 'bg-[#f8981d] text-white border-[#f8981d]'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >

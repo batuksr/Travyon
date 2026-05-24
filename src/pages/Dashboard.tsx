@@ -1,139 +1,191 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { useSavedPlansStore } from '../store/useSavedPlansStore';
 import { useNavigate } from 'react-router-dom';
 import {
-  Navigation,
   Bus,
   Users,
   Lightbulb,
   Map,
-  Plus,
-  AlertTriangle,
   ArrowLeft,
   X,
   Bookmark,
   BookmarkCheck,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useThemeStore } from '../store/useThemeStore';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 
 const Dashboard: React.FC = () => {
-  const { plan } = usePlanStore();
-  const { addPlan } = useSavedPlansStore();
+  const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
+  const { addPlan, updatePlan } = useSavedPlansStore();
   const { data: onboardingData } = useOnboardingStore();
   const navigate = useNavigate();
+  const { dark, toggle: toggleTheme } = useThemeStore();
 
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [guideOpen, setGuideOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
+  const [showExitModal, setShowExitModal]   = useState(false);
+  const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
+  const [justSaved, setJustSaved]           = useState(false);
+  const hasSaved = useRef(false);
   const [selectedPlace, setSelectedPlace] = useState<{
     placeName: string;
     lat: number;
     lng: number;
   } | null>(null);
 
+  /* ── Resize / collapse ── */
+  const [leftWidthPct, setLeftWidthPct] = useState(42);
+  const containerRef   = useRef<HTMLDivElement>(null);
+  const dragStartX     = useRef(0);
+  const dragStartWidth = useRef(42);
+
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragStartX.current     = e.clientX;
+    dragStartWidth.current = leftWidthPct;
+
+    const onMove = (ev: MouseEvent) => {
+      if (!containerRef.current) return;
+      const totalW = containerRef.current.offsetWidth;
+      const delta  = ev.clientX - dragStartX.current;
+      const newPct = Math.min(78, Math.max(22, dragStartWidth.current + (delta / totalW) * 100));
+      setLeftWidthPct(newPct);
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [leftWidthPct]);
+
   useEffect(() => {
     setActiveDayIndex(0);
   }, [plan]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const totalActivities = useMemo(
-    () => plan?.dailyPlans.reduce((s, d) => s + d.activities.length, 0) ?? 0,
-    [plan?.dailyPlans]
-  );
+  /* ── Browser back button → intercept ── */
+  useEffect(() => {
+    // Geçmişe ekstra bir entry koy — geri basılınca buraya döner
+    window.history.pushState(null, '', window.location.pathname);
+
+    const handlePopState = () => {
+      // Geri navigasyonu engelle, modal aç
+      window.history.pushState(null, '', window.location.pathname);
+      setPendingNavTarget('/saved-plans');
+      setShowExitModal(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+
 
   const activeDayActivities = useMemo(
     () => plan?.dailyPlans[activeDayIndex]?.activities ?? [],
     [plan?.dailyPlans, activeDayIndex]
   );
 
-  if (!plan) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 bg-[#187fe7]/10 rounded-lg flex items-center justify-center mx-auto mb-5">
-            <Navigation size={24} className="text-[#187fe7]" />
-          </div>
-          <h2 className="text-base font-bold text-slate-900 mb-2">Henüz Plan Yok</h2>
-          <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-            Yapay zeka ile saniyeler içinde kişisel seyahat planınızı oluşturun.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/onboarding')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#187fe7] hover:bg-[#156bc2] text-white font-semibold rounded-lg text-sm transition-all"
-          >
-            <Plus size={14} />
-            Plan Oluştur
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!plan) {
+      navigate('/hub', { replace: true });
+    }
+  }, [plan, navigate]);
 
-  const handleNewPlanClick = () => {
-    setShowConfirm(true);
-  };
+  if (!plan) return null;
 
-  const handleConfirmNewPlan = () => {
-    setShowConfirm(false);
-    navigate('/onboarding');
-  };
 
   const handleSavePlan = () => {
     if (!plan) return;
-    addPlan(plan, onboardingData);
+    if (savedPlanId) {
+      updatePlan(savedPlanId, plan, onboardingData);
+    } else {
+      const newId = addPlan(plan, onboardingData);
+      setSavedPlanId(newId);
+    }
+    hasSaved.current = true;
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2500);
+  };
+
+  /* Exit modal aksiyonları */
+  const handleSaveAndExit = () => {
+    handleSavePlan();
+    setShowExitModal(false);
+    navigate(pendingNavTarget ?? '/hub');
+  };
+
+  const handleExitWithoutSave = () => {
+    hasSaved.current = true; // blocker'ı geç
+    setShowExitModal(false);
+    navigate(pendingNavTarget ?? '/hub');
+  };
+
+  const handleBackClick = () => {
+    setPendingNavTarget('/saved-plans');
+    setShowExitModal(true);
   };
 
   const activeDay = plan.dailyPlans[activeDayIndex];
 
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
 
-      {/* ── ONAY MODALİ ── */}
-      {showConfirm && (
+
+      {/* ── ÇIKIŞ ONAY MODALİ ── */}
+      {showExitModal && (
         <div
-          className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowConfirm(false)}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowExitModal(false)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl p-5 max-w-sm w-full"
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-700"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center text-amber-500 shrink-0">
-                <AlertTriangle size={16} />
+            {/* İkon + başlık */}
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-14 h-14 bg-[#f8981d]/10 rounded-2xl flex items-center justify-center mb-4">
+                <Bookmark size={26} className="text-[#f8981d]" />
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm">Yeni Plan Oluştur?</h3>
-                <p className="text-slate-500 text-xs mt-0.5">Mevcut planın kaybolacak</p>
-              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Planı kaydetmek ister misiniz?
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                {plan?.destination} planınız kaydedilmedi. Çıkmadan önce kaydetmek ister misiniz?
+              </p>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              <strong>{plan.destination}</strong> planın silinecek ve yeni bir plan oluşturma sürecine geçilecek. Bu işlem geri alınamaz.
-            </p>
-            <div className="flex gap-2">
+
+            {/* Butonlar */}
+            <div className="flex flex-col gap-2.5">
               <button
                 type="button"
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-all"
+                onClick={handleSaveAndExit}
+                className="w-full py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#f8981d]/20"
               >
-                İptal
+                <BookmarkCheck size={15} />
+                Kaydet ve Çık
               </button>
               <button
                 type="button"
-                onClick={handleConfirmNewPlan}
-                className="flex-1 px-3 py-2 bg-[#187fe7] hover:bg-[#156bc2] text-white font-semibold rounded-lg text-xs transition-all"
+                onClick={handleExitWithoutSave}
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-sm transition-all"
               >
-                Evet, Devam Et
+                Kaydetmeden Çık
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowExitModal(false)}
+                className="w-full py-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-xs transition-colors"
+              >
+                Plana Geri Dön
               </button>
             </div>
           </div>
@@ -217,14 +269,14 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* ── ÜST BAR — ~56px ── */}
-      <div className="shrink-0 border-b border-slate-200 px-5 py-3 flex items-center justify-between bg-white">
+      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-800">
 
         {/* Sol: Geri + Şehir adı */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={() => navigate('/')}
-            className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors shrink-0"
+            onClick={handleBackClick}
+            className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
           >
             <ArrowLeft size={15} />
           </button>
@@ -241,17 +293,17 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Orta: Plan / Rehber sekmeleri */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
+        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg">
           <button
             type="button"
-            className="px-3 py-1 text-xs font-semibold bg-white rounded-md shadow-sm text-slate-900"
+            className="px-3 py-1 text-xs font-semibold bg-white dark:bg-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white"
           >
             Plan
           </button>
           <button
             type="button"
             onClick={() => setGuideOpen(true)}
-            className="px-3 py-1 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors rounded-md"
+            className="px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-md"
           >
             Rehber
           </button>
@@ -272,31 +324,38 @@ const Dashboard: React.FC = () => {
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
               justSaved
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                : 'bg-white dark:bg-slate-700 border border-[#f8981d]/40 text-[#f8981d] hover:bg-[#f8981d]/5 hover:border-[#f8981d]'
             }`}
           >
             {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
             {justSaved ? 'Kaydedildi' : 'Planı Kaydet'}
           </button>
+
+          {/* Gece / Aydınlık Mod Toggle */}
           <button
             type="button"
-            onClick={handleNewPlanClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs transition-all"
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-yellow-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shrink-0"
+            title={dark ? 'Aydınlık Mod' : 'Gece Modu'}
           >
-            <Plus size={12} />
-            Yeni Plan
+            <span key={dark ? 'sun' : 'moon'} className="theme-icon-in">
+              {dark ? <Sun size={14} /> : <Moon size={14} />}
+            </span>
           </button>
         </div>
       </div>
 
       {/* ── ANA İÇERİK ── */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div ref={containerRef} className="flex-1 flex overflow-hidden min-h-0">
 
         {/* SOL PANEL — Plan listesi */}
-        <div className="w-full lg:w-[45%] xl:w-[42%] flex flex-col border-r border-slate-200 bg-white">
+        <div
+          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-[width] duration-200"
+          style={{ width: `${leftWidthPct}%` }}
+        >
 
           {/* Gün sekmeleri */}
-          <div className="shrink-0 border-b border-slate-200 px-5 py-2.5 bg-slate-50/50">
+          <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-2.5 bg-slate-50/50 dark:bg-slate-800/50">
             <div
               role="tablist"
               aria-label="Günlük plan sekmeleri"
@@ -311,9 +370,9 @@ const Dashboard: React.FC = () => {
                   onClick={() => setActiveDayIndex(index)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all shrink-0 whitespace-nowrap ${
                     activeDayIndex === index
-                      ? 'bg-[#187fe7] text-white'
+                      ? 'bg-[#f8981d] text-white'
                       : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
+                  } dark:border-slate-600`}
                 >
                   <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
                     activeDayIndex === index
@@ -324,7 +383,7 @@ const Dashboard: React.FC = () => {
                   </span>
                   {day.date?.slice(5) ?? `Gün ${day.dayNumber}`}
                   <span className={`text-[10px] font-normal ${
-                    activeDayIndex === index ? 'text-blue-100' : 'text-slate-400'
+                    activeDayIndex === index ? 'text-orange-100' : 'text-slate-400'
                   }`}>
                     ({day.activities.length})
                   </span>
@@ -362,6 +421,12 @@ const Dashboard: React.FC = () => {
             {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} /> : null}
           </div>
         </div>
+
+        {/* ── RESIZE HANDLE ── */}
+        <div
+          className="hidden lg:flex w-[5px] relative cursor-col-resize flex-shrink-0 bg-slate-200 dark:bg-slate-700 hover:bg-[#f8981d]/40 transition-colors"
+          onMouseDown={handleResizeMouseDown}
+        />
 
         {/* SAĞ PANEL — Harita */}
         <div
