@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import {
   Home, Sparkles, Bookmark, LogOut, ChevronRight, Settings,
 } from 'lucide-react';
+import TravyonLogo from './TravyonLogo';
 
 const mainNavItems = [
   { icon: Home,     label: 'Ana Sayfa',   path: '/hub' },
@@ -31,18 +32,15 @@ const Sidebar: React.FC = () => {
       className={`fixed left-0 top-0 bottom-0 z-50
                  bg-white border-r border-slate-200
                  flex flex-col transition-all duration-300 ease-out
-                 ${expanded ? 'w-60' : 'w-16'}`}
+                 ${expanded ? 'w-60' : 'w-[84px]'}`}
     >
 
       {/* LOGO */}
-      <div className="h-16 flex items-center border-b border-slate-100 px-4 shrink-0">
-        <div className="w-8 h-8 bg-[#f8981d] rounded-lg flex items-center justify-center shrink-0">
-          <span className="text-white font-black text-sm">T</span>
-        </div>
-        <span className={`ml-3 font-bold text-slate-900 text-lg tracking-tight whitespace-nowrap transition-opacity duration-200
-                         ${expanded ? 'opacity-100' : 'opacity-0'}`}>
-          Travyon
-        </span>
+      <div className="h-16 flex items-center border-b border-slate-100 px-2 shrink-0 overflow-hidden">
+        <TravyonLogo
+          size={64}
+          showText={expanded}
+        />
       </div>
 
       {/* ANA NAVİGASYON */}

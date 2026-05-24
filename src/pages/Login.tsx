@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import TravyonLogo from '../components/TravyonLogo';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -55,11 +56,8 @@ const Login: React.FC = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/75" />
         <div className="relative z-10 flex flex-col h-full p-10">
-          <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#187fe7] rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-base">T</span>
-            </div>
-            <span className="text-white font-bold text-lg tracking-tight">Travyon</span>
+          <Link to="/">
+            <TravyonLogo size={64} dark />
           </Link>
           <div className="mt-auto">
             <blockquote className="text-white text-xl font-semibold leading-snug max-w-xs">
@@ -80,11 +78,8 @@ const Login: React.FC = () => {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-[#187fe7] rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-black text-base">T</span>
-              </div>
-              <span className="text-slate-900 font-bold text-lg tracking-tight">Travyon</span>
+            <Link to="/">
+              <TravyonLogo size={64} />
             </Link>
           </div>
 

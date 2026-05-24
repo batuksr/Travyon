@@ -7,6 +7,7 @@ import {
   Loader2, Plus, Minus, Plane, Search,
 } from 'lucide-react';
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
+import TravyonLogo from '../components/TravyonLogo';
 import { generateTravelPlan } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { searchCities, type CityOption } from '../data/cities';
@@ -242,12 +243,7 @@ const Onboarding: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-between p-10 w-full">
 
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#f8981d] rounded-xl flex items-center justify-center shadow-lg shadow-[#f8981d]/30">
-              <span className="text-white font-black text-lg">T</span>
-            </div>
-            <span className="text-white font-black text-lg tracking-tight">Travyon</span>
-          </div>
+          <TravyonLogo size={64} dark />
 
           {/* Adıma özel mesaj */}
           <motion.div key={currentStep} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -277,16 +273,6 @@ const Onboarding: React.FC = () => {
             </p>
           </motion.div>
 
-          {/* Progress çubukları */}
-          <div>
-            <div className="flex gap-2 mb-2">
-              {[1, 2, 3, 4].map((s) => (
-                <div key={s} className={`h-1 rounded-full transition-all duration-300
-                  ${currentStep >= s ? 'bg-[#f8981d] flex-[2]' : 'bg-white/20 flex-1'}`} />
-              ))}
-            </div>
-            <p className="text-white/40 text-xs">Adım {currentStep} / 4</p>
-          </div>
         </div>
       </div>
 
@@ -297,11 +283,8 @@ const Onboarding: React.FC = () => {
         <div className="shrink-0 px-8 lg:px-12 pt-7 pb-5 border-b border-slate-100">
 
           {/* Mobil logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-5">
-            <div className="w-7 h-7 bg-[#f8981d] rounded-lg flex items-center justify-center">
-              <span className="text-white font-black text-sm">T</span>
-            </div>
-            <span className="text-[#f8981d] font-black text-base tracking-tight">Travyon</span>
+          <div className="lg:hidden mb-5">
+            <TravyonLogo size={64} />
           </div>
 
           <div className="flex items-center max-w-2xl">

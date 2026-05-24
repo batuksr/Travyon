@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Wallet, ArrowRight, Calendar } from 'lucide-react';
 import GlobeAnimation from '../components/GlobeAnimation';
 import SamplePlanModal from '../components/SamplePlanModal';
+import TravyonLogo from '../components/TravyonLogo';
 
 const HERO_VIDEOS = [
   '/videos/334716.mp4',
@@ -192,15 +193,7 @@ const Home: React.FC = () => {
           ${scrollStage === 0 ? 'w-[92%] max-w-6xl px-6 py-3.5' : scrollStage === 1 ? 'w-[82%] max-w-5xl px-5 py-2.5' : 'w-[72%] max-w-4xl px-4 py-2'}`}>
 
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className={`bg-[#f8981d] rounded-xl flex items-center justify-center shadow-md shadow-[#f8981d]/30 transition-all duration-500
-              ${scrollStage === 0 ? 'w-8 h-8' : 'w-7 h-7'}`}>
-              <span className={`text-white font-black transition-all duration-500 ${scrollStage === 0 ? 'text-base' : 'text-sm'}`}>T</span>
-            </div>
-            <span className={`text-slate-900 font-black tracking-tight transition-all duration-500 ${scrollStage === 0 ? 'text-lg' : 'text-base'}`}>
-              Travyon
-            </span>
-          </div>
+          <TravyonLogo size={64} />
 
           {/* Auth butonları */}
           <div className="flex items-center gap-2">
