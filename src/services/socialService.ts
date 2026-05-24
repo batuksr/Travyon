@@ -1,0 +1,161 @@
+import { db } from './firebase';
+import {
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc,
+  query, orderBy, limit, where, serverTimestamp,
+  runTransaction, Timestamp,
+} from 'firebase/firestore';
+import type { TravelPlanResponse } from './aiService';
+import type { OnboardingData } from '../store/useOnboardingStore';
+
+/* ══════════════════════════════════════════════
+   Types
+═══════════════════════════════════════════════ */
+export interface PublicPlan {
+  id:              string;
+  userId:          string;
+  userDisplayName: string;
+  userPhotoURL:    string | null;
+  destination:     string;
+  dailyPlanCount:  number;
+  budget:          number;
+  currencySymbol:  string;
+  tripPurpose:     string;
+  createdAt:       number;   // ms timestamp
+  avgRating:       number;
+  ratingCount:     number;
+}
+
+/* ══════════════════════════════════════════════
+   Plan Sharing
+═══════════════════════════════════════════════ */
+export const shareplan = async (
+  planId: string,
+  plan: TravelPlanResponse,
+  onboardingData: OnboardingData,
+  user: { uid: string; displayName: string | null; photoURL: string | null },
+): Promise<void> => {
+  await setDoc(doc(db, 'publicPlans', planId), {
+    userId:          user.uid,
+    userDisplayName: user.displayName ?? 'Gezgin',
+    userPhotoURL:    user.photoURL ?? null,
+    destination:     plan.destination,
+    dailyPlanCount:  plan.dailyPlans.length,
+    budget:          onboardingData.budget,
+    currencySymbol:  onboardingData.currencySymbol ?? '₺',
+    tripPurpose:     onboardingData.tripPurpose ?? '',
+    createdAt:       serverTimestamp(),
+    avgRating:       0,
+    ratingCount:     0,
+    planData:        plan,   // full plan stored for detail view
+  });
+};
+
+export const getPublicPlanDetails = async (planId: string): Promise<TravelPlanResponse | null> => {
+  const snap = await getDoc(doc(db, 'publicPlans', planId));
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return (data?.planData as TravelPlanResponse) ?? null;
+};
+
+export const unshareplan = async (planId: string): Promise<void> => {
+  await deleteDoc(doc(db, 'publicPlans', planId));
+};
+
+export const getMySharedPlanIds = async (userId: string): Promise<Set<string>> => {
+  const q = query(collection(db, 'publicPlans'), where('userId', '==', userId));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map(d => d.id));
+};
+
+/* ══════════════════════════════════════════════
+   Public Feed
+═══════════════════════════════════════════════ */
+const toPublicPlan = (id: string, data: Record<string, unknown>): PublicPlan => ({
+  id,
+  userId:          data.userId          as string,
+  userDisplayName: data.userDisplayName as string,
+  userPhotoURL:    (data.userPhotoURL   as string | null) ?? null,
+  destination:     data.destination     as string,
+  dailyPlanCount:  (data.dailyPlanCount as number) ?? 0,
+  budget:          (data.budget         as number) ?? 0,
+  currencySymbol:  (data.currencySymbol as string) ?? '₺',
+  tripPurpose:     (data.tripPurpose    as string) ?? '',
+  createdAt:       data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+  avgRating:       (data.avgRating      as number) ?? 0,
+  ratingCount:     (data.ratingCount    as number) ?? 0,
+});
+
+export const getPublicFeed = async (limitCount = 10): Promise<PublicPlan[]> => {
+  const q = query(
+    collection(db, 'publicPlans'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => toPublicPlan(d.id, d.data() as Record<string, unknown>));
+};
+
+/* ══════════════════════════════════════════════
+   Community Ratings  (on shared plans)
+═══════════════════════════════════════════════ */
+export const ratePlan = async (
+  planId: string,
+  userId: string,
+  rating: number,
+): Promise<{ newAvg: number; newCount: number }> => {
+  const ratingRef = doc(db, 'planRatings', `${planId}_${userId}`);
+  const planRef   = doc(db, 'publicPlans', planId);
+
+  return runTransaction(db, async (tx) => {
+    const [existingSnap, planSnap] = await Promise.all([tx.get(ratingRef), tx.get(planRef)]);
+    if (!planSnap.exists()) throw new Error('Plan bulunamadı');
+
+    const curr  = planSnap.data() as { avgRating?: number; ratingCount?: number };
+    let count   = curr.ratingCount ?? 0;
+    let sum     = (curr.avgRating ?? 0) * count;
+
+    if (existingSnap.exists()) {
+      sum = sum - (existingSnap.data().rating as number) + rating;   // replace old rating
+    } else {
+      sum  += rating;
+      count += 1;
+    }
+
+    const newAvg = count > 0 ? sum / count : 0;
+    tx.set(ratingRef, { planId, userId, rating, createdAt: serverTimestamp() });
+    tx.update(planRef, { avgRating: newAvg, ratingCount: count });
+    return { newAvg, newCount: count };
+  });
+};
+
+export const getUserRatings = async (
+  userId: string,
+  planIds: string[],
+): Promise<Record<string, number>> => {
+  const results: Record<string, number> = {};
+  await Promise.all(
+    planIds.map(async (planId) => {
+      const snap = await getDoc(doc(db, 'planRatings', `${planId}_${userId}`));
+      if (snap.exists()) results[planId] = snap.data().rating as number;
+    }),
+  );
+  return results;
+};
+
+/* ══════════════════════════════════════════════
+   Follow System  (Twitter-style, one-way)
+═══════════════════════════════════════════════ */
+export const followUser = async (myUid: string, targetUid: string): Promise<void> => {
+  await setDoc(doc(db, 'userFollows', myUid, 'following', targetUid), {
+    followedAt: serverTimestamp(),
+  });
+};
+
+export const unfollowUser = async (myUid: string, targetUid: string): Promise<void> => {
+  await deleteDoc(doc(db, 'userFollows', myUid, 'following', targetUid));
+};
+
+export const getFollowingList = async (myUid: string): Promise<string[]> => {
+  const snap = await getDocs(collection(db, 'userFollows', myUid, 'following'));
+  return snap.docs.map(d => d.id);
+};
