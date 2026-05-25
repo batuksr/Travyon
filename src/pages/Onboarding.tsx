@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
 import TravyonLogo from '../components/TravyonLogo';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { generateTravelPlan } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { searchCities, type CityOption } from '../data/cities';
@@ -73,6 +74,7 @@ const validateStep = (step: number, data: OnboardingData): string | null => {
   }
   if (step === 3) {
     if (data.dietaryRestrictions.length === 0) return 'En az bir beslenme tercihi seçin.';
+    if (!data.foodPhilosophy) return 'Yemek felsefeni seç.';
     if (!data.mealBudget) return 'Öğün başı bütçe seçin.';
   }
   if (step === 4) {
@@ -96,13 +98,13 @@ const validateAll = (data: OnboardingData): string | null => {
 type FieldHints = {
   destination: boolean; startDate: boolean; endDate: boolean; budget: boolean;
   travelType: boolean; tripPurpose: boolean; pace: boolean;
-  dietary: boolean; mealBudget: boolean;
+  dietary: boolean; foodPhilosophy: boolean; mealBudget: boolean;
   accommodation: boolean; transport: boolean;
 };
 const EMPTY_HINTS: FieldHints = {
   destination: false, startDate: false, endDate: false, budget: false,
   travelType: false, tripPurpose: false, pace: false,
-  dietary: false, mealBudget: false,
+  dietary: false, foodPhilosophy: false, mealBudget: false,
   accommodation: false, transport: false,
 };
 const hintsForStep = (step: number, data: OnboardingData): FieldHints => {
@@ -120,7 +122,11 @@ const hintsForStep = (step: number, data: OnboardingData): FieldHints => {
     h.tripPurpose = effectivePurposes.length === 0;
     h.pace        = !data.pace;
   }
-  if (step === 3) { h.dietary = data.dietaryRestrictions.length === 0; h.mealBudget = !data.mealBudget; }
+  if (step === 3) {
+    h.dietary        = data.dietaryRestrictions.length === 0;
+    h.foodPhilosophy = !data.foodPhilosophy;
+    h.mealBudget     = !data.mealBudget;
+  }
   if (step === 4) {
     h.accommodation = data.hasReservation === null
       || (data.hasReservation === true  && !data.accommodationAddress.trim())
@@ -892,6 +898,50 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.dietary ? 'En az bir beslenme tercihi seçin.' : undefined} />
                     </div>
 
+                    {/* Yemek Felsefesi */}
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 mb-1 block">Yemek Felsefen</label>
+                      <p className="text-[11px] text-slate-400 mb-2.5">AI sana hangi mekanları önersin?</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {([
+                          { val: 'iconic',      emoji: '⭐', title: 'İkonik Lezzetler',    subtitle: 'Şehrin ünlü, herkesin bildiği mekanları keşfet' },
+                          { val: 'hidden_gems', emoji: '🗺️', title: 'Gizli Keşifler',       subtitle: 'Az bilinen, yerel favoriler ve saklı köşeler' },
+                          { val: 'fine_dining', emoji: '🍷', title: 'Fine Dining',           subtitle: 'Kaliteli, özenli restoran deneyimi' },
+                          { val: 'street_food', emoji: '🌮', title: 'Sokak Yemeği',         subtitle: 'Tezgah lezzetleri, pazar yiyecekleri, yerel atıştırmalıklar' },
+                          { val: 'mixed',       emoji: '🎲', title: 'Karışık / Sürpriz et', subtitle: 'Hepsinden biraz — her gün farklı bir deneyim' },
+                        ] as const).map(({ val, emoji, title, subtitle }) => {
+                          const selected = data.foodPhilosophy === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => {
+                                updateData({ foodPhilosophy: val });
+                                setHints((h) => ({ ...h, foodPhilosophy: false }));
+                              }}
+                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-lg border-2 text-left
+                                transition-all duration-150 active:scale-[0.99]
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <span className="text-xl shrink-0 leading-none">{emoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className={`font-semibold text-sm leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{subtitle}</p>
+                              </div>
+                              {selected && (
+                                <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                  <Check size={9} className="text-white" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <FieldError msg={hints.foodPhilosophy ? 'Yemek felsefeni seç.' : undefined} />
+                    </div>
+
                     <div>
                       <label className="text-xs font-medium text-slate-500 mb-2 block">Öğün Başı Bütçe</label>
                       <div className="grid grid-cols-3 gap-2.5">
@@ -934,7 +984,7 @@ const Onboarding: React.FC = () => {
                         <OptionCard
                           emoji="🔍"
                           title="Hayır, henüz seçmedim"
-                          subtitle="Bana öneri göster"
+                          subtitle="Konaklama tarzımı söyleyeceğim"
                           selected={data.hasReservation === false}
                           onClick={() => {
                             updateData({ hasReservation: false, accommodationAddress: '' });
@@ -958,15 +1008,19 @@ const Onboarding: React.FC = () => {
                           <label className="text-xs font-medium text-slate-500 mb-1.5 block">
                             Konaklama Adı / Adresi
                           </label>
-                          <input
-                            type="text"
-                            value={data.accommodationAddress}
-                            onChange={(e) => {
-                              updateData({ accommodationAddress: e.target.value });
+                          <PlacesAutocomplete
+                            value={data.accommodationAddress || ''}
+                            onChange={(place) => {
+                              updateData({
+                                accommodationAddress: `${place.name}, ${place.address}`,
+                                accommodationLat: place.lat || null,
+                                accommodationLng: place.lng || null,
+                              });
                               setHints((h) => ({ ...h, accommodation: false }));
                             }}
                             placeholder="Örn. Hotel Roma Centro, Via del Corso 123"
-                            className={inputCls(hints.accommodation && !data.accommodationAddress.trim())}
+                            destination={data.destination}
+                            hasError={hints.accommodation && !data.accommodationAddress.trim()}
                           />
                           <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? 'Konaklama adresini girin.' : undefined} />
                           <p className="text-[11px] text-slate-400 mt-1.5 ml-0.5">
@@ -1013,11 +1067,12 @@ const Onboarding: React.FC = () => {
                     {/* Şehir İçi Ulaşım — her zaman görünür */}
                     <div>
                       <label className="text-xs font-medium text-slate-500 mb-2 block">Şehir İçi Ulaşım</label>
-                      <div className="grid grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { val: 'public', emoji: '🚇', title: 'Toplu Taşıma', sub: 'Metro, otobüs' },
-                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',      sub: 'Yürüme mesafesi' },
-                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',  sub: 'Kapıdan kapıya' },
+                          { val: 'public', emoji: '🚇', title: 'Toplu Taşıma',        sub: 'Metro, otobüs' },
+                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',              sub: 'Yürüme mesafesi' },
+                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',          sub: 'Kapıdan kapıya' },
+                          { val: 'car',    emoji: '🚗', title: 'Araç (Kiralık/Kendi)', sub: 'Park önemli, şehir dışı dahil' },
                         ].map(({ val, emoji, title, sub }) => (
                           <OptionCard
                             key={val}

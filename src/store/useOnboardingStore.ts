@@ -22,11 +22,14 @@ export interface OnboardingData {
 
   // Adım 3: Yeme-İçme
   dietaryRestrictions: string[];
+  foodPhilosophy: string;
   mealBudget: string;
 
   // Adım 4: Konfor ve Ulaşım
   hasReservation: boolean | null;
   accommodationAddress: string;
+  accommodationLat: number | null;
+  accommodationLng: number | null;
   accommodation: string;
   transport: string;
 }
@@ -60,10 +63,13 @@ const defaultData: OnboardingData = {
   dislikes: [],
   
   dietaryRestrictions: [],
+  foodPhilosophy: '',
   mealBudget: '',
   
   hasReservation: null,
   accommodationAddress: '',
+  accommodationLat: null,
+  accommodationLng: null,
   accommodation: '',
   transport: ''
 };

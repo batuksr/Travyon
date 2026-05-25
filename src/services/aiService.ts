@@ -611,11 +611,51 @@ const buildPrompt = (data: OnboardingData): string => {
   const travelTypeLabel = travelTypeMap[data.travelType] || 'Genel tatil';
 
   const purposeMap: Record<string, string> = {
-    culture: 'Kültür ve Tarih odaklı (müzeler, anıtlar, tarihi yerler)',
-    relax: 'Dinlenme ve Spa odaklı (yavaş tempo, manzaralı kafeler, parklar)',
-    nightlife: 'Gece Hayatı odaklı (barlar, kulüpler, canlı müzik, gece aktiviteleri)',
-    nature: 'Doğa ve Macera odaklı (trekking, doğa yürüyüşü, açık hava)',
+    culture:   'Kültür ve Tarih (müzeler, anıtlar, tarihi yerler)',
+    relax:     'Dinlenme ve Spa (yavaş tempo, manzaralı kafeler, parklar)',
+    nightlife: 'Gece Hayatı (barlar, kulüpler, canlı müzik)',
+    nature:    'Doğa ve Macera (trekking, doğa yürüyüşü, açık hava)',
   };
+
+  // Backward compat: eski 'tripPurpose' string → yeni 'purposes' array
+  const effectivePurposes: string[] =
+    data.purposes && data.purposes.length > 0
+      ? data.purposes
+      : data.tripPurpose ? [data.tripPurpose] : [];
+
+  // Özel durum sinyalleri — seçili ilgi alanlarına göre zorunlu aktivite talimatları
+  const purposeSpecialRules: string[] = [];
+  if (effectivePurposes.includes('nightlife')) {
+    purposeSpecialRules.push('Gece Hayatı seçildi → plana MUTLAKA 21:00 sonrası bar/kulüp aktivitesi ekle.');
+  }
+  if (effectivePurposes.includes('nature')) {
+    purposeSpecialRules.push('Doğa & Macera seçildi → plana MUTLAKA gündüz doğa aktivitesi ekle (yürüyüş, park, doğa rotası).');
+  }
+  if (effectivePurposes.includes('culture')) {
+    purposeSpecialRules.push('Kültür & Tarih seçildi → plana MUTLAKA en az 1 müze veya tarihi alan ekle.');
+  }
+  if (effectivePurposes.includes('relax')) {
+    purposeSpecialRules.push('Dinlenme seçildi → plana MUTLAKA en az 1 sakin mola/spa/park aktivitesi ekle.');
+  }
+
+  // Öncelik ağırlıklı ilgi alanı talimatı
+  const purposeLabel = (() => {
+    if (effectivePurposes.length === 0) return 'Belirtilmedi';
+    if (effectivePurposes.length === 1) {
+      return `Kullanıcının tek ilgi alanı: ${purposeMap[effectivePurposes[0]] || effectivePurposes[0]}. Plan AĞIRLIKLI olarak buna odaklı olsun.`;
+    }
+    if (effectivePurposes.length === 2) {
+      return `Kullanıcının ilgi alanları (öncelik sırasına göre):
+  1. ${purposeMap[effectivePurposes[0]] || effectivePurposes[0]} — ANA ilgi, plan %60 buna ayrılsın
+  2. ${purposeMap[effectivePurposes[1]] || effectivePurposes[1]} — İKİNCİL ilgi, plan %40 buna ayrılsın
+Her günü tek tip yapma, iki ilgiyi dengeli dağıt.`;
+    }
+    return `Kullanıcının ilgi alanları (öncelik sırasına göre):
+  1. ${purposeMap[effectivePurposes[0]] || effectivePurposes[0]} — ANA, plan %50
+  2. ${purposeMap[effectivePurposes[1]] || effectivePurposes[1]} — %30
+  3. ${purposeMap[effectivePurposes[2]] || effectivePurposes[2]} — %20
+Her günü tek tip yapma, KARMA günler oluştur. Örnek: sabah kültür, öğleden sonra doğa, akşam gece hayatı gibi.`;
+  })();
 
   const paceMap: Record<string, string> = {
     // Yeni değerler
@@ -628,6 +668,22 @@ const buildPrompt = (data: OnboardingData): string => {
     orta:  'ORTA tempo (günde 5-6 aktivite, dengeli)',
     yoğun: 'YOĞUN tempo (günde 6-7 aktivite, hızlı geçişler)',
   };
+
+  const foodPhilosophyMap: Record<string, string> = {
+    iconic:      'İkonik Lezzetler — Şehrin meşhur, herkesin bildiği lezzet duraklarını planla. Yerel sembol yemekler, şehrin en bilinen restoranları.',
+    hidden_gems: 'Gizli Keşifler — Az bilinen, yerel mahallelerde saklı mekanlar öner. Turistlerin gittiği yerlerden kaçın; fırıncı esnafı, yerel lokantalı arka sokaklar.',
+    fine_dining: 'Fine Dining — Kaliteli, özenli restoranlar. Sunum, servis ve ambiyans önemli. Michelin ve üst segment rehberlerdeki mekanlar öncelikli.',
+    street_food: 'Sokak Yemeği — Tezgah lezzetleri, pazar yiyecekleri, yerel atıştırmalıklar. Otur-kalk kafe yerine yürürken yenilen lezzetler.',
+    mixed:       'Karışık / Sürpriz — Her öğün farklı bir deneyim: bir öğün ikonik, bir öğün sokak lezzeti, bir öğün keşif. Monoton kalıplardan kaçın.',
+  };
+
+  // YEMEK FELSEFESİ + BÜTÇE ÇAKIŞMA KURALI:
+  // foodPhilosophy=fine_dining VE mealBudget=low → bütçe kısıtı önceliklidir; uygun fiyatlı ama kaliteli bistro/brasserie öner
+  // foodPhilosophy=street_food VE mealBudget=high → yüksek kaliteli/ödüllü sokak yemeği mekanları (gourmet street food) öner
+  // Her durumda mealBudget alanı felsefeden DAHA önceliklidir — bütçe aşan öneriler yapma
+  const effectiveFoodPhilosophy = data.foodPhilosophy
+    ? foodPhilosophyMap[data.foodPhilosophy] || data.foodPhilosophy
+    : 'Belirtilmedi — standart karışık plan yap';
 
   const accommodationMap: Record<string, string> = {
     hotel:  'OTEL — Kullanıcı otel tarzında kalıyor (konfor, standart konaklama). Plan içinde otele dönüş veya dinlenme molaları doğal olabilir.',
@@ -642,9 +698,10 @@ const buildPrompt = (data: OnboardingData): string => {
   // • Aktivite tarzı → SADECE travelType, tripPurpose, dislikes alanlarından al
 
   const transportMap: Record<string, string> = {
-    public: 'Toplu taşıma (metro, otobüs, tramvay)',
-    walk: 'Yürüyüş (yürünebilir mesafeli rotalar tercih)',
-    taxi: 'Taksi/Uber (konfor odaklı)',
+    public: 'Kullanıcı TOPLU TAŞIMA kullanacak. Aktiviteleri METRO/OTOBÜS hatlarına yakın seç. Her şehir için transit kart/pass bilgisi ver (örn Roma Pass, Paris Navigo, İstanbul Istanbulkart). Ulaşım önerilerinde spesifik hat ve durak belirt (örn "Termini\'den A metro hattı ile Barberini durağı, 3 dk").',
+    walk:   'Kullanıcı YÜRÜYEREK gezecek. Günlük aktiviteleri max 1.5-2 km yarıçapında kümele; aynı mahallede tut. Mekanlar arası yürüme süresini ve mesafeyi belirt (örn "5 dk yürüme, ~400 m"). Uzak mekanları aynı güne koyma. Gün içinde toplam yürüyüş 5-6 km\'yi geçmesin.',
+    taxi:   'Kullanıcı TAKSİ/UBER kullanacak. Mesafe önemli değil — coğrafi olarak optimize et ama yürüme şartı yok. Her aktivite arası tahmini taksi/Uber ücretini belirt (örn "Termini → Vatikan ~€15"). Şehrin uzak noktaları aynı güne konabilir.',
+    car:    'Kullanıcı ARABA kullanacak (kiralık veya kendi aracı). KRİTİK BİLGİLER ver: 1) Şehir merkezinde park yeri durumu — kısıtlı bölgeleri uyar (örn Roma ZTL/Zona a Traffico Limitato bölgelerini SAKINDIRMA, ceza kesilir); 2) Her aktivite için yakın park önerisi ve tahmini ücret; 3) ŞEHİR DIŞI gezi fırsatlarını muhakkak öner (örn Roma → Tivoli, Castel Gandolfo; Paris → Versailles, Giverny); 4) Trafik yoğun saatleri belirt ve o saatlerde araç yerine toplu taşıma öner; 5) Konaklama için otopark varlığını sorgulat veya yakın otopark öner; 6) Araba sayesinde ulaşılabilen ama toplu taşımayla zor olan yerleri özellikle vurgula.',
   };
 
   return `
@@ -667,12 +724,27 @@ KULLANICI PROFİLİ
    ↳ Günlük tavsiye: ~${dailyBudget} ${data.currencyCode}/gün
 
 🧳 Seyahat Türü: ${travelTypeLabel}
-🎯 Seyahat Amacı: ${purposeMap[data.tripPurpose] || data.tripPurpose}
+🎯 İlgi Alanları: ${purposeLabel}
+${purposeSpecialRules.length > 0 ? `⚠️ ZORUNLU AKTİVİTE KURALLARI:\n${purposeSpecialRules.map(r => `- ${r}`).join('\n')}` : ''}
 ⚡ Tempo: ${paceMap[data.pace] || data.pace}
 🌅 Erken Kalkma: ${data.earlyBird ? 'EVET — sabah 7-8 başlayabilir' : 'HAYIR — sabah 9-10 başlanmalı'}
 🍽️ Beslenme: ${data.dietaryRestrictions.join(', ') || 'Kısıtlama yok'}
-💵 Öğün Bütçesi: ${mealBudgetLabel}
-🏨 Konaklama: ${data.hasReservation ? `Rezervasyon mevcut — "${data.accommodationAddress}" (günlük rotaları mümkün olduğunca bu konuma yakın planla, her güne bu noktadan başla)` : (accommodationMap[data.accommodation] || data.accommodation)}
+🍴 Yemek Felsefesi: ${effectiveFoodPhilosophy}
+💵 Öğün Bütçesi: ${mealBudgetLabel} (BÜTÇEYİ ASLA AŞMA — felsefe bütçeyle çelişirse bütçeye uyu)
+🏨 Konaklama: ${data.hasReservation
+  ? (() => {
+      const hasCoords = data.accommodationLat && data.accommodationLng;
+      return `Rezervasyon mevcut — "${data.accommodationAddress}"${hasCoords ? ` [koordinat: ${(data.accommodationLat as number).toFixed(6)}, ${(data.accommodationLng as number).toFixed(6)}]` : ''}`;
+    })()
+  : (accommodationMap[data.accommodation] || data.accommodation)}
+${data.hasReservation && data.accommodationLat && data.accommodationLng ? `
+📍 KULLANICI KONAKLAMA KONUMU (KRİTİK):
+- Adres: ${data.accommodationAddress}
+- Koordinatlar: ${(data.accommodationLat as number).toFixed(6)}, ${(data.accommodationLng as number).toFixed(6)}
+→ Her günün rotasını BU KOORDİNATTAN başlat.
+→ Aktiviteleri bu konuma göre coğrafi olarak optimize et; yakın mekanları önceliklendir.
+→ Akşam dönüşünde bu noktaya yakın aktiviteler bırak.
+→ Aktiviteler arası mesafeleri bu noktayı merkez kabul ederek hesapla.` : ''}
 🚇 Ulaşım: ${transportMap[data.transport] || data.transport}
 ${data.dislikes && data.dislikes.length > 0 ? `
 🚫 UZAK DURULMASI GEREKENLER (KESİNLİKLE UYGULA):
@@ -700,8 +772,9 @@ Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
 ✅ DOĞRU EŞLEŞMELER:
 - mealBudget=low  → Sokak lezzetleri, ekonomik mekanlar (konaklama tipine BAKMAKSIZIN)
 - mealBudget=high → Fine dining, kaliteli restoranlar (konaklama tipine BAKMAKSIZIN)
-- tripPurpose=relax + pace=rahat → Sahil kafeleri, spa, parklar
-- tripPurpose=nightlife + pace=aktif → Bar tour, gece kulüpleri
+- purposes içinde relax + pace=rahat → Sahil kafeleri, spa, parklar
+- purposes içinde nightlife + pace=aktif → Bar tour, gece kulüpleri
+- purposes içinde birden fazla alan → karma günler oluştur (sabah kültür, akşam gece hayatı)
 - transport=walk → Birbirine yakın mekanlar seçilmeli
 - earlyBird=true → İlk aktivite 08:00-09:00 (Sabah)
 - earlyBird=false → İlk aktivite 10:00 sonrası (Öğle)
@@ -709,8 +782,9 @@ Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
 - travelType=hostel → Sosyal aktiviteler (yemek bütçesinden BAĞIMSIZ)
 
 ❌ ASLA YAPMA:
-- mealBudget=low için Michelin restoran önerme
-- mealBudget=high için fastfood/sokak yemeği önerme
+- mealBudget=low için Michelin restoran önerme (foodPhilosophy=fine_dining olsa bile)
+- mealBudget=high için ucuz fastfood önerme (foodPhilosophy=street_food ise → gourmet/ödüllü sokak lezzetleri öner)
+- mealBudget=low için pahalı yemek önerip "küçük porsiyon al" demek
 - transport=walk seçildiyse şehrin uzak ucuna mekan koyma
 - tripPurpose=relax için yoğun müze maratonu yapma
 - tripPurpose=nightlife için tüm gün kapanış 21:00 olan yer önerme
