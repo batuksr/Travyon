@@ -11,14 +11,13 @@ import {
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppSettingsStore, CURRENCY_MAP } from '../store/useAppSettingsStore';
 import {
   User, Mail, Lock, ChevronRight, Check, AlertCircle, Loader2, Camera,
-  Settings2, BookOpen, MapPin, Palette, Globe, Ruler,
+  Settings2, BookOpen, MapPin, Globe, Ruler,
   BellRing, Smartphone, Eye, EyeOff, Database,
   CreditCard, Receipt, Wallet, Download, Trash2,
   HelpCircle, MessageCircle, Bug,
-  Sun, Moon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,7 +25,7 @@ import {
 type Section =
   | 'profile' | 'email' | 'password'
   | 'travel_defaults' | 'passport' | 'location_tz'
-  | 'theme' | 'language_currency' | 'units'
+  | 'language_currency' | 'units'
   | 'app_notif' | 'email_notif' | 'push_notif'
   | 'privacy_profile' | 'privacy_location' | 'privacy_data'
   | 'subscription' | 'billing_history' | 'payment'
@@ -37,7 +36,72 @@ type Status = { type: 'success' | 'error'; message: string } | null;
 
 const LANGUAGES = ['Türkçe', 'English', 'Français', 'Español', 'Deutsch'];
 const CURRENCIES = ['TRY — ₺', 'USD — $', 'EUR — €', 'GBP — £', 'JPY — ¥'];
-const TIMEZONES = ['Europe/Istanbul (UTC+3)', 'Europe/London (UTC+0)', 'America/New_York (UTC-5)', 'America/Los_Angeles (UTC-8)', 'Asia/Tokyo (UTC+9)'];
+
+const TIMEZONES = [
+  'Europe/Istanbul (UTC+3)',
+  'Europe/London (UTC+0)',
+  'Europe/Paris (UTC+1)',
+  'Europe/Berlin (UTC+1)',
+  'Europe/Moscow (UTC+3)',
+  'Europe/Athens (UTC+2)',
+  'Europe/Rome (UTC+1)',
+  'Europe/Madrid (UTC+1)',
+  'Europe/Amsterdam (UTC+1)',
+  'Europe/Warsaw (UTC+1)',
+  'America/New_York (UTC-5)',
+  'America/Chicago (UTC-6)',
+  'America/Denver (UTC-7)',
+  'America/Los_Angeles (UTC-8)',
+  'America/Sao_Paulo (UTC-3)',
+  'America/Buenos_Aires (UTC-3)',
+  'America/Toronto (UTC-5)',
+  'America/Mexico_City (UTC-6)',
+  'Asia/Dubai (UTC+4)',
+  'Asia/Riyadh (UTC+3)',
+  'Asia/Tokyo (UTC+9)',
+  'Asia/Seoul (UTC+9)',
+  'Asia/Shanghai (UTC+8)',
+  'Asia/Singapore (UTC+8)',
+  'Asia/Kolkata (UTC+5:30)',
+  'Asia/Bangkok (UTC+7)',
+  'Asia/Jakarta (UTC+7)',
+  'Asia/Tehran (UTC+3:30)',
+  'Africa/Cairo (UTC+2)',
+  'Africa/Johannesburg (UTC+2)',
+  'Pacific/Sydney (UTC+10)',
+  'Pacific/Auckland (UTC+12)',
+];
+
+const PASSPORT_COUNTRIES = [
+  'Türkiye', 'Almanya', 'Fransa', 'İtalya', 'İspanya', 'İngiltere',
+  'Amerika Birleşik Devletleri', 'Kanada', 'Avustralya', 'Japonya',
+  'Çin', 'Rusya', 'Brezilya', 'Hindistan', 'Güney Kore', 'Hollanda',
+  'Belçika', 'İsveç', 'Norveç', 'Danimarka', 'Finlandiya', 'İsviçre',
+  'Avusturya', 'Portekiz', 'Polonya', 'Çek Cumhuriyeti', 'Yunanistan',
+  'Macaristan', 'Romanya', 'Bulgaristan', 'Hırvatistan', 'Sırbistan',
+  'Ukrayna', 'İsrail', 'Suudi Arabistan', 'BAE', 'Mısır', 'Fas',
+  'Güney Afrika', 'Nijerya', 'Meksika', 'Arjantin', 'Şili', 'Kolombiya',
+  'Singapur', 'Malezya', 'Tayland', 'Endonezya', 'Vietnam', 'Filipinler',
+  'Yeni Zelanda', 'Diğer',
+];
+
+// Tarayıcı saat dilimini TIMEZONES listesiyle eşleştirir
+const detectTimezone = (): string => {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; // örn. "Europe/Istanbul"
+    const match = TIMEZONES.find(t => t.startsWith(tz));
+    return match ?? TIMEZONES[0];
+  } catch {
+    return TIMEZONES[0];
+  }
+};
+
+// Pasaport süre kontrolü — kaç gün kaldı
+const passportDaysLeft = (expiry: string): number | null => {
+  if (!expiry) return null;
+  const diff = new Date(expiry).getTime() - Date.now();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+};
 
 /* Şifre gücü: 0-4 */
 const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
@@ -72,10 +136,17 @@ const firebaseErrorMsg = (code: string): string => {
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <button
     type="button"
+    role="switch"
+    aria-checked={value}
     onClick={() => onChange(!value)}
-    className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-[#f8981d]' : 'bg-slate-200'}`}
+    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none
+      ${value ? 'bg-[#f8981d]' : 'bg-slate-200 dark:bg-slate-700'}`}
   >
-    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-5' : 'translate-x-1'}`} />
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out
+        ${value ? 'translate-x-5' : 'translate-x-0'}`}
+    />
   </button>
 );
 
@@ -139,8 +210,7 @@ const NAV_GROUPS: { label: string; items: { id: Section; icon: LucideIcon; label
   {
     label: 'GÖRÜNÜM',
     items: [
-      { id: 'theme',             icon: Palette, label: 'Tema' },
-      { id: 'language_currency', icon: Globe,   label: 'Dil & Para Birimi' },
+      { id: 'language_currency', icon: Globe,   label: 'Dil' },
       { id: 'units',             icon: Ruler,   label: 'Ölçü Birimleri' },
     ],
   },
@@ -191,7 +261,7 @@ const NAV_GROUPS: { label: string; items: { id: Section; icon: LucideIcon; label
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { dark, toggle: toggleTheme } = useThemeStore();
+  const { setSettings } = useAppSettingsStore();
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
 
@@ -222,15 +292,22 @@ const Settings: React.FC = () => {
   const [defaultBudget, setDefaultBudget] = useState('15000');
   const [defaultCurrency, setDefaultCurrency] = useState('TRY — ₺');
   const [defaultPace, setDefaultPace] = useState('normal');
+  const [defaultPeopleCount, setDefaultPeopleCount] = useState('2');
+  const [travelDefaultsStatus, setTravelDefaultsStatus] = useState<Status>(null);
+  const [travelDefaultsLoading, setTravelDefaultsLoading] = useState(false);
+
   const [passportCountry, setPassportCountry] = useState('Türkiye');
+  const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiry, setPassportExpiry] = useState('');
-  const [timezone, setTimezone] = useState('Europe/Istanbul (UTC+3)');
-  const [travelStatus, setTravelStatus] = useState<Status>(null);
-  const [travelLoading, setTravelLoading] = useState(false);
+  const [passportStatus, setPassportStatus] = useState<Status>(null);
+  const [passportLoading, setPassportLoading] = useState(false);
+
+  const [timezone, setTimezone] = useState(() => detectTimezone());
+  const [locationStatus, setLocationStatus] = useState<Status>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   /* ── GÖRÜNÜM ── */
   const [language, setLanguage] = useState('Türkçe');
-  const [currency, setCurrency] = useState('TRY — ₺');
   const [distanceKm, setDistanceKm] = useState(true);
   const [tempCelsius, setTempCelsius] = useState(true);
   const [appearanceStatus, setAppearanceStatus] = useState<Status>(null);
@@ -283,22 +360,28 @@ const Settings: React.FC = () => {
         setUsername(d.username ?? (user.displayName ?? '').toLowerCase().replace(/\s+/g, '') ?? 'kullanici');
         setBio(d.bio ?? '');
         setLanguage(d.language ?? 'Türkçe');
-        setCurrency(d.currency ?? 'TRY — ₺');
         setDistanceKm(d.distanceKm ?? true);
         setTempCelsius(d.tempCelsius ?? true);
         setFollowPublic(d.followPublic ?? true);
         setProfilePublic(d.profilePublic ?? true);
         setPlansPublic(d.plansPublic ?? false);
+        setAppPlanNotif(d.appPlanNotif ?? true);
+        setAppCommunityNotif(d.appCommunityNotif ?? true);
+        setAppUpdateNotif(d.appUpdateNotif ?? false);
         setEmailPlanNotif(d.emailPlanNotif ?? true);
         setEmailWeeklyDigest(d.emailWeeklyDigest ?? true);
+        setEmailPromoNotif(d.emailPromoNotif ?? false);
         setPushEnabled(d.pushEnabled ?? false);
+        setPushSoundEnabled(d.pushSoundEnabled ?? true);
         setAnalyticsEnabled(d.analyticsEnabled ?? true);
         setDefaultBudget(d.defaultBudget ?? '15000');
         setDefaultCurrency(d.defaultCurrency ?? 'TRY — ₺');
         setDefaultPace(d.defaultPace ?? 'normal');
+        setDefaultPeopleCount(d.defaultPeopleCount ?? '2');
         setPassportCountry(d.passportCountry ?? 'Türkiye');
+        setPassportNumber(d.passportNumber ?? '');
         setPassportExpiry(d.passportExpiry ?? '');
-        setTimezone(d.timezone ?? 'Europe/Istanbul (UTC+3)');
+        setTimezone(d.timezone ?? detectTimezone());
       }
     } catch { /* Auth verisi yüklü */ }
   }, [user]);
@@ -382,23 +465,57 @@ const Settings: React.FC = () => {
     } finally { setPasswordLoading(false); }
   };
 
-  const handleTravelSave = async () => {
+  const handleTravelDefaultsSave = async () => {
     if (!user) return;
-    setTravelLoading(true); setTravelStatus(null);
+    setTravelDefaultsLoading(true); setTravelDefaultsStatus(null);
     try {
-      await setDoc(doc(db, 'users', user.uid), { defaultBudget, defaultCurrency, defaultPace, passportCountry, passportExpiry, timezone }, { merge: true });
-      setTravelStatus({ type: 'success', message: 'Seyahat tercihleri kaydedildi.' });
+      await setDoc(doc(db, 'users', user.uid), { defaultBudget, defaultCurrency, defaultPace, defaultPeopleCount }, { merge: true });
+      // Para birimi store'unu güncelle — tüm uygulamada yansır
+      const curr = CURRENCY_MAP[defaultCurrency] ?? { code: 'TRY', symbol: '₺' };
+      setSettings({ currencyLabel: defaultCurrency, currencyCode: curr.code, currencySymbol: curr.symbol });
+      setTravelDefaultsStatus({ type: 'success', message: 'Varsayılan tercihler kaydedildi. Yeni plan oluştururken otomatik uygulanacak.' });
     } catch {
-      setTravelStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
-    } finally { setTravelLoading(false); }
+      setTravelDefaultsStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+    } finally { setTravelDefaultsLoading(false); }
+  };
+
+  const handlePassportSave = async () => {
+    if (!user) return;
+    if (passportExpiry) {
+      const days = passportDaysLeft(passportExpiry);
+      if (days !== null && days < 0) {
+        setPassportStatus({ type: 'error', message: 'Pasaport süresi dolmuş. Lütfen geçerli bir tarih girin.' });
+        return;
+      }
+    }
+    setPassportLoading(true); setPassportStatus(null);
+    try {
+      await setDoc(doc(db, 'users', user.uid), { passportCountry, passportNumber, passportExpiry }, { merge: true });
+      setPassportStatus({ type: 'success', message: 'Pasaport bilgileri kaydedildi.' });
+    } catch {
+      setPassportStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+    } finally { setPassportLoading(false); }
+  };
+
+  const handleLocationSave = async () => {
+    if (!user) return;
+    setLocationLoading(true); setLocationStatus(null);
+    try {
+      await setDoc(doc(db, 'users', user.uid), { timezone }, { merge: true });
+      setLocationStatus({ type: 'success', message: 'Saat dilimi kaydedildi.' });
+    } catch {
+      setLocationStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+    } finally { setLocationLoading(false); }
   };
 
   const handleAppearanceSave = async () => {
     if (!user) return;
     setAppearanceLoading(true); setAppearanceStatus(null);
     try {
-      await setDoc(doc(db, 'users', user.uid), { language, currency, distanceKm, tempCelsius }, { merge: true });
-      setAppearanceStatus({ type: 'success', message: 'Görünüm ayarları kaydedildi.' });
+      await setDoc(doc(db, 'users', user.uid), { language, distanceKm, tempCelsius }, { merge: true });
+      // Zustand store'u anında güncelle — tüm uygulama etkilenir
+      setSettings({ language, distanceKm, tempCelsius });
+      setAppearanceStatus({ type: 'success', message: 'Ölçü birimi ayarları kaydedildi ve uygulandı.' });
     } catch {
       setAppearanceStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
     } finally { setAppearanceLoading(false); }
@@ -413,6 +530,12 @@ const Settings: React.FC = () => {
         emailPlanNotif, emailWeeklyDigest, emailPromoNotif,
         pushEnabled, pushSoundEnabled,
       }, { merge: true });
+      // Zustand store'u güncelle — Bildirimler sayfası anında tepki verir
+      setSettings({
+        appPlanNotif, appCommunityNotif, appUpdateNotif,
+        emailPlanNotif, emailWeeklyDigest, emailPromoNotif,
+        pushEnabled, pushSoundEnabled,
+      });
       setNotifStatus({ type: 'success', message: 'Bildirim ayarları kaydedildi.' });
     } catch {
       setNotifStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
@@ -424,7 +547,9 @@ const Settings: React.FC = () => {
     setPrivacyLoading(true); setPrivacyStatus(null);
     try {
       await setDoc(doc(db, 'users', user.uid), { profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled }, { merge: true });
-      setPrivacyStatus({ type: 'success', message: 'Gizlilik ayarları kaydedildi.' });
+      // Store'u güncelle — Community, Hub anında tepki verir
+      setSettings({ profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled });
+      setPrivacyStatus({ type: 'success', message: 'Gizlilik ayarları kaydedildi ve uygulandı.' });
     } catch {
       setPrivacyStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
     } finally { setPrivacyLoading(false); }
@@ -812,14 +937,24 @@ const Settings: React.FC = () => {
           })()}
 
           {/* ══ SEYAHAT — Varsayılan Tercihler ══ */}
+          {/* ══ SEYAHAT — Varsayılan Tercihler ══ */}
           {activeSection === 'travel_defaults' && (
-            <CardWrap title="Varsayılan Seyahat Tercihleri" subtitle="Plan oluştururken otomatik doldurulur.">
-              <StatusBanner status={travelStatus} />
-              <div className="space-y-4">
+            <CardWrap title="Varsayılan Seyahat Tercihleri" subtitle="Yeni plan oluştururken bu değerler otomatik doldurulur.">
+              <StatusBanner status={travelDefaultsStatus} />
+              <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1.5">Varsayılan Bütçe</label>
-                    <input type="number" value={defaultBudget} onChange={e => setDefaultBudget(e.target.value)} className={inputCls()} placeholder="15000" />
+                    <input
+                      type="number" min="100"
+                      value={defaultBudget}
+                      onChange={e => setDefaultBudget(e.target.value)}
+                      className={inputCls(Number(defaultBudget) < 100)}
+                      placeholder="15000"
+                    />
+                    {Number(defaultBudget) < 100 && Number(defaultBudget) > 0 && (
+                      <p className="text-[11px] text-rose-500 mt-1">En az 100 olmalı</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1.5">Para Birimi</label>
@@ -828,143 +963,232 @@ const Settings: React.FC = () => {
                     </select>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Varsayılan Kişi Sayısı</label>
+                  <div className="flex items-center gap-4">
+                    <button type="button"
+                      onClick={() => setDefaultPeopleCount(v => String(Math.max(1, Number(v) - 1)))}
+                      className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:border-slate-300 transition-all"
+                    >−</button>
+                    <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums w-8 text-center">{defaultPeopleCount}</span>
+                    <button type="button"
+                      onClick={() => setDefaultPeopleCount(v => String(Math.min(15, Number(v) + 1)))}
+                      className="w-9 h-9 rounded-xl border border-[#f8981d] flex items-center justify-center text-[#f8981d] hover:bg-[#f8981d]/5 transition-all"
+                    >+</button>
+                    <span className="text-xs text-slate-400">kişi</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-2">Varsayılan Tempo</label>
-                  <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden text-xs font-semibold">
-                    {[{ label: '🛋️ Rahat', val: 'rahat' }, { label: '🚶 Normal', val: 'normal' }, { label: '🏃 Aktif', val: 'aktif' }, { label: '🧭 Esnek', val: 'esnek' }].map(({ label, val }) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: '🛋️', sub: 'Rahat', val: 'rahat' },
+                      { label: '🚶', sub: 'Normal', val: 'normal' },
+                      { label: '🏃', sub: 'Aktif', val: 'aktif' },
+                      { label: '🧭', sub: 'Esnek', val: 'esnek' },
+                    ].map(({ label, sub, val }) => (
                       <button key={val} type="button" onClick={() => setDefaultPace(val)}
-                        className={`flex-1 py-2 transition-colors ${defaultPace === val ? 'bg-[#f8981d] text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                      >{label}</button>
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-center transition-all
+                          ${defaultPace === val
+                            ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'}`}
+                      >
+                        <span className="text-xl">{label}</span>
+                        <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-[#f8981d]' : 'text-slate-600 dark:text-slate-400'}`}>{sub}</span>
+                      </button>
                     ))}
                   </div>
                 </div>
+
+                <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                  <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                    Bu değerler "Plan Oluştur" sayfasındaki başlangıç değerlerini belirler. Plan oluştururken istediğin zaman değiştirebilirsin.
+                  </p>
+                </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleTravelSave} loading={travelLoading} />
+                <SaveBtn onClick={handleTravelDefaultsSave} loading={travelDefaultsLoading} label="Tercihleri Kaydet" />
               </div>
             </CardWrap>
           )}
 
           {/* ══ SEYAHAT — Pasaport ══ */}
-          {activeSection === 'passport' && (
-            <CardWrap title="Pasaport & Vatandaşlık" subtitle="Vize bilgileri ve seyahat uyarıları için kullanılır.">
-              <StatusBanner status={travelStatus} />
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Vatandaşlık / Pasaport Ülkesi</label>
-                  <input type="text" value={passportCountry} onChange={e => setPassportCountry(e.target.value)} className={inputCls()} placeholder="Türkiye" />
+          {activeSection === 'passport' && (() => {
+            const daysLeft = passportDaysLeft(passportExpiry);
+            const isExpired   = daysLeft !== null && daysLeft < 0;
+            const isWarning   = daysLeft !== null && daysLeft >= 0 && daysLeft <= 180;
+            const isOk        = daysLeft !== null && daysLeft > 180;
+            return (
+              <CardWrap title="Pasaport & Vatandaşlık" subtitle="Vize bilgileri ve seyahat uyarıları için kullanılır.">
+                <StatusBanner status={passportStatus} />
+
+                {/* Süre uyarı bandı */}
+                {isExpired && (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl mb-4">
+                    <AlertCircle size={15} className="text-rose-500 shrink-0" />
+                    <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">Pasaportunuzun süresi dolmuş!</p>
+                  </div>
+                )}
+                {isWarning && (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl mb-4">
+                    <AlertCircle size={15} className="text-amber-500 shrink-0" />
+                    <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                      Pasaportunuz <span className="font-black">{daysLeft} gün</span> içinde sona eriyor. Seyahat planı yapmadan önce yenileyin.
+                    </p>
+                  </div>
+                )}
+                {isOk && (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4">
+                    <Check size={15} className="text-emerald-500 shrink-0" strokeWidth={3} />
+                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      Pasaport geçerli — <span className="font-semibold">{daysLeft} gün</span> kaldı.
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Vatandaşlık / Pasaport Ülkesi</label>
+                    <select value={passportCountry} onChange={e => setPassportCountry(e.target.value)} className={inputCls()}>
+                      {PASSPORT_COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                      Pasaport Numarası <span className="text-slate-400 font-normal">(isteğe bağlı)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={passportNumber}
+                      onChange={e => setPassportNumber(e.target.value.toUpperCase())}
+                      className={inputCls()}
+                      placeholder="Örn. U12345678"
+                      maxLength={20}
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Yalnızca cihazınızda saklanır, üçüncü taraflarla paylaşılmaz.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Son Kullanma Tarihi</label>
+                    <input
+                      type="date"
+                      value={passportExpiry}
+                      onChange={e => setPassportExpiry(e.target.value)}
+                      className={inputCls(isExpired)}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Pasaport Son Kullanma Tarihi</label>
-                  <input type="date" value={passportExpiry} onChange={e => setPassportExpiry(e.target.value)} className={inputCls()} />
-                  <p className="text-[11px] text-slate-400 mt-1">Sona ermeye yakın pasaportla seyahat uyarısı alırsınız.</p>
+                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                  <SaveBtn onClick={handlePassportSave} loading={passportLoading} label="Bilgileri Kaydet" disabled={isExpired} />
                 </div>
-              </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleTravelSave} loading={travelLoading} />
-              </div>
-            </CardWrap>
-          )}
+              </CardWrap>
+            );
+          })()}
 
           {/* ══ SEYAHAT — Konum & Saat Dilimi ══ */}
           {activeSection === 'location_tz' && (
-            <CardWrap title="Konum & Saat Dilimi" subtitle="Yerel önerilerin doğruluğunu artırır.">
-              <StatusBanner status={travelStatus} />
+            <CardWrap title="Konum & Saat Dilimi">
+              <StatusBanner status={locationStatus} />
               <div className="space-y-4">
+
+                {/* Otomatik algıla */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Otomatik Algıla</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Tarayıcıdan saat dilimini tespit et</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const detected = detectTimezone();
+                      setTimezone(detected);
+                      setLocationStatus({ type: 'success', message: `Algılandı: ${detected}` });
+                    }}
+                    className="px-3.5 py-2 rounded-lg bg-[#f8981d]/10 text-[#f8981d] text-xs font-bold hover:bg-[#f8981d]/20 transition-colors"
+                  >
+                    Algıla
+                  </button>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1.5">Saat Dilimi</label>
                   <select value={timezone} onChange={e => setTimezone(e.target.value)} className={inputCls()}>
-                    {TIMEZONES.map(t => <option key={t}>{t}</option>)}
+                    {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Şu an seçili: <span className="font-semibold text-slate-600 dark:text-slate-300">{timezone.split(' ')[0]}</span>
+                  </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
-                  <MapPin size={16} className="text-[#f8981d] shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Konum Erişimi</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Tarayıcı izin ayarlarından değiştirilebilir.</p>
-                  </div>
+              </div>
+              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                <SaveBtn onClick={handleLocationSave} loading={locationLoading} label="Kaydet" />
+              </div>
+            </CardWrap>
+          )}
+
+          {/* ══ GÖRÜNÜM — Dil ══ */}
+          {activeSection === 'language_currency' && (
+            <CardWrap title="Dil" subtitle="Uygulama arayüz dili.">
+              <StatusBanner status={appearanceStatus} />
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <label className="text-xs font-medium text-slate-500">Uygulama Dili</label>
                   <ComingSoonBadge />
                 </div>
-              </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleTravelSave} loading={travelLoading} />
-              </div>
-            </CardWrap>
-          )}
-
-          {/* ══ GÖRÜNÜM — Tema ══ */}
-          {activeSection === 'theme' && (
-            <CardWrap title="Tema" subtitle="Arayüz renk temasını seç.">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Açık', icon: Sun, val: false, bg: 'bg-white', border: 'border-slate-200' },
-                  { label: 'Koyu', icon: Moon, val: true, bg: 'bg-slate-900', border: 'border-slate-700' },
-                ].map(({ label, icon: Icon, val, bg, border }) => {
-                  const active = dark === val;
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => { if (dark !== val) toggleTheme(); }}
-                      className={`relative flex flex-col items-center gap-3 py-8 rounded-xl border-2 transition-all
-                        ${active ? 'border-[#f8981d]' : `border-slate-200 dark:border-slate-700 ${bg} ${border}`}`}
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${active ? 'bg-[#f8981d]/15' : val ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                        <Icon size={20} className={active ? 'text-[#f8981d]' : val ? 'text-slate-300' : 'text-slate-600'} />
-                      </div>
-                      <span className={`font-bold text-sm ${active ? 'text-[#f8981d]' : 'text-slate-700 dark:text-slate-300'}`}>{label}</span>
-                      {active && (
-                        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#f8981d] flex items-center justify-center">
-                          <Check size={10} className="text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </CardWrap>
-          )}
-
-          {/* ══ GÖRÜNÜM — Dil & Para Birimi ══ */}
-          {activeSection === 'language_currency' && (
-            <CardWrap title="Dil & Para Birimi">
-              <StatusBanner status={appearanceStatus} />
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Uygulama Dili</label>
-                  <select value={language} onChange={e => setLanguage(e.target.value)} className={inputCls()}>
-                    {LANGUAGES.map(l => <option key={l}>{l}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Para Birimi</label>
-                  <select value={currency} onChange={e => setCurrency(e.target.value)} className={inputCls()}>
-                    {CURRENCIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} />
+                <select value={language} onChange={e => setLanguage(e.target.value)} className={inputCls()} disabled>
+                  {LANGUAGES.map(l => <option key={l}>{l}</option>)}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1.5">Çok dilli destek yakında eklenecek. Şimdilik Türkçe aktif.</p>
               </div>
             </CardWrap>
           )}
 
           {/* ══ GÖRÜNÜM — Ölçü Birimleri ══ */}
           {activeSection === 'units' && (
-            <CardWrap title="Ölçü Birimleri">
+            <CardWrap title="Ölçü Birimleri" subtitle="Mesafe ve sıcaklık birimleri plan detaylarında kullanılır.">
               <StatusBanner status={appearanceStatus} />
               <div className="space-y-6">
+
+                {/* Mesafe */}
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-2">Mesafe</label>
-                  <SegmentedControl options={[{ label: 'Kilometre (km)', val: true }, { label: 'Mil (mi)', val: false }]} value={distanceKm} onChange={setDistanceKm} />
+                  <SegmentedControl
+                    options={[{ label: 'Kilometre (km)', val: true }, { label: 'Mil (mi)', val: false }]}
+                    value={distanceKm}
+                    onChange={setDistanceKm}
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    Mevcut: <span className="font-semibold text-slate-600 dark:text-slate-300">{distanceKm ? 'km — Kilometre' : 'mi — Mil'}</span>
+                  </p>
                 </div>
+
+                {/* Sıcaklık */}
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-2">Sıcaklık</label>
-                  <SegmentedControl options={[{ label: 'Celsius (°C)', val: true }, { label: 'Fahrenheit (°F)', val: false }]} value={tempCelsius} onChange={setTempCelsius} />
+                  <SegmentedControl
+                    options={[{ label: 'Celsius (°C)', val: true }, { label: 'Fahrenheit (°F)', val: false }]}
+                    value={tempCelsius}
+                    onChange={setTempCelsius}
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    Mevcut: <span className="font-semibold text-slate-600 dark:text-slate-300">{tempCelsius ? '°C — Celsius' : '°F — Fahrenheit'}</span>
+                  </p>
+                </div>
+
+                {/* Önizleme */}
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <p className="text-[11px] font-semibold text-slate-500 mb-2">Plan önizleme</p>
+                  <div className="flex gap-4 text-sm">
+                    <span className="text-slate-700 dark:text-slate-300 font-medium">📍 Mesafe: <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
+                    <span className="text-slate-700 dark:text-slate-300 font-medium">🌡️ Hava: <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} />
+                <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} label="Uygula & Kaydet" />
               </div>
             </CardWrap>
           )}
@@ -996,54 +1220,286 @@ const Settings: React.FC = () => {
           )}
 
           {/* ══ BİLDİRİMLER — Push ══ */}
-          {activeSection === 'push_notif' && (
-            <CardWrap title="Push Bildirimleri" subtitle="Tarayıcı ve mobil bildirimler.">
-              <StatusBanner status={notifStatus} />
-              <SettingRow title="Push bildirimleri" desc="Anlık tarayıcı bildirimleri"><Toggle value={pushEnabled} onChange={setPushEnabled} /></SettingRow>
-              <SettingRow title="Bildirim sesi" desc="Bildirim geldiğinde ses çal"><Toggle value={pushSoundEnabled} onChange={setPushSoundEnabled} /></SettingRow>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleNotifSave} loading={notifLoading} />
-              </div>
-            </CardWrap>
-          )}
+          {activeSection === 'push_notif' && (() => {
+            const browserSupported = 'Notification' in window;
+            const currentPerm = browserSupported ? Notification.permission : 'unsupported';
+            const isGranted = currentPerm === 'granted';
+            const isDenied  = currentPerm === 'denied';
+
+            const requestPermission = async () => {
+              if (!browserSupported) return;
+              const result = await Notification.requestPermission();
+              if (result === 'granted') {
+                setPushEnabled(true);
+                setSettings({ pushPermission: 'granted', pushEnabled: true });
+                // Test bildirimi gönder
+                new Notification('Travyon Bildirimleri Aktif 🎉', {
+                  body: 'Seyahat uyarılarını artık anlık alacaksınız.',
+                  icon: '/favicon.ico',
+                });
+              } else {
+                setSettings({ pushPermission: result as 'denied' | 'default' });
+              }
+            };
+
+            return (
+              <CardWrap title="Push Bildirimleri" subtitle="Tarayıcı anlık bildirimlerini yönet.">
+                <StatusBanner status={notifStatus} />
+
+                {/* İzin durumu kartı */}
+                <div className={`flex items-start gap-3 p-4 rounded-xl border mb-5
+                  ${isGranted ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
+                  : isDenied  ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
+                  : !browserSupported ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
+                  <div className={`mt-0.5 text-lg shrink-0`}>
+                    {isGranted ? '🔔' : isDenied ? '🔕' : !browserSupported ? '🚫' : '⏳'}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold
+                      ${isGranted ? 'text-emerald-800 dark:text-emerald-300'
+                      : isDenied  ? 'text-rose-800 dark:text-rose-300'
+                      : !browserSupported ? 'text-slate-600 dark:text-slate-300'
+                      : 'text-amber-800 dark:text-amber-300'}`}>
+                      {isGranted ? 'Bildirim izni verildi'
+                      : isDenied ? 'Bildirim izni reddedildi'
+                      : !browserSupported ? 'Tarayıcınız push bildirimleri desteklemiyor'
+                      : 'Bildirim izni bekleniyor'}
+                    </p>
+                    <p className={`text-xs mt-0.5
+                      ${isGranted ? 'text-emerald-700 dark:text-emerald-400'
+                      : isDenied  ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-amber-700 dark:text-amber-400'}`}>
+                      {isGranted ? 'Tarayıcı anlık bildirimleri aktif.'
+                      : isDenied ? 'Tarayıcı adres çubuğundaki kilit ikonundan izin verebilirsiniz.'
+                      : !browserSupported ? 'Farklı bir tarayıcı deneyin (Chrome, Edge, Firefox).'
+                      : 'Bildirimleri etkinleştirmek için aşağıdaki butona basın.'}
+                    </p>
+                  </div>
+                  {!isGranted && !isDenied && browserSupported && (
+                    <button
+                      type="button"
+                      onClick={requestPermission}
+                      className="shrink-0 px-3.5 py-2 rounded-lg bg-[#f8981d] text-white text-xs font-bold hover:bg-[#e08518] transition-colors shadow-sm"
+                    >
+                      İzin Ver
+                    </button>
+                  )}
+                </div>
+
+                <SettingRow title="Push bildirimleri" desc="Seyahat yaklaştığında anlık uyarı al">
+                  <Toggle
+                    value={pushEnabled}
+                    onChange={(v) => {
+                      if (v && !isGranted) { requestPermission(); return; }
+                      setPushEnabled(v);
+                    }}
+                  />
+                </SettingRow>
+                <SettingRow title="Bildirim sesi" desc="Bildirim geldiğinde ses çal">
+                  <Toggle value={pushSoundEnabled} onChange={setPushSoundEnabled} />
+                </SettingRow>
+
+                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                  <SaveBtn onClick={handleNotifSave} loading={notifLoading} disabled={!browserSupported} />
+                </div>
+              </CardWrap>
+            );
+          })()}
 
           {/* ══ GİZLİLİK — Profil & Plan ══ */}
           {activeSection === 'privacy_profile' && (
-            <CardWrap title="Profil & Plan Gizliliği">
+            <CardWrap title="Profil & Plan Gizliliği" subtitle="Diğer kullanıcıların sizi nasıl göreceğini kontrol edin.">
               <StatusBanner status={privacyStatus} />
-              <SettingRow title="Herkese açık profil" desc="Profiliniz arama sonuçlarında görünsün"><Toggle value={profilePublic} onChange={setProfilePublic} /></SettingRow>
-              <SettingRow title="Planlarım herkese açık" desc="Oluşturduğunuz planlar toplulukta görünsün"><Toggle value={plansPublic} onChange={setPlansPublic} /></SettingRow>
-              <SettingRow title="Herkes takip edebilir" desc="Kapalıysa takip onayı gerekir"><Toggle value={followPublic} onChange={setFollowPublic} /></SettingRow>
+
+              {/* Genel durum özeti */}
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                  { label: 'Profil',  active: profilePublic, on: 'Herkese açık', off: 'Gizli' },
+                  { label: 'Planlar', active: plansPublic,   on: 'Paylaşılabilir', off: 'Kilitli' },
+                  { label: 'Takip',   active: followPublic,  on: 'Serbest', off: 'Onaylı' },
+                ].map(({ label, active, on, off }) => (
+                  <div key={label} className={`p-3 rounded-xl border text-center transition-colors
+                    ${active ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800'
+                             : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
+                    <p className={`text-xs font-bold ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                      {active ? on : off}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Profil */}
+              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-3">
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Herkese açık profil</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {profilePublic
+                        ? '✅ Toplulukta görünür — diğer kullanıcılar sizi bulabilir'
+                        : '🔒 Gizli mod — kimse profilinizi göremez'}
+                    </p>
+                  </div>
+                  <Toggle value={profilePublic} onChange={setProfilePublic} />
+                </div>
+              </div>
+
+              {/* Planlar */}
+              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-3">
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Planlarım herkese açık</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {plansPublic
+                        ? '✅ Toplulukta paylaşabilirsiniz'
+                        : '🔒 Paylaşım kapalı — Topluluk sayfasında paylaşım butonu kilitlenir'}
+                    </p>
+                  </div>
+                  <Toggle value={plansPublic} onChange={setPlansPublic} />
+                </div>
+                {!plansPublic && (
+                  <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900">
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                      ⚠️ Bu ayar kapalıyken planlarınızı Topluluk sayfasından paylaşamazsınız.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Takip */}
+              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Herkes takip edebilir</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {followPublic
+                        ? '✅ Onaysız takip — herkes takip edebilir'
+                        : '🔒 Onaylı takip — takip istekleri onayınızı bekler'}
+                    </p>
+                  </div>
+                  <Toggle value={followPublic} onChange={setFollowPublic} />
+                </div>
+              </div>
+
               <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
           )}
 
           {/* ══ GİZLİLİK — Lokasyon ══ */}
           {activeSection === 'privacy_location' && (
-            <CardWrap title="Lokasyon Gizliliği">
+            <CardWrap title="Lokasyon Gizliliği" subtitle="Konumunuzun nasıl kullanılacağını kontrol edin.">
               <StatusBanner status={privacyStatus} />
-              <SettingRow title="Konum önerilerini etkinleştir" desc="Yakındaki mekanlar için konum kullan"><Toggle value={locationEnabled} onChange={setLocationEnabled} /></SettingRow>
-              <SettingRow title="Konum geçmişi" desc="Ziyaret geçmişi kaydedilsin (daha iyi öneriler)"><Toggle value={locationHistory} onChange={setLocationHistory} /></SettingRow>
+
+              {/* Mevcut konum izni */}
+              {(() => {
+                const geoSupported = 'geolocation' in navigator;
+                return (
+                  <div className={`flex items-start gap-3 p-4 rounded-xl border mb-5
+                    ${geoSupported ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900'
+                                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                    <span className="text-lg shrink-0 mt-0.5">{geoSupported ? '📍' : '🚫'}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {geoSupported ? 'Tarayıcı Konum API' : 'Konum desteklenmiyor'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {geoSupported
+                          ? 'Tarayıcınız konum desteğine sahip. Konum özellikleri bu uygulama için seçimlidir.'
+                          : 'Tarayıcınız konumu desteklemiyor.'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="space-y-3">
+                <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3.5">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Konum tabanlı öneriler</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {locationEnabled
+                          ? '✅ Yakındaki mekanlar ve akıllı öneriler için konum kullanılır'
+                          : '🔒 Konum özellikleri devre dışı — genel öneriler gösterilir'}
+                      </p>
+                    </div>
+                    <Toggle value={locationEnabled} onChange={setLocationEnabled} />
+                  </div>
+                </div>
+
+                <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3.5">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Konum geçmişi</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {locationHistory
+                          ? '✅ Ziyaret geçmişi kaydediliyor — gelecek planlar için daha iyi öneriler'
+                          : '🔒 Konum geçmişi saklanmıyor'}
+                      </p>
+                    </div>
+                    <Toggle value={locationHistory} onChange={setLocationHistory} />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
           )}
 
           {/* ══ GİZLİLİK — Veri Kullanımı ══ */}
           {activeSection === 'privacy_data' && (
-            <CardWrap title="Veri Kullanımı">
+            <CardWrap title="Veri Kullanımı" subtitle="Verilerinizin nasıl işlendiğini kontrol edin.">
               <StatusBanner status={privacyStatus} />
-              <SettingRow title="Analitik verilerini paylaş" desc="Hizmet iyileştirmek için anonim kullanım verisi"><Toggle value={analyticsEnabled} onChange={setAnalyticsEnabled} /></SettingRow>
-              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 mt-4">
+
+              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-4">
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Analitik verisi paylaş</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {analyticsEnabled
+                        ? '✅ Anonim kullanım verisi — hizmet iyileştirmek için gönderilir'
+                        : '🔒 Hiçbir kullanım verisi gönderilmez'}
+                    </p>
+                  </div>
+                  <Toggle value={analyticsEnabled} onChange={setAnalyticsEnabled} />
+                </div>
+              </div>
+
+              {/* Veri özeti */}
+              <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-4">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Hesabınızda saklanan veriler</p>
+                </div>
+                {[
+                  { icon: '👤', label: 'Profil bilgileri', desc: 'Ad, e-posta, fotoğraf' },
+                  { icon: '✈️', label: 'Seyahat planları', desc: 'Oluşturduğunuz tüm planlar' },
+                  { icon: '⚙️', label: 'Tercihler & ayarlar', desc: 'Bildirim, görünüm, gizlilik' },
+                  { icon: '📍', label: 'Pasaport & konum', desc: 'Seyahat ile ilgili kişisel bilgiler' },
+                ].map(({ icon, label, desc }) => (
+                  <div key={label} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                    <span className="text-base w-7 shrink-0">{icon}</span>
+                    <div>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</p>
+                      <p className="text-[11px] text-slate-400">{desc}</p>
+                    </div>
+                    <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">Şifreli</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
                 <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  Kişisel verileriniz 6698 sayılı KVKK kapsamında işlenmektedir. Verilerinizi indirmek veya hesabı silmek için "Verilerim" bölümünü kullanın.
+                  🔐 Kişisel verileriniz 6698 sayılı KVKK kapsamında işlenmektedir.
+                  Verilerinizi indirmek veya hesabınızı silmek için <strong>Verilerim</strong> bölümünü kullanın.
                 </p>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
           )}

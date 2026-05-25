@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import {
   Users, Search, X as XIcon, ChevronDown, ChevronUp, Loader2, Globe,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ const FEED_INITIAL = 3;
 const Community: React.FC = () => {
   const { user }  = useAuthStore();
   const plans     = useUserPlans();
+  const { plansPublic, profilePublic, followPublic } = useAppSettingsStore();
 
   /* ── Social state ── */
   const [publicFeed, setPublicFeed]       = useState<PublicPlan[]>([]);
@@ -68,6 +70,12 @@ const Community: React.FC = () => {
   /* Social handlers */
   const handleShare = useCallback(async (planId: string) => {
     if (!user) return;
+    // Gizlilik ayarı — plan paylaşımı kapalı, sadece geri almaya izin ver
+    if (!plansPublic && !sharedPlanIds.has(planId)) {
+      setShareError('Plan paylaşımı gizlilik ayarlarınızda kapalı. Ayarlar → Gizlilik → Planlarım herkese açık seçeneğini etkinleştirin.');
+      setTimeout(() => setShareError(null), 5000);
+      return;
+    }
     setSavingShare(planId);
     setShareError(null);
     try {
@@ -156,7 +164,7 @@ const Community: React.FC = () => {
       <div className="max-w-[1150px] mx-auto px-10 py-10">
 
         {/* Başlık */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Users size={18} className="text-[#f8981d]" />
             <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest">Topluluk</p>
@@ -164,6 +172,38 @@ const Community: React.FC = () => {
           <h1 className="text-2xl font-black text-slate-900">Gezgin Akışı</h1>
           <p className="text-slate-400 text-sm mt-1">Diğer gezginlerin planlarını keşfet, takip et ve ilham al.</p>
         </div>
+
+        {/* Gizlilik uyarı banner'ları */}
+        {(!profilePublic || !plansPublic || !followPublic) && (
+          <div className="mb-5 space-y-2">
+            {!profilePublic && (
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+                <span className="text-base">🔒</span>
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  <strong>Gizli profil:</strong> Profiliniz başkaları tarafından görüntülenemiyor.
+                  <a href="/settings" className="ml-1.5 text-[#f8981d] font-semibold hover:underline">Ayarları değiştir →</a>
+                </p>
+              </div>
+            )}
+            {!plansPublic && (
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <span className="text-base">🔕</span>
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  <strong>Plan paylaşımı kapalı:</strong> Planlarınızı toplulukta paylaşamazsınız.
+                  <a href="/settings" className="ml-1.5 font-semibold hover:underline">Ayarlardan aç →</a>
+                </p>
+              </div>
+            )}
+            {!followPublic && (
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                <span className="text-base">👤</span>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>Onaylı takip modu:</strong> Yeni takip istekleri onayınızı bekler.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Header: tabs + arama */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">

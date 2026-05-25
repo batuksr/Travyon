@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Bell, X, CheckCheck, AlertTriangle, Info } from 'lucide-react';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
 
 interface WeatherData { temp: number; code: number; windspeed: number }
 
@@ -30,6 +31,11 @@ const levelConfig = {
 
 const Notifications: React.FC = () => {
   const plans = useUserPlans();
+  const {
+    tempCelsius,
+    appPlanNotif, appCommunityNotif, appUpdateNotif,
+    pushEnabled, pushPermission,
+  } = useAppSettingsStore();
 
   const [weather, setWeather]       = useState<WeatherData | null>(null);
   const [dismissed, setDismissed]   = useState<Set<string>>(() => {
@@ -88,13 +94,52 @@ const Notifications: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const allNotifications = useMemo(() =>
-    buildNotifications(plans, weather, todayStr, cityName),
-  [plans, weather, todayStr, cityName]);
+  const allNotifications = useMemo(() => {
+    let notifs = buildNotifications(plans, weather, todayStr, cityName, tempCelsius);
+
+    // Kullanıcının bildirim tercihlerine göre filtrele
+    if (!appPlanNotif) {
+      // Plan/bütçe/seyahat bildirimleri kapalı — sadece hava durumunu göster
+      notifs = notifs.filter(n => n.id.startsWith('weather-'));
+    }
+    if (!appCommunityNotif) {
+      notifs = notifs.filter(n => !n.id.startsWith('community-'));
+    }
+    if (!appUpdateNotif) {
+      notifs = notifs.filter(n => !n.id.startsWith('update-'));
+    }
+    return notifs;
+  }, [plans, weather, todayStr, cityName, tempCelsius, appPlanNotif, appCommunityNotif, appUpdateNotif]);
 
   const notifications: AppNotification[] = useMemo(() =>
     allNotifications.filter(n => !dismissed.has(n.id)),
   [allNotifications, dismissed]);
+
+  // Push bildirimi gönder — sayfa açıldığında, izin varsa ve push aktifse
+  useEffect(() => {
+    if (!pushEnabled || pushPermission !== 'granted') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const urgentPlan = plans.find(p => {
+      const start = p.onboardingData.startDate;
+      const daysLeft = Math.ceil((new Date(start).getTime() - Date.now()) / 86_400_000);
+      return daysLeft >= 0 && daysLeft <= 1;
+    });
+
+    if (urgentPlan) {
+      const dest = urgentPlan.plan.destination.split(',')[0];
+      const daysLeft = Math.ceil((new Date(urgentPlan.onboardingData.startDate).getTime() - Date.now()) / 86_400_000);
+      const sent = sessionStorage.getItem('push-sent-' + urgentPlan.id);
+      if (!sent) {
+        new Notification(daysLeft === 0 ? `Bugün ${dest}'a yolculuk! ✈️` : `Yarın ${dest}'a yolculuk! 🧳`, {
+          body: daysLeft === 0 ? 'Planını son kez kontrol etmeyi unutma.' : 'Hazırlıklarını tamamladın mı?',
+          icon: '/favicon.ico',
+        });
+        sessionStorage.setItem('push-sent-' + urgentPlan.id, '1');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pushEnabled, pushPermission]);
 
   const urgentCount  = notifications.filter(n => n.level === 'urgent').length;
   const warningCount = notifications.filter(n => n.level === 'warning').length;

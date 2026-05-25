@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import { CITIES } from '../data/cities';
 import { Plane, MapPin, Wind, LayoutGrid, Wallet, Globe, Trophy,
          Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
@@ -168,6 +169,11 @@ const Hub: React.FC = () => {
   const [hoveredPin, setHoveredPin]         = useState<string | null>(null);
   const [selectedPin, setSelectedPin]       = useState<DestPin | null>(null);
   const { dark } = useThemeStore();
+  const { tempCelsius, distanceKm: distKm } = useAppSettingsStore();
+
+  /* Birim yardımcıları */
+  const displayTemp  = (c: number) => tempCelsius ? `${c}°C` : `${Math.round(c * 9 / 5 + 32)}°F`;
+  const displayWind  = (kmh: number) => distKm ? `${kmh} km/s` : `${Math.round(kmh * 0.621371)} mph`;
 
   /* ── Social state (paylaş butonu için) ── */
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
@@ -185,8 +191,16 @@ const Hub: React.FC = () => {
   }, [user]);
 
   /* Paylaş / geri al */
+  const { plansPublic } = useAppSettingsStore();
+
   const handleShare = useCallback(async (planId: string) => {
     if (!user) return;
+    // Gizlilik kontrolü — sadece geri almaya izin ver
+    if (!plansPublic && !sharedPlanIds.has(planId)) {
+      setShareError('Plan paylaşımı gizlilik ayarlarınızda kapalı.');
+      setTimeout(() => setShareError(null), 4000);
+      return;
+    }
     setSavingShare(planId);
     setShareError(null);
     try {
@@ -210,7 +224,7 @@ const Hub: React.FC = () => {
       setSavingShare(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, sharedPlanIds, plans]);
+  }, [user, sharedPlanIds, plans, plansPublic]);
 
   /* ── Quick Actions state ── */
   type RandState = 'idle' | 'spinning' | 'revealed';
@@ -649,11 +663,11 @@ const Hub: React.FC = () => {
                   <div className="flex items-end gap-5 mt-auto">
                     <span className="text-7xl leading-none select-none">{weatherIcon(weather.code)}</span>
                     <div>
-                      <p className="text-5xl font-black text-slate-900 leading-none">{weather.temp}°</p>
+                      <p className="text-5xl font-black text-slate-900 leading-none">{displayTemp(weather.temp)}</p>
                       <p className="text-slate-500 text-sm font-medium mt-1">{weatherLabel(weather.code)}</p>
                       <div className="flex items-center gap-1 mt-1.5">
                         <Wind size={11} className="text-slate-400" />
-                        <span className="text-slate-400 text-xs">{weather.windspeed} km/s rüzgar</span>
+                        <span className="text-slate-400 text-xs">{displayWind(weather.windspeed)} rüzgar</span>
                       </div>
                     </div>
                   </div>
@@ -1001,11 +1015,14 @@ const Hub: React.FC = () => {
                               {/* Share toggle */}
                               <button
                                 onClick={() => handleShare(item.planId)}
-                                disabled={savingShare === item.planId}
+                                disabled={savingShare === item.planId || (!plansPublic && !sharedPlanIds.has(item.planId))}
+                                title={!plansPublic && !sharedPlanIds.has(item.planId) ? 'Plan paylaşımı gizlilik ayarlarınızda kapalı' : undefined}
                                 className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all flex-shrink-0 ${
-                                  sharedPlanIds.has(item.planId)
-                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-red-50 hover:text-red-400 hover:border-red-200'
-                                    : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
+                                  !plansPublic && !sharedPlanIds.has(item.planId)
+                                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                                    : sharedPlanIds.has(item.planId)
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-red-50 hover:text-red-400 hover:border-red-200'
+                                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
                                 }`}
                               >
                                 {savingShare === item.planId

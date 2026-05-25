@@ -16,6 +16,10 @@ import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { generateTravelPlan } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { searchCities, type CityOption } from '../data/cities';
+import { useAuthStore } from '../store/useAuthStore';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { CURRENCY_MAP } from '../store/useAppSettingsStore';
 
 const today = new Date().toISOString().split('T')[0];
 const ALL_EATER_OPTION = 'Her Şeyi Yerim';
@@ -149,6 +153,26 @@ const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const { currentStep, data, nextStep, prevStep, updateData } = useOnboardingStore();
   const { setPlan } = usePlanStore();
+  const { user } = useAuthStore();
+
+  // Ayarlar'dan kaydedilen varsayılan değerleri yükle (sadece form boşsa uygula)
+  useEffect(() => {
+    if (!user || data.destination !== '') return; // form zaten doldurulmuşsa dokunma
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      const updates: Partial<OnboardingData> = {};
+      if (d.defaultBudget)      updates.budget      = Number(d.defaultBudget);
+      if (d.defaultPeopleCount) updates.peopleCount  = Number(d.defaultPeopleCount);
+      if (d.defaultPace)        updates.pace         = d.defaultPace as string;
+      if (d.defaultCurrency) {
+        const curr = CURRENCY_MAP[d.defaultCurrency as string];
+        if (curr) { updates.currencyCode = curr.code; updates.currencySymbol = curr.symbol; }
+      }
+      if (Object.keys(updates).length > 0) updateData(updates);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingIdx, setLoadingIdx] = useState(0);
@@ -723,10 +747,10 @@ const Onboarding: React.FC = () => {
                           <p className="text-[11px] text-slate-400 mt-0.5">Sabah erken aktivite planlanabilir</p>
                         </div>
                       </div>
-                      <div className={`relative w-11 h-6 rounded-full transition-colors duration-300 shrink-0
+                      <div className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
                         ${data.earlyBird ? 'bg-[#f8981d]' : 'bg-slate-200'}`}>
-                        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300
-                          ${data.earlyBird ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out
+                          ${data.earlyBird ? 'translate-x-5' : 'translate-x-0'}`} />
                       </div>
                     </button>
 

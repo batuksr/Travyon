@@ -6,6 +6,7 @@ import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
 import type { VibeType } from './VibeSelector';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
 
 interface Props {
   day: DailyPlan;
@@ -31,6 +32,7 @@ const vibeConfig: Record<string, { label: string; emoji: string }> = {
 const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
   const { plan, updateDayPlan, updateActivityActualCost } = usePlanStore();
   const { data: tripData } = useOnboardingStore();
+  const { distanceKm: distKm } = useAppSettingsStore();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [activeVibe, setActiveVibe] = useState<VibeType>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -92,11 +94,16 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
         {day.activities.map((activity, index) => {
           const isLast = index === day.activities.length - 1;
           const nextActivity = !isLast ? day.activities[index + 1] : null;
-          const distanceKm = nextActivity
+          const rawDistKm = nextActivity
             ? haversineDistance(
                 activity.coordinates.lat, activity.coordinates.lng,
                 nextActivity.coordinates.lat, nextActivity.coordinates.lng
-              ).toFixed(1)
+              )
+            : null;
+          const distanceDisplay = rawDistKm !== null
+            ? distKm
+              ? `${rawDistKm.toFixed(1)} km`
+              : `${(rawDistKm * 0.621371).toFixed(1)} mi`
             : null;
 
           const colors = getPeriodColor(activity.period);
@@ -185,8 +192,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                   </div>
 
                   {/* Distance to next activity */}
-                  {distanceKm && !isLast && (
-                    <p className="text-[10px] text-slate-400 mt-1 font-medium">↕ {distanceKm} km</p>
+                  {distanceDisplay && !isLast && (
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">↕ {distanceDisplay}</p>
                   )}
                 </div>
               </div>

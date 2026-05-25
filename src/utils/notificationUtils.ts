@@ -46,11 +46,15 @@ const requiresBooking = (placeName: string): boolean =>
 /* ══════════════════════════════════════════════
    Main builder
 ═══════════════════════════════════════════════ */
+const fmtTemp = (c: number, celsius: boolean) =>
+  celsius ? `${c}°C` : `${Math.round(c * 9 / 5 + 32)}°F`;
+
 export const buildNotifications = (
-  plans:       PlanEntry[],
-  weather:     WeatherData | null,
-  todayStr:    string,
+  plans:        PlanEntry[],
+  weather:      WeatherData | null,
+  todayStr:     string,
   nextTripCity: string,
+  tempCelsius:  boolean = true,
 ): AppNotification[] => {
   const now   = Date.now();
   const notifs: AppNotification[] = [];
@@ -174,23 +178,23 @@ export const buildNotifications = (
       });
     }
 
-    // Sıcaklık
+    // Sıcaklık — karşılaştırmalar hep °C, gösterim tercih biriminde
     if (temp <= 2) {
       notifs.push({
         id: 'weather-freezing', icon: '🥶', level: 'urgent',
-        title: `Hava ${temp}°C — Dondurucu`,
+        title: `Hava ${fmtTemp(temp, tempCelsius)} — Dondurucu`,
         body: `${nextTripCity}'da çok soğuk. Kalın mont, eldiven ve bere şart.`,
       });
     } else if (temp < 10) {
       notifs.push({
         id: 'weather-cold', icon: '🧥', level: 'warning',
-        title: `Hava ${temp}°C — Soğuk`,
+        title: `Hava ${fmtTemp(temp, tempCelsius)} — Soğuk`,
         body: `${nextTripCity}'da soğuk hava. Yağmurluk ve kalın giysi planla.`,
       });
     } else if (temp >= 35) {
       notifs.push({
         id: 'weather-hot', icon: '🌡️', level: 'warning',
-        title: `Hava ${temp}°C — Çok Sıcak`,
+        title: `Hava ${fmtTemp(temp, tempCelsius)} — Çok Sıcak`,
         body: `${nextTripCity}'da sıcak hava. Bol su ve güneş kremi unutma.`,
       });
     }

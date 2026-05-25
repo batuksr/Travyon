@@ -135,11 +135,11 @@ const Sidebar: React.FC = () => {
           {/* Kapalıyken: pill toggle ortada */}
           {!expanded && (
             <div className="w-full flex justify-start">
-              <div className={`relative w-11 h-6 rounded-full transition-colors duration-300
+              <div className={`relative inline-flex h-6 w-11 rounded-full border-2 border-transparent transition-colors duration-300
                 ${dark ? 'bg-slate-600' : 'bg-slate-200'}`}
               >
-                <div className={`pill-circle absolute top-0.5 w-5 h-5 rounded-full shadow-sm flex items-center justify-center
-                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0.5 bg-white text-slate-500'}`}
+                <div className={`pill-circle inline-flex h-5 w-5 rounded-full shadow-lg items-center justify-center
+                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0 bg-white text-slate-500'}`}
                   style={{ transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.3s ease' }}
                 >
                   <span key={pillDark ? 'moon-c' : 'sun-c'} className="theme-icon-in">
@@ -156,11 +156,11 @@ const Sidebar: React.FC = () => {
               <span className="text-xs font-semibold whitespace-nowrap text-slate-600 dark:text-slate-300 flex-1 text-left pl-3">
                 Tema
               </span>
-              <div className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-300
+              <div className={`relative inline-flex flex-shrink-0 h-6 w-11 rounded-full border-2 border-transparent transition-colors duration-300
                 ${dark ? 'bg-slate-600' : 'bg-slate-200'}`}
               >
-                <div className={`pill-circle absolute top-0.5 w-5 h-5 rounded-full shadow-sm flex items-center justify-center
-                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0.5 bg-white text-slate-500'}`}
+                <div className={`pill-circle inline-flex h-5 w-5 rounded-full shadow-lg items-center justify-center
+                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0 bg-white text-slate-500'}`}
                   style={{ transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.3s ease' }}
                 >
                   <span key={pillDark ? 'moon-e' : 'sun-e'} className="theme-icon-in">

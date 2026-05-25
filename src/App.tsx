@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./services/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useSidebarStore } from "./store/useSidebarStore";
+import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -59,6 +61,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
 function App() {
   const { user, setUser, setLoading, loading } = useAuthStore();
   const { dark } = useThemeStore();
+  const { setSettings } = useAppSettingsStore();
 
   /* Apply / remove dark class on <html> */
   useEffect(() => {
@@ -74,9 +77,49 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+
+      // Kullanıcı giriş yaptığında uygulama ayarlarını Firestore'dan yükle
+      if (currentUser) {
+        getDoc(doc(db, 'users', currentUser.uid)).then((snap) => {
+          if (!snap.exists()) return;
+          const d = snap.data();
+          // Para birimi → Varsayılan Tercihler'deki defaultCurrency'den alınır
+          const currLabel: string = d.defaultCurrency ?? 'TRY — ₺';
+          const curr = CURRENCY_MAP[currLabel] ?? { code: 'TRY', symbol: '₺' };
+          // Tarayıcı push iznini kontrol et
+          const pushPerm: 'default' | 'granted' | 'denied' | 'unsupported' =
+            'Notification' in window
+              ? (Notification.permission as 'default' | 'granted' | 'denied')
+              : 'unsupported';
+
+          setSettings({
+            language:           d.language           ?? 'Türkçe',
+            currencyLabel:      currLabel,
+            currencyCode:       curr.code,
+            currencySymbol:     curr.symbol,
+            distanceKm:         d.distanceKm          ?? true,
+            tempCelsius:        d.tempCelsius          ?? true,
+            appPlanNotif:       d.appPlanNotif         ?? true,
+            appCommunityNotif:  d.appCommunityNotif    ?? true,
+            appUpdateNotif:     d.appUpdateNotif       ?? false,
+            emailPlanNotif:     d.emailPlanNotif       ?? true,
+            emailWeeklyDigest:  d.emailWeeklyDigest    ?? true,
+            emailPromoNotif:    d.emailPromoNotif      ?? false,
+            pushEnabled:        d.pushEnabled          ?? false,
+            pushSoundEnabled:   d.pushSoundEnabled     ?? true,
+            pushPermission:     pushPerm,
+            profilePublic:      d.profilePublic        ?? true,
+            plansPublic:        d.plansPublic          ?? false,
+            followPublic:       d.followPublic         ?? true,
+            locationEnabled:    d.locationEnabled      ?? true,
+            locationHistory:    d.locationHistory      ?? false,
+            analyticsEnabled:   d.analyticsEnabled     ?? true,
+          });
+        }).catch(() => {});
+      }
     });
     return () => unsubscribe();
-  }, [setUser, setLoading]);
+  }, [setUser, setLoading, setSettings]);
 
   if (loading) {
     return (
