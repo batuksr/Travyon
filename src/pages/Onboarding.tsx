@@ -5,6 +5,10 @@ import {
   MapPin, Calendar, Heart, Utensils, Bed,
   ArrowRight, ArrowLeft, Check, Sparkles,
   Loader2, Plus, Minus, Plane, Search,
+  Backpack, Users, PartyPopper, Briefcase, Coffee, Map,
+  Camera, TrendingUp, Building2, Footprints, Wine,
+  DollarSign, Bus, Sunrise, CloudRain, ChevronDown, X,
+  Sofa, Mountain, Compass,
 } from 'lucide-react';
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
 import TravyonLogo from '../components/TravyonLogo';
@@ -61,7 +65,10 @@ const validateStep = (step: number, data: OnboardingData): string | null => {
     if (data.budget < 100) return 'Bütçe en az 100 olmalı.';
   }
   if (step === 2) {
-    if (!data.tripPurpose) return 'Seyahat amacı seçin.';
+    if (!data.travelType) return 'Seyahat türünü seçmelisin.';
+    const effectivePurposes = data.purposes && data.purposes.length > 0
+      ? data.purposes : (data.tripPurpose ? [data.tripPurpose] : []);
+    if (effectivePurposes.length === 0) return 'En az 1 ilgi alanı seç.';
     if (!data.pace) return 'Günlük tempo seçin.';
   }
   if (step === 3) {
@@ -69,7 +76,9 @@ const validateStep = (step: number, data: OnboardingData): string | null => {
     if (!data.mealBudget) return 'Öğün başı bütçe seçin.';
   }
   if (step === 4) {
-    if (!data.accommodation) return 'Konaklama tercihi seçin.';
+    if (data.hasReservation === null) return 'Rezervasyon durumunuzu belirtin.';
+    if (data.hasReservation === true && !data.accommodationAddress.trim()) return 'Konaklama adresini girin.';
+    if (data.hasReservation === false && !data.accommodation) return 'Konaklama tercihi seçin.';
     if (!data.transport) return 'Ulaşım tercihi seçin.';
   }
   return null;
@@ -86,12 +95,14 @@ const validateAll = (data: OnboardingData): string | null => {
 /* ── Field-level hints ── */
 type FieldHints = {
   destination: boolean; startDate: boolean; endDate: boolean; budget: boolean;
-  tripPurpose: boolean; pace: boolean; dietary: boolean; mealBudget: boolean;
+  travelType: boolean; tripPurpose: boolean; pace: boolean;
+  dietary: boolean; mealBudget: boolean;
   accommodation: boolean; transport: boolean;
 };
 const EMPTY_HINTS: FieldHints = {
   destination: false, startDate: false, endDate: false, budget: false,
-  tripPurpose: false, pace: false, dietary: false, mealBudget: false,
+  travelType: false, tripPurpose: false, pace: false,
+  dietary: false, mealBudget: false,
   accommodation: false, transport: false,
 };
 const hintsForStep = (step: number, data: OnboardingData): FieldHints => {
@@ -102,9 +113,20 @@ const hintsForStep = (step: number, data: OnboardingData): FieldHints => {
     h.endDate   = !data.endDate   || data.endDate   < today || data.startDate >= data.endDate;
     h.budget    = data.budget < 100;
   }
-  if (step === 2) { h.tripPurpose = !data.tripPurpose; h.pace = !data.pace; }
+  if (step === 2) {
+    const effectivePurposes = data.purposes && data.purposes.length > 0
+      ? data.purposes : (data.tripPurpose ? [data.tripPurpose] : []);
+    h.travelType  = !data.travelType;
+    h.tripPurpose = effectivePurposes.length === 0;
+    h.pace        = !data.pace;
+  }
   if (step === 3) { h.dietary = data.dietaryRestrictions.length === 0; h.mealBudget = !data.mealBudget; }
-  if (step === 4) { h.accommodation = !data.accommodation; h.transport = !data.transport; }
+  if (step === 4) {
+    h.accommodation = data.hasReservation === null
+      || (data.hasReservation === true  && !data.accommodationAddress.trim())
+      || (data.hasReservation === false && !data.accommodation);
+    h.transport = !data.transport;
+  }
   return h;
 };
 
@@ -159,6 +181,8 @@ const Onboarding: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [hints, setHints] = useState<FieldHints>(EMPTY_HINTS);
   const [allCompleted, setAllCompleted] = useState(false);
+  const [dislikesOpen, setDislikesOpen] = useState(false);
+  const [purposesWarning, setPurposesWarning] = useState(false);
 
   /* Destination autocomplete */
   const [citySuggestions, setCitySuggestions] = useState<CityOption[]>([]);
@@ -397,7 +421,7 @@ const Onboarding: React.FC = () => {
                   {currentStep === 1 && 'Destinasyon ve tarihleri belirle.'}
                   {currentStep === 2 && 'Bütçe ve seyahat tarzını seç.'}
                   {currentStep === 3 && 'Damak zevkine göre öneriler.'}
-                  {currentStep === 4 && 'Konfor seviyeni belirle.'}
+                  {currentStep === 4 && 'Bu seçim, AI\'nın konaklama bağlamını anlamasına yardımcı olacak.'}
                 </p>
 
                 {/* ── ADIM 1 ── */}
@@ -550,41 +574,204 @@ const Onboarding: React.FC = () => {
                 {/* ── ADIM 2 ── */}
                 {currentStep === 2 && (
                   <div className="space-y-6">
+
+                    {/* Seyahat Türü */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Seyahat Amacı</label>
+                      <label className="text-xs font-medium text-slate-500 mb-2 block">Seyahat Türü</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {([
+                          { val: 'solo_macera',    Icon: Backpack,     color: 'text-emerald-500', title: 'Solo Macera',       sub: 'Tek başına, esnek keşif' },
+                          { val: 'romantik',       Icon: Heart,        color: 'text-rose-500',    title: 'Romantik Kaçamak',  sub: 'Çift olarak sakin tatil' },
+                          { val: 'balayi',         Icon: Sparkles,     color: 'text-amber-500',   title: 'Balayı',            sub: 'Lüks ve özel anlar' },
+                          { val: 'aile',           Icon: Users,        color: 'text-blue-500',    title: 'Aile Tatili',       sub: 'Çocuk dostu aktiviteler' },
+                          { val: 'arkadas_grubu',  Icon: PartyPopper,  color: 'text-purple-500',  title: 'Arkadaşlarla',      sub: 'Eğlence ve sosyal' },
+                          { val: 'is_seyahati',    Icon: Briefcase,    color: 'text-slate-700',   title: 'İş Seyahati',       sub: 'Verimli, kısa süreli' },
+                          { val: 'sehir_kacamagi', Icon: Coffee,       color: 'text-teal-500',    title: 'Şehir Kaçamağı',    sub: 'Kısa hafta sonu' },
+                          { val: 'klasik_tatil',   Icon: Map,          color: 'text-indigo-500',  title: 'Klasik Tatil',      sub: 'Genel turistik gezi' },
+                        ] as const).map(({ val, Icon, color, title, sub }) => {
+                          const selected = data.travelType === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => { updateData({ travelType: val }); setHints((h) => ({ ...h, travelType: false })); }}
+                              className={`relative flex flex-col items-start gap-1.5 px-3 py-2.5 rounded-lg border text-left
+                                transition-all duration-150 hover:-translate-y-px
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.03]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <Icon size={16} className={`shrink-0 ${selected ? 'text-[#f8981d]' : color}`} />
+                              <div className="min-w-0">
+                                <p className={`font-semibold text-xs leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
+                              </div>
+                              {selected && (
+                                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-[#f8981d] flex items-center justify-center">
+                                  <Check size={8} className="text-white" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <FieldError msg={hints.travelType ? 'Seyahat türünü seçmelisin.' : undefined} />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 mb-0.5 block">İlgi Alanların</label>
+                      <p className="text-[11px] text-slate-400 mb-2.5">
+                        En fazla 3 tane seçebilirsin. Seçim sırası önceliği belirler.
+                      </p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
                           { val: 'culture',   emoji: '🏛️', title: 'Kültür & Tarih',  sub: 'Müzeler, tarihi mekanlar' },
                           { val: 'relax',     emoji: '😴', title: 'Dinlenme',          sub: 'Spa, sahil, yavaş tempo' },
                           { val: 'nightlife', emoji: '🌙', title: 'Gece Hayatı',       sub: 'Bar, kulüp, canlı müzik' },
                           { val: 'nature',    emoji: '🏔️', title: 'Doğa & Macera',    sub: 'Trekking, doğa yürüyüşü' },
-                        ].map(({ val, emoji, title, sub }) => (
-                          <OptionCard
-                            key={val}
-                            emoji={emoji} title={title} subtitle={sub}
-                            selected={data.tripPurpose === val}
-                            onClick={() => { updateData({ tripPurpose: val as OnboardingData['tripPurpose'] }); setHints((h) => ({ ...h, tripPurpose: false })); }}
-                          />
-                        ))}
+                        ].map(({ val, emoji, title, sub }) => {
+                          const currentPurposes: string[] = data.purposes && data.purposes.length > 0
+                            ? data.purposes
+                            : (data.tripPurpose ? [data.tripPurpose] : []);
+                          const rank = currentPurposes.indexOf(val); // -1 = seçili değil
+                          const isSelected = rank !== -1;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => {
+                                const cur: string[] = data.purposes && data.purposes.length > 0
+                                  ? data.purposes
+                                  : (data.tripPurpose ? [data.tripPurpose] : []);
+                                if (isSelected) {
+                                  // Kaldır — kalan elemanlar sırayı korur
+                                  const next = cur.filter((p) => p !== val);
+                                  updateData({ purposes: next, tripPurpose: next[0] ?? '' });
+                                  setHints((h) => ({ ...h, tripPurpose: false }));
+                                  setPurposesWarning(false);
+                                } else if (cur.length >= 3) {
+                                  // Limit aşıldı — inline uyarı
+                                  setPurposesWarning(true);
+                                  setTimeout(() => setPurposesWarning(false), 2500);
+                                } else {
+                                  const next = [...cur, val];
+                                  updateData({ purposes: next, tripPurpose: next[0] });
+                                  setHints((h) => ({ ...h, tripPurpose: false }));
+                                  setPurposesWarning(false);
+                                }
+                              }}
+                              className={`relative px-3.5 py-2.5 rounded-lg border-2 text-left transition-all duration-150 flex items-center gap-2.5 w-full hover:-translate-y-px
+                                ${isSelected
+                                  ? 'border-[#f8981d] bg-orange-50/30'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              {emoji && <span className="text-base shrink-0 leading-none">{emoji}</span>}
+                              <div className="flex-1 min-w-0">
+                                <p className={`font-medium text-sm leading-tight ${isSelected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                {sub && <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>}
+                              </div>
+                              {isSelected && (
+                                <div className="w-6 h-6 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0 text-white text-xs font-black absolute top-2 right-2">
+                                  {rank + 1}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <FieldError msg={hints.tripPurpose ? 'Bir seyahat amacı seçin.' : undefined} />
+
+                      {/* Max-3 inline uyarısı */}
+                      <AnimatePresence>
+                        {purposesWarning && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.18 }}
+                            className="text-xs text-amber-600 mt-1.5 ml-0.5 font-medium"
+                          >
+                            En fazla 3 ilgi alanı seçebilirsin.
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+
+                      <FieldError msg={hints.tripPurpose ? 'En az 1 ilgi alanı seç.' : undefined} />
                     </div>
 
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Günlük Tempo</label>
-                      <div className="grid grid-cols-3 gap-2.5">
-                        {[
-                          { val: 'yavaş', emoji: '🐢', title: 'Yavaş', sub: '2-3 aktivite' },
-                          { val: 'orta',  emoji: '⚖️', title: 'Orta',  sub: '4-5 aktivite' },
-                          { val: 'yoğun', emoji: '🔥', title: 'Yoğun', sub: '6+ aktivite'  },
-                        ].map(({ val, emoji, title, sub }) => (
-                          <OptionCard
-                            key={val}
-                            emoji={emoji} title={title} subtitle={sub}
-                            selected={data.pace === val}
-                            onClick={() => { updateData({ pace: val as OnboardingData['pace'] }); setHints((h) => ({ ...h, pace: false })); }}
-                          />
-                        ))}
+                      <label className="text-xs font-medium text-slate-500 mb-0.5 block">Tempon Nasıl Olsun?</label>
+                      <p className="text-[11px] text-slate-400 mb-2.5">Günlük yürüyüş ve aktivite yoğunluğunu seç.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        {([
+                          {
+                            val: 'rahat',
+                            Icon: Sofa,
+                            color: 'text-emerald-500',
+                            activeBg: 'bg-emerald-50/40',
+                            title: 'Rahat',
+                            desc: 'Az yürüyüş, çok mola',
+                            detail: 'Günde 3–4 km, taksi/transit ağırlıklı',
+                          },
+                          {
+                            val: 'normal',
+                            Icon: Footprints,
+                            color: 'text-blue-500',
+                            activeBg: 'bg-blue-50/40',
+                            title: 'Normal',
+                            desc: 'Standart turist temposu',
+                            detail: 'Günde 6–8 km, 3–4 ana nokta',
+                          },
+                          {
+                            val: 'aktif',
+                            Icon: Mountain,
+                            color: 'text-orange-500',
+                            activeBg: 'bg-orange-50/40',
+                            title: 'Aktif',
+                            desc: 'Her şeyi görmek isterim',
+                            detail: 'Günde 10–15 km, sınırsız aktivite',
+                          },
+                          {
+                            val: 'esnek',
+                            Icon: Compass,
+                            color: 'text-purple-500',
+                            activeBg: 'bg-purple-50/40',
+                            title: 'Esnek',
+                            desc: 'AI karar versin',
+                            detail: 'Şehre ve havaya göre değişsin',
+                          },
+                        ] as const).map(({ val, Icon, color, activeBg, title, desc, detail }) => {
+                          const selected = data.pace === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => { updateData({ pace: val }); setHints((h) => ({ ...h, pace: false })); }}
+                              className={`relative flex flex-col items-start gap-1.5 px-3.5 py-3 rounded-lg border text-left
+                                transition-all duration-150 hover:-translate-y-px hover:shadow-sm
+                                ${selected
+                                  ? `border-[#f8981d] ${activeBg}`
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <Icon size={20} className={`shrink-0 ${selected ? 'text-[#f8981d]' : color}`} />
+                              <div className="min-w-0 w-full">
+                                <p className={`font-bold text-sm leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>
+                                  {title}
+                                </p>
+                                <p className={`text-xs mt-0.5 leading-tight ${selected ? 'text-[#f8981d]/80' : 'text-slate-500'}`}>
+                                  {desc}
+                                </p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight border-t border-slate-100 pt-1.5">
+                                  {detail}
+                                </p>
+                              </div>
+                              {selected && (
+                                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-[#f8981d] flex items-center justify-center">
+                                  <Check size={8} className="text-white" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                       <FieldError msg={hints.pace ? 'Günlük tempo seçin.' : undefined} />
                     </div>
@@ -598,6 +785,89 @@ const Onboarding: React.FC = () => {
                       />
                       <span className="text-sm text-slate-700 font-semibold">Erken kalkmayı severim</span>
                     </label>
+
+                    {/* ── Uzak Durmak İstediklerin (Collapsible, opsiyonel) ── */}
+                    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+
+                      {/* Başlık — tıklanabilir */}
+                      <button
+                        type="button"
+                        onClick={() => setDislikesOpen((o) => !o)}
+                        className="w-full flex items-center justify-between px-3.5 py-3 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="text-left">
+                          <p className="text-sm font-semibold text-slate-700">
+                            Uzak durmak istediklerin var mı?
+                            <span className="ml-1.5 text-[10px] font-medium text-slate-400 normal-case">(İsteğe bağlı)</span>
+                          </p>
+                          {!dislikesOpen && data.dislikes.length > 0 && (
+                            <p className="text-[11px] text-[#f8981d] mt-0.5">
+                              {data.dislikes.length} seçim yapıldı
+                            </p>
+                          )}
+                        </div>
+                        <ChevronDown
+                          size={16}
+                          className={`text-slate-400 shrink-0 transition-transform duration-300 ${dislikesOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      {/* İçerik — smooth collapsible */}
+                      <div
+                        className="transition-all duration-300 ease-in-out overflow-hidden"
+                        style={{ maxHeight: dislikesOpen ? '480px' : '0px', opacity: dislikesOpen ? 1 : 0 }}
+                      >
+                        <div className="px-3.5 pb-3.5 pt-1 border-t border-slate-100">
+                          <p className="text-[11px] text-slate-400 mb-3">
+                            Seçtiklerin AI planını şekillendirecek.
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {([
+                              { val: 'kalabalik_yerler',    Icon: Users,        label: 'Kalabalık yerler' },
+                              { val: 'turistik_noktalar',   Icon: Camera,       label: 'Çok turistik noktalar' },
+                              { val: 'yuksek_yerler',       Icon: TrendingUp,   label: 'Yüksek yerler' },
+                              { val: 'muzeler',             Icon: Building2,    label: 'Müzeler' },
+                              { val: 'uzun_yuruyusler',     Icon: Footprints,   label: 'Uzun yürüyüşler' },
+                              { val: 'gece_hayati',         Icon: Wine,         label: 'Gece hayatı' },
+                              { val: 'pahali_restoranlar',  Icon: DollarSign,   label: 'Pahalı restoranlar' },
+                              { val: 'toplu_turlar',        Icon: Bus,          label: 'Toplu turlar' },
+                              { val: 'erken_kalkma',        Icon: Sunrise,      label: 'Erken kalkma' },
+                              { val: 'yagmurda_gezme',      Icon: CloudRain,    label: 'Yağmurda gezme' },
+                            ] as const).map(({ val, Icon, label }) => {
+                              const selected = data.dislikes.includes(val);
+                              return (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => {
+                                    const next = selected
+                                      ? data.dislikes.filter((d) => d !== val)
+                                      : [...data.dislikes, val];
+                                    updateData({ dislikes: next });
+                                  }}
+                                  className={`relative flex items-center gap-2 px-3 py-2.5 rounded-lg border text-left
+                                    transition-all duration-150 active:scale-95
+                                    ${selected
+                                      ? 'border-rose-400 bg-rose-50'
+                                      : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                >
+                                  <Icon size={14} className={`shrink-0 ${selected ? 'text-rose-500' : 'text-slate-400'}`} />
+                                  <span className={`text-xs font-medium leading-tight ${selected ? 'text-rose-600' : 'text-slate-600'}`}>
+                                    {label}
+                                  </span>
+                                  {selected && (
+                                    <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 flex items-center justify-center">
+                                      <X size={8} className="text-white" strokeWidth={3} />
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
@@ -646,39 +916,117 @@ const Onboarding: React.FC = () => {
                 {/* ── ADIM 4 ── */}
                 {currentStep === 4 && (
                   <div className="space-y-6">
+
+                    {/* Rezervasyon sorusu */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Konaklama Tercihi</label>
+                      <label className="text-xs font-medium text-slate-500 mb-2 block">Rezervasyonun var mı?</label>
                       <div className="grid grid-cols-2 gap-2.5">
-                        {[
-                          { val: 'hotel',  emoji: '🏨', title: 'Otel',              sub: 'Konforlu, tam servis' },
-                          { val: 'airbnb', emoji: '🏠', title: 'Airbnb / Ev',        sub: 'Yerel deneyim' },
-                          { val: 'hostel', emoji: '🛏️', title: 'Hostel',             sub: 'Sosyal, ekonomik' },
-                          { val: 'resort', emoji: '🌴', title: 'Tatil Köyü / Resort', sub: 'Her şey dahil' },
-                        ].map(({ val, emoji, title, sub }) => (
-                          <OptionCard
-                            key={val}
-                            emoji={emoji} title={title} subtitle={sub}
-                            selected={data.accommodation === val}
-                            onClick={() => { updateData({ accommodation: val as OnboardingData['accommodation'] }); setHints((h) => ({ ...h, accommodation: false })); }}
-                          />
-                        ))}
+                        <OptionCard
+                          emoji="✅"
+                          title="Evet, rezervasyonum var"
+                          subtitle="Konaklama yerim belli"
+                          selected={data.hasReservation === true}
+                          onClick={() => {
+                            updateData({ hasReservation: true });
+                            setHints((h) => ({ ...h, accommodation: false }));
+                          }}
+                        />
+                        <OptionCard
+                          emoji="🔍"
+                          title="Hayır, henüz seçmedim"
+                          subtitle="Bana öneri göster"
+                          selected={data.hasReservation === false}
+                          onClick={() => {
+                            updateData({ hasReservation: false, accommodationAddress: '' });
+                            setHints((h) => ({ ...h, accommodation: false }));
+                          }}
+                        />
                       </div>
-                      <FieldError msg={hints.accommodation ? 'Bir konaklama tercihi seçin.' : undefined} />
+                      <FieldError msg={hints.accommodation && data.hasReservation === null ? 'Rezervasyon durumunuzu belirtin.' : undefined} />
                     </div>
 
+                    {/* Evet → konaklama adı / adresi */}
+                    {data.hasReservation === true && (
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key="reservation-input"
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.18 }}
+                        >
+                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                            Konaklama Adı / Adresi
+                          </label>
+                          <input
+                            type="text"
+                            value={data.accommodationAddress}
+                            onChange={(e) => {
+                              updateData({ accommodationAddress: e.target.value });
+                              setHints((h) => ({ ...h, accommodation: false }));
+                            }}
+                            placeholder="Örn. Hotel Roma Centro, Via del Corso 123"
+                            className={inputCls(hints.accommodation && !data.accommodationAddress.trim())}
+                          />
+                          <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? 'Konaklama adresini girin.' : undefined} />
+                          <p className="text-[11px] text-slate-400 mt-1.5 ml-0.5">
+                            AI günlük rotaları bu konuma göre optimize edecek.
+                          </p>
+                        </motion.div>
+                      </AnimatePresence>
+                    )}
+
+                    {/* Hayır → konaklama tipi seçimi */}
+                    {data.hasReservation === false && (
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key="accommodation-types"
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.18 }}
+                        >
+                          <label className="text-xs font-medium text-slate-500 mb-2 block">Konaklama Tercihi</label>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {[
+                              { val: 'hotel',  emoji: '🏨', title: 'Otel',               sub: 'Konforlu, tam servis' },
+                              { val: 'airbnb', emoji: '🏠', title: 'Airbnb / Ev',          sub: 'Yerel deneyim' },
+                              { val: 'hostel', emoji: '🛏️', title: 'Hostel',               sub: 'Sosyal, ekonomik' },
+                              { val: 'resort', emoji: '🌴', title: 'Tatil Köyü / Resort',   sub: 'Her şey dahil' },
+                            ].map(({ val, emoji, title, sub }) => (
+                              <OptionCard
+                                key={val}
+                                emoji={emoji} title={title} subtitle={sub}
+                                selected={data.accommodation === val}
+                                onClick={() => {
+                                  updateData({ accommodation: val as OnboardingData['accommodation'] });
+                                  setHints((h) => ({ ...h, accommodation: false }));
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FieldError msg={hints.accommodation && !data.accommodation ? 'Konaklama tercihi seçin.' : undefined} />
+                        </motion.div>
+                      </AnimatePresence>
+                    )}
+
+                    {/* Şehir İçi Ulaşım — her zaman görünür */}
                     <div>
                       <label className="text-xs font-medium text-slate-500 mb-2 block">Şehir İçi Ulaşım</label>
                       <div className="grid grid-cols-3 gap-2.5">
                         {[
                           { val: 'public', emoji: '🚇', title: 'Toplu Taşıma', sub: 'Metro, otobüs' },
-                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',       sub: 'Yürüme mesafesi' },
-                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',   sub: 'Kapıdan kapıya' },
+                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',      sub: 'Yürüme mesafesi' },
+                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',  sub: 'Kapıdan kapıya' },
                         ].map(({ val, emoji, title, sub }) => (
                           <OptionCard
                             key={val}
                             emoji={emoji} title={title} subtitle={sub}
                             selected={data.transport === val}
-                            onClick={() => { updateData({ transport: val as OnboardingData['transport'] }); setHints((h) => ({ ...h, transport: false })); }}
+                            onClick={() => {
+                              updateData({ transport: val as OnboardingData['transport'] });
+                              setHints((h) => ({ ...h, transport: false }));
+                            }}
                           />
                         ))}
                       </div>

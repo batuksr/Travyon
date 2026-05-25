@@ -17,6 +17,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
+import { toggleWithCircle } from '../utils/themeTransition';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
@@ -338,12 +339,12 @@ const Dashboard: React.FC = () => {
           {/* Gece / Aydınlık Mod Toggle */}
           <button
             type="button"
-            onClick={toggleTheme}
+            onClick={(e) => toggleWithCircle(toggleTheme, e)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-yellow-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shrink-0"
-            title={dark ? 'Aydınlık Mod' : 'Gece Modu'}
+            title={dark ? 'Gece Modu' : 'Aydınlık Mod'}
           >
-            <span key={dark ? 'sun' : 'moon'} className="theme-icon-in">
-              {dark ? <Sun size={14} /> : <Moon size={14} />}
+            <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
+              {dark ? <Moon size={14} /> : <Sun size={14} />}
             </span>
           </button>
         </div>

@@ -79,6 +79,29 @@ html.dark .hover\:bg-slate-100:hover { background-color: #334155 !important; }
 html.dark ::-webkit-scrollbar-track  { background: #1e293b; }
 html.dark ::-webkit-scrollbar-thumb  { background: #475569; }
 
+/* ── Tema geçişi — daire yayılma animasyonu (View Transitions API) ── */
+@keyframes vt-circle-in {
+  from { clip-path: circle(0px   at var(--vt-cx, 50%) var(--vt-cy, 50%)); }
+  to   { clip-path: circle(var(--vt-r, 150%) at var(--vt-cx, 50%) var(--vt-cy, 50%)); }
+}
+
+::view-transition-new(root) {
+  animation: vt-circle-in 0.5s ease-out forwards;
+  will-change: clip-path;
+}
+::view-transition-old(root) {
+  animation: none;
+  z-index: -1;
+}
+
+/* VT sırasında tüm CSS transition'ları kapat — perf */
+/* .pill-circle sınıfı hariç (pill kayma animasyonu korunur) */
+html.no-transitions *:not(.pill-circle),
+html.no-transitions *:not(.pill-circle)::before,
+html.no-transitions *:not(.pill-circle)::after {
+  transition: none !important;
+}
+
 /* ── Google Maps InfoWindow — kutu ve ok kaldırıldı ── */
 .gm-style .gm-style-iw-c {
   background: transparent !important;

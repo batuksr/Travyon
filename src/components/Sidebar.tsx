@@ -9,6 +9,7 @@ import {
 import TravyonLogo from './TravyonLogo';
 import { useThemeStore } from '../store/useThemeStore';
 import { useSidebarStore } from '../store/useSidebarStore';
+import { toggleWithCircle } from '../utils/themeTransition';
 
 const mainNavItems = [
   { icon: Home,     label: 'Ana Sayfa',   path: '/hub' },
@@ -20,10 +21,20 @@ const mainNavItems = [
 
 const Sidebar: React.FC = () => {
   const { expanded, setExpanded } = useSidebarStore();
+  const transitioningRef = React.useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
+  // Pill pozisyonunu VT snapshot'tan sonra geciktirerek güncelle — akıcı kayma için
+  const [pillDark, setPillDark] = React.useState(dark);
+
+  // Başka bir sayfadan tema değişince pill'i senkronize et
+  React.useEffect(() => {
+    if (!transitioningRef.current) {
+      setPillDark(dark);
+    }
+  }, [dark]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -33,7 +44,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      onMouseLeave={() => { if (!transitioningRef.current) setExpanded(false); }}
       className={`fixed left-0 top-0 bottom-0 z-50
                  bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
                  flex flex-col transition-all duration-300 ease-out
@@ -111,20 +122,54 @@ const Sidebar: React.FC = () => {
         {/* Dark mode toggle */}
         <button
           type="button"
-          onClick={toggleTheme}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all
-            ${dark
-              ? 'bg-slate-800 text-yellow-300 hover:bg-slate-700'
-              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}
+          onClick={(e) => {
+            transitioningRef.current = true;
+            toggleWithCircle(toggleTheme, e);
+            // VT snapshot alındıktan sonra pill'i kaydır — akıcı sliding için
+            setTimeout(() => setPillDark(d => !d), 150);
+            setTimeout(() => { transitioningRef.current = false; }, 50);
+          }}
+          className="w-full flex items-center px-0.5 py-2 rounded-lg transition-all hover:bg-slate-50"
           aria-label="Tema değiştir"
         >
-          <span key={dark ? 'sun' : 'moon'} className="theme-icon-in shrink-0">
-            {dark ? <Sun size={16} /> : <Moon size={16} />}
-          </span>
-          <span className={`text-xs font-semibold whitespace-nowrap transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
-            {dark ? 'Aydınlık Mod' : 'Gece Modu'}
-          </span>
+          {/* Kapalıyken: pill toggle ortada */}
+          {!expanded && (
+            <div className="w-full flex justify-start">
+              <div className={`relative w-11 h-6 rounded-full transition-colors duration-300
+                ${dark ? 'bg-slate-600' : 'bg-slate-200'}`}
+              >
+                <div className={`pill-circle absolute top-0.5 w-5 h-5 rounded-full shadow-sm flex items-center justify-center
+                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0.5 bg-white text-slate-500'}`}
+                  style={{ transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.3s ease' }}
+                >
+                  <span key={pillDark ? 'moon-c' : 'sun-c'} className="theme-icon-in">
+                    {pillDark ? <Moon size={11} /> : <Sun size={11} />}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Genişlemişken: Tema yazısı + pill toggle */}
+          {expanded && (
+            <>
+              <span className="text-xs font-semibold whitespace-nowrap text-slate-600 dark:text-slate-300 flex-1 text-left pl-3">
+                Tema
+              </span>
+              <div className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-300
+                ${dark ? 'bg-slate-600' : 'bg-slate-200'}`}
+              >
+                <div className={`pill-circle absolute top-0.5 w-5 h-5 rounded-full shadow-sm flex items-center justify-center
+                  ${pillDark ? 'translate-x-5 bg-slate-900 text-yellow-300' : 'translate-x-0.5 bg-white text-slate-500'}`}
+                  style={{ transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.3s ease' }}
+                >
+                  <span key={pillDark ? 'moon-e' : 'sun-e'} className="theme-icon-in">
+                    {pillDark ? <Moon size={11} /> : <Sun size={11} />}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
         </button>
 
         {/* Kullanıcı avatarı */}

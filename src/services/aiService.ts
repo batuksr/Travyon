@@ -598,6 +598,18 @@ const buildPrompt = (data: OnboardingData): string => {
   };
   const mealBudgetLabel = mealBudgetLabels[data.mealBudget] || data.mealBudget || 'Belirtilmedi';
 
+  const travelTypeMap: Record<string, string> = {
+    solo_macera:    'Solo Macera — Tek başına esnek keşif; hostel sosyal alanları, yerel buluşma noktaları, güvenli ama otantik deneyimler öner. Plan esnek tutulsun.',
+    romantik:       'Romantik Çift Tatili — Sakin restoranlar, gün batımı noktaları, kalabalıktan uzak mekanlar. Çift fotoğrafı için ikonik spotlar ekle.',
+    balayi:         'Balayı — LÜKS ve ÖZEL odak. Romantik akşam yemekleri, özel deneyimler, fotoğraflık anlar. Kalabalık turistik alanlardan kaçın; sakin ve şık mekanlar seç.',
+    aile:           'Aile Tatili (çocuklarla) — Çocuk dostu mekanlar, interaktif müzeler, parklar, kısa yürüyüş mesafeleri. Plan çok yorucu olmasın; öğleden sonra dinlenme bırak.',
+    arkadas_grubu:  'Arkadaş Grubu Seyahati — Gece hayatı, barlar, grup aktiviteleri, paylaşımlı deneyimler öncelikli. Sosyal ve eğlenceli mekanlar seç.',
+    is_seyahati:    'İş Seyahati — Verimli ve pratik. Otel civarı kısa aktiviteler, sabah/akşam boş zamanlara odaklan. Fazla yorucu plan yapma; iş enerjisi korunsun.',
+    sehir_kacamagi: 'Kısa Şehir Kaçamağı (max 2-3 gün) — En öncelikli klassikleri ve en ikonik yerleri öner. Dinlenme ile keşif dengesini kur; her şeyi sığdırmaya çalışma.',
+    klasik_tatil:   'Klasik Turistik Tatil — Top atraksiyonlar, mutlaka görülmesi gerekenler, fotoğraflık yerler. Ziyaretçi dostu mekanlar ve net rota.',
+  };
+  const travelTypeLabel = travelTypeMap[data.travelType] || 'Genel tatil';
+
   const purposeMap: Record<string, string> = {
     culture: 'Kültür ve Tarih odaklı (müzeler, anıtlar, tarihi yerler)',
     relax: 'Dinlenme ve Spa odaklı (yavaş tempo, manzaralı kafeler, parklar)',
@@ -606,17 +618,28 @@ const buildPrompt = (data: OnboardingData): string => {
   };
 
   const paceMap: Record<string, string> = {
+    // Yeni değerler
+    rahat:  'RAHAT tempo — Günde MAX 4 km yürüyüş, 2-3 ana aktivite. Aktiviteler arası taksi/transit kullan, yürüme rotaları kısa tut. Bolca kafe/mola ekle. Yorucu günler yapma.',
+    normal: 'NORMAL tempo — Günde 6-8 km yürüyüş, 3-4 ana aktivite. Yürüme + transit dengeli. Standart turist planı.',
+    aktif:  'AKTİF tempo — Günde 10-15 km yürüyüş kabul edilebilir. 5-6 aktivite. Yürüyerek bağlantılı rotalar oluştur. Tepe çıkışları, uzun mahalle turları ekle. Aktivite sayısında limit koyma.',
+    esnek:  'ESNEK tempo — Şehre ve güne göre karar ver. Genelde normal-aktif arası planla; sıcaklık 30°C+ ise tempoyu düşür, yağmur varsa kapalı mekan öncelikli yap.',
+    // Geriye dönük uyumluluk (eski planlar için)
     yavaş: 'YAVAŞ tempo (günde 3-4 aktivite, uzun molalar)',
-    orta: 'ORTA tempo (günde 5-6 aktivite, dengeli)',
+    orta:  'ORTA tempo (günde 5-6 aktivite, dengeli)',
     yoğun: 'YOĞUN tempo (günde 6-7 aktivite, hızlı geçişler)',
   };
 
   const accommodationMap: Record<string, string> = {
-    hotel: 'Otel (konforlu, tam servis tercihi)',
-    airbnb: 'Airbnb/Ev (yerel deneyim tercihi)',
-    hostel: 'Hostel (ekonomik, sosyal tercih)',
-    resort: 'Tatil Köyü (her şey dahil tercih)',
+    hotel:  'OTEL — Kullanıcı otel tarzında kalıyor (konfor, standart konaklama). Plan içinde otele dönüş veya dinlenme molaları doğal olabilir.',
+    airbnb: 'AİRBNB/EV — Kullanıcının kendi alanı ve mutfak erişimi var. Plan içinde market alışverişi, kahvaltı kendin hazırlama gibi seçenekler doğal olabilir. Mahalleyi derinlemesine tanıma fırsatları öner.',
+    hostel: 'HOSTEL — Kullanıcı sosyal, paylaşımlı ortamda kalıyor. Plan içinde hostel sosyal aktiviteleri, free walking tour katılımı veya diğer gezginlerle buluşma noktaları öner.',
+    resort: 'RESORT/TATİL KÖYÜ — Kullanıcı resort\'ta kalıyor (her şey dahil, sakin). Plan içinde resort\'tan kısa kaçamaklar, yakın çevre keşfi, spa zamanları doğal olabilir.',
   };
+
+  // KRİTİK KURAL — konaklama tipinden yemek bütçesi veya aktivite lüksü VARSAYILMAZ.
+  // Konaklama tipi yalnızca konaklamanın bağlamı için kullanılır.
+  // • Yemek bütçesi → SADECE mealBudgetLabel alanından al
+  // • Aktivite tarzı → SADECE travelType, tripPurpose, dislikes alanlarından al
 
   const transportMap: Record<string, string> = {
     public: 'Toplu taşıma (metro, otobüs, tramvay)',
@@ -643,28 +666,47 @@ KULLANICI PROFİLİ
    ↳ Kişi başı: ~${perPersonBudget} ${data.currencyCode}
    ↳ Günlük tavsiye: ~${dailyBudget} ${data.currencyCode}/gün
 
+🧳 Seyahat Türü: ${travelTypeLabel}
 🎯 Seyahat Amacı: ${purposeMap[data.tripPurpose] || data.tripPurpose}
 ⚡ Tempo: ${paceMap[data.pace] || data.pace}
 🌅 Erken Kalkma: ${data.earlyBird ? 'EVET — sabah 7-8 başlayabilir' : 'HAYIR — sabah 9-10 başlanmalı'}
 🍽️ Beslenme: ${data.dietaryRestrictions.join(', ') || 'Kısıtlama yok'}
 💵 Öğün Bütçesi: ${mealBudgetLabel}
-🏨 Konaklama: ${accommodationMap[data.accommodation] || data.accommodation}
+🏨 Konaklama: ${data.hasReservation ? `Rezervasyon mevcut — "${data.accommodationAddress}" (günlük rotaları mümkün olduğunca bu konuma yakın planla, her güne bu noktadan başla)` : (accommodationMap[data.accommodation] || data.accommodation)}
 🚇 Ulaşım: ${transportMap[data.transport] || data.transport}
-
-═══════════════════════════════════════════════
-TUTARLILIK PRENSİPLERİ (EN ÖNEMLİ)
+${data.dislikes && data.dislikes.length > 0 ? `
+🚫 UZAK DURULMASI GEREKENLER (KESİNLİKLE UYGULA):
+Kullanıcı aşağıdakilerden UZAK DURMAK istiyor — bu öğeleri plana KOYMA veya minimize et:
+${data.dislikes.map((d) => {
+  const dislikeGuide: Record<string, string> = {
+    kalabalik_yerler:   '→ Popüler yerlere sabah erken saatte git, kalabalık önle. Alternatif sakin mekanlar tercih et.',
+    turistik_noktalar:  '→ Aşırı turistik tuzak mekanlardan kaçın. Yerel mahalleleri ve az bilinen yerleri öner.',
+    yuksek_yerler:      '→ Kule, gözlem terası, yüksek tepe aktivitesi ÖNERME. Yükseklik gerektirmeyen alternatifler sun.',
+    muzeler:            '→ Müze yerine sokak sanatı turu, parklar, açık hava pazarları, yerel mahalle gezisi öner.',
+    uzun_yuruyusler:    '→ Günlük yürüyüş max 4-5 km. Mekanlar arasında taksi/toplu taşıma kullan.',
+    gece_hayati:        '→ Bar, kulüp, gece kulübü içermesin. Akşamlar sakin restoran veya manzara noktası tercih et.',
+    pahali_restoranlar: '→ Fine dining ve pahalı restoranlardan kaçın. Orta bütçeli, kaliteli yerel mekanlar öner.',
+    toplu_turlar:       '→ Organize tur grubu aktivitelerinden kaçın. Bağımsız keşif rotaları öner.',
+    erken_kalkma:       '→ Günü 10:00-10:30\'dan ÖNCE başlatma. Sabah aktivitesi ekleme.',
+    yagmurda_gezme:     '→ Hava şartlarına karşı önlem al; kapalı alan alternatifleri de listele.',
+  };
+  return `- ${d} ${dislikeGuide[d] || ''}`;
+}).join('\n')}
+` : ''}
 ═══════════════════════════════════════════════
 
 Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
 
 ✅ DOĞRU EŞLEŞMELER:
-- mealBudget=low + tripPurpose=culture → Sokak lezzetleri + ücretsiz/ucuz müzeler
-- mealBudget=high + accommodation=hotel → Fine dining + Michelin önerileri
-- tripPurpose=relax + pace=yavaş → Sahil kafeleri, spa, parklar
-- tripPurpose=nightlife + pace=yoğun → Bar tour, gece kulüpleri
+- mealBudget=low  → Sokak lezzetleri, ekonomik mekanlar (konaklama tipine BAKMAKSIZIN)
+- mealBudget=high → Fine dining, kaliteli restoranlar (konaklama tipine BAKMAKSIZIN)
+- tripPurpose=relax + pace=rahat → Sahil kafeleri, spa, parklar
+- tripPurpose=nightlife + pace=aktif → Bar tour, gece kulüpleri
 - transport=walk → Birbirine yakın mekanlar seçilmeli
 - earlyBird=true → İlk aktivite 08:00-09:00 (Sabah)
 - earlyBird=false → İlk aktivite 10:00 sonrası (Öğle)
+- travelType=balayi → Fine dining, özel mekanlar (SADECE mealBudget=high ile birlikte)
+- travelType=hostel → Sosyal aktiviteler (yemek bütçesinden BAĞIMSIZ)
 
 ❌ ASLA YAPMA:
 - mealBudget=low için Michelin restoran önerme

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
 import { Wallet, ArrowRight, Calendar, Sun, Moon } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
+import { toggleWithCircle } from '../utils/themeTransition';
 import GlobeAnimation from '../components/GlobeAnimation';
 import SamplePlanModal from '../components/SamplePlanModal';
 import TravyonLogo from '../components/TravyonLogo';
@@ -216,14 +217,14 @@ const Home: React.FC = () => {
             {/* Dark mode toggle */}
             <button
               type="button"
-              onClick={toggleTheme}
+              onClick={(e) => toggleWithCircle(toggleTheme, e)}
               className={`relative flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95
                 ${scrollStage === 0 ? 'w-9 h-9' : scrollStage <= 2 ? 'w-8 h-8' : 'w-7 h-7'}
                 ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
               aria-label="Tema değiştir"
             >
-              <span key={dark ? 'sun' : 'moon'} className="theme-icon-in">
-                {dark ? <Sun size={scrollStage === 0 ? 16 : 14} /> : <Moon size={scrollStage === 0 ? 16 : 14} />}
+              <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
+                {dark ? <Moon size={scrollStage === 0 ? 16 : 14} /> : <Sun size={scrollStage === 0 ? 16 : 14} />}
               </span>
             </button>
 

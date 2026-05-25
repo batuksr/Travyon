@@ -12,16 +12,21 @@ export interface OnboardingData {
   currencySymbol: string;
   peopleCount: number;
 
-  // Adım 2: Tatil Amacı ve Tempo
-  tripPurpose: string;
+  // Adım 2: Seyahat Türü, Tatil Amacı (çoklu), Tempo ve Uzak Durulacaklar
+  travelType: string;
+  purposes: string[];       // yeni — çoklu seçim, sıra önceliği belirler
+  tripPurpose: string;      // @deprecated — backward compat için korunuyor
   pace: string;
   earlyBird: boolean;
+  dislikes: string[];
 
   // Adım 3: Yeme-İçme
   dietaryRestrictions: string[];
   mealBudget: string;
 
   // Adım 4: Konfor ve Ulaşım
+  hasReservation: boolean | null;
+  accommodationAddress: string;
   accommodation: string;
   transport: string;
 }
@@ -47,13 +52,18 @@ const defaultData: OnboardingData = {
   currencySymbol: '₺',
   peopleCount: 1,
   
+  travelType: '',
+  purposes: [],
   tripPurpose: '',
-  pace: '',
+  pace: 'normal',
   earlyBird: false,
+  dislikes: [],
   
   dietaryRestrictions: [],
   mealBudget: '',
   
+  hasReservation: null,
+  accommodationAddress: '',
   accommodation: '',
   transport: ''
 };
