@@ -8,8 +8,7 @@ import { useThemeStore } from '../store/useThemeStore';
 import { CITIES } from '../data/cities';
 import { Plane, MapPin, Wind, LayoutGrid, Wallet, Globe, Trophy,
          Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
-         Clock, CheckCheck, FileText, Users, Loader2,
-         X as XIcon } from 'lucide-react';
+         Clock, CheckCheck, FileText, Loader2 } from 'lucide-react';
 import { relativeTime } from '../utils/timeUtils';
 import {
   getMySharedPlanIds,
@@ -437,9 +436,10 @@ const Hub: React.FC = () => {
 
   const currentLevel = getLevel(stats.uniqueCities);
   const nextLevel    = LEVELS[LEVELS.indexOf(currentLevel) + 1];
-  const progress     = nextLevel
+  // progress: level ilerlemesi (UI'da şimdilik kullanılmıyor)
+  void (nextLevel
     ? Math.min(100, ((stats.uniqueCities - currentLevel.minCities) / (nextLevel.minCities - currentLevel.minCities)) * 100)
-    : 100;
+    : 100);
 
   /* ── Weather ── */
 

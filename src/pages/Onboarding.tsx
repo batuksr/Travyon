@@ -137,40 +137,8 @@ const hintsForStep = (step: number, data: OnboardingData): FieldHints => {
 };
 
 /* ── Shared sub-components ── */
-const inputCls = (err?: boolean) =>
-  `w-full px-3.5 py-2.5 rounded-lg border text-sm outline-none transition-all text-slate-800 placeholder:text-slate-400
-   ${err
-     ? 'border-rose-200 bg-rose-50/20 focus:border-rose-300'
-     : 'border-slate-200 bg-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`;
-
 const FieldError = ({ msg }: { msg?: string }) =>
   msg ? <p className="text-xs text-rose-500 mt-1.5 ml-0.5">{msg}</p> : null;
-
-interface OptionCardProps {
-  selected: boolean; onClick: () => void;
-  title: string; emoji?: string; subtitle?: string;
-}
-const OptionCard = ({ selected, onClick, title, emoji, subtitle }: OptionCardProps) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`relative px-3.5 py-2.5 rounded-lg border text-left transition-all duration-150 flex items-center gap-2.5 w-full
-      ${selected
-        ? 'border-[#f8981d] bg-[#f8981d]/[0.03]'
-        : 'border-slate-200 bg-white hover:border-slate-300'}`}
-  >
-    {emoji && <span className="text-base shrink-0 leading-none">{emoji}</span>}
-    <div className="flex-1 min-w-0">
-      <p className={`font-medium text-sm leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-      {subtitle && <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{subtitle}</p>}
-    </div>
-    {selected && (
-      <div className="w-3.5 h-3.5 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
-        <Check size={8} className="text-white" strokeWidth={3} />
-      </div>
-    )}
-  </button>
-);
 
 const MAX_PEOPLE = 15;
 
@@ -270,10 +238,7 @@ const Onboarding: React.FC = () => {
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-black/65" />
 
-        <div className="relative z-10 flex flex-col justify-between p-10 w-full">
-
-          {/* Logo */}
-          <TravyonLogo size={64} dark />
+        <div className="relative z-10 flex flex-col justify-end p-10 w-full">
 
           {/* Adıma özel mesaj */}
           <motion.div key={currentStep} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -413,29 +378,32 @@ const Onboarding: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Adım başlığı */}
-                <p className="text-[#f8981d] text-xs font-bold uppercase tracking-widest mb-2">
-                  Adım {currentStep} / 4
-                </p>
-                <h2 className="text-2xl font-black text-slate-900 mb-1">
-                  {currentStep === 1 && 'Nereye gidiyorsun?'}
-                  {currentStep === 2 && 'Tercihlerini söyle'}
-                  {currentStep === 3 && 'Yemek tarzın nasıl?'}
-                  {currentStep === 4 && 'Nerede kalmak istersin?'}
-                </h2>
-                <p className="text-slate-500 text-sm mb-7">
-                  {currentStep === 1 && 'Destinasyon ve tarihleri belirle.'}
-                  {currentStep === 2 && 'Bütçe ve seyahat tarzını seç.'}
-                  {currentStep === 3 && 'Damak zevkine göre öneriler.'}
-                  {currentStep === 4 && 'Bu seçim, AI\'nın konaklama bağlamını anlamasına yardımcı olacak.'}
-                </p>
+                {/* ── Adım Başlığı ── */}
+                <div className="mb-8">
+                  <p className="text-[10px] font-bold text-[#f8981d] uppercase tracking-widest mb-2.5">
+                    Adım {currentStep} / 4
+                  </p>
+                  <h2 className="text-2xl font-black text-slate-900 mb-1.5 leading-tight">
+                    {currentStep === 1 && 'Nereye gidiyorsun?'}
+                    {currentStep === 2 && 'Tercihlerini söyle'}
+                    {currentStep === 3 && 'Yemek tarzın nasıl?'}
+                    {currentStep === 4 && 'Nerede kalmak istersin?'}
+                  </h2>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {currentStep === 1 && 'Destinasyon ve tarihleri belirle.'}
+                    {currentStep === 2 && 'Seyahat tarzını ve ilgi alanlarını seç.'}
+                    {currentStep === 3 && 'Damak zevkine göre öneriler oluşturalım.'}
+                    {currentStep === 4 && 'Konaklama ve ulaşım tercihlerini belirt.'}
+                  </p>
+                </div>
 
                 {/* ── ADIM 1 ── */}
                 {currentStep === 1 && (
                   <div className="space-y-5">
 
+                    {/* Destinasyon */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">Destinasyon</label>
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-2.5">Destinasyon</p>
                       <div className="relative" ref={destinationRef}>
                         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                         <input
@@ -444,11 +412,14 @@ const Onboarding: React.FC = () => {
                           onChange={(e) => handleDestinationChange(e.target.value)}
                           onFocus={() => { if (data.destination.trim().length > 0) setShowSuggestions(true); }}
                           placeholder="Örn. Roma, İtalya"
-                          className={inputCls(hints.destination) + ' pl-10'}
+                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all text-slate-800 placeholder:text-slate-400
+                            ${hints.destination
+                              ? 'border-rose-200 bg-rose-50/20'
+                              : 'border-slate-200 bg-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           autoComplete="off"
                         />
                         {showSuggestions && citySuggestions.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
                             {citySuggestions.map((c, i) => (
                               <button
                                 key={i}
@@ -467,82 +438,88 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.destination ? 'Destinasyon girmelisin.' : undefined} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
-                          <Calendar size={12} className="text-[#f8981d]" /> Gidiş Tarihi
-                        </label>
-                        <input
-                          type="date" min={today}
-                          value={data.startDate}
-                          onChange={(e) => { updateData({ startDate: e.target.value }); setHints((h) => ({ ...h, startDate: false })); }}
-                          className={inputCls(hints.startDate)}
-                        />
-                        <FieldError msg={hints.startDate ? 'Geçerli bir gidiş tarihi seçin.' : undefined} />
+                    {/* Tarihler + Saatler */}
+                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Seyahat Tarihleri</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
+                            <Calendar size={11} className="text-[#f8981d]" /> Gidiş
+                          </label>
+                          <input
+                            type="date" min={today}
+                            value={data.startDate}
+                            onChange={(e) => { updateData({ startDate: e.target.value }); setHints((h) => ({ ...h, startDate: false })); }}
+                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white text-slate-800
+                              ${hints.startDate ? 'border-rose-200' : 'border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                          />
+                          <FieldError msg={hints.startDate ? 'Geçerli bir gidiş tarihi seçin.' : undefined} />
+                        </div>
+                        <div>
+                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
+                            <Calendar size={11} className="text-[#f8981d]" /> Dönüş
+                          </label>
+                          <input
+                            type="date" min={data.startDate || today}
+                            value={data.endDate}
+                            onChange={(e) => { updateData({ endDate: e.target.value }); setHints((h) => ({ ...h, endDate: false })); }}
+                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white text-slate-800
+                              ${hints.endDate ? 'border-rose-200' : 'border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                          />
+                          <FieldError msg={hints.endDate ? 'Geçerli bir dönüş tarihi seçin.' : undefined} />
+                        </div>
                       </div>
-                      <div>
-                        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
-                          <Calendar size={12} className="text-[#f8981d]" /> Dönüş Tarihi
-                        </label>
-                        <input
-                          type="date" min={data.startDate || today}
-                          value={data.endDate}
-                          onChange={(e) => { updateData({ endDate: e.target.value }); setHints((h) => ({ ...h, endDate: false })); }}
-                          className={inputCls(hints.endDate)}
-                        />
-                        <FieldError msg={hints.endDate ? 'Geçerli bir dönüş tarihi seçin.' : undefined} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Varış Saati</label>
+                          <input
+                            type="time"
+                            value={data.arrivalTime}
+                            onChange={(e) => updateData({ arrivalTime: e.target.value })}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none text-slate-800 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Ayrılış Saati</label>
+                          <input
+                            type="time"
+                            value={data.departureTime}
+                            onChange={(e) => updateData({ departureTime: e.target.value })}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none text-slate-800 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-slate-500 mb-1.5 block">Varış Saati</label>
-                        <input
-                          type="time"
-                          value={data.arrivalTime}
-                          onChange={(e) => updateData({ arrivalTime: e.target.value })}
-                          className={inputCls()}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-slate-500 mb-1.5 block">Dönüş Saati</label>
-                        <input
-                          type="time"
-                          value={data.departureTime}
-                          onChange={(e) => updateData({ departureTime: e.target.value })}
-                          className={inputCls()}
-                        />
-                      </div>
-                    </div>
-
+                    {/* Kişi + Bütçe */}
                     <div className="grid grid-cols-2 gap-4 items-start">
                       <div>
-                        <label className="text-xs font-medium text-slate-500 mb-2 block">Kişi Sayısı</label>
-                        <div className="flex items-center gap-4">
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Kişi Sayısı</p>
+                        <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={() => updateData({ peopleCount: Math.max(1, data.peopleCount - 1) })}
-                            className="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all"
+                            className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-slate-300 hover:text-slate-700 transition-all"
                           >
-                            <Minus size={12} />
+                            <Minus size={14} />
                           </button>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-slate-900 tabular-nums w-6 text-center">{data.peopleCount}</span>
-                            <span className="text-xs text-slate-400">kişi</span>
+                          <div className="flex-1 text-center">
+                            <span className="text-2xl font-black text-slate-900 tabular-nums">{data.peopleCount}</span>
+                            <span className="text-xs text-slate-400 ml-1">kişi</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => updateData({ peopleCount: Math.min(MAX_PEOPLE, data.peopleCount + 1) })}
-                            className="w-7 h-7 rounded-md border border-[#f8981d] flex items-center justify-center text-[#f8981d] hover:bg-[#f8981d]/5 transition-all"
+                            className="w-9 h-9 rounded-xl border border-[#f8981d] flex items-center justify-center text-[#f8981d] hover:bg-[#f8981d]/5 transition-all"
                           >
-                            <Plus size={12} />
+                            <Plus size={14} />
                           </button>
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-500 mb-1.5 block">Toplam Bütçe</label>
-                        <div className={`flex rounded-lg overflow-hidden border transition-all focus-within:ring-2 focus-within:ring-[#f8981d]/8
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Toplam Bütçe</p>
+                        <div className={`flex rounded-xl overflow-hidden border transition-all focus-within:ring-2 focus-within:ring-[#f8981d]/8
                           ${hints.budget ? 'border-rose-200' : 'border-slate-200 focus-within:border-[#f8981d]'}`}>
                           <input
                             type="number" min="100"
@@ -554,7 +531,7 @@ const Onboarding: React.FC = () => {
                               const n = parseInt(v, 10);
                               if (!isNaN(n)) { updateData({ budget: n }); setHints((h) => ({ ...h, budget: false })); }
                             }}
-                            className="flex-1 px-3 py-2.5 border-0 outline-none text-sm text-slate-800 bg-white placeholder:text-slate-400 transition-all"
+                            className="flex-1 px-3 py-2.5 border-0 outline-none text-sm text-slate-800 bg-white placeholder:text-slate-400"
                           />
                           <select
                             value={data.currencyCode}
@@ -583,40 +560,35 @@ const Onboarding: React.FC = () => {
 
                     {/* Seyahat Türü */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Seyahat Türü</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Seyahat Türü</p>
+                      <div className="grid grid-cols-4 gap-2">
                         {([
-                          { val: 'solo_macera',    Icon: Backpack,     color: 'text-emerald-500', title: 'Solo Macera',       sub: 'Tek başına, esnek keşif' },
-                          { val: 'romantik',       Icon: Heart,        color: 'text-rose-500',    title: 'Romantik Kaçamak',  sub: 'Çift olarak sakin tatil' },
-                          { val: 'balayi',         Icon: Sparkles,     color: 'text-amber-500',   title: 'Balayı',            sub: 'Lüks ve özel anlar' },
-                          { val: 'aile',           Icon: Users,        color: 'text-blue-500',    title: 'Aile Tatili',       sub: 'Çocuk dostu aktiviteler' },
-                          { val: 'arkadas_grubu',  Icon: PartyPopper,  color: 'text-purple-500',  title: 'Arkadaşlarla',      sub: 'Eğlence ve sosyal' },
-                          { val: 'is_seyahati',    Icon: Briefcase,    color: 'text-slate-700',   title: 'İş Seyahati',       sub: 'Verimli, kısa süreli' },
-                          { val: 'sehir_kacamagi', Icon: Coffee,       color: 'text-teal-500',    title: 'Şehir Kaçamağı',    sub: 'Kısa hafta sonu' },
-                          { val: 'klasik_tatil',   Icon: Map,          color: 'text-indigo-500',  title: 'Klasik Tatil',      sub: 'Genel turistik gezi' },
-                        ] as const).map(({ val, Icon, color, title, sub }) => {
+                          { val: 'solo_macera',    Icon: Backpack,    bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Solo' },
+                          { val: 'romantik',       Icon: Heart,       bg: 'bg-rose-100',    color: 'text-rose-600',    title: 'Romantik' },
+                          { val: 'balayi',         Icon: Sparkles,    bg: 'bg-amber-100',   color: 'text-amber-600',   title: 'Balayı' },
+                          { val: 'aile',           Icon: Users,       bg: 'bg-blue-100',    color: 'text-blue-600',    title: 'Aile' },
+                          { val: 'arkadas_grubu',  Icon: PartyPopper, bg: 'bg-purple-100',  color: 'text-purple-600',  title: 'Arkadaşlar' },
+                          { val: 'is_seyahati',    Icon: Briefcase,   bg: 'bg-slate-100',   color: 'text-slate-600',   title: 'İş' },
+                          { val: 'sehir_kacamagi', Icon: Coffee,      bg: 'bg-teal-100',    color: 'text-teal-600',    title: 'Kaçamak' },
+                          { val: 'klasik_tatil',   Icon: Map,         bg: 'bg-indigo-100',  color: 'text-indigo-600',  title: 'Klasik' },
+                        ] as const).map(({ val, Icon, bg, color, title }) => {
                           const selected = data.travelType === val;
                           return (
                             <button
                               key={val}
                               type="button"
                               onClick={() => { updateData({ travelType: val }); setHints((h) => ({ ...h, travelType: false })); }}
-                              className={`relative flex flex-col items-start gap-1.5 px-3 py-2.5 rounded-lg border text-left
-                                transition-all duration-150 hover:-translate-y-px
+                              className={`flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.03]'
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
                                   : 'border-slate-200 bg-white hover:border-slate-300'}`}
                             >
-                              <Icon size={16} className={`shrink-0 ${selected ? 'text-[#f8981d]' : color}`} />
-                              <div className="min-w-0">
-                                <p className={`font-semibold text-xs leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-[#f8981d]/15' : bg}`}>
+                                <Icon size={17} className={selected ? 'text-[#f8981d]' : color} />
                               </div>
-                              {selected && (
-                                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-[#f8981d] flex items-center justify-center">
-                                  <Check size={8} className="text-white" strokeWidth={3} />
-                                </div>
-                              )}
+                              <span className={`text-[10px] font-bold leading-tight text-center ${selected ? 'text-[#f8981d]' : 'text-slate-600'}`}>
+                                {title}
+                              </span>
                             </button>
                           );
                         })}
@@ -624,22 +596,21 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.travelType ? 'Seyahat türünü seçmelisin.' : undefined} />
                     </div>
 
+                    {/* İlgi Alanları */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-0.5 block">İlgi Alanların</label>
-                      <p className="text-[11px] text-slate-400 mb-2.5">
-                        En fazla 3 tane seçebilirsin. Seçim sırası önceliği belirler.
-                      </p>
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">İlgi Alanları</p>
+                      <p className="text-[11px] text-slate-400 mb-3">En fazla 3 tane. Seçim sırası önceliği belirler.</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { val: 'culture',   emoji: '🏛️', title: 'Kültür & Tarih',  sub: 'Müzeler, tarihi mekanlar' },
-                          { val: 'relax',     emoji: '😴', title: 'Dinlenme',          sub: 'Spa, sahil, yavaş tempo' },
-                          { val: 'nightlife', emoji: '🌙', title: 'Gece Hayatı',       sub: 'Bar, kulüp, canlı müzik' },
-                          { val: 'nature',    emoji: '🏔️', title: 'Doğa & Macera',    sub: 'Trekking, doğa yürüyüşü' },
+                          { val: 'culture',   emoji: '🏛️', title: 'Kültür & Tarih', sub: 'Müzeler, tarihi mekanlar' },
+                          { val: 'relax',     emoji: '😴', title: 'Dinlenme',         sub: 'Spa, sahil, yavaş tempo' },
+                          { val: 'nightlife', emoji: '🌙', title: 'Gece Hayatı',      sub: 'Bar, kulüp, canlı müzik' },
+                          { val: 'nature',    emoji: '🏔️', title: 'Doğa & Macera',   sub: 'Trekking, doğa yürüyüşü' },
                         ].map(({ val, emoji, title, sub }) => {
                           const currentPurposes: string[] = data.purposes && data.purposes.length > 0
                             ? data.purposes
                             : (data.tripPurpose ? [data.tripPurpose] : []);
-                          const rank = currentPurposes.indexOf(val); // -1 = seçili değil
+                          const rank = currentPurposes.indexOf(val);
                           const isSelected = rank !== -1;
                           return (
                             <button
@@ -650,13 +621,11 @@ const Onboarding: React.FC = () => {
                                   ? data.purposes
                                   : (data.tripPurpose ? [data.tripPurpose] : []);
                                 if (isSelected) {
-                                  // Kaldır — kalan elemanlar sırayı korur
                                   const next = cur.filter((p) => p !== val);
                                   updateData({ purposes: next, tripPurpose: next[0] ?? '' });
                                   setHints((h) => ({ ...h, tripPurpose: false }));
                                   setPurposesWarning(false);
                                 } else if (cur.length >= 3) {
-                                  // Limit aşıldı — inline uyarı
                                   setPurposesWarning(true);
                                   setTimeout(() => setPurposesWarning(false), 2500);
                                 } else {
@@ -666,18 +635,18 @@ const Onboarding: React.FC = () => {
                                   setPurposesWarning(false);
                                 }
                               }}
-                              className={`relative px-3.5 py-2.5 rounded-lg border-2 text-left transition-all duration-150 flex items-center gap-2.5 w-full hover:-translate-y-px
+                              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all duration-150
                                 ${isSelected
                                   ? 'border-[#f8981d] bg-orange-50/30'
                                   : 'border-slate-200 bg-white hover:border-slate-300'}`}
                             >
-                              {emoji && <span className="text-base shrink-0 leading-none">{emoji}</span>}
+                              <span className="text-xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-medium text-sm leading-tight ${isSelected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                {sub && <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>}
+                                <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
                               </div>
                               {isSelected && (
-                                <div className="w-6 h-6 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0 text-white text-xs font-black absolute top-2 right-2">
+                                <div className="w-6 h-6 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0 text-white text-xs font-black">
                                   {rank + 1}
                                 </div>
                               )}
@@ -685,8 +654,6 @@ const Onboarding: React.FC = () => {
                           );
                         })}
                       </div>
-
-                      {/* Max-3 inline uyarısı */}
                       <AnimatePresence>
                         {purposesWarning && (
                           <motion.p
@@ -700,81 +667,39 @@ const Onboarding: React.FC = () => {
                           </motion.p>
                         )}
                       </AnimatePresence>
-
                       <FieldError msg={hints.tripPurpose ? 'En az 1 ilgi alanı seç.' : undefined} />
                     </div>
 
+                    {/* Tempo */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-0.5 block">Tempon Nasıl Olsun?</label>
-                      <p className="text-[11px] text-slate-400 mb-2.5">Günlük yürüyüş ve aktivite yoğunluğunu seç.</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Günlük Tempo</p>
+                      <p className="text-[11px] text-slate-400 mb-3">Aktivite yoğunluğunu seç.</p>
+                      <div className="grid grid-cols-4 gap-2">
                         {([
-                          {
-                            val: 'rahat',
-                            Icon: Sofa,
-                            color: 'text-emerald-500',
-                            activeBg: 'bg-emerald-50/40',
-                            title: 'Rahat',
-                            desc: 'Az yürüyüş, çok mola',
-                            detail: 'Günde 3–4 km, taksi/transit ağırlıklı',
-                          },
-                          {
-                            val: 'normal',
-                            Icon: Footprints,
-                            color: 'text-blue-500',
-                            activeBg: 'bg-blue-50/40',
-                            title: 'Normal',
-                            desc: 'Standart turist temposu',
-                            detail: 'Günde 6–8 km, 3–4 ana nokta',
-                          },
-                          {
-                            val: 'aktif',
-                            Icon: Mountain,
-                            color: 'text-orange-500',
-                            activeBg: 'bg-orange-50/40',
-                            title: 'Aktif',
-                            desc: 'Her şeyi görmek isterim',
-                            detail: 'Günde 10–15 km, sınırsız aktivite',
-                          },
-                          {
-                            val: 'esnek',
-                            Icon: Compass,
-                            color: 'text-purple-500',
-                            activeBg: 'bg-purple-50/40',
-                            title: 'Esnek',
-                            desc: 'AI karar versin',
-                            detail: 'Şehre ve havaya göre değişsin',
-                          },
-                        ] as const).map(({ val, Icon, color, activeBg, title, desc, detail }) => {
+                          { val: 'rahat',  Icon: Sofa,       bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Rahat',  desc: 'Az yürüyüş',     detail: '3–4 km/gün' },
+                          { val: 'normal', Icon: Footprints, bg: 'bg-blue-100',    color: 'text-blue-600',    title: 'Normal', desc: 'Standart tempo', detail: '6–8 km/gün' },
+                          { val: 'aktif',  Icon: Mountain,   bg: 'bg-orange-100',  color: 'text-orange-600',  title: 'Aktif',  desc: 'Her şeyi gör',   detail: '10–15 km/gün' },
+                          { val: 'esnek',  Icon: Compass,    bg: 'bg-purple-100',  color: 'text-purple-600',  title: 'Esnek',  desc: 'AI karar versin', detail: 'Değişken' },
+                        ] as const).map(({ val, Icon, bg, color, title, desc, detail }) => {
                           const selected = data.pace === val;
                           return (
                             <button
                               key={val}
                               type="button"
                               onClick={() => { updateData({ pace: val }); setHints((h) => ({ ...h, pace: false })); }}
-                              className={`relative flex flex-col items-start gap-1.5 px-3.5 py-3 rounded-lg border text-left
-                                transition-all duration-150 hover:-translate-y-px hover:shadow-sm
+                              className={`flex flex-col items-center gap-2 py-4 px-2 rounded-xl border-2 text-center transition-all duration-150
                                 ${selected
-                                  ? `border-[#f8981d] ${activeBg}`
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
                                   : 'border-slate-200 bg-white hover:border-slate-300'}`}
                             >
-                              <Icon size={20} className={`shrink-0 ${selected ? 'text-[#f8981d]' : color}`} />
-                              <div className="min-w-0 w-full">
-                                <p className={`font-bold text-sm leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>
-                                  {title}
-                                </p>
-                                <p className={`text-xs mt-0.5 leading-tight ${selected ? 'text-[#f8981d]/80' : 'text-slate-500'}`}>
-                                  {desc}
-                                </p>
-                                <p className="text-[10px] text-slate-400 mt-1.5 leading-tight border-t border-slate-100 pt-1.5">
-                                  {detail}
-                                </p>
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-[#f8981d]/15' : bg}`}>
+                                <Icon size={17} className={selected ? 'text-[#f8981d]' : color} />
                               </div>
-                              {selected && (
-                                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-[#f8981d] flex items-center justify-center">
-                                  <Check size={8} className="text-white" strokeWidth={3} />
-                                </div>
-                              )}
+                              <div>
+                                <p className={`font-bold text-xs ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>{title}</p>
+                                <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-[#f8981d]/70' : 'text-slate-500'}`}>{desc}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">{detail}</p>
+                              </div>
                             </button>
                           );
                         })}
@@ -782,63 +707,73 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.pace ? 'Günlük tempo seçin.' : undefined} />
                     </div>
 
-                    <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-slate-300 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={data.earlyBird}
-                        onChange={(e) => updateData({ earlyBird: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-300 text-[#f8981d] accent-[#f8981d]"
-                      />
-                      <span className="text-sm text-slate-700 font-semibold">Erken kalkmayı severim</span>
-                    </label>
+                    {/* Erken Kalkmayı Severim — Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => updateData({ earlyBird: !data.earlyBird })}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-colors
+                        ${data.earlyBird ? 'border-[#f8981d] bg-[#f8981d]/[0.04]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${data.earlyBird ? 'bg-[#f8981d]/15' : 'bg-amber-100'}`}>
+                          <Sunrise size={17} className={data.earlyBird ? 'text-[#f8981d]' : 'text-amber-600'} />
+                        </div>
+                        <div className="text-left">
+                          <p className={`text-sm font-semibold ${data.earlyBird ? 'text-[#f8981d]' : 'text-slate-700'}`}>Erken kalkmayı severim</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Sabah erken aktivite planlanabilir</p>
+                        </div>
+                      </div>
+                      <div className={`relative w-11 h-6 rounded-full transition-colors duration-300 shrink-0
+                        ${data.earlyBird ? 'bg-[#f8981d]' : 'bg-slate-200'}`}>
+                        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300
+                          ${data.earlyBird ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </div>
+                    </button>
 
-                    {/* ── Uzak Durmak İstediklerin (Collapsible, opsiyonel) ── */}
-                    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-
-                      {/* Başlık — tıklanabilir */}
+                    {/* Uzak Durmak İstediklerin */}
+                    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setDislikesOpen((o) => !o)}
-                        className="w-full flex items-center justify-between px-3.5 py-3 hover:bg-slate-50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors"
                       >
-                        <div className="text-left">
-                          <p className="text-sm font-semibold text-slate-700">
-                            Uzak durmak istediklerin var mı?
-                            <span className="ml-1.5 text-[10px] font-medium text-slate-400 normal-case">(İsteğe bağlı)</span>
-                          </p>
-                          {!dislikesOpen && data.dislikes.length > 0 && (
-                            <p className="text-[11px] text-[#f8981d] mt-0.5">
-                              {data.dislikes.length} seçim yapıldı
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                            <X size={15} className="text-rose-400" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-slate-700">
+                              Uzak durmak istediklerin
+                              <span className="ml-1.5 text-[10px] font-medium text-slate-400">(İsteğe bağlı)</span>
                             </p>
-                          )}
+                            {!dislikesOpen && data.dislikes.length > 0 && (
+                              <p className="text-[11px] text-[#f8981d] mt-0.5">{data.dislikes.length} seçim yapıldı</p>
+                            )}
+                          </div>
                         </div>
                         <ChevronDown
                           size={16}
                           className={`text-slate-400 shrink-0 transition-transform duration-300 ${dislikesOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
-
-                      {/* İçerik — smooth collapsible */}
                       <div
                         className="transition-all duration-300 ease-in-out overflow-hidden"
                         style={{ maxHeight: dislikesOpen ? '480px' : '0px', opacity: dislikesOpen ? 1 : 0 }}
                       >
-                        <div className="px-3.5 pb-3.5 pt-1 border-t border-slate-100">
-                          <p className="text-[11px] text-slate-400 mb-3">
-                            Seçtiklerin AI planını şekillendirecek.
-                          </p>
+                        <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+                          <p className="text-[11px] text-slate-400 mb-3">Seçtiklerin AI planını şekillendirecek.</p>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {([
-                              { val: 'kalabalik_yerler',    Icon: Users,        label: 'Kalabalık yerler' },
-                              { val: 'turistik_noktalar',   Icon: Camera,       label: 'Çok turistik noktalar' },
-                              { val: 'yuksek_yerler',       Icon: TrendingUp,   label: 'Yüksek yerler' },
-                              { val: 'muzeler',             Icon: Building2,    label: 'Müzeler' },
-                              { val: 'uzun_yuruyusler',     Icon: Footprints,   label: 'Uzun yürüyüşler' },
-                              { val: 'gece_hayati',         Icon: Wine,         label: 'Gece hayatı' },
-                              { val: 'pahali_restoranlar',  Icon: DollarSign,   label: 'Pahalı restoranlar' },
-                              { val: 'toplu_turlar',        Icon: Bus,          label: 'Toplu turlar' },
-                              { val: 'erken_kalkma',        Icon: Sunrise,      label: 'Erken kalkma' },
-                              { val: 'yagmurda_gezme',      Icon: CloudRain,    label: 'Yağmurda gezme' },
+                              { val: 'kalabalik_yerler',   Icon: Users,       label: 'Kalabalık yerler' },
+                              { val: 'turistik_noktalar',  Icon: Camera,      label: 'Çok turistik' },
+                              { val: 'yuksek_yerler',      Icon: TrendingUp,  label: 'Yüksek yerler' },
+                              { val: 'muzeler',            Icon: Building2,   label: 'Müzeler' },
+                              { val: 'uzun_yuruyusler',    Icon: Footprints,  label: 'Uzun yürüyüşler' },
+                              { val: 'gece_hayati',        Icon: Wine,        label: 'Gece hayatı' },
+                              { val: 'pahali_restoranlar', Icon: DollarSign,  label: 'Pahalı restoranlar' },
+                              { val: 'toplu_turlar',       Icon: Bus,         label: 'Toplu turlar' },
+                              { val: 'erken_kalkma',       Icon: Sunrise,     label: 'Erken kalkma' },
+                              { val: 'yagmurda_gezme',     Icon: CloudRain,   label: 'Yağmurda gezme' },
                             ] as const).map(({ val, Icon, label }) => {
                               const selected = data.dislikes.includes(val);
                               return (
@@ -851,21 +786,13 @@ const Onboarding: React.FC = () => {
                                       : [...data.dislikes, val];
                                     updateData({ dislikes: next });
                                   }}
-                                  className={`relative flex items-center gap-2 px-3 py-2.5 rounded-lg border text-left
-                                    transition-all duration-150 active:scale-95
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-left transition-all duration-150
                                     ${selected
-                                      ? 'border-rose-400 bg-rose-50'
+                                      ? 'border-rose-300 bg-rose-50'
                                       : 'border-slate-200 bg-white hover:border-slate-300'}`}
                                 >
-                                  <Icon size={14} className={`shrink-0 ${selected ? 'text-rose-500' : 'text-slate-400'}`} />
-                                  <span className={`text-xs font-medium leading-tight ${selected ? 'text-rose-600' : 'text-slate-600'}`}>
-                                    {label}
-                                  </span>
-                                  {selected && (
-                                    <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 flex items-center justify-center">
-                                      <X size={8} className="text-white" strokeWidth={3} />
-                                    </div>
-                                  )}
+                                  <Icon size={13} className={`shrink-0 ${selected ? 'text-rose-500' : 'text-slate-400'}`} />
+                                  <span className={`text-xs font-medium leading-tight ${selected ? 'text-rose-600' : 'text-slate-600'}`}>{label}</span>
                                 </button>
                               );
                             })}
@@ -880,35 +807,46 @@ const Onboarding: React.FC = () => {
                 {/* ── ADIM 3 ── */}
                 {currentStep === 3 && (
                   <div className="space-y-6">
+
+                    {/* Beslenme Tercihleri */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Beslenme Tercihleri</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                        {['Vegan', 'Vejetaryen', 'Helal', 'Glutensiz', 'Pesketaryen', ALL_EATER_OPTION].map((diet) => (
-                          <OptionCard
-                            key={diet}
-                            emoji={DIET_EMOJIS[diet]} title={diet}
-                            selected={data.dietaryRestrictions.includes(diet)}
-                            onClick={() => {
-                              updateData({ dietaryRestrictions: toggleDietaryRestriction(diet, data.dietaryRestrictions) });
-                              setHints((h) => ({ ...h, dietary: false }));
-                            }}
-                          />
-                        ))}
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Beslenme Tercihleri</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {['Vegan', 'Vejetaryen', 'Helal', 'Glutensiz', 'Pesketaryen', ALL_EATER_OPTION].map((diet) => {
+                          const selected = data.dietaryRestrictions.includes(diet);
+                          return (
+                            <button
+                              key={diet}
+                              type="button"
+                              onClick={() => {
+                                updateData({ dietaryRestrictions: toggleDietaryRestriction(diet, data.dietaryRestrictions) });
+                                setHints((h) => ({ ...h, dietary: false }));
+                              }}
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-150
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <span className="text-base leading-none shrink-0">{DIET_EMOJIS[diet]}</span>
+                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{diet}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                       <FieldError msg={hints.dietary ? 'En az bir beslenme tercihi seçin.' : undefined} />
                     </div>
 
                     {/* Yemek Felsefesi */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1 block">Yemek Felsefen</label>
-                      <p className="text-[11px] text-slate-400 mb-2.5">AI sana hangi mekanları önersin?</p>
-                      <div className="grid grid-cols-1 gap-2">
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Yemek Felsefesi</p>
+                      <p className="text-[11px] text-slate-400 mb-3">AI sana hangi mekanları önersin?</p>
+                      <div className="grid grid-cols-2 gap-2.5">
                         {([
-                          { val: 'iconic',      emoji: '⭐', title: 'İkonik Lezzetler',    subtitle: 'Şehrin ünlü, herkesin bildiği mekanları keşfet' },
-                          { val: 'hidden_gems', emoji: '🗺️', title: 'Gizli Keşifler',       subtitle: 'Az bilinen, yerel favoriler ve saklı köşeler' },
-                          { val: 'fine_dining', emoji: '🍷', title: 'Fine Dining',           subtitle: 'Kaliteli, özenli restoran deneyimi' },
-                          { val: 'street_food', emoji: '🌮', title: 'Sokak Yemeği',         subtitle: 'Tezgah lezzetleri, pazar yiyecekleri, yerel atıştırmalıklar' },
-                          { val: 'mixed',       emoji: '🎲', title: 'Karışık / Sürpriz et', subtitle: 'Hepsinden biraz — her gün farklı bir deneyim' },
+                          { val: 'iconic',      emoji: '⭐', title: 'İkonik Lezzetler', subtitle: 'Şehrin ünlü mekanları' },
+                          { val: 'hidden_gems', emoji: '🗺️', title: 'Gizli Keşifler',    subtitle: 'Yerel favoriler, saklı köşeler' },
+                          { val: 'fine_dining', emoji: '🍷', title: 'Fine Dining',        subtitle: 'Kaliteli restoran deneyimi' },
+                          { val: 'street_food', emoji: '🌮', title: 'Sokak Yemeği',      subtitle: 'Tezgah lezzetleri, pazar' },
+                          { val: 'mixed',       emoji: '🎲', title: 'Karışık / Sürpriz', subtitle: 'Her gün farklı deneyim' },
                         ] as const).map(({ val, emoji, title, subtitle }) => {
                           const selected = data.foodPhilosophy === val;
                           return (
@@ -919,8 +857,8 @@ const Onboarding: React.FC = () => {
                                 updateData({ foodPhilosophy: val });
                                 setHints((h) => ({ ...h, foodPhilosophy: false }));
                               }}
-                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-lg border-2 text-left
-                                transition-all duration-150 active:scale-[0.99]
+                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-xl border-2 text-left transition-all duration-150
+                                ${val === 'mixed' ? 'col-span-2' : ''}
                                 ${selected
                                   ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
                                   : 'border-slate-200 bg-white hover:border-slate-300'}`}
@@ -942,21 +880,32 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.foodPhilosophy ? 'Yemek felsefeni seç.' : undefined} />
                     </div>
 
+                    {/* Öğün Başı Bütçe */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Öğün Başı Bütçe</label>
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Öğün Başı Bütçe</p>
                       <div className="grid grid-cols-3 gap-2.5">
                         {[
-                          { val: 'low',    emoji: '💵',      title: ' Düşük'  },
-                          { val: 'medium', emoji: '💵💵',    title: ' Orta'  },
-                          { val: 'high',   emoji: '💵💵💵',  title: ' Yüksek' },
-                        ].map(({ val, emoji, title }) => (
-                          <OptionCard
-                            key={val}
-                            emoji={emoji} title={title}
-                            selected={data.mealBudget === val}
-                            onClick={() => { updateData({ mealBudget: val as OnboardingData['mealBudget'] }); setHints((h) => ({ ...h, mealBudget: false })); }}
-                          />
-                        ))}
+                          { val: 'low',    emoji: '💵',     title: 'Düşük',  sub: 'Uygun fiyatlı' },
+                          { val: 'medium', emoji: '💵💵',   title: 'Orta',   sub: 'Dengeli' },
+                          { val: 'high',   emoji: '💵💵💵', title: 'Yüksek', sub: 'Kalite öncelikli' },
+                        ].map(({ val, emoji, title, sub }) => {
+                          const selected = data.mealBudget === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => { updateData({ mealBudget: val as OnboardingData['mealBudget'] }); setHints((h) => ({ ...h, mealBudget: false })); }}
+                              className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl border-2 text-center transition-all duration-150
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <span className="text-lg leading-none">{emoji}</span>
+                              <p className={`font-bold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>{title}</p>
+                              <p className={`text-[10px] ${selected ? 'text-[#f8981d]/70' : 'text-slate-400'}`}>{sub}</p>
+                            </button>
+                          );
+                        })}
                       </div>
                       <FieldError msg={hints.mealBudget ? 'Öğün başı bütçe seçin.' : undefined} />
                     </div>
@@ -969,28 +918,34 @@ const Onboarding: React.FC = () => {
 
                     {/* Rezervasyon sorusu */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Rezervasyonun var mı?</label>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <OptionCard
-                          emoji="✅"
-                          title="Evet, rezervasyonum var"
-                          subtitle="Konaklama yerim belli"
-                          selected={data.hasReservation === true}
-                          onClick={() => {
-                            updateData({ hasReservation: true });
-                            setHints((h) => ({ ...h, accommodation: false }));
-                          }}
-                        />
-                        <OptionCard
-                          emoji="🔍"
-                          title="Hayır, henüz seçmedim"
-                          subtitle="Konaklama tarzımı söyleyeceğim"
-                          selected={data.hasReservation === false}
-                          onClick={() => {
-                            updateData({ hasReservation: false, accommodationAddress: '' });
-                            setHints((h) => ({ ...h, accommodation: false }));
-                          }}
-                        />
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Rezervasyon Durumu</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { val: true,  emoji: '✅', title: 'Rezervasyonum var', sub: 'Konaklama yerim belli' },
+                          { val: false, emoji: '🔍', title: 'Henüz seçmedim',    sub: 'Konaklama tarzımı söyleyeceğim' },
+                        ].map(({ val, emoji, title, sub }) => {
+                          const selected = data.hasReservation === val;
+                          return (
+                            <button
+                              key={String(val)}
+                              type="button"
+                              onClick={() => {
+                                updateData({ hasReservation: val, ...(!val ? { accommodationAddress: '' } : {}) });
+                                setHints((h) => ({ ...h, accommodation: false }));
+                              }}
+                              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-xl border-2 text-center transition-all duration-150
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <span className="text-3xl leading-none">{emoji}</span>
+                              <div>
+                                <p className={`font-bold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                       <FieldError msg={hints.accommodation && data.hasReservation === null ? 'Rezervasyon durumunuzu belirtin.' : undefined} />
                     </div>
@@ -1005,9 +960,7 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">
-                            Konaklama Adı / Adresi
-                          </label>
+                          <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-2">Konaklama Yeri</p>
                           <PlacesAutocomplete
                             value={data.accommodationAddress || ''}
                             onChange={(place) => {
@@ -1023,7 +976,7 @@ const Onboarding: React.FC = () => {
                             hasError={hints.accommodation && !data.accommodationAddress.trim()}
                           />
                           <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? 'Konaklama adresini girin.' : undefined} />
-                          <p className="text-[11px] text-slate-400 mt-1.5 ml-0.5">
+                          <p className="text-[11px] text-slate-400 mt-1.5">
                             AI günlük rotaları bu konuma göre optimize edecek.
                           </p>
                         </motion.div>
@@ -1040,50 +993,84 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <label className="text-xs font-medium text-slate-500 mb-2 block">Konaklama Tercihi</label>
+                          <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Konaklama Tercihi</p>
                           <div className="grid grid-cols-2 gap-2.5">
                             {[
                               { val: 'hotel',  emoji: '🏨', title: 'Otel',               sub: 'Konforlu, tam servis' },
-                              { val: 'airbnb', emoji: '🏠', title: 'Airbnb / Ev',          sub: 'Yerel deneyim' },
-                              { val: 'hostel', emoji: '🛏️', title: 'Hostel',               sub: 'Sosyal, ekonomik' },
-                              { val: 'resort', emoji: '🌴', title: 'Tatil Köyü / Resort',   sub: 'Her şey dahil' },
-                            ].map(({ val, emoji, title, sub }) => (
-                              <OptionCard
-                                key={val}
-                                emoji={emoji} title={title} subtitle={sub}
-                                selected={data.accommodation === val}
-                                onClick={() => {
-                                  updateData({ accommodation: val as OnboardingData['accommodation'] });
-                                  setHints((h) => ({ ...h, accommodation: false }));
-                                }}
-                              />
-                            ))}
+                              { val: 'airbnb', emoji: '🏠', title: 'Airbnb / Ev',         sub: 'Yerel deneyim' },
+                              { val: 'hostel', emoji: '🛏️', title: 'Hostel',              sub: 'Sosyal, ekonomik' },
+                              { val: 'resort', emoji: '🌴', title: 'Tatil Köyü',          sub: 'Her şey dahil' },
+                            ].map(({ val, emoji, title, sub }) => {
+                              const selected = data.accommodation === val;
+                              return (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => {
+                                    updateData({ accommodation: val as OnboardingData['accommodation'] });
+                                    setHints((h) => ({ ...h, accommodation: false }));
+                                  }}
+                                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-150
+                                    ${selected
+                                      ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                      : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                >
+                                  <span className="text-2xl shrink-0 leading-none">{emoji}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`font-semibold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>
+                                  </div>
+                                  {selected && (
+                                    <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                      <Check size={9} className="text-white" strokeWidth={3} />
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                           <FieldError msg={hints.accommodation && !data.accommodation ? 'Konaklama tercihi seçin.' : undefined} />
                         </motion.div>
                       </AnimatePresence>
                     )}
 
-                    {/* Şehir İçi Ulaşım — her zaman görünür */}
+                    {/* Şehir İçi Ulaşım */}
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-2 block">Şehir İçi Ulaşım</label>
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Şehir İçi Ulaşım</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { val: 'public', emoji: '🚇', title: 'Toplu Taşıma',        sub: 'Metro, otobüs' },
-                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',              sub: 'Yürüme mesafesi' },
-                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',          sub: 'Kapıdan kapıya' },
-                          { val: 'car',    emoji: '🚗', title: 'Araç (Kiralık/Kendi)', sub: 'Park önemli, şehir dışı dahil' },
-                        ].map(({ val, emoji, title, sub }) => (
-                          <OptionCard
-                            key={val}
-                            emoji={emoji} title={title} subtitle={sub}
-                            selected={data.transport === val}
-                            onClick={() => {
-                              updateData({ transport: val as OnboardingData['transport'] });
-                              setHints((h) => ({ ...h, transport: false }));
-                            }}
-                          />
-                        ))}
+                          { val: 'public', emoji: '🚇', title: 'Toplu Taşıma',  sub: 'Metro, otobüs' },
+                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',       sub: 'Yürüme mesafesi' },
+                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',   sub: 'Kapıdan kapıya' },
+                          { val: 'car',    emoji: '🚗', title: 'Araç',           sub: 'Kiralık veya kendi' },
+                        ].map(({ val, emoji, title, sub }) => {
+                          const selected = data.transport === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => {
+                                updateData({ transport: val as OnboardingData['transport'] });
+                                setHints((h) => ({ ...h, transport: false }));
+                              }}
+                              className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-150
+                                ${selected
+                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                            >
+                              <span className="text-2xl shrink-0 leading-none">{emoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className={`font-semibold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>
+                              </div>
+                              {selected && (
+                                <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                  <Check size={9} className="text-white" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                       <FieldError msg={hints.transport ? 'Bir ulaşım tercihi seçin.' : undefined} />
                     </div>

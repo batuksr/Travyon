@@ -117,8 +117,8 @@ const ensureGoogleMapsLoaded = (apiKey: string): Promise<void> => {
   // Script yok — kendimiz yükleriz
   const callbackName = `__gm_places_cb_${Date.now()}`;
   scriptPromise = new Promise<void>((resolve, reject) => {
-    (window as Record<string, unknown>)[callbackName] = () => {
-      delete (window as Record<string, unknown>)[callbackName];
+    (window as unknown as Record<string, unknown>)[callbackName] = () => {
+      delete (window as unknown as Record<string, unknown>)[callbackName];
       resolve();
     };
     const script = document.createElement('script');
