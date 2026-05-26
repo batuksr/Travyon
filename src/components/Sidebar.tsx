@@ -23,6 +23,7 @@ const mainNavItems = [
 const Sidebar: React.FC = () => {
   const { expanded, setExpanded } = useSidebarStore();
   const transitioningRef = React.useRef(false);
+  const isHoveredRef = React.useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
@@ -46,11 +47,11 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => { if (!transitioningRef.current) setExpanded(false); }}
-      className={`fixed left-0 top-0 bottom-0 z-50
-                 bg-slate 0 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
-                 flex flex-col transition-all duration-300 ease-out
+      onMouseEnter={() => { isHoveredRef.current = true; setExpanded(true); }}
+      onMouseLeave={() => { isHoveredRef.current = false; if (!transitioningRef.current) setExpanded(false); }}
+      className={`sticky top-0 h-screen shrink-0 z-40
+                 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
+                 flex flex-col transition-all duration-300 ease-out overflow-hidden
                  ${expanded ? 'w-60' : 'w-[84px]'}`}
     >
 
@@ -130,7 +131,11 @@ const Sidebar: React.FC = () => {
             toggleWithCircle(toggleTheme, e);
             // VT snapshot alındıktan sonra pill'i kaydır — akıcı sliding için
             setTimeout(() => setPillDark(d => !d), 150);
-            setTimeout(() => { transitioningRef.current = false; }, 50);
+            // Transition bittikten sonra: ref'i sıfırla, mouse dışarıdaysa sidebar'ı kapat
+            setTimeout(() => {
+              transitioningRef.current = false;
+              if (!isHoveredRef.current) setExpanded(false);
+            }, 700);
           }}
           className="w-full flex items-center px-0.5 py-2 rounded-lg transition-all hover:bg-slate-50"
           aria-label="Tema değiştir"

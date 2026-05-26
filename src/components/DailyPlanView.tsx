@@ -6,7 +6,7 @@ import { regenerateDayWithVibe } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
-import type { VibeType } from './VibeSelector';
+export type VibeType = 'rest' | 'indoor' | 'budget' | 'explore' | null;
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
 
 const LIBRARIES: ('places')[] = ['places'];

@@ -41,10 +41,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
       {showSidebar && <Sidebar />}
-      <main
-        className="flex-1 transition-all duration-300"
-        style={{ marginLeft: showSidebar ? (expanded ? '240px' : '84px') : '0px' }}
-      >
+      <main className="flex-1 min-w-0">
         <Routes>
           <Route path="/"            element={isAuthenticated ? <Navigate to="/hub" replace /> : <Home />} />
           <Route path="/hub"         element={<ProtectedRoute><Hub /></ProtectedRoute>} />
