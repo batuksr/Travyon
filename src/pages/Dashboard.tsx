@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
-import { useSavedPlansStore } from '../store/useSavedPlansStore';
+import { useSavedPlansStore, useUserPlans } from '../store/useSavedPlansStore';
 import { useNavigate } from 'react-router-dom';
 import {
   Bus,
@@ -25,7 +25,14 @@ import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 const Dashboard: React.FC = () => {
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
   const { addPlan, updatePlan } = useSavedPlansStore();
-  const { data: onboardingData } = useOnboardingStore();
+  const savedPlans = useUserPlans();
+  const { data: currentOnboardingData } = useOnboardingStore();
+
+  // Kaydedilmiş plan görüntüleniyorsa onun onboardingData'sını kullan
+  // (farklı planların otel koordinatlarının birbirini ezmemesi için)
+  const onboardingData = savedPlanId
+    ? (savedPlans.find(p => p.id === savedPlanId)?.onboardingData ?? currentOnboardingData)
+    : currentOnboardingData;
   const navigate = useNavigate();
   const { dark, toggle: toggleTheme } = useThemeStore();
 
@@ -107,6 +114,17 @@ const Dashboard: React.FC = () => {
 
   if (!plan) return null;
 
+  // Otel markeri — rezervasyon var ve koordinatlar girilmişse
+  const hotelMarker =
+    onboardingData.hasReservation &&
+    onboardingData.accommodationLat &&
+    onboardingData.accommodationLng
+      ? {
+          lat:  onboardingData.accommodationLat,
+          lng:  onboardingData.accommodationLng,
+          name: onboardingData.accommodationAddress || 'Konaklama',
+        }
+      : null;
 
   const handleSavePlan = () => {
     if (!plan) return;
@@ -142,7 +160,7 @@ const Dashboard: React.FC = () => {
   const activeDay = plan.dailyPlans[activeDayIndex];
 
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-200 dark:bg-slate-900 overflow-hidden">
 
 
       {/* ── ÇIKIŞ ONAY MODALİ ── */}
@@ -268,7 +286,7 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <MapView activities={activeDayActivities} />
+            <MapView activities={activeDayActivities} hotel={hotelMarker} />
           </div>
         </div>
       )}
@@ -355,7 +373,7 @@ const Dashboard: React.FC = () => {
 
         {/* SOL PANEL — Plan listesi */}
         <div
-          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-[width] duration-200"
+          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200"
           style={{ width: `${leftWidthPct}%` }}
         >
 
@@ -439,7 +457,7 @@ const Dashboard: React.FC = () => {
           aria-label="Rota haritası"
           className="hidden lg:flex flex-1 relative"
         >
-          <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} />
+          <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} hotel={hotelMarker} />
 
           {/* Mini optimize badge */}
           <div className="absolute top-3 right-3 bg-white border border-slate-200 rounded-lg shadow-sm px-3 py-2 flex items-center gap-2 z-[5]">

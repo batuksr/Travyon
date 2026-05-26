@@ -71,7 +71,7 @@ const Register: React.FC = () => {
       </div>
 
       {/* Sağ Panel — Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-white overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-slate-200 dark:bg-slate-900 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}

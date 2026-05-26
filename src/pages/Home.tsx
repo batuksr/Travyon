@@ -187,7 +187,7 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-[#fafaf9] text-[#1a1a1a] overflow-x-hidden">
+    <div className="bg-slate-200 dark:bg-slate-900 text-[#1a1a1a] dark:text-white overflow-x-hidden">
 
       {/* ══════════════════════════════════════════
           NAVBAR — Floating Island
@@ -372,7 +372,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════════
           BÖLÜM 2 — ÖRNEK PLANLAR
          ══════════════════════════════════════════ */}
-      <section id="ornek-planlar" className="bg-slate-50 py-16">
+      <section id="ornek-planlar" className="bg-slate-200 dark:bg-slate-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Başlık */}

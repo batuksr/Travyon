@@ -151,9 +151,15 @@ const MAX_PEOPLE = 15;
 ════════════════════════════════════════════════════════ */
 const Onboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { currentStep, data, nextStep, prevStep, updateData } = useOnboardingStore();
+  const { currentStep, data, nextStep, prevStep, updateData, setStep, resetForm } = useOnboardingStore();
   const { setPlan } = usePlanStore();
   const { user } = useAuthStore();
+
+  // Sayfaya her girişte formu sıfırla — önceki planın seçimleri kalmasın
+  useEffect(() => {
+    resetForm();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ayarlar'dan kaydedilen varsayılan değerleri yükle (sadece form boşsa uygula)
   useEffect(() => {
@@ -236,6 +242,7 @@ const Onboarding: React.FC = () => {
       let applied = false;
       const plan = await generateTravelPlan(data, (partial) => { if (applied) setPlan(partial); });
       setPlan(plan); applied = true;
+      setStep(1);           // Sadece adımı sıfırla — konaklama verisi Dashboard'da gerekli
       navigate('/dashboard');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Plan oluşturulurken bir hata oluştu.');
@@ -245,7 +252,7 @@ const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-white flex overflow-hidden">
+    <div className="h-screen bg-slate-200 dark:bg-slate-900 flex overflow-hidden">
 
       {/* ═══ SOL — VİDEO ═══ */}
       <div className="hidden lg:flex lg:w-2/5 relative overflow-hidden shrink-0">
@@ -296,7 +303,37 @@ const Onboarding: React.FC = () => {
       </div>
 
       {/* ═══ SAĞ — FORM ═══ */}
-      <div className="flex-1 flex flex-col h-screen min-w-0">
+      <div className="flex-1 flex flex-col h-screen min-w-0 relative">
+
+        {/* Loading overlay — tüm sağ paneli kaplar, scroll edilemez */}
+        {isGenerating && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white dark:bg-slate-900 px-8 text-center"
+          >
+            <div className="relative w-20 h-20 mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-[#f8981d] border-t-transparent animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center text-2xl">✈️</div>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Planınız Hazırlanıyor</h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+              Yapay zekamız rotaları, gizli mekanları ve aktiviteleri seçiyor.
+            </p>
+            <div className="bg-orange-50 border border-orange-100 rounded-full px-5 py-2.5 min-w-[220px]">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={loadingIdx}
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.25 }}
+                  className="text-sm text-[#e08518] font-semibold"
+                >
+                  {loadingMessages[loadingIdx]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
 
         {/* Üst bar — step indikatörleri */}
         <div className="shrink-0 px-8 lg:px-12 pt-7 pb-5 border-b border-slate-100">
@@ -345,37 +382,7 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Form alanı */}
-        <div className="flex-1 overflow-y-auto px-8 lg:px-12 py-8 relative">
-
-          {/* Loading overlay */}
-          {isGenerating && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white px-8 text-center"
-            >
-              <div className="relative w-20 h-20 mb-6">
-                <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
-                <div className="absolute inset-0 rounded-full border-4 border-[#f8981d] border-t-transparent animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center text-2xl">✈️</div>
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">Planınız Hazırlanıyor</h3>
-              <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
-                Yapay zekamız rotaları, gizli mekanları ve aktiviteleri seçiyor.
-              </p>
-              <div className="bg-orange-50 border border-orange-100 rounded-full px-5 py-2.5 min-w-[220px]">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={loadingIdx}
-                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-sm text-[#e08518] font-semibold"
-                  >
-                    {loadingMessages[loadingIdx]}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          )}
+        <div className="flex-1 overflow-y-auto px-8 lg:px-12 py-8">
 
           <div className="max-w-2xl" aria-hidden={isGenerating || undefined}>
 
@@ -1107,7 +1114,7 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Alt bar — navigasyon */}
-        <div className="shrink-0 border-t border-slate-100 px-8 lg:px-12 py-4 flex items-center justify-between bg-white">
+        <div className="shrink-0 border-t border-slate-100 px-8 lg:px-12 py-4 flex items-center justify-between bg-gray">
 
           <button
             type="button"

@@ -49,7 +49,7 @@ const Sidebar: React.FC = () => {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => { if (!transitioningRef.current) setExpanded(false); }}
       className={`fixed left-0 top-0 bottom-0 z-50
-                 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
+                 bg-slate 0 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
                  flex flex-col transition-all duration-300 ease-out
                  ${expanded ? 'w-60' : 'w-[84px]'}`}
     >

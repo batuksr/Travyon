@@ -188,7 +188,7 @@ const Community: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
       <div className="max-w-[1150px] mx-auto px-10 py-10">
 
         {/* Başlık */}

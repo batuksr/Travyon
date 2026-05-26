@@ -410,6 +410,7 @@ const Hub: React.FC = () => {
   /* ── Stats + Pins ── */
   const { stats, destPins } = useMemo(() => {
     const now        = new Date();
+    const today      = now.toISOString().split('T')[0];
     const thisMonth  = now.getMonth();
     const thisYear   = now.getFullYear();
     const thisMonthCount = plans.filter(p => {
@@ -421,15 +422,18 @@ const Hub: React.FC = () => {
       dest.includes(',') ? dest.split(',').slice(1).join(',').trim() : '';
     const getCityRaw = (dest: string) => dest.split(',')[0].trim();
 
-    const uniqueCities    = new Set(plans.map(p => getCityRaw(p.plan.destination))).size;
-    const allCountries    = plans.map(p => getCountry(p.plan.destination)).filter(Boolean);
+    // Sadece tamamlanmış seyahatler (bitiş tarihi bugünden önce)
+    const visitedPlans = plans.filter(p => p.onboardingData.endDate < today);
+
+    const uniqueCities    = new Set(visitedPlans.map(p => getCityRaw(p.plan.destination))).size;
+    const allCountries    = visitedPlans.map(p => getCountry(p.plan.destination)).filter(Boolean);
     const uniqueCountries = new Set(allCountries).size;
     const countryCounts: Record<string, number> = {};
     allCountries.forEach(c => { countryCounts[c] = (countryCounts[c] ?? 0) + 1; });
     const topCountries = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const uniqueFlags  = [...new Set(allCountries)].slice(0, 8).map(c => ({ name: c, flag: getCountryFlag(c) }));
     const budgetMap: Record<string, { symbol: string; total: number }> = {};
-    plans.forEach(p => {
+    visitedPlans.forEach(p => {
       const code = p.onboardingData.currencyCode ?? 'TRY';
       const sym  = p.onboardingData.currencySymbol ?? '₺';
       if (!budgetMap[code]) budgetMap[code] = { symbol: sym, total: 0 };
@@ -437,10 +441,10 @@ const Hub: React.FC = () => {
     });
     const budgets = Object.entries(budgetMap).sort((a, b) => b[1].total - a[1].total).slice(0, 3);
 
-    /* Destination pins — centroid of each plan's activities (deduplicated) */
+    /* Destination pins — sadece tamamlanmış seyahatler (centroid, deduplicated) */
     const seen = new Set<string>();
     const pins: DestPin[] = [];
-    plans.forEach(p => {
+    visitedPlans.forEach(p => {
       const activities = p.plan.dailyPlans.flatMap(d => d.activities);
       if (!activities.length) return;
       const lat = activities.reduce((s, a) => s + a.coordinates.lat, 0) / activities.length;
@@ -585,7 +589,7 @@ const Hub: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
       <div className="max-w-[1280px] mx-auto px-8 py-10 pl-12">
 
         {/* ── Greeting ── */}
@@ -1071,95 +1075,96 @@ const Hub: React.FC = () => {
               </div>
             )}
 
-            {/* ── Dünya Haritası ── */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-
-              {/* Harita başlık */}
-              <div className="px-6 pt-5 pb-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-5 h-5 bg-[#f8981d]/15 rounded-md flex items-center justify-center">
-                    <Globe size={11} className="text-[#f8981d]" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dünya Haritam</span>
-                </div>
-                <p className="text-lg font-black text-slate-900">
-                  Şu ana kadar{' '}
-                  <span className="text-[#f8981d]">{stats.uniqueCities} şehir</span>{' '}
-                  keşfettin!
-                </p>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
-                </p>
-              </div>
-
-              {/* Harita */}
-              <div className="h-72 w-full border-t border-slate-100">
-                {!isLoaded ? (
-                  <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-[#f8981d] border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : (
-                  <GoogleMap
-                    mapContainerStyle={{ width: '100%', height: '100%' }}
-                    center={MAP_INIT_CENTER}
-                    zoom={MAP_INIT_ZOOM}
-                    options={{ ...BASE_MAP_OPTIONS, styles: dark ? WORLD_MAP_STYLES_DARK : WORLD_MAP_STYLES_LIGHT }}
-                    onLoad={onMapLoad}
-                    onUnmount={onMapUnmount}
-                    onClick={() => setSelectedPin(null)}
-                  >
-                    {destPins.map((pin) => (
-                      <MarkerF
-                        key={`${pin.lat}-${pin.lng}`}
-                        position={{ lat: pin.lat, lng: pin.lng }}
-                        title={pin.name}
-                        onMouseOver={() => setHoveredPin(pin.name)}
-                        onMouseOut={() => setHoveredPin(null)}
-                        onClick={() => setSelectedPin(pin)}
-                        icon={isLoaded ? {
-                          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-                            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-                              <circle cx="14" cy="14" r="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? 11 : 8}" fill="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? '#e08518' : '#f8981d'}" stroke="white" stroke-width="2.5"/>
-                            </svg>`
-                          )}`,
-                          scaledSize: new window.google.maps.Size(28, 28),
-                          anchor: new window.google.maps.Point(14, 14),
-                        } : undefined}
-                      />
-                    ))}
-
-                    {selectedPin && (
-                      <InfoWindowF
-                        position={{ lat: selectedPin.lat, lng: selectedPin.lng }}
-                        onCloseClick={() => setSelectedPin(null)}
-                        options={{ pixelOffset: new window.google.maps.Size(0, -22), disableAutoPan: true }}
-                      >
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '5px',
-                          background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(8px)',
-                          color: '#f1f5f9', fontSize: '12px', fontWeight: 700,
-                          fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
-                          padding: '5px 10px', borderRadius: '20px',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-                        }}>
-                          <span style={{ color: '#f8981d', fontSize: '13px' }}>📍</span>
-                          {selectedPin.name}
-                        </div>
-                      </InfoWindowF>
-                    )}
-                  </GoogleMap>
-                )}
-              </div>
-
-              {/* Harita alt bilgi */}
-              {destPins.length === 0 && (
-                <div className="px-6 py-3 border-t border-slate-100">
-                  <p className="text-slate-400 text-xs text-center">Plan oluşturdukça şehirler haritada belirmeye başlayacak 🗺️</p>
-                </div>
-              )}
-            </div>
           </>
         )}
+
+        {/* ── Dünya Haritası — her zaman görünür ── */}
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+          {/* Harita başlık */}
+          <div className="px-6 pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-5 h-5 bg-[#f8981d]/15 rounded-md flex items-center justify-center">
+                <Globe size={11} className="text-[#f8981d]" />
+              </div>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dünya Haritam</span>
+            </div>
+            <p className="text-lg font-black text-slate-900">
+              Şu ana kadar{' '}
+              <span className="text-[#f8981d]">{stats.uniqueCities} şehir</span>{' '}
+              keşfettin!
+            </p>
+            <p className="text-slate-400 text-xs mt-0.5">
+              {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
+            </p>
+          </div>
+
+          {/* Harita */}
+          <div className="h-72 w-full border-t border-slate-100">
+            {!isLoaded ? (
+              <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-[#f8981d] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={MAP_INIT_CENTER}
+                zoom={MAP_INIT_ZOOM}
+                options={{ ...BASE_MAP_OPTIONS, styles: dark ? WORLD_MAP_STYLES_DARK : WORLD_MAP_STYLES_LIGHT }}
+                onLoad={onMapLoad}
+                onUnmount={onMapUnmount}
+                onClick={() => setSelectedPin(null)}
+              >
+                {destPins.map((pin) => (
+                  <MarkerF
+                    key={`${pin.lat}-${pin.lng}`}
+                    position={{ lat: pin.lat, lng: pin.lng }}
+                    title={pin.name}
+                    onMouseOver={() => setHoveredPin(pin.name)}
+                    onMouseOut={() => setHoveredPin(null)}
+                    onClick={() => setSelectedPin(pin)}
+                    icon={isLoaded ? {
+                      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+                          <circle cx="14" cy="14" r="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? 11 : 8}" fill="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? '#e08518' : '#f8981d'}" stroke="white" stroke-width="2.5"/>
+                        </svg>`
+                      )}`,
+                      scaledSize: new window.google.maps.Size(28, 28),
+                      anchor: new window.google.maps.Point(14, 14),
+                    } : undefined}
+                  />
+                ))}
+
+                {selectedPin && (
+                  <InfoWindowF
+                    position={{ lat: selectedPin.lat, lng: selectedPin.lng }}
+                    onCloseClick={() => setSelectedPin(null)}
+                    options={{ pixelOffset: new window.google.maps.Size(0, -22), disableAutoPan: true }}
+                  >
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(8px)',
+                      color: '#f1f5f9', fontSize: '12px', fontWeight: 700,
+                      fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
+                      padding: '5px 10px', borderRadius: '20px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                    }}>
+                      <span style={{ color: '#f8981d', fontSize: '13px' }}>📍</span>
+                      {selectedPin.name}
+                    </div>
+                  </InfoWindowF>
+                )}
+              </GoogleMap>
+            )}
+          </div>
+
+          {/* Harita alt bilgi */}
+          {destPins.length === 0 && (
+            <div className="px-6 py-3 border-t border-slate-100">
+              <p className="text-slate-400 text-xs text-center">Seyahatlerini tamamladıkça şehirler haritada belirmeye başlayacak 🗺️</p>
+            </div>
+          )}
+        </div>
 
       </div>
     </div>

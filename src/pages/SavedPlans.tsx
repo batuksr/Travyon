@@ -231,10 +231,10 @@ const SavedPlans: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
 
       {/* Üst Bar */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-gray border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>

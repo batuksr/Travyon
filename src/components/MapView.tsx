@@ -10,6 +10,7 @@ const LIBRARIES: ('places')[] = ['places'];
 interface MapViewProps {
   activities: DailyActivity[];
   onActivityClick?: (place: { placeName: string; lat: number; lng: number }) => void;
+  hotel?: { lat: number; lng: number; name: string } | null;
 }
 
 const containerStyle = { width: '100%', height: '100%', borderRadius: '1rem' };
@@ -48,7 +49,7 @@ const baseMapOptions = {
   streetViewControl: false,
 };
 
-const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
+const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel }) => {
   const { dark } = useThemeStore();
 
   const { isLoaded } = useJsApiLoader({
@@ -90,13 +91,15 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
 
     const bounds = new window.google.maps.LatLngBounds();
     activities.forEach(a => bounds.extend({ lat: a.coordinates.lat, lng: a.coordinates.lng }));
+    // Otel koordinatı varsa bounds'a dahil et
+    if (hotel?.lat && hotel?.lng) bounds.extend({ lat: hotel.lat, lng: hotel.lng });
     map.fitBounds(bounds);
 
     const listener = window.google.maps.event.addListener(map, 'idle', () => {
       if ((map.getZoom() ?? 0) > 16) map.setZoom(16);
       window.google.maps.event.removeListener(listener);
     });
-  }, [map, activitiesKey, activities]);
+  }, [map, activitiesKey, activities, hotel]);
 
   if (!isLoaded) {
     return (
@@ -107,6 +110,26 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
   }
 
   const path = activities.map(a => ({ lat: a.coordinates.lat, lng: a.coordinates.lng }));
+
+  // Otel marker SVG — yeşil iğne şeklinde, "H" harfli
+  const makeHotelMarkerIcon = () => {
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">
+        <defs>
+          <filter id="hotel-sh" x="-30%" y="-20%" width="160%" height="150%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity="0.25"/>
+          </filter>
+        </defs>
+        <path d="M11 1.5 C6 1.5 2 5.5 2 10.5 C2 17.5 11 28.5 11 28.5 C11 28.5 20 17.5 20 10.5 C20 5.5 16 1.5 11 1.5 Z"
+              fill="#10b981" stroke="white" stroke-width="1.8" filter="url(#hotel-sh)"/>
+        <circle cx="11" cy="10.5" r="2.8" fill="white" opacity="0.9"/>
+      </svg>`;
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new window.google.maps.Size(22, 30),
+      anchor: new window.google.maps.Point(11, 28),
+    };
+  };
 
   // Custom marker SVG — yuvarlak köşeli kare, modern flat
   const makeMarkerIcon = (index: number) => {
@@ -168,6 +191,26 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick }) => {
                   repeat: '18px',
                 },
               ],
+            }}
+          />
+        )}
+
+        {/* Otel / konaklama markeri */}
+        {hotel?.lat && hotel?.lng && (
+          <MarkerF
+            position={{ lat: hotel.lat, lng: hotel.lng }}
+            icon={isLoaded ? makeHotelMarkerIcon() : undefined}
+            title={hotel.name}
+            zIndex={999}
+            options={{ cursor: 'pointer' }}
+            onClick={() => {
+              if (onActivityClick) {
+                onActivityClick({
+                  placeName: hotel.name,
+                  lat: hotel.lat,
+                  lng: hotel.lng,
+                });
+              }
             }}
           />
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
+import { Bot, X, Send, Loader2, RotateCcw, Sparkles } from 'lucide-react';
 import { askTravelAssistant } from '../services/assistantService';
 
 /* ══════════════════════════════════════════════
@@ -55,7 +55,7 @@ const MessageBubble: React.FC<{ msg: Message }> = ({ msg }) => {
     <div className={`flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#f8981d] to-[#e08518] flex items-center justify-center flex-shrink-0 mb-0.5 shadow-sm">
-          <Sparkles size={12} className="text-white" />
+          <Bot size={12} className="text-white" />
         </div>
       )}
       <div className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
@@ -190,7 +190,7 @@ export const AiAssistantWidget: React.FC = () => {
           <div className="bg-gradient-to-r from-[#f8981d] to-[#e08518] px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
-                <Sparkles size={14} className="text-white" />
+                <Bot size={14} className="text-white" />
               </div>
               <div>
                 <p className="text-white text-sm font-bold leading-tight">Travyon AI</p>
@@ -272,17 +272,10 @@ export const AiAssistantWidget: React.FC = () => {
       {/* ── Floating trigger button ── */}
       <button
         onClick={() => setOpen(v => !v)}
-        className={`relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 ${
-          open
-            ? 'bg-slate-700 text-white'
-            : 'bg-gradient-to-br from-[#f8981d] to-[#e08518] text-white'
-        }`}
+        className="relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-gradient-to-br from-[#f8981d] to-[#e08518] text-white"
         aria-label="AI Asistanı"
       >
-        {open
-          ? <ChevronDown size={22} />
-          : <Sparkles size={22} />
-        }
+        {open ? <X size={22} /> : <Bot size={22} />}
 
         {/* Pulse ring (when closed, no conversation) */}
         {!open && !hasMessages && (
