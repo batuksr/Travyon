@@ -189,6 +189,35 @@ const ComingSoonBadge = () => (
   <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest">Yakında</span>
 );
 
+/* Profil sayfası satır bileşeni — Airbnb tarzı inline edit */
+const ProfileRow: React.FC<{
+  label: string;
+  display: React.ReactNode;
+  isEditing: boolean;
+  onEdit: () => void;
+  actionLabel?: string;
+  children?: React.ReactNode;
+}> = ({ label, display, isEditing, onEdit, actionLabel = 'Düzenle', children }) => (
+  <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+    <div className="flex items-start py-4 gap-4">
+      <p className="w-40 shrink-0 text-[13px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5 uppercase tracking-wide">{label}</p>
+      <div className="flex-1 min-w-0 text-sm pt-0.5">{display}</div>
+      {!isEditing && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="shrink-0 text-sm font-bold text-[#f8981d] hover:text-[#e08518] transition-colors underline underline-offset-2 decoration-[#f8981d]/40"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+    {isEditing && children && (
+      <div className="pb-5 pl-44">{children}</div>
+    )}
+  </div>
+);
+
 /* ── Nav structure ── */
 const NAV_GROUPS: { label: string; items: { id: Section; icon: LucideIcon; label: string }[] }[] = [
   {
@@ -268,9 +297,17 @@ const Settings: React.FC = () => {
   /* ── HESAP ── */
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
   const [username, setUsername] = useState((user?.displayName ?? '').toLowerCase().replace(/\s+/g, '') || '');
-  const [bio, setBio] = useState('');
+  const [phone, setPhone] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [nationality, setNationality] = useState('Türkiye');
+  const [gender, setGender] = useState('');
+  const [address, setAddress] = useState('');
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<Status>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [localPhotoURL, setLocalPhotoURL] = useState<string | null>(null);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
 
   const [newEmail, setNewEmail] = useState('');
   const [emailCurrentPassword, setEmailCurrentPassword] = useState('');
@@ -335,6 +372,18 @@ const Settings: React.FC = () => {
   const [privacyStatus, setPrivacyStatus] = useState<Status>(null);
   const [privacyLoading, setPrivacyLoading] = useState(false);
 
+  /* ── FATURALAMA ── */
+  const [isPro, setIsPro] = useState(false);
+  const [plansUsedThisMonth, setPlansUsedThisMonth] = useState(0);
+  const [savedCard, setSavedCard] = useState<{ last4: string; brand: string; expiry: string } | null>(null);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardStatus, setCardStatus] = useState<Status>(null);
+  const [cardLoading, setCardLoading] = useState(false);
+
   /* ── VERİLERİM ── */
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
@@ -358,7 +407,12 @@ const Settings: React.FC = () => {
         const d = snap.data();
         setDisplayName(d.displayName ?? user.displayName ?? '');
         setUsername(d.username ?? (user.displayName ?? '').toLowerCase().replace(/\s+/g, '') ?? 'kullanici');
-        setBio(d.bio ?? '');
+        setPhone(d.phone ?? '');
+        setBirthDate(d.birthDate ?? '');
+        setNationality(d.nationality ?? 'Türkiye');
+        setGender(d.gender ?? '');
+        setAddress(d.address ?? '');
+        if (d.photoURL) setLocalPhotoURL(d.photoURL);
         setLanguage(d.language ?? 'Türkçe');
         setDistanceKm(d.distanceKm ?? true);
         setTempCelsius(d.tempCelsius ?? true);
@@ -382,6 +436,9 @@ const Settings: React.FC = () => {
         setPassportNumber(d.passportNumber ?? '');
         setPassportExpiry(d.passportExpiry ?? '');
         setTimezone(d.timezone ?? detectTimezone());
+        setIsPro(d.isPro ?? false);
+        setPlansUsedThisMonth(d.plansUsedThisMonth ?? 0);
+        setSavedCard(d.savedCard ?? null);
       }
     } catch { /* Auth verisi yüklü */ }
   }, [user]);
@@ -389,15 +446,72 @@ const Settings: React.FC = () => {
   useEffect(() => { loadUserData(); }, [loadUserData]);
 
   /* ── Handlers ── */
-  const handleProfileSave = async () => {
-    if (!auth.currentUser || !user) return;
+
+  /* Canvas ile resim küçültme → JPEG base64 */
+  const resizeToBase64 = (file: File, maxPx = 256): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxPx) { height = Math.round((height * maxPx) / width); width = maxPx; }
+        } else {
+          if (height > maxPx) { width = Math.round((width * maxPx) / height); height = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+
+  /* Profil fotoğrafı yükleme — canvas resize + Firestore */
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth.currentUser || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileStatus({ type: 'error', message: 'Dosya 5 MB\'dan büyük olamaz.' }); return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setProfileStatus({ type: 'error', message: 'Yalnızca PNG, JPG veya WebP yüklenebilir.' }); return;
+    }
+    setPhotoLoading(true); setProfileStatus(null);
+    try {
+      const dataUrl = await resizeToBase64(file, 256);
+      // Firestore'a kaydet (Firebase Auth base64 data URL kabul etmiyor)
+      await setDoc(doc(db, 'users', user.uid), { photoURL: dataUrl }, { merge: true });
+      // Local state + global store güncelle — Sidebar dahil her yer anında görsün
+      setLocalPhotoURL(dataUrl);
+      setSettings({ photoURL: dataUrl });
+      setProfileStatus({ type: 'success', message: 'Profil fotoğrafı güncellendi.' });
+      setTimeout(() => setProfileStatus(null), 3000);
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      setProfileStatus({ type: 'error', message: 'Yükleme başarısız, tekrar deneyin.' });
+    } finally {
+      setPhotoLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  /* Alan bazlı kaydetme — profil satır düzeni için */
+  const handleFieldSave = async (data: Record<string, unknown>) => {
+    if (!user || !auth.currentUser) return;
     setProfileLoading(true); setProfileStatus(null);
     try {
-      await updateProfile(auth.currentUser, { displayName });
-      await setDoc(doc(db, 'users', user.uid), { displayName, username, bio }, { merge: true });
-      setProfileStatus({ type: 'success', message: 'Profil başarıyla güncellendi.' });
-    } catch (err: any) {
-      setProfileStatus({ type: 'error', message: firebaseErrorMsg(err.code) });
+      if ('displayName' in data) {
+        await updateProfile(auth.currentUser, { displayName: data.displayName as string });
+      }
+      await setDoc(doc(db, 'users', user.uid), data, { merge: true });
+      setProfileStatus({ type: 'success', message: 'Kaydedildi.' });
+      setEditingField(null);
+      setTimeout(() => setProfileStatus(null), 3000);
+    } catch {
+      setProfileStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
     } finally { setProfileLoading(false); }
   };
 
@@ -555,6 +669,54 @@ const Settings: React.FC = () => {
     } finally { setPrivacyLoading(false); }
   };
 
+  /* ── Kart formatters ── */
+  const fmtCardNumber = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  const fmtCardExpiry = (v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 4);
+    return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+  };
+  const detectBrand = (num: string) => {
+    const n = num.replace(/\s/g, '');
+    if (n.startsWith('4')) return 'Visa';
+    if (/^5[1-5]/.test(n)) return 'Mastercard';
+    if (/^3[47]/.test(n)) return 'Amex';
+    return 'Kart';
+  };
+
+  const handleCardSave = async () => {
+    if (!user) return;
+    const digits = cardNumber.replace(/\s/g, '');
+    if (digits.length < 13) { setCardStatus({ type: 'error', message: 'Geçersiz kart numarası.' }); return; }
+    if (!cardName.trim()) { setCardStatus({ type: 'error', message: 'Kart üzerindeki adı girin.' }); return; }
+    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) { setCardStatus({ type: 'error', message: 'Son kullanma tarihi MM/YY formatında olmalı.' }); return; }
+    const [mm, yy] = cardExpiry.split('/').map(Number);
+    const expDate = new Date(2000 + yy, mm - 1, 1);
+    if (expDate < new Date()) { setCardStatus({ type: 'error', message: 'Kartın son kullanma tarihi geçmiş.' }); return; }
+    if (cardCvv.length < 3) { setCardStatus({ type: 'error', message: 'Geçersiz CVV kodu.' }); return; }
+    setCardLoading(true); setCardStatus(null);
+    try {
+      const card = { last4: digits.slice(-4), brand: detectBrand(digits), expiry: cardExpiry };
+      await setDoc(doc(db, 'users', user.uid), { savedCard: card }, { merge: true });
+      setSavedCard(card);
+      setShowCardForm(false);
+      setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv('');
+      setCardStatus({ type: 'success', message: 'Kart başarıyla kaydedildi.' });
+    } catch {
+      setCardStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+    } finally { setCardLoading(false); }
+  };
+
+  const handleCardDelete = async () => {
+    if (!user || !savedCard) return;
+    try {
+      await setDoc(doc(db, 'users', user.uid), { savedCard: null }, { merge: true });
+      setSavedCard(null);
+      setCardStatus({ type: 'success', message: 'Kart kaldırıldı.' });
+    } catch {
+      setCardStatus({ type: 'error', message: 'İşlem başarısız, tekrar deneyin.' });
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!auth.currentUser || !user?.email) return;
     if (deleteConfirm !== 'HESABIMI SİL') { setDeleteStatus({ type: 'error', message: 'Onay metnini doğru yazın.' }); return; }
@@ -663,54 +825,201 @@ const Settings: React.FC = () => {
         <div className="flex-1 min-w-0 space-y-4">
 
           {/* ══ HESAP — Profil ══ */}
-          {activeSection === 'profile' && (
-            <CardWrap title="Profil Bilgileri">
-              <StatusBanner status={profileStatus} />
-              {/* Avatar */}
-              <div className="flex items-center gap-5 mb-7">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center text-white text-2xl font-black">
-                    {displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <button type="button" className="absolute -bottom-1 -right-1 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors">
-                    <Camera size={13} className="text-slate-600 dark:text-slate-300" />
-                  </button>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm">Profil fotoğrafı</p>
-                  <p className="text-xs text-slate-500 mt-0.5">PNG, JPG — maks. 2 MB</p>
-                </div>
+          {activeSection === 'profile' && (() => {
+            const fmtBirthDate = (d: string) => {
+              if (!d) return null;
+              return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            };
+            const EditBtns = ({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) => (
+              <div className="flex gap-2 mt-3">
+                <button type="button" onClick={onSave} disabled={profileLoading}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity disabled:opacity-40">
+                  {profileLoading && <Loader2 size={13} className="animate-spin" />} Kaydet
+                </button>
+                <button type="button" onClick={onCancel}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  İptal
+                </button>
               </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Ad Soyad</label>
-                    <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className={inputCls()} placeholder="Adınız Soyadınız" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Kullanıcı Adı</label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
-                      <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} className={`${inputCls()} pl-8`} placeholder="kullaniciadi" />
+            );
+            return (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+
+                {/* Başlık + avatar */}
+                <div className="flex items-center gap-5 p-6 border-b border-slate-100 dark:border-slate-800">
+                  {/* Gizli dosya input */}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+
+                  {/* Avatar */}
+                  <div className="relative shrink-0 group">
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center text-white text-2xl font-black ring-4 ring-white dark:ring-slate-900 shadow-md">
+                      {(localPhotoURL || user?.photoURL)
+                        ? <img src={localPhotoURL || user?.photoURL!} alt="avatar" className="w-full h-full object-cover" />
+                        : (displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U')
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoLoading}
+                      className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:cursor-wait"
+                      aria-label="Fotoğraf değiştir"
+                    >
+                      {photoLoading
+                        ? <Loader2 size={18} className="text-white animate-spin" />
+                        : <Camera size={18} className="text-white" />
+                      }
+                    </button>
+                    {/* Alt köşe chip */}
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#f8981d] rounded-full flex items-center justify-center shadow-md pointer-events-none">
+                      <Camera size={12} className="text-white" />
                     </div>
                   </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-bold text-slate-900 dark:text-white text-lg leading-tight truncate">{displayName || 'Profil Bilgileri'}</h2>
+                    {username && <p className="text-sm text-slate-400 mt-0.5">@{username}</p>}
+                    <p className="text-[11px] text-slate-400 mt-1.5">PNG, JPG veya WebP — maks. 2 MB</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">E-posta</label>
-                  <input type="email" value={user?.email ?? ''} readOnly className="w-full px-3.5 py-2.5 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-400 cursor-not-allowed outline-none" />
-                  <p className="text-[11px] text-slate-400 mt-1">E-posta değiştirmek için "E-posta" bölümünü kullanın.</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Hakkımda</label>
-                  <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={160} className={`${inputCls()} resize-none`} placeholder="Kendinizden biraz bahsedin..." />
-                  <p className="text-[11px] text-slate-400 mt-1 text-right">{bio.length}/160</p>
+
+                {/* Durum bandı */}
+                {profileStatus && (
+                  <div className={`flex items-center gap-2 px-6 py-2.5 text-sm ${profileStatus.type === 'success' ? 'bg-green-50 text-green-700 border-b border-green-200' : 'bg-rose-50 text-rose-700 border-b border-rose-200'}`}>
+                    {profileStatus.type === 'success' ? <Check size={14} /> : <AlertCircle size={14} />}
+                    {profileStatus.message}
+                  </div>
+                )}
+
+                {/* Satırlar */}
+                <div className="px-6">
+
+                  {/* Ad */}
+                  <ProfileRow label="Ad"
+                    display={displayName
+                      ? <span className="font-semibold text-slate-800 dark:text-white">{displayName}</span>
+                      : <span className="text-slate-400">Adınızı girin</span>}
+                    isEditing={editingField === 'displayName'}
+                    onEdit={() => { setEditingField('displayName'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className={inputCls()} placeholder="Ad Soyad" />
+                      <EditBtns onSave={() => handleFieldSave({ displayName })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Profil adı */}
+                  <ProfileRow label="Profil adı"
+                    display={username
+                      ? <span className="font-medium text-slate-800 dark:text-white">@{username}</span>
+                      : <span className="text-slate-400">Bir profil adı seçin</span>}
+                    isEditing={editingField === 'username'}
+                    onEdit={() => { setEditingField('username'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
+                        <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} className={`${inputCls()} pl-8`} placeholder="kullaniciadi" />
+                      </div>
+                      <EditBtns onSave={() => handleFieldSave({ username })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Telefon */}
+                  <ProfileRow label="Telefon numarası"
+                    display={phone
+                      ? <span className="font-medium text-slate-800 dark:text-white">🇹🇷 +90 {phone}</span>
+                      : <span className="text-slate-400">Telefon numarası ekleyin</span>}
+                    isEditing={editingField === 'phone'}
+                    actionLabel={phone ? 'Düzenle' : 'Ekle'}
+                    onEdit={() => { setEditingField('phone'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <div className="flex gap-2">
+                        <span className="flex items-center px-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+                          🇹🇷 +90
+                        </span>
+                        <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className={inputCls()} placeholder="530 823 45 96" />
+                      </div>
+                      <p className="text-[11px] text-slate-400">Rezervasyon ve seyahat uyarıları için kullanılır.</p>
+                      <EditBtns onSave={() => handleFieldSave({ phone })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Doğum tarihi */}
+                  <ProfileRow label="Doğum tarihi"
+                    display={birthDate
+                      ? <span className="font-medium text-slate-800 dark:text-white">{fmtBirthDate(birthDate)}</span>
+                      : <span className="text-slate-400">Doğum tarihinizi girin</span>}
+                    isEditing={editingField === 'birthDate'}
+                    actionLabel={birthDate ? 'Düzenle' : 'Ekle'}
+                    onEdit={() => { setEditingField('birthDate'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls()}
+                        max={new Date().toISOString().split('T')[0]} />
+                      <p className="text-[11px] text-slate-400">18 yaşından büyük olmak gerekmektedir.</p>
+                      <EditBtns onSave={() => handleFieldSave({ birthDate })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Uyruk */}
+                  <ProfileRow label="Uyruk"
+                    display={<span className="font-medium text-slate-800 dark:text-white">{nationality}</span>}
+                    isEditing={editingField === 'nationality'}
+                    onEdit={() => { setEditingField('nationality'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <select value={nationality} onChange={e => setNationality(e.target.value)} className={inputCls()}>
+                        {PASSPORT_COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                      <EditBtns onSave={() => handleFieldSave({ nationality })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Cinsiyet */}
+                  <ProfileRow label="Cinsiyet"
+                    display={gender
+                      ? <span className="font-medium text-slate-800 dark:text-white">{gender}</span>
+                      : <span className="text-slate-400">Cinsiyetinizi seçin</span>}
+                    isEditing={editingField === 'gender'}
+                    actionLabel={gender ? 'Düzenle' : 'Ekle'}
+                    onEdit={() => { setEditingField('gender'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        {['Erkek', 'Kadın', 'Diğer', 'Belirtmek istemiyorum'].map(g => (
+                          <button key={g} type="button" onClick={() => setGender(g)}
+                            className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition-all
+                              ${gender === g ? 'border-[#187fe7] bg-[#187fe7]/5 text-[#187fe7]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}>
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                      <EditBtns onSave={() => handleFieldSave({ gender })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
+                  {/* Adres */}
+                  <ProfileRow label="Adres"
+                    display={address
+                      ? <span className="font-medium text-slate-800 dark:text-white whitespace-pre-line">{address}</span>
+                      : <span className="text-slate-400">Adresinizi ekleyin</span>}
+                    isEditing={editingField === 'address'}
+                    actionLabel={address ? 'Düzenle' : 'Ekle'}
+                    onEdit={() => { setEditingField('address'); setProfileStatus(null); }}>
+                    <div className="max-w-sm space-y-1">
+                      <textarea value={address} onChange={e => setAddress(e.target.value)} rows={3}
+                        className={`${inputCls()} resize-none`} placeholder="Sokak, mahalle, şehir, ülke" />
+                      <EditBtns onSave={() => handleFieldSave({ address })} onCancel={() => setEditingField(null)} />
+                    </div>
+                  </ProfileRow>
+
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <SaveBtn onClick={handleProfileSave} loading={profileLoading} label="Değişiklikleri Kaydet" />
-              </div>
-            </CardWrap>
-          )}
+            );
+          })()}
 
           {/* ══ HESAP — E-posta ══ */}
           {activeSection === 'email' && (
@@ -1505,48 +1814,305 @@ const Settings: React.FC = () => {
           )}
 
           {/* ══ FATURALAMA — Abonelik ══ */}
-          {activeSection === 'subscription' && (
-            <CardWrap title="Abonelik">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-slate-800 dark:text-white text-sm">Ücretsiz Plan</span>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">Aktif</span>
+          {activeSection === 'subscription' && (() => {
+            const FREE_LIMIT = 3;
+            const usagePct = Math.min(100, (plansUsedThisMonth / FREE_LIMIT) * 100);
+            const barColor = usagePct >= 100 ? 'bg-rose-500' : usagePct >= 67 ? 'bg-amber-400' : 'bg-emerald-500';
+            return (
+              <CardWrap title="Abonelik" subtitle="Mevcut planınız ve kullanım durumunuz.">
+
+                {/* Mevcut plan kartı */}
+                <div className={`rounded-xl border p-5 mb-5 ${isPro
+                  ? 'bg-gradient-to-br from-[#187fe7]/5 to-[#0a4d99]/5 border-[#187fe7]/20'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white text-base">
+                        {isPro ? '✨ Pro Plan' : 'Ücretsiz Plan'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {isPro ? 'Sınırsız plan + Gelişmiş AI + Reklamsız' : 'Ayda 3 plan oluşturma hakkı'}
+                      </p>
+                    </div>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPro
+                      ? 'bg-[#187fe7] text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                      {isPro ? 'Pro' : 'Ücretsiz'}
+                    </span>
+                  </div>
+
+                  {/* Aylık kullanım metresi — sadece Free'de */}
+                  {!isPro && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Bu ay oluşturulan planlar</p>
+                        <p className={`text-xs font-black tabular-nums ${usagePct >= 100 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                          {plansUsedThisMonth} / {FREE_LIMIT}
+                        </p>
+                      </div>
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                          style={{ width: `${usagePct}%` }}
+                        />
+                      </div>
+                      {usagePct >= 100 && (
+                        <p className="text-[11px] text-rose-500 font-semibold mt-1.5">
+                          ⚠️ Aylık limitinize ulaştınız. Pro'ya geçerek sınırsız plan oluşturun.
+                        </p>
+                      )}
+                      {usagePct >= 67 && usagePct < 100 && (
+                        <p className="text-[11px] text-amber-500 font-semibold mt-1.5">
+                          Bu ay {FREE_LIMIT - plansUsedThisMonth} plan hakkınız kaldı.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-slate-500">Ayda 3 plan oluşturma hakkı</p>
-              </div>
-              <div className="relative bg-gradient-to-br from-[#187fe7] to-[#0a4d99] rounded-xl p-5 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#f8981d]/20 rounded-full blur-3xl" />
-                <div className="relative">
-                  <span className="inline-block px-2 py-0.5 bg-[#f8981d] text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-3">Pro</span>
-                  <p className="text-white font-bold text-base mb-1">Sınırsız Plan + Gelişmiş AI</p>
-                  <p className="text-blue-100 text-xs leading-relaxed mb-4">Reklamsız deneyim, öncelikli destek ve tüm premium özellikler</p>
-                  <button type="button" className="px-5 py-2 bg-white text-[#187fe7] font-bold text-sm rounded-lg hover:bg-slate-50 transition-colors">
-                    Pro'ya Yükselt
-                  </button>
+
+                {/* Özellik karşılaştırması */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden mb-5">
+                  <div className="grid grid-cols-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Özellik</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400 text-center">Ücretsiz</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-[#187fe7] text-center">Pro</div>
+                  </div>
+                  {[
+                    { label: 'Plan oluşturma',        free: '3 / ay',      pro: 'Sınırsız' },
+                    { label: 'AI plan kalitesi',       free: 'Standart',    pro: 'Gelişmiş' },
+                    { label: 'Reklam',                 free: '✅',         pro: '-' },
+                    { label: 'Topluluk paylaşımı',     free: '✅',          pro: '✅' },
+                    { label: 'Öncelikli destek',       free: '—',           pro: '✅' },
+                    { label: 'Erken erişim',           free: '—',           pro: '✅' },
+                  ].map(({ label, free, pro }) => (
+                    <div key={label} className="grid grid-cols-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                      <div className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300">{label}</div>
+                      <div className="px-4 py-3 text-xs text-slate-500 text-center">{free}</div>
+                      <div className="px-4 py-3 text-xs font-semibold text-[#187fe7] text-center">{pro}</div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </CardWrap>
-          )}
+
+                {/* Upgrade CTA — sadece Free kullanıcılara */}
+                {!isPro && (
+                  <div className="relative bg-gradient-to-br from-[#187fe7] to-[#0a4d99] rounded-xl p-5 overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-32 h-32 bg-[#f8981d]/25 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative flex items-center justify-between gap-4">
+                      <div>
+                        <span className="inline-block px-2 py-0.5 bg-[#f8981d] text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">Pro</span>
+                        <p className="text-white font-bold text-sm mb-0.5">Sınırsız Plan + Gelişmiş AI</p>
+                        <p className="text-blue-100 text-xs">Reklamsız deneyim, öncelikli destek ve tüm premium özellikler.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="shrink-0 px-5 py-2.5 bg-white text-[#187fe7] font-bold text-sm rounded-xl hover:bg-slate-50 transition-colors shadow-lg"
+                      >
+                        Yükselt →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pro iptal */}
+                {isPro && (
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Aboneliği İptal Et</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Dönem sonunda ücretsiz plana geçilir.</p>
+                    </div>
+                    <button type="button" className="px-3.5 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">
+                      İptal Et
+                    </button>
+                  </div>
+                )}
+              </CardWrap>
+            );
+          })()}
 
           {/* ══ FATURALAMA — Fatura Geçmişi ══ */}
           {activeSection === 'billing_history' && (
             <CardWrap title="Fatura Geçmişi" subtitle="Geçmiş ödemelerinizi görüntüleyin.">
-              <div className="py-12 text-center">
-                <Receipt size={40} className="mx-auto text-slate-300 mb-3" />
-                <p className="text-sm font-medium text-slate-500">Henüz fatura bulunmuyor</p>
-                <p className="text-xs text-slate-400 mt-1">Pro aboneliğe geçtikten sonra faturalar burada görünür.</p>
-              </div>
+              {isPro ? (
+                /* Pro kullanıcı — tablo (başlangıçta boş, ilerleyen dönemde dolar) */
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div className="grid grid-cols-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2.5">
+                    {['Tarih', 'Tutar', 'Durum', 'Belge'].map(h => (
+                      <p key={h} className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{h}</p>
+                    ))}
+                  </div>
+                  <div className="py-10 text-center">
+                    <Receipt size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm text-slate-500 font-medium">İlk faturanız burada görünecek.</p>
+                    <p className="text-xs text-slate-400 mt-1">Bir sonraki dönem sonunda otomatik oluşturulur.</p>
+                  </div>
+                </div>
+              ) : (
+                /* Free kullanıcı */
+                <div className="flex flex-col items-center py-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                    <Receipt size={28} className="text-slate-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Henüz fatura bulunmuyor</p>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    Pro aboneliğe geçtikten sonra tüm faturalarınız burada listelenir ve indirilebilir hale gelir.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('subscription')}
+                    className="mt-5 px-5 py-2.5 bg-[#187fe7] text-white text-sm font-bold rounded-xl hover:bg-[#1570cc] transition-colors"
+                  >
+                    Pro'ya Geç →
+                  </button>
+                </div>
+              )}
             </CardWrap>
           )}
 
           {/* ══ FATURALAMA — Ödeme Yöntemi ══ */}
           {activeSection === 'payment' && (
-            <CardWrap title="Ödeme Yöntemi">
-              <div className="py-12 text-center">
-                <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
-                <p className="text-sm font-medium text-slate-500">Kayıtlı ödeme yöntemi yok</p>
-                <p className="text-xs text-slate-400 mt-1">Pro aboneliğe geçerken ödeme yöntemi eklenecek.</p>
-              </div>
+            <CardWrap title="Ödeme Yöntemi" subtitle="Abonelik ödemelerinde kullanılacak kartı yönetin.">
+              <StatusBanner status={cardStatus} />
+
+              {/* Kayıtlı kart */}
+              {savedCard && !showCardForm && (
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 mb-5">
+                  <div className="w-12 h-8 rounded-md bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0">
+                    <CreditCard size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white">
+                      {savedCard.brand} •••• {savedCard.last4}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">Son kullanma: {savedCard.expiry}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => { setShowCardForm(true); setCardStatus(null); }}
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Değiştir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCardDelete}
+                      className="px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
+                    >
+                      Kaldır
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Boş durum — kart yok ve form kapalı */}
+              {!savedCard && !showCardForm && (
+                <div className="flex flex-col items-center py-10 text-center mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                    <Wallet size={28} className="text-slate-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Kayıtlı ödeme yöntemi yok</p>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    Pro aboneliğe geçmek için bir kart ekleyin. Verileriniz şifreli olarak saklanır.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCardForm(true); setCardStatus(null); }}
+                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#f8981d] text-white text-sm font-bold rounded-xl hover:bg-[#e08518] transition-colors"
+                  >
+                    <CreditCard size={14} /> Kart Ekle
+                  </button>
+                </div>
+              )}
+
+              {/* Kart formu */}
+              {showCardForm && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-2">
+                    <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                      Kart bilgileriniz şifreli olarak saklanır. CVV numarası hiçbir zaman kaydedilmez.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Kart Numarası</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={e => setCardNumber(fmtCardNumber(e.target.value))}
+                        className={inputCls()}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        autoComplete="cc-number"
+                      />
+                      {cardNumber && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">
+                          {detectBrand(cardNumber)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Kart Üzerindeki Ad</label>
+                    <input
+                      type="text"
+                      value={cardName}
+                      onChange={e => setCardName(e.target.value.toUpperCase())}
+                      className={inputCls()}
+                      placeholder="AD SOYAD"
+                      autoComplete="cc-name"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-1.5">Son Kullanma (MM/YY)</label>
+                      <input
+                        type="text"
+                        value={cardExpiry}
+                        onChange={e => setCardExpiry(fmtCardExpiry(e.target.value))}
+                        className={inputCls()}
+                        placeholder="12/27"
+                        maxLength={5}
+                        autoComplete="cc-exp"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-1.5">CVV</label>
+                      <input
+                        type="password"
+                        value={cardCvv}
+                        onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        className={inputCls()}
+                        placeholder="•••"
+                        maxLength={4}
+                        autoComplete="cc-csc"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => { setShowCardForm(false); setCardStatus(null); setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv(''); }}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      İptal
+                    </button>
+                    <SaveBtn onClick={handleCardSave} loading={cardLoading} label="Kartı Kaydet" />
+                  </div>
+                </div>
+              )}
+
+              {/* Güvenlik notu */}
+              {!showCardForm && (
+                <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400">
+                  <span>🔐</span>
+                  <span>Ödeme bilgileri 256-bit SSL şifreleme ile korunur.</span>
+                </div>
+              )}
             </CardWrap>
           )}
 

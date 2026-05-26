@@ -61,6 +61,12 @@ export const unshareplan = async (planId: string): Promise<void> => {
   await deleteDoc(doc(db, 'publicPlans', planId));
 };
 
+/** Paylaşılmış plandaki fotoğrafı günceller (profil foto değiştiğinde) */
+export const updatePlanPhoto = async (planId: string, photoURL: string | null): Promise<void> => {
+  const { updateDoc } = await import('firebase/firestore');
+  await updateDoc(doc(db, 'publicPlans', planId), { userPhotoURL: photoURL ?? null });
+};
+
 export const getMySharedPlanIds = async (userId: string): Promise<Set<string>> => {
   const q = query(collection(db, 'publicPlans'), where('userId', '==', userId));
   const snap = await getDocs(q);
@@ -158,4 +164,55 @@ export const unfollowUser = async (myUid: string, targetUid: string): Promise<vo
 export const getFollowingList = async (myUid: string): Promise<string[]> => {
   const snap = await getDocs(collection(db, 'userFollows', myUid, 'following'));
   return snap.docs.map(d => d.id);
+};
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  photoURL: string | null;
+  email?: string;
+}
+
+/** Birden fazla kullanıcının profilini Firestore'dan çeker.
+ *  Önce users/ koleksiyonuna bakar; yoksa publicPlans'taki bilgileri kullanır. */
+export const getUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
+  if (!uids.length) return [];
+  const results = await Promise.all(
+    uids.map(async (uid): Promise<UserProfile | null> => {
+      let displayName = '';
+      let photoURL: string | null = null;
+      let email: string | undefined;
+
+      // 1) users/ koleksiyonundan dene
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          displayName = (d.displayName as string) || '';
+          photoURL    = (d.photoURL    as string | null) ?? null;
+          email       = (d.email       as string | undefined);
+        }
+      } catch { /* izin yok veya belge yok — fallback'e geç */ }
+
+      // 2) publicPlans'tan fallback — isim veya foto eksikse tamamla
+      if (!displayName || !photoURL) {
+        try {
+          const q = query(
+            collection(db, 'publicPlans'),
+            where('userId', '==', uid),
+            limit(1),
+          );
+          const plansSnap = await getDocs(q);
+          if (!plansSnap.empty) {
+            const d = plansSnap.docs[0].data();
+            if (!displayName) displayName = (d.userDisplayName as string) || '';
+            if (!photoURL)    photoURL    = (d.userPhotoURL    as string | null) ?? null;
+          }
+        } catch { /* hata */ }
+      }
+
+      return { uid, displayName: displayName || 'Gezgin', photoURL, email };
+    })
+  );
+  return results.filter(Boolean) as UserProfile[];
 };

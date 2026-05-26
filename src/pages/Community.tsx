@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
@@ -8,8 +9,8 @@ import {
 import {
   getPublicFeed, getMySharedPlanIds, getFollowingList,
   shareplan, unshareplan, ratePlan, getUserRatings,
-  followUser, unfollowUser,
-  type PublicPlan,
+  followUser, unfollowUser, getUserProfiles,
+  type PublicPlan, type UserProfile,
 } from '../services/socialService';
 import { PublicPlanCard } from '../components/PublicPlanCard';
 import SharedPlanModal from '../components/SharedPlanModal';
@@ -17,9 +18,13 @@ import SharedPlanModal from '../components/SharedPlanModal';
 const FEED_INITIAL = 3;
 
 const Community: React.FC = () => {
+  const navigate  = useNavigate();
   const { user }  = useAuthStore();
   const plans     = useUserPlans();
-  const { plansPublic, profilePublic, followPublic } = useAppSettingsStore();
+  const { plansPublic, profilePublic, followPublic, photoURL: storePhotoURL } = useAppSettingsStore();
+
+  // Her zaman güncel fotoğraf: store (Firestore'dan) > Firebase Auth
+  const currentUserPhoto = storePhotoURL || user?.photoURL || null;
 
   /* ── Social state ── */
   const [publicFeed, setPublicFeed]       = useState<PublicPlan[]>([]);
@@ -30,7 +35,10 @@ const Community: React.FC = () => {
   const [followingSet, setFollowingSet]   = useState<Set<string>>(new Set());
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
   const [userRatings, setUserRatings]     = useState<Record<string, number>>({});
-  const [savingShare, setSavingShare]     = useState<string | null>(null);
+  const [followingProfiles, setFollowingProfiles]     = useState<UserProfile[]>([]);
+  const [profilesLoading, setProfilesLoading]         = useState(false);
+  const [unfollowConfirm, setUnfollowConfirm]         = useState<string | null>(null); // uid
+  const [savingShare, setSavingShare]              = useState<string | null>(null);
   const [savingRating, setSavingRating]   = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan]   = useState<PublicPlan | null>(null);
   const [feedSearch, setFeedSearch]       = useState('');
@@ -59,6 +67,15 @@ const Community: React.FC = () => {
       if (planIds.length) {
         getUserRatings(user.uid, planIds).then(setUserRatings).catch(() => {});
       }
+      // Eski paylaşımlardaki fotoğrafı arka planda güncelle
+      const latestPhoto = useAppSettingsStore.getState().photoURL || user.photoURL || null;
+      feed
+        .filter(p => p.userId === user.uid && p.userPhotoURL !== latestPhoto)
+        .forEach(p => {
+          import('../services/socialService').then(({ updatePlanPhoto }) =>
+            updatePlanPhoto(p.id, latestPhoto).catch(() => {})
+          );
+        });
     })
     .catch(() => setFeedError(true))
     .finally(() => setFeedLoading(false));
@@ -66,6 +83,16 @@ const Community: React.FC = () => {
   }, [user]);
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  /* Takip Ettiklerim sekmesinde profilleri yükle */
+  useEffect(() => {
+    if (feedTab !== 'following' || followingSet.size === 0) return;
+    setProfilesLoading(true);
+    getUserProfiles([...followingSet])
+      .then(setFollowingProfiles)
+      .catch(() => {})
+      .finally(() => setProfilesLoading(false));
+  }, [feedTab, followingSet]);
 
   /* Social handlers */
   const handleShare = useCallback(async (planId: string) => {
@@ -88,7 +115,7 @@ const Community: React.FC = () => {
         if (!savedPlan) return;
         await withTimeout(
           shareplan(planId, savedPlan.plan, savedPlan.onboardingData, {
-            uid: user.uid, displayName: user.displayName, photoURL: user.photoURL,
+            uid: user.uid, displayName: user.displayName, photoURL: currentUserPhoto,
           })
         );
         setSharedPlanIds(prev => new Set([...prev, planId]));
@@ -96,7 +123,7 @@ const Community: React.FC = () => {
           id: planId,
           userId:          user.uid,
           userDisplayName: user.displayName ?? 'Gezgin',
-          userPhotoURL:    user.photoURL ?? null,
+          userPhotoURL:    currentUserPhoto,
           destination:     savedPlan.plan.destination,
           dailyPlanCount:  savedPlan.plan.dailyPlans.length,
           budget:          savedPlan.onboardingData.budget,
@@ -136,6 +163,7 @@ const Community: React.FC = () => {
       if (followingSet.has(targetUid)) {
         await unfollowUser(user.uid, targetUid);
         setFollowingSet(prev => { const n = new Set(prev); n.delete(targetUid); return n; });
+        setFollowingProfiles(prev => prev.filter(p => p.uid !== targetUid));
       } else {
         await followUser(user.uid, targetUid);
         setFollowingSet(prev => new Set([...prev, targetUid]));
@@ -240,7 +268,7 @@ const Community: React.FC = () => {
               type="text"
               value={feedSearch}
               onChange={e => { setFeedSearch(e.target.value); setFeedShowAll(false); }}
-              placeholder="Kişi, şehir veya ülke ara..."
+              placeholder={feedTab === 'following' ? 'Kişi ara...' : 'Kişi, şehir veya ülke ara...'}
               className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none placeholder:text-slate-400 transition-all"
             />
             {feedSearch && (
@@ -261,8 +289,106 @@ const Community: React.FC = () => {
           </div>
         )}
 
-        {/* Feed */}
-        {feedLoading ? (
+        {/* ══ TAKİP ETTİKLERİM SEKMESİ — Kişi listesi ══ */}
+        {feedTab === 'following' ? (
+          profilesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-32 bg-slate-100 rounded" />
+                    <div className="h-3 w-20 bg-slate-100 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : followingProfiles.length > 0 ? (() => {
+            const filteredProfiles = feedSearch.trim()
+              ? followingProfiles.filter(p =>
+                  p.displayName.toLowerCase().includes(feedSearch.toLowerCase().trim())
+                )
+              : followingProfiles;
+            return (
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {filteredProfiles.length} kişi {feedSearch ? 'bulundu' : 'takip ediliyor'}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {filteredProfiles.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-slate-400">"{feedSearch}" ile eşleşen kişi yok</p>
+                  </div>
+                ) : filteredProfiles.map(profile => {
+                  const initials = profile.displayName
+                    .split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase();
+                  const isPending = unfollowConfirm === profile.uid;
+                  return (
+                    <div key={profile.uid} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/profile/${profile.uid}`)}>
+                      {/* Avatar */}
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center overflow-hidden shrink-0">
+                        {profile.photoURL ? (
+                          <img src={profile.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-white text-xs font-black">{initials}</span>
+                        )}
+                      </div>
+                      {/* İsim */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{profile.displayName}</p>
+                        {profile.email && (
+                          <p className="text-xs text-slate-400 truncate">{profile.email}</p>
+                        )}
+                      </div>
+                      {/* Takipten çık — onay popup */}
+                      {isPending ? (
+                        <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                          <span className="text-[11px] text-slate-500 font-medium">Takibi bırak?</span>
+                          <button
+                            onClick={() => { handleToggleFollow(profile.uid); setUnfollowConfirm(null); }}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all"
+                          >
+                            Evet
+                          </button>
+                          <button
+                            onClick={() => setUnfollowConfirm(null)}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); setUnfollowConfirm(profile.uid); }}
+                          className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-400 transition-all"
+                        >
+                          ✓ Takip Ediliyor
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            );
+          })() : (
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
+              <p className="text-3xl mb-3">👥</p>
+              <p className="text-sm font-bold text-slate-700">Henüz kimseyi takip etmiyorsun</p>
+              <p className="text-xs text-slate-400 mt-1">"Herkes" sekmesinden gezginleri keşfet ve takip et</p>
+              <button
+                onClick={() => setFeedTab('all')}
+                className="mt-3 text-xs font-bold text-[#187fe7] hover:text-blue-700 transition-colors"
+              >
+                Herkese bak →
+              </button>
+            </div>
+          )
+
+        /* ══ HERKES SEKMESİ — Plan akışı ══ */
+        ) : feedLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse">
@@ -298,7 +424,10 @@ const Community: React.FC = () => {
               {visibleFeed.map(plan => (
                 <PublicPlanCard
                   key={plan.id}
-                  plan={plan}
+                  plan={{
+                    ...plan,
+                    userPhotoURL: plan.userId === user?.uid ? currentUserPhoto : plan.userPhotoURL,
+                  }}
                   currentUserId={user?.uid}
                   isFollowing={followingSet.has(plan.userId)}
                   userRating={userRatings[plan.id]}
@@ -325,19 +454,7 @@ const Community: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
-            {feedTab === 'following' ? (
-              <>
-                <p className="text-3xl mb-3">👥</p>
-                <p className="text-sm font-bold text-slate-700">Henüz kimseyi takip etmiyorsun</p>
-                <p className="text-xs text-slate-400 mt-1">"Herkes" sekmesinde gezginleri keşfet</p>
-                <button
-                  onClick={() => setFeedTab('all')}
-                  className="mt-3 text-xs font-bold text-blue-500 hover:text-blue-700 transition-colors"
-                >
-                  Herkese bak →
-                </button>
-              </>
-            ) : feedSearch ? (
+            {feedSearch ? (
               <>
                 <p className="text-3xl mb-3">🔍</p>
                 <p className="text-sm font-bold text-slate-700">Sonuç bulunamadı</p>
@@ -359,8 +476,8 @@ const Community: React.FC = () => {
           </div>
         )}
 
-        {/* Paylaşılmamış planlar için hızlı paylaşım */}
-        {!feedLoading && !feedError && plans.length > 0 && (
+        {/* Paylaşılmamış planlar için hızlı paylaşım — sadece Herkes sekmesinde */}
+        {feedTab === 'all' && !feedLoading && !feedError && plans.length > 0 && (
           <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-5">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
               <Globe size={12} /> Planlarımı Paylaş

@@ -9,6 +9,7 @@ import {
 import TravyonLogo from './TravyonLogo';
 import { useThemeStore } from '../store/useThemeStore';
 import { useSidebarStore } from '../store/useSidebarStore';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 
 const mainNavItems = [
@@ -26,6 +27,7 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
+  const { photoURL: storePhotoURL, setSettings } = useAppSettingsStore();
   // Pill pozisyonunu VT snapshot'tan sonra geciktirerek güncelle — akıcı kayma için
   const [pillDark, setPillDark] = React.useState(dark);
 
@@ -37,6 +39,7 @@ const Sidebar: React.FC = () => {
   }, [dark]);
 
   const handleLogout = async () => {
+    setSettings({ photoURL: null }); // localStorage'daki fotoğrafı temizle
     await signOut(auth);
     navigate('/login');
   };
@@ -175,8 +178,11 @@ const Sidebar: React.FC = () => {
         {/* Kullanıcı avatarı */}
         {user && (
           <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center text-white text-xs font-black shrink-0">
-              {user.displayName?.charAt(0).toUpperCase() ?? user.email?.charAt(0).toUpperCase() ?? 'U'}
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center text-white text-xs font-black shrink-0 overflow-hidden">
+              {(storePhotoURL || user.photoURL)
+                ? <img src={storePhotoURL || user.photoURL!} alt="avatar" className="w-full h-full object-cover" />
+                : (user.displayName?.charAt(0).toUpperCase() ?? user.email?.charAt(0).toUpperCase() ?? 'U')
+              }
             </div>
             <div className={`text-left min-w-0 transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
               <p className="text-xs font-bold text-slate-900 truncate">

@@ -28,6 +28,9 @@ export interface AppSettingsData {
   locationEnabled: boolean; // konum tabanlı özellikler
   locationHistory: boolean; // konum geçmişi kaydedilsin mi
   analyticsEnabled: boolean;
+
+  // Profil
+  photoURL: string | null;
 }
 
 interface AppSettingsState extends AppSettingsData {
@@ -56,6 +59,7 @@ const defaults: AppSettingsData = {
   locationEnabled: true,
   locationHistory: false,
   analyticsEnabled: true,
+  photoURL: null,
 };
 
 export const CURRENCY_MAP: Record<string, { code: string; symbol: string }> = {

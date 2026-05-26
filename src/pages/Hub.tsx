@@ -28,20 +28,30 @@ const getGreeting = (): { text: string; emoji: string } => {
   return                         { text: 'İyi Geceler',  emoji: '🌙' };
 };
 
-/* ── Weather helpers ── */
+/* ── Weather helpers (wttr.in codes) ── */
 const weatherIcon = (code: number) => {
-  if (code === 0) return '☀️'; if (code <= 2)  return '🌤️';
-  if (code === 3) return '☁️'; if (code <= 48) return '🌫️';
-  if (code <= 55) return '🌦️'; if (code <= 67) return '🌧️';
-  if (code <= 77) return '❄️'; if (code <= 82) return '🌦️';
-  return '⛈️';
+  if (code === 113) return '☀️';
+  if (code === 116) return '🌤️';
+  if (code === 119 || code === 122) return '☁️';
+  if ([143, 248, 260].includes(code)) return '🌫️';
+  if ([176, 263, 266, 293, 296, 353].includes(code)) return '🌦️';
+  if ([299, 302, 305, 308, 356, 359].includes(code)) return '🌧️';
+  if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371].includes(code)) return '❄️';
+  if ([200, 386, 389, 392, 395].includes(code)) return '⛈️';
+  return '🌡️';
 };
 const weatherLabel = (code: number) => {
-  if (code === 0) return 'Açık Hava';  if (code <= 2)  return 'Az Bulutlu';
-  if (code === 3) return 'Bulutlu';    if (code <= 48) return 'Sisli';
-  if (code <= 55) return 'Çiseleyen'; if (code <= 67) return 'Yağmurlu';
-  if (code <= 77) return 'Karlı';     if (code <= 82) return 'Sağanak';
-  return 'Fırtınalı';
+  if (code === 113) return 'Açık Hava';
+  if (code === 116) return 'Az Bulutlu';
+  if (code === 119) return 'Bulutlu';
+  if (code === 122) return 'Kapalı';
+  if ([143, 248, 260].includes(code)) return 'Sisli';
+  if ([263, 266, 293, 296].includes(code)) return 'Çiseleyen';
+  if ([176, 299, 302, 305, 308, 353, 356, 359].includes(code)) return 'Yağmurlu';
+  if ([182, 185, 281, 284, 311, 314, 317, 320, 362, 365].includes(code)) return 'Sağanak';
+  if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371].includes(code)) return 'Karlı';
+  if ([200, 386, 389, 392, 395].includes(code)) return 'Fırtınalı';
+  return 'Değişken';
 };
 
 /* ── Country flag ── */
@@ -461,6 +471,26 @@ const Hub: React.FC = () => {
   const GEO_ALIASES: Record<string, string> = {
     'kapadokya':   'Nevşehir',
     'cappadocia':  'Nevşehir',
+    'barselona':   'Barcelona',
+    'londra':      'London',
+    'münih':       'Munich',
+    'viyana':      'Vienna',
+    'varşova':     'Warsaw',
+    'brüksel':     'Brussels',
+    'lizbon':      'Lisbon',
+    'kopenhag':    'Copenhagen',
+    'stokholm':    'Stockholm',
+    'amsterdam':   'Amsterdam',
+    'dubai':       'Dubai',
+    'new york':    'New York',
+    'los angeles': 'Los Angeles',
+    'şikago':      'Chicago',
+    'moskova':     'Moscow',
+    'pekin':       'Beijing',
+    'şangay':      'Shanghai',
+    'singapur':    'Singapore',
+    'bangkok':     'Bangkok',
+    'maldivler':   'Malé',
     'pamukkale':   'Denizli',
     'efes':        'Selçuk',
     'şirince':     'Selçuk',
@@ -487,20 +517,6 @@ const Hub: React.FC = () => {
     'sicilya':     'Palermo',
   };
 
-  // Tek bir isim için koordinat döndürür; bulunamazsa null
-  const geocodeOnce = async (name: string): Promise<{ lat: number; lng: number } | null> => {
-    try {
-      const res  = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&format=json`
-      );
-      const data = await res.json();
-      if (data.results?.length) {
-        return { lat: data.results[0].latitude, lng: data.results[0].longitude };
-      }
-    } catch { /* ağ hatası */ }
-    return null;
-  };
-
   useEffect(() => {
     if (!cityName) return;
     setWeatherLoading(true);
@@ -508,36 +524,28 @@ const Hub: React.FC = () => {
 
     (async () => {
       try {
-        // 1. Bilinen alias'ı dene (Kapadokya → Nevşehir gibi)
-        const alias  = GEO_ALIASES[cityName.toLowerCase()];
-        let   coords = alias ? await geocodeOnce(alias) : null;
+        const alias      = GEO_ALIASES[cityName.toLowerCase()];
+        const candidates = [alias, cityName, nextTrip?.plan.destination]
+          .filter(Boolean) as string[];
 
-        // 2. Doğrudan şehir adını dene
-        if (!coords) coords = await geocodeOnce(cityName);
-
-        // 3. Tam destinasyon stringini dene ("Kapadokya, Türkiye")
-        if (!coords && nextTrip?.plan.destination && nextTrip.plan.destination !== cityName) {
-          coords = await geocodeOnce(nextTrip.plan.destination);
-        }
-
-        // 4. Virgülden sonraki kısmı (ülke/bölge) dene
-        if (!coords && nextTrip?.plan.destination.includes(',')) {
-          const rest = nextTrip.plan.destination.split(',').slice(1).join(',').trim();
-          if (rest) coords = await geocodeOnce(rest);
-        }
-
-        if (!coords) return;   // hiçbiri bulunamadı
-
-        const wxRes  = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current_weather=true`
-        );
-        const wxData = await wxRes.json();
-        if (wxData.current_weather) {
-          setWeather({
-            temp:      Math.round(wxData.current_weather.temperature),
-            code:      wxData.current_weather.weathercode,
-            windspeed: Math.round(wxData.current_weather.windspeed),
-          });
+        for (const candidate of candidates) {
+          try {
+            const res = await withTimeout(
+              fetch(`https://wttr.in/${encodeURIComponent(candidate)}?format=j1`),
+              8000,
+            );
+            if (!res.ok) continue;
+            const data = await res.json();
+            const cur  = data?.current_condition?.[0];
+            if (cur) {
+              setWeather({
+                temp:      parseInt(cur.temp_C,        10),
+                code:      parseInt(cur.weatherCode,   10),
+                windspeed: parseInt(cur.windspeedKmph, 10),
+              });
+              return;
+            }
+          } catch { continue; }
         }
       } catch { /* sessizce */ }
       finally { setWeatherLoading(false); }
@@ -679,22 +687,29 @@ const Hub: React.FC = () => {
                         if (!cityName) return;
                         setWeather(null);
                         setWeatherLoading(true);
-                        // cityName değişmeden tekrar tetiklemek için dummy state değişikliği yerine
-                        // doğrudan fetch yapalım
-                        const alias = GEO_ALIASES[cityName.toLowerCase()];
-                        const candidates = [alias, cityName, nextTrip?.plan.destination].filter(Boolean) as string[];
+                        const alias      = GEO_ALIASES[cityName.toLowerCase()];
+                        const candidates = [alias, cityName, nextTrip?.plan.destination]
+                          .filter(Boolean) as string[];
                         (async () => {
                           try {
-                            let coords: { lat: number; lng: number } | null = null;
-                            for (const c of candidates) {
-                              coords = await geocodeOnce(c);
-                              if (coords) break;
-                            }
-                            if (!coords) return;
-                            const wxRes  = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current_weather=true`);
-                            const wxData = await wxRes.json();
-                            if (wxData.current_weather) {
-                              setWeather({ temp: Math.round(wxData.current_weather.temperature), code: wxData.current_weather.weathercode, windspeed: Math.round(wxData.current_weather.windspeed) });
+                            for (const candidate of candidates) {
+                              try {
+                                const res = await withTimeout(
+                                  fetch(`https://wttr.in/${encodeURIComponent(candidate)}?format=j1`),
+                                  8000,
+                                );
+                                if (!res.ok) continue;
+                                const data = await res.json();
+                                const cur  = data?.current_condition?.[0];
+                                if (cur) {
+                                  setWeather({
+                                    temp:      parseInt(cur.temp_C,        10),
+                                    code:      parseInt(cur.weatherCode,   10),
+                                    windspeed: parseInt(cur.windspeedKmph, 10),
+                                  });
+                                  return;
+                                }
+                              } catch { continue; }
                             }
                           } catch { /* sessizce */ }
                           finally { setWeatherLoading(false); }

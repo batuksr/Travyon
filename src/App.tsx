@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Hub from "./pages/Hub";
 import Community from "./pages/Community";
 import Notifications from "./pages/Notifications";
+import UserProfile from "./pages/UserProfile";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -52,6 +53,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
           <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/saved-plans" element={<ProtectedRoute><SavedPlans /></ProtectedRoute>} />
           <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>
@@ -77,6 +79,12 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+
+      // Kullanıcı çıkış yaptığında store'u temizle
+      if (!currentUser) {
+        setSettings({ photoURL: null });
+        return;
+      }
 
       // Kullanıcı giriş yaptığında uygulama ayarlarını Firestore'dan yükle
       if (currentUser) {
@@ -114,6 +122,7 @@ function App() {
             locationEnabled:    d.locationEnabled      ?? true,
             locationHistory:    d.locationHistory      ?? false,
             analyticsEnabled:   d.analyticsEnabled     ?? true,
+            photoURL:           d.photoURL             ?? null,
           });
         }).catch(() => {});
       }

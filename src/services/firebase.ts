@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
 const firebaseConfig = {
@@ -22,4 +23,5 @@ try {
 } // Servisleri dışarı aktar
 export const auth = app ? getAuth(app) : ({} as any);
 export const db = app ? getFirestore(app) : ({} as any);
+export const storage = app ? getStorage(app) : ({} as any);
 export const googleProvider = new GoogleAuthProvider();
