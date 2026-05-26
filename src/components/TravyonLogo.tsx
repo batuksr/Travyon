@@ -117,7 +117,7 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
           {/* Orbiting airplane ✈ via animateMotion */}
           <g>
             <animateMotion
-              dur="5s"
+              dur="1.6s"
               repeatCount="indefinite"
               rotate="auto"
               path="M 87,50 A 37,13 0 1,1 86.99,50 Z"

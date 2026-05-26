@@ -19,6 +19,9 @@ import Hub from "./pages/Hub";
 import Community from "./pages/Community";
 import Notifications from "./pages/Notifications";
 import UserProfile from "./pages/UserProfile";
+import SSS from "./pages/SSS";
+import Gizlilik from "./pages/Gizlilik";
+import KullanimKosullari from "./pages/KullanimKosullari";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -54,6 +57,9 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
           <Route path="/saved-plans" element={<ProtectedRoute><SavedPlans /></ProtectedRoute>} />
           <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+          <Route path="/sss"                  element={<SSS />} />
+          <Route path="/gizlilik"             element={<Gizlilik />} />
+          <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
         </Routes>
       </main>
     </div>

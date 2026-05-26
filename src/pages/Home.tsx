@@ -1,12 +1,11 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
-import { Wallet, ArrowRight, Calendar, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Sun, Moon } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import GlobeAnimation from '../components/GlobeAnimation';
-import SamplePlanModal from '../components/SamplePlanModal';
 import TravyonLogo from '../components/TravyonLogo';
 
 const HERO_VIDEOS = [
@@ -18,99 +17,6 @@ const HERO_VIDEOS = [
 
 const HERO_FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=2035&auto=format&fit=crop';
-
-const SAMPLE_PLANS = [
-  {
-    id: 'rome',
-    city: 'Roma',
-    country: 'İtalya',
-    flag: '🇮🇹',
-    days: 4,
-    budget: 1200,
-    currency: '€',
-    theme: 'Kültür & Tarih',
-    themeEmoji: '🏛️',
-    image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Kolezyum', 'Vatikan Müzesi', 'Trevi Çeşmesi'],
-    badge: 'En Popüler',
-    badgeColor: 'bg-orange-500',
-  },
-  {
-    id: 'paris',
-    city: 'Paris',
-    country: 'Fransa',
-    flag: '🇫🇷',
-    days: 5,
-    budget: 1800,
-    currency: '€',
-    theme: 'Romantik Kaçış',
-    themeEmoji: '💕',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Eyfel Kulesi', 'Louvre', 'Montmartre'],
-    badge: 'Trend',
-    badgeColor: 'bg-pink-500',
-  },
-  {
-    id: 'istanbul',
-    city: 'İstanbul',
-    country: 'Türkiye',
-    flag: '🇹🇷',
-    days: 3,
-    budget: 8500,
-    currency: '₺',
-    theme: 'Kültür & Lezzet',
-    themeEmoji: '🕌',
-    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Ayasofya', 'Kapalıçarşı', 'Boğaz Turu'],
-    badge: 'Yerel Favorisi',
-    badgeColor: 'bg-red-500',
-  },
-  {
-    id: 'barcelona',
-    city: 'Barcelona',
-    country: 'İspanya',
-    flag: '🇪🇸',
-    days: 4,
-    budget: 1400,
-    currency: '€',
-    theme: 'Sanat & Mimari',
-    themeEmoji: '🎨',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Sagrada Familia', 'Park Güell', 'Gothic Quarter'],
-    badge: null,
-    badgeColor: '',
-  },
-  {
-    id: 'tokyo',
-    city: 'Tokyo',
-    country: 'Japonya',
-    flag: '🇯🇵',
-    days: 7,
-    budget: 2500,
-    currency: '€',
-    theme: 'Doğa & Teknoloji',
-    themeEmoji: '🌸',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Senso-ji', 'Shibuya', 'teamLab'],
-    badge: 'Egzotik',
-    badgeColor: 'bg-purple-500',
-  },
-  {
-    id: 'amsterdam',
-    city: 'Amsterdam',
-    country: 'Hollanda',
-    flag: '🇳🇱',
-    days: 3,
-    budget: 900,
-    currency: '€',
-    theme: 'Müze & Kanal',
-    themeEmoji: '🚲',
-    image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?q=80&w=800&auto=format&fit=crop',
-    highlights: ['Rijksmuseum', 'Anne Frank Evi', 'Kanal Turu'],
-    badge: null,
-    badgeColor: '',
-  },
-];
 
 
 const STEPS = [
@@ -144,8 +50,7 @@ const Home: React.FC = () => {
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
-  const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
-  const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
+const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
 
   useEffect(() => {
     const onScroll = () => {
@@ -370,123 +275,86 @@ const Home: React.FC = () => {
       </section>
 
       {/* ══════════════════════════════════════════
-          BÖLÜM 2 — ÖRNEK PLANLAR
+          SCROLL İNDİKATÖRÜ
          ══════════════════════════════════════════ */}
-      <section id="ornek-planlar" className="bg-slate-200 dark:bg-slate-800 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-slate-200 dark:bg-slate-900 flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
+        <span className="text-[11px] font-semibold tracking-[0.25em] text-slate-900 dark:text-white uppercase select-none">
+          Scroll
+        </span>
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          className="text-slate-900 dark:text-white"
+        >
+          <svg width="20" height="12" viewBox="0 0 20 12" fill="none">
+            <path d="M1 1L10 10L19 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.div>
+      </div>
+
+      {/* ══════════════════════════════════════════
+          BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
+         ══════════════════════════════════════════ */}
+      <section className="bg-slate-200 dark:bg-slate-900 pt-16 pb-32 lg:pt-24 lg:pb-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
           <motion.div
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.5 }}
-            className="max-w-xl mb-10"
+            className="text-center mb-10"
           >
-            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">Örnek Planlar</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2 leading-tight">İlham alın, kendinize özel planlayın</h2>
-            <p className="text-slate-500 mt-3 text-sm leading-relaxed">
-              Yapay zekanın ürettiği gerçek plan örnekleri. Kendi tercihlerinizle dakikalar içinde oluşturun.
+            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">ÜRÜN</span>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+              Travyon'u Keşfedin
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
+              Dakikalar içinde kişiselleştirilmiş seyahat planın hazır.
             </p>
           </motion.div>
 
-          {/* Kartlar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SAMPLE_PLANS.map((plan, i) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07, duration: 0.4 }}
-                className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedSampleId(plan.id)}
-              >
-                {/* Görsel */}
-                <div className="relative h-40 overflow-hidden">
-                  <img
-                    src={plan.image}
-                    alt={plan.city}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
-                  {/* Sol alt: bayrak + şehir */}
-                  <div className="absolute bottom-3 left-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{plan.flag}</span>
-                      <div>
-                        <p className="text-white font-bold text-base leading-none">{plan.city}</p>
-                        <p className="text-white/70 text-xs font-medium">{plan.country}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sağ üst: badge */}
-                  {plan.badge && (
-                    <div className={`absolute top-2.5 right-2.5 ${plan.badgeColor} text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full`}>
-                      {plan.badge}
-                    </div>
-                  )}
+          {/* Video kartı */}
+          <motion.div
+            initial={{ opacity: 0, y: 32, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="relative rounded-2xl overflow-hidden border border-slate-300/70 dark:border-slate-700 shadow-2xl shadow-slate-400/25 dark:shadow-black/50"
+          >
+            {/* Browser şerit */}
+            <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex gap-1.5 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 flex justify-center">
+                <div className="bg-white dark:bg-slate-700 rounded-md px-4 py-1 text-[11px] text-slate-400 dark:text-slate-400 w-48 text-center">
+                  travyon.app
                 </div>
+              </div>
+            </div>
 
-                {/* İçerik */}
-                <div className="p-4">
-
-                  {/* Tema */}
-                  <div className="flex items-center gap-1.5 mb-2.5">
-                    <span className="text-sm">{plan.themeEmoji}</span>
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{plan.theme}</span>
-                  </div>
-
-                  {/* Öne çıkan mekanlar */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {plan.highlights.map((h) => (
-                      <span key={h} className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-medium">
-                        {h}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Alt: gün + bütçe + buton */}
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-[#187fe7]/10 rounded flex items-center justify-center">
-                          <Calendar size={11} className="text-[#187fe7]" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">{plan.days} Gün</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-[#f8981d]/10 rounded flex items-center justify-center">
-                          <Wallet size={11} className="text-[#f8981d]" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">{plan.currency}{plan.budget.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setSelectedSampleId(plan.id); }}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#187fe7] hover:text-[#156bc2] transition-colors group/btn"
-                    >
-                      Planı Gör
-                      <ArrowRight size={11} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
+            <video
+              src="/videos/travyon.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full block bg-slate-900"
+            />
+          </motion.div>
         </div>
       </section>
+
 
       {/* ══════════════════════════════════════════
           BÖLÜM 3 — NASIL ÇALIŞIR (Globe arka plan)
          ══════════════════════════════════════════ */}
       <section
         id="nasil-calisir"
-        className="relative bg-white overflow-x-hidden"
-        style={{ minHeight: 780 }}
+        className="relative bg-slate-200 dark:bg-slate-900 overflow-x-hidden"
+        style={{ minHeight: 580 }}
       >
 
         {/* Globe — yatayda ve dikeyde ortalı */}
@@ -549,18 +417,266 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* ══════════════════════════════════════════
+          BÖLÜM 3.5 — POPÜLER DESTİNASYONLAR
+         ══════════════════════════════════════════ */}
+      <section className="bg-slate-200 dark:bg-slate-900 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5 }}
+            className="text-center mb-10"
+          >
+            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">Destinasyonlar</span>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+              En Popüler Destinasyonlar
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+              AI bu şehirlerde uzman — saniyeler içinde optimize planlar üretir.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { city: 'Roma',      country: 'İtalya',    flag: '🇮🇹', count: '2.4k', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop' },
+              { city: 'Paris',     country: 'Fransa',    flag: '🇫🇷', count: '3.1k', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop' },
+              { city: 'Tokyo',     country: 'Japonya',   flag: '🇯🇵', count: '1.8k', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop' },
+              { city: 'İstanbul',  country: 'Türkiye',   flag: '🇹🇷', count: '4.2k', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=600&auto=format&fit=crop' },
+              { city: 'Barcelona', country: 'İspanya',   flag: '🇪🇸', count: '1.5k', img: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=600&auto=format&fit=crop' },
+              { city: 'New York',  country: 'ABD',       flag: '🇺🇸', count: '2.0k', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=600&auto=format&fit=crop' },
+              { city: 'Bangkok',   country: 'Tayland',   flag: '🇹🇭', count: '1.2k', img: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?q=80&w=600&auto=format&fit=crop' },
+              { city: 'Dubai',     country: 'BAE',       flag: '🇦🇪', count: '1.7k', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=600&auto=format&fit=crop' },
+            ].map((dest, i) => (
+              <motion.button
+                key={dest.city}
+                type="button"
+                onClick={() => navigate('/register')}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.35 }}
+                className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[#f8981d]/50 dark:hover:border-[#f8981d]/40 hover:shadow-xl hover:shadow-slate-300/40 dark:hover:shadow-black/40 rounded-2xl overflow-hidden text-left transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Fotoğraf */}
+                <div className="relative h-34 overflow-hidden">
+                  <img
+                    src={dest.img}
+                    alt={dest.city}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  {/* Plan sayısı — fotoğraf üstünde */}
+                  <span className="absolute top-2 right-2 text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    {dest.count} plan
+                  </span>
+                  {/* Bayrak */}
+                  <span className="absolute bottom-2 left-2.5 text-xl leading-none drop-shadow">
+                    {dest.flag}
+                  </span>
+                </div>
+
+                {/* Alt bilgi */}
+                <div className="px-3.5 py-3">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{dest.city}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{dest.country}</p>
+                  <p className="text-[10px] text-[#f8981d] font-semibold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Plan oluştur →
+                  </p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════
-          ÖRNEK PLAN MODAL
+          BÖLÜM 4 — FİYATLANDIRMA
          ══════════════════════════════════════════ */}
-      <SamplePlanModal
-        planId={selectedSampleId}
-        onClose={() => setSelectedSampleId(null)}
-        cityMeta={selectedSampleId ? (() => {
-          const p = SAMPLE_PLANS.find((s) => s.id === selectedSampleId);
-          return p ? { city: p.city, country: p.country, flag: p.flag, days: p.days, budget: p.budget, currency: p.currency, image: p.image } : null;
-        })() : null}
-      />
+      <section className="bg-slate-200 dark:bg-slate-900 pt-0 pb-16 lg:pb-24 mt-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">Fiyatlandırma</span>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+              Seyahatine uygun plan seç
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
+              Ücretsiz başla, ihtiyacın büyüdükçe yükselt.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* FREE */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.4, delay: 0 }}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col"
+            >
+              <div className="mb-5">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Free</span>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-4xl font-black text-slate-900 dark:text-white">₺0</span>
+                  <span className="text-slate-400 text-sm">/ay</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Sonsuza kadar ücretsiz</p>
+              </div>
+              <div className="flex-1 space-y-3 mb-6">
+                {['3 plan hakkı', 'Temel AI planlama', 'İnteraktif harita', 'Plan kaydetme'].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/register')}
+                className="w-full py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+              >
+                Ücretsiz Başla
+              </button>
+            </motion.div>
+
+            {/* PRO — öne çıkan */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.1 }}
+              className="relative bg-gradient-to-b from-[#f8981d] to-[#e08518] rounded-2xl p-6 flex flex-col shadow-2xl shadow-[#f8981d]/30 scale-[1.03]"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                  En Popüler
+                </span>
+              </div>
+              <div className="mb-5">
+                <span className="text-xs font-bold uppercase tracking-widest text-white/70">Pro</span>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-4xl font-black text-white">₺99</span>
+                  <span className="text-white/70 text-sm">/ay</span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">Yıllık ödemede %20 indirim</p>
+              </div>
+              <div className="flex-1 space-y-3 mb-6">
+                {['Sınırsız plan', 'Reklamsız deneyim', 'Gelişmiş AI modeli', 'Seyahat süreleri', 'Öncelikli destek'].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-sm text-white">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/register')}
+                className="w-full py-2.5 rounded-xl bg-white text-[#e08518] text-sm font-bold hover:bg-white/90 transition-all shadow-lg"
+              >
+                Pro'ya Geç →
+              </button>
+            </motion.div>
+
+            {/* TEAM */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col"
+            >
+              <div className="mb-5">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Team</span>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-4xl font-black text-slate-900 dark:text-white">₺299</span>
+                  <span className="text-slate-400 text-sm">/ay</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">5 kullanıcıya kadar</p>
+              </div>
+              <div className="flex-1 space-y-3 mb-6">
+                {['5 kişiye kadar', 'Sınırsız plan', 'Ortak düzenleme', 'Paylaşılabilir planlar', 'Özel destek hattı'].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/register')}
+                className="w-full py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:border-[#f8981d]/40 hover:bg-orange-50 dark:hover:bg-slate-700 transition-all"
+              >
+                Team'e Başla
+              </button>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          CTA TEKRARI
+         ══════════════════════════════════════════ */}
+      <section className="bg-slate-200 dark:bg-slate-900 py-24 lg:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-2xl mx-auto px-6 text-center"
+        >
+          <p className="text-xs font-semibold text-[#f8981d] uppercase tracking-widest mb-4">Başlamaya hazır mısın?</p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight">
+            Hayalindeki seyahat<br />sadece <span className="text-[#f8981d]">1 tık</span> ötede.
+          </h2>
+          <p className="mt-4 text-slate-500 dark:text-slate-400 text-base leading-relaxed">
+            Kredi kartı gerekmez. Dakikalar içinde ücretsiz planını oluştur.
+          </p>
+          <button
+            type="button"
+            onClick={handleCTA}
+            className="mt-8 inline-flex items-center gap-2.5 px-8 py-4 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-2xl text-base transition-all shadow-2xl shadow-[#f8981d]/30 hover:-translate-y-0.5 active:scale-95"
+          >
+            Ücretsiz Plan Oluştur
+            <ArrowRight size={18} />
+          </button>
+          <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+            50.000+ gezgin zaten kullanıyor ✈️
+          </p>
+        </motion.div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          FOOTER
+         ══════════════════════════════════════════ */}
+      <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+
+          {/* Logo */}
+          <TravyonLogo size={40} />
+
+          {/* Linkler */}
+          <div className="flex items-center gap-6">
+            <Link to="/sss" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">SSS</Link>
+            <Link to="/gizlilik" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Gizlilik</Link>
+            <Link to="/kullanim-kosullari" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Kullanım Koşulları</Link>
+            <a href="mailto:iletisim@travyon.app" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">İletişim</a>
+          </div>
+
+          {/* Copyright */}
+          <p className="text-sm text-slate-400 whitespace-nowrap">
+            © 2026 Travyon. Tüm hakları saklıdır.
+          </p>
+
+        </div>
+      </footer>
 
     </div>
   );
