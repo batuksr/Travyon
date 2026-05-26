@@ -92,42 +92,54 @@ export const PublicPlanCard: React.FC<Props> = memo(({
       {/* ── Bottom row: stars + follow ── */}
       <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-50 gap-2">
 
-        {/* Stars */}
-        {isOwn ? (
-          <span className="text-[11px] text-slate-400 italic">Kendi planın</span>
-        ) : (
-          <div className="flex items-center gap-0.5">
-            {[1, 2, 3, 4, 5].map(s => (
-              <button
-                key={s}
-                onMouseEnter={() => setHoverStar(s)}
-                onMouseLeave={() => setHoverStar(0)}
-                onClick={() => !isSavingRating && onRate(plan.id, s)}
-                disabled={isSavingRating}
-                aria-label={`${s} yıldız`}
-                className={`text-xl leading-none transition-all duration-100 ${
-                  isSavingRating
-                    ? 'opacity-40 cursor-wait'
-                    : s <= activeStar
+        {/* Sol: yıldızlar + ortalama */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {isOwn ? (
+            <span className="text-[11px] text-slate-400 italic">Kendi planın</span>
+          ) : (
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map(s => (
+                <button
+                  key={s}
+                  onMouseEnter={() => !isSavingRating && setHoverStar(s)}
+                  onMouseLeave={() => setHoverStar(0)}
+                  onClick={() => !isSavingRating && onRate(plan.id, s)}
+                  disabled={isSavingRating}
+                  aria-label={`${s} yıldız`}
+                  className={`text-xl leading-none transition-all duration-100 ${
+                    s <= activeStar
                       ? hoverStar
                         ? 'text-amber-300 scale-110'
                         : 'text-amber-400'
-                      : 'text-slate-200 hover:text-amber-200 hover:scale-110'
-                }`}
-              >
-                ★
-              </button>
-            ))}
-            {isSavingRating && <Loader2 size={12} className="animate-spin text-slate-300 ml-1" />}
-            {avgDisplay && (
-              <span className="text-[10px] text-slate-400 ml-1.5 font-medium tabular-nums">
-                {avgDisplay} ({plan.ratingCount})
-              </span>
-            )}
-          </div>
-        )}
+                      : isSavingRating
+                        ? 'text-slate-200 cursor-wait'
+                        : 'text-slate-200 hover:text-amber-200 hover:scale-110'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+              {isSavingRating && <Loader2 size={12} className="animate-spin text-slate-300 ml-1" />}
+            </div>
+          )}
 
-        {/* Follow button */}
+          {/* Ortalama badge — hem kendi planında hem başkasının planında göster */}
+          {avgDisplay ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 tabular-nums">
+              <span className="text-amber-400 text-xs leading-none">★</span>
+              <span className="text-xs font-bold text-amber-600">{avgDisplay}</span>
+              <span className="text-[10px] text-slate-400 font-medium">/ 5</span>
+              <span className="text-[10px] text-slate-300 mx-0.5">·</span>
+              <span className="text-[10px] text-slate-400">{plan.ratingCount} oy</span>
+            </span>
+          ) : (
+            !isOwn && (
+              <span className="text-[10px] text-slate-300 italic">Henüz oy yok</span>
+            )
+          )}
+        </div>
+
+        {/* Sağ: takip butonu */}
         {!isOwn && (
           <button
             onClick={() => onToggleFollow(plan.userId)}

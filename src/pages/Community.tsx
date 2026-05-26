@@ -13,7 +13,6 @@ import {
   type PublicPlan, type UserProfile,
 } from '../services/socialService';
 import { PublicPlanCard } from '../components/PublicPlanCard';
-import SharedPlanModal from '../components/SharedPlanModal';
 
 const FEED_INITIAL = 3;
 
@@ -31,7 +30,7 @@ const Community: React.FC = () => {
   const [feedLoading, setFeedLoading]     = useState(false);
   const [feedError, setFeedError]         = useState(false);
   const [shareError, setShareError]       = useState<string | null>(null);
-  const [feedTab, setFeedTab]             = useState<'all' | 'following'>('all');
+  const [feedTab, setFeedTab]             = useState<'all' | 'following' | 'top'>('all');
   const [followingSet, setFollowingSet]   = useState<Set<string>>(new Set());
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
   const [userRatings, setUserRatings]     = useState<Record<string, number>>({});
@@ -40,7 +39,6 @@ const Community: React.FC = () => {
   const [unfollowConfirm, setUnfollowConfirm]         = useState<string | null>(null); // uid
   const [savingShare, setSavingShare]              = useState<string | null>(null);
   const [savingRating, setSavingRating]   = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan]   = useState<PublicPlan | null>(null);
   const [feedSearch, setFeedSearch]       = useState('');
   const [feedShowAll, setFeedShowAll]     = useState(false);
 
@@ -146,14 +144,17 @@ const Community: React.FC = () => {
 
   const handleRate = useCallback(async (planId: string, rating: number) => {
     if (!user) return;
+    // Optimistik: anında yıldızları sabitle — hata olsa bile geri alma
+    setUserRatings(prev => ({ ...prev, [planId]: rating }));
     setSavingRating(planId);
     try {
       const { newAvg, newCount } = await ratePlan(planId, user.uid, rating);
-      setUserRatings(prev => ({ ...prev, [planId]: rating }));
       setPublicFeed(prev => prev.map(p =>
         p.id === planId ? { ...p, avgRating: newAvg, ratingCount: newCount } : p
       ));
-    } catch { /* hata */ }
+    } catch {
+      // Yıldız görünümünü geri alma; sadece ortalama güncellenemiyor olabilir
+    }
     finally { setSavingRating(null); }
   }, [user]);
 
@@ -170,6 +171,13 @@ const Community: React.FC = () => {
       }
     } catch { /* hata */ }
   }, [user, followingSet]);
+
+  /* ── Puana göre sıralı tüm planlar (sekme için) ── */
+  const topPlans = useMemo(() =>
+    [...publicFeed]
+      .filter(p => p.ratingCount > 0)
+      .sort((a, b) => b.avgRating - a.avgRating || b.ratingCount - a.ratingCount),
+  [publicFeed]);
 
   /* ── Filtered feed ── */
   const displayedFeed = useMemo(() => {
@@ -237,28 +245,36 @@ const Community: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
           {/* Tabs */}
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 gap-0.5 shrink-0">
-            {(['all', 'following'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => { setFeedTab(tab); setFeedShowAll(false); }}
-                className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
-                  feedTab === tab
-                    ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                {tab === 'all' ? 'Herkes' : (
-                  <span className="flex items-center gap-1">
-                    Takip Ettiklerim
-                    {followingSet.size > 0 && (
-                      <span className="bg-blue-500 text-white text-[9px] font-black px-1 rounded-full">
-                        {followingSet.size}
-                      </span>
-                    )}
-                  </span>
-                )}
-              </button>
-            ))}
+            <button
+              onClick={() => { setFeedTab('all'); setFeedShowAll(false); }}
+              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+                feedTab === 'all'
+                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Herkes
+            </button>
+            <button
+              onClick={() => { setFeedTab('following'); setFeedShowAll(false); }}
+              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+                feedTab === 'following'
+                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Takip Ettiklerim
+            </button>
+            <button
+              onClick={() => { setFeedTab('top'); setFeedShowAll(false); }}
+              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+                feedTab === 'top'
+                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              En Beğenilenler
+            </button>
           </div>
 
           {/* Arama */}
@@ -289,8 +305,57 @@ const Community: React.FC = () => {
           </div>
         )}
 
-        {/* ══ TAKİP ETTİKLERİM SEKMESİ — Kişi listesi ══ */}
-        {feedTab === 'following' ? (
+        {/* ══ EN BEĞENİLENLER SEKMESİ ══ */}
+        {feedTab === 'top' ? (
+          topPlans.length === 0 ? (
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
+              <p className="text-3xl mb-3">🏆</p>
+              <p className="text-sm font-bold text-slate-700">Henüz puanlanan plan yok</p>
+              <p className="text-xs text-slate-400 mt-1">Planlara yıldız verdikçe burada sıralama oluşur</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topPlans.map((plan, idx) => {
+                const medals  = ['🥇', '🥈', '🥉'];
+                const medal   = medals[idx] ?? `${idx + 1}.`;
+                const leftBorder = idx === 0
+                  ? 'border-l-4 border-amber-400'
+                  : idx === 1
+                    ? 'border-l-4 border-slate-300'
+                    : idx === 2
+                      ? 'border-l-4 border-orange-300'
+                      : 'border-l-4 border-slate-100';
+                return (
+                  <div key={plan.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden ${leftBorder} hover:shadow-md transition-all`}>
+                    <div className="flex items-center gap-4 px-4 py-4">
+                      {/* Sıra rozeti */}
+                      <span className="text-2xl flex-shrink-0 w-8 text-center">{medal}</span>
+
+                      {/* Plan kartı (aynı PublicPlanCard) */}
+                      <div className="flex-1 min-w-0">
+                        <PublicPlanCard
+                          plan={{
+                            ...plan,
+                            userPhotoURL: plan.userId === user?.uid ? currentUserPhoto : plan.userPhotoURL,
+                          }}
+                          currentUserId={user?.uid}
+                          isFollowing={followingSet.has(plan.userId)}
+                          userRating={userRatings[plan.id]}
+                          isSavingRating={savingRating === plan.id}
+                          onRate={handleRate}
+                          onToggleFollow={handleToggleFollow}
+                          onOpen={p => navigate(`/plan/${p.id}`)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+
+        /* ══ TAKİP ETTİKLERİM SEKMESİ — Kişi listesi ══ */
+        ) : feedTab === 'following' ? (
           profilesLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
@@ -434,7 +499,7 @@ const Community: React.FC = () => {
                   isSavingRating={savingRating === plan.id}
                   onRate={handleRate}
                   onToggleFollow={handleToggleFollow}
-                  onOpen={setSelectedPlan}
+                  onOpen={p => navigate(`/plan/${p.id}`)}
                 />
               ))}
             </div>
@@ -514,9 +579,6 @@ const Community: React.FC = () => {
       </div>
     </div>
 
-    {selectedPlan && (
-      <SharedPlanModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
-    )}
     </>
   );
 };

@@ -23,6 +23,19 @@ export interface PublicPlan {
   createdAt:       number;   // ms timestamp
   avgRating:       number;
   ratingCount:     number;
+  // Onboarding seçimleri (opsiyonel — eski planlar yoksa undefined)
+  travelType?:          string;
+  peopleCount?:         number;
+  pace?:                string;
+  purposes?:            string[];
+  earlyBird?:           boolean;
+  dislikes?:            string[];
+  dietaryRestrictions?: string[];
+  foodPhilosophy?:      string;
+  accommodation?:       string;
+  transport?:           string;
+  startDate?:           string;
+  endDate?:             string;
 }
 
 /* ══════════════════════════════════════════════
@@ -46,7 +59,20 @@ export const shareplan = async (
     createdAt:       serverTimestamp(),
     avgRating:       0,
     ratingCount:     0,
-    planData:        plan,   // full plan stored for detail view
+    // Onboarding seçimleri
+    travelType:          onboardingData.travelType          ?? '',
+    peopleCount:         onboardingData.peopleCount         ?? 1,
+    pace:                onboardingData.pace                ?? '',
+    purposes:            onboardingData.purposes            ?? [],
+    earlyBird:           onboardingData.earlyBird           ?? false,
+    dislikes:            onboardingData.dislikes            ?? [],
+    dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
+    foodPhilosophy:      onboardingData.foodPhilosophy      ?? '',
+    accommodation:       onboardingData.accommodation       ?? '',
+    transport:           onboardingData.transport           ?? '',
+    startDate:           onboardingData.startDate           ?? '',
+    endDate:             onboardingData.endDate             ?? '',
+    planData:            plan,
   });
 };
 
@@ -89,6 +115,18 @@ const toPublicPlan = (id: string, data: Record<string, unknown>): PublicPlan => 
   createdAt:       data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
   avgRating:       (data.avgRating      as number) ?? 0,
   ratingCount:     (data.ratingCount    as number) ?? 0,
+  travelType:          (data.travelType          as string)   || undefined,
+  peopleCount:         (data.peopleCount          as number)  || undefined,
+  pace:                (data.pace                as string)   || undefined,
+  purposes:            (data.purposes            as string[]) || undefined,
+  earlyBird:           data.earlyBird            != null ? (data.earlyBird as boolean) : undefined,
+  dislikes:            (data.dislikes            as string[]) || undefined,
+  dietaryRestrictions: (data.dietaryRestrictions as string[]) || undefined,
+  foodPhilosophy:      (data.foodPhilosophy      as string)   || undefined,
+  accommodation:       (data.accommodation       as string)   || undefined,
+  transport:           (data.transport           as string)   || undefined,
+  startDate:           (data.startDate           as string)   || undefined,
+  endDate:             (data.endDate             as string)   || undefined,
 });
 
 export const getPublicFeed = async (limitCount = 10): Promise<PublicPlan[]> => {

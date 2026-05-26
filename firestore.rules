@@ -20,8 +20,17 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.auth != null
                     && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-                            && resource.data.userId == request.auth.uid;
+      // Plan sahibi her şeyi güncelleyebilir/silebilir
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && (
+                      // Plan sahibi her alanı güncelleyebilir
+                      resource.data.userId == request.auth.uid
+                      ||
+                      // Diğer kullanıcılar SADECE puan alanlarını yazabilir
+                      request.resource.data.diff(resource.data)
+                        .affectedKeys().hasOnly(['avgRating', 'ratingCount'])
+                    );
     }
 
     // Puan işlemleri

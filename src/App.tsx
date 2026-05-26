@@ -20,6 +20,8 @@ import Community from "./pages/Community";
 import Notifications from "./pages/Notifications";
 import UserProfile from "./pages/UserProfile";
 import SSS from "./pages/SSS";
+import TravelChecklist from "./pages/TravelChecklist";
+import CommunityPlanView from "./pages/CommunityPlanView";
 import Gizlilik from "./pages/Gizlilik";
 import KullanimKosullari from "./pages/KullanimKosullari";
 
@@ -33,7 +35,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) => {
   const location = useLocation();
   const { expanded } = useSidebarStore();
-  const isDashboard = location.pathname === '/dashboard';
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/plan/');
 
   /* Dashboard'da sidebar yok, margin da yok */
   const showSidebar = isAuthenticated && !isDashboard;
@@ -55,6 +57,8 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
           <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route path="/sss"                  element={<SSS />} />
+          <Route path="/travel-checklist"     element={<ProtectedRoute><TravelChecklist /></ProtectedRoute>} />
+          <Route path="/plan/:planId"         element={<ProtectedRoute><CommunityPlanView /></ProtectedRoute>} />
           <Route path="/gizlilik"             element={<Gizlilik />} />
           <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
         </Routes>

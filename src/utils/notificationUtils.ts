@@ -7,12 +7,15 @@ import type { OnboardingData } from '../store/useOnboardingStore';
 export type NotifLevel = 'info' | 'warning' | 'urgent';
 
 export interface AppNotification {
-  id:      string;
-  icon:    string;
-  title:   string;
-  body:    string;
-  level:   NotifLevel;
-  planId?: string;
+  id:           string;
+  icon:         string;
+  title:        string;
+  body:         string;
+  level:        NotifLevel;
+  planId?:      string;
+  actionUrl?:   string;   // harici link
+  actionLabel?: string;   // buton metni
+  actionRoute?: string;   // dahili route (Link için)
 }
 
 export interface PlanEntry {
@@ -74,6 +77,8 @@ export const buildNotifications = (
           title: 'Bugün yola çıkıyorsun!',
           body: `${dest} seyahatin bugün başlıyor. İyi yolculuklar! 🎉`,
           planId: p.id,
+          actionRoute: `/travel-checklist?planId=${p.id}&dest=${encodeURIComponent(dest)}`,
+          actionLabel: 'Hazırlık Listesi',
         });
       } else if (daysUntil === 1) {
         notifs.push({
@@ -81,6 +86,8 @@ export const buildNotifications = (
           title: 'Yarın yola çıkıyorsun!',
           body: `${dest} seyahatin yarın başlıyor. Son hazırlıklarını yaptın mı?`,
           planId: p.id,
+          actionRoute: `/travel-checklist?planId=${p.id}&dest=${encodeURIComponent(dest)}`,
+          actionLabel: 'Hazırlık Listesi',
         });
       } else if (daysUntil <= 3) {
         notifs.push({
@@ -88,6 +95,8 @@ export const buildNotifications = (
           title: `${daysUntil} günde ${dest}!`,
           body: 'Bilet, pasaport ve rezervasyonlarını kontrol etme vakti.',
           planId: p.id,
+          actionRoute: `/travel-checklist?planId=${p.id}&dest=${encodeURIComponent(dest)}`,
+          actionLabel: 'Hazırlık Listesi',
         });
       } else {
         notifs.push({
@@ -95,6 +104,8 @@ export const buildNotifications = (
           title: `${dest} seyahatin ${daysUntil} gün sonra`,
           body: 'Hazırlıklarını tamamlamaya başlamak için iyi bir an.',
           planId: p.id,
+          actionRoute: `/travel-checklist?planId=${p.id}&dest=${encodeURIComponent(dest)}`,
+          actionLabel: 'Hazırlık Listesine Bak',
         });
       }
     }
@@ -111,6 +122,8 @@ export const buildNotifications = (
           title: 'Bilet rezervasyonu gerekebilir',
           body: `${dest} planındaki ${bookable.placeName} için önceden bilet almayı unutma.`,
           planId: p.id,
+          actionUrl: `https://www.getyourguide.com/s/?q=${encodeURIComponent(bookable.placeName)}&locale_autoredirect_optout=1`,
+          actionLabel: 'Bilet Al →',
         });
       }
     }
@@ -134,6 +147,8 @@ export const buildNotifications = (
           title: `Bütçe uyarısı — %${pct} harcandı!`,
           body: `${dest}: ${spentFmt} / ${totalFmt}. Harcamaları gözden geçir.`,
           planId: p.id,
+          actionRoute: '/saved-plans',
+          actionLabel: 'Planı Gör',
         });
       } else if (pct >= 50) {
         notifs.push({
@@ -141,6 +156,8 @@ export const buildNotifications = (
           title: `Bütçenin yarısı harcandı — %${pct}`,
           body: `${dest} planında ${spentFmt} harcama kaydedildi.`,
           planId: p.id,
+          actionRoute: '/saved-plans',
+          actionLabel: 'Planı Gör',
         });
       } else if (pct >= 20) {
         notifs.push({
@@ -148,6 +165,8 @@ export const buildNotifications = (
           title: `Bütçenin %${pct}'i harcandı`,
           body: `${dest} planında ${spentFmt} harcama kaydedildi.`,
           planId: p.id,
+          actionRoute: '/saved-plans',
+          actionLabel: 'Planı Gör',
         });
       }
     }

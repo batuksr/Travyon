@@ -8,7 +8,6 @@ import {
   getPublicFeed, followUser, unfollowUser, getFollowingList,
   type PublicPlan,
 } from '../services/socialService';
-import SharedPlanModal from '../components/SharedPlanModal';
 import {
   ArrowLeft, MapPin, Calendar, Globe, Users, Loader2,
 } from 'lucide-react';
@@ -40,7 +39,6 @@ const UserProfile: React.FC = () => {
   const [loading, setLoading]           = useState(true);
   const [isFollowing, setIsFollowing]   = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PublicPlan | null>(null);
   const [unfollowConfirm, setUnfollowConfirm] = useState(false);
 
   const isOwnProfile = uid === user?.uid;
@@ -286,7 +284,7 @@ const UserProfile: React.FC = () => {
                 return (
                   <div
                     key={plan.id}
-                    onClick={() => setSelectedPlan(plan)}
+                    onClick={() => navigate(`/plan/${plan.id}`)}
                     className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 cursor-pointer hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -322,9 +320,7 @@ const UserProfile: React.FC = () => {
       </div>
     </div>
 
-    {selectedPlan && (
-      <SharedPlanModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
-    )}
+
     </>
   );
 };

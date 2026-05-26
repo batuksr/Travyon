@@ -1,5 +1,6 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Bell, X, CheckCheck, AlertTriangle, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { Bell, X, CheckCheck, Plane, AlertCircle, Info, ExternalLink } from 'lucide-react';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
@@ -24,9 +25,30 @@ const geocodeOnce = async (name: string): Promise<{ lat: number; lng: number } |
 };
 
 const levelConfig = {
-  urgent:  { bg: 'bg-red-50',    border: 'border-red-200',    bar: 'bg-red-500',    title: 'text-red-800',   body: 'text-red-600',   badge: 'bg-red-500',   icon: AlertTriangle },
-  warning: { bg: 'bg-amber-50',  border: 'border-amber-200',  bar: 'bg-amber-400',  title: 'text-amber-900', body: 'text-amber-700', badge: 'bg-amber-400', icon: AlertTriangle },
-  info:    { bg: 'bg-blue-50',   border: 'border-blue-200',   bar: 'bg-blue-400',   title: 'text-blue-800',  body: 'text-blue-600',  badge: 'bg-blue-400',  icon: Info },
+  urgent:  {
+    bar:   'bg-red-400',
+    dot:   'bg-red-400',
+    badge: 'bg-red-100 text-red-600',
+    icon:  AlertCircle,
+    iconColor: 'text-red-400',
+    label: 'Acil',
+  },
+  warning: {
+    bar:   'bg-amber-400',
+    dot:   'bg-amber-400',
+    badge: 'bg-amber-100 text-amber-700',
+    icon:  AlertCircle,
+    iconColor: 'text-amber-400',
+    label: 'Uyarı',
+  },
+  info:    {
+    bar:   'bg-blue-400',
+    dot:   'bg-blue-400',
+    badge: 'bg-blue-100 text-blue-600',
+    icon:  Info,
+    iconColor: 'text-blue-400',
+    label: 'Bilgi',
+  },
 };
 
 const Notifications: React.FC = () => {
@@ -37,28 +59,27 @@ const Notifications: React.FC = () => {
     pushEnabled, pushPermission,
   } = useAppSettingsStore();
 
-  const [weather, setWeather]       = useState<WeatherData | null>(null);
-  const [dismissed, setDismissed]   = useState<Set<string>>(() => {
+  const [weather, setWeather]     = useState<WeatherData | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem('travyon-dismissed-notifs');
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch { return new Set(); }
   });
 
-  const todayStr  = new Date().toISOString().split('T')[0];
-  const nextTrip  = plans
+  const todayStr = new Date().toISOString().split('T')[0];
+  const nextTrip = plans
     .filter(p => p.onboardingData.startDate >= todayStr)
     .sort((a, b) => a.onboardingData.startDate.localeCompare(b.onboardingData.startDate))[0]
     ?? plans[0];
-  const cityName  = nextTrip?.plan.destination.split(',')[0].trim() ?? '';
+  const cityName = nextTrip?.plan.destination.split(',')[0].trim() ?? '';
 
-  /* Hava durumu çek */
   useEffect(() => {
     if (!cityName) return;
     (async () => {
-      const alias  = GEO_ALIASES[cityName.toLowerCase()];
-      let coords   = alias ? await geocodeOnce(alias) : null;
-      if (!coords)  coords = await geocodeOnce(cityName);
+      const alias = GEO_ALIASES[cityName.toLowerCase()];
+      let coords  = alias ? await geocodeOnce(alias) : null;
+      if (!coords) coords = await geocodeOnce(cityName);
       if (!coords && nextTrip?.plan.destination !== cityName)
         coords = await geocodeOnce(nextTrip!.plan.destination);
       if (!coords) return;
@@ -75,7 +96,6 @@ const Notifications: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityName]);
 
-  /* Dismissed'i localStorage'a yaz */
   const dismiss = useCallback((id: string) => {
     setDismissed(prev => {
       const next = new Set([...prev, id]);
@@ -96,18 +116,9 @@ const Notifications: React.FC = () => {
 
   const allNotifications = useMemo(() => {
     let notifs = buildNotifications(plans, weather, todayStr, cityName, tempCelsius);
-
-    // Kullanıcının bildirim tercihlerine göre filtrele
-    if (!appPlanNotif) {
-      // Plan/bütçe/seyahat bildirimleri kapalı — sadece hava durumunu göster
-      notifs = notifs.filter(n => n.id.startsWith('weather-'));
-    }
-    if (!appCommunityNotif) {
-      notifs = notifs.filter(n => !n.id.startsWith('community-'));
-    }
-    if (!appUpdateNotif) {
-      notifs = notifs.filter(n => !n.id.startsWith('update-'));
-    }
+    if (!appPlanNotif)      notifs = notifs.filter(n => n.id.startsWith('weather-'));
+    if (!appCommunityNotif) notifs = notifs.filter(n => !n.id.startsWith('community-'));
+    if (!appUpdateNotif)    notifs = notifs.filter(n => !n.id.startsWith('update-'));
     return notifs;
   }, [plans, weather, todayStr, cityName, tempCelsius, appPlanNotif, appCommunityNotif, appUpdateNotif]);
 
@@ -115,17 +126,13 @@ const Notifications: React.FC = () => {
     allNotifications.filter(n => !dismissed.has(n.id)),
   [allNotifications, dismissed]);
 
-  // Push bildirimi gönder — sayfa açıldığında, izin varsa ve push aktifse
   useEffect(() => {
     if (!pushEnabled || pushPermission !== 'granted') return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
     const urgentPlan = plans.find(p => {
-      const start = p.onboardingData.startDate;
-      const daysLeft = Math.ceil((new Date(start).getTime() - Date.now()) / 86_400_000);
+      const daysLeft = Math.ceil((new Date(p.onboardingData.startDate).getTime() - Date.now()) / 86_400_000);
       return daysLeft >= 0 && daysLeft <= 1;
     });
-
     if (urgentPlan) {
       const dest = urgentPlan.plan.destination.split(',')[0];
       const daysLeft = Math.ceil((new Date(urgentPlan.onboardingData.startDate).getTime() - Date.now()) / 86_400_000);
@@ -146,90 +153,107 @@ const Notifications: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
-      <div className="max-w-[1150px] mx-auto px-10 py-10">
+      <div className="max-w-4xl mx-auto px-6 py-12">
 
-        {/* Başlık */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
+        {/* ── Başlık ── */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#f8981d]/10 flex items-center justify-center">
               <Bell size={18} className="text-[#f8981d]" />
-              <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest">Bildirimler</p>
             </div>
-            <h1 className="text-2xl font-black text-slate-900">Bildirimlerim</h1>
-            <p className="text-slate-400 text-sm mt-1">Seyahat uyarıları, bütçe takibi ve hava durumu bildirimleri.</p>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-none">Bildirimler</h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {notifications.length === 0
+                  ? 'Her şey yolunda görünüyor'
+                  : `${notifications.length} bildirim · ${urgentCount > 0 ? `${urgentCount} acil` : warningCount > 0 ? `${warningCount} uyarı` : 'hepsi bilgi'}`}
+              </p>
+            </div>
           </div>
 
           {notifications.length > 0 && (
             <button
               onClick={dismissAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all mt-1"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-sm transition-all"
             >
-              <CheckCheck size={13} />
-              Tümünü Okundu Say
+              <CheckCheck size={12} />
+              Tümünü temizle
             </button>
           )}
         </div>
 
-        {/* Özet istatistik */}
-        {notifications.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-black text-slate-900">{notifications.length}</p>
-              <p className="text-xs text-slate-400 mt-0.5">Toplam</p>
-            </div>
-            <div className={`rounded-xl p-4 text-center border ${urgentCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
-              <p className={`text-2xl font-black ${urgentCount > 0 ? 'text-red-600' : 'text-slate-300'}`}>{urgentCount}</p>
-              <p className={`text-xs mt-0.5 ${urgentCount > 0 ? 'text-red-500' : 'text-slate-400'}`}>Acil</p>
-            </div>
-            <div className={`rounded-xl p-4 text-center border ${warningCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'}`}>
-              <p className={`text-2xl font-black ${warningCount > 0 ? 'text-amber-600' : 'text-slate-300'}`}>{warningCount}</p>
-              <p className={`text-xs mt-0.5 ${warningCount > 0 ? 'text-amber-500' : 'text-slate-400'}`}>Uyarı</p>
-            </div>
-          </div>
-        )}
-
-        {/* Bildirim listesi */}
+        {/* ── Boş durum ── */}
         {notifications.length === 0 ? (
-          <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-16 text-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Bell size={24} className="text-slate-300" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-16 text-center">
+            <div className="w-14 h-14 bg-[#f5f0e8] dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Plane size={22} className="text-[#f8981d]" />
             </div>
-            <p className="font-bold text-slate-700">Yeni bildirim yok</p>
-            <p className="text-xs text-slate-400 mt-1">Yaklaşan seyahat, bütçe veya hava durumu uyarıların burada görünecek.</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-200">Yeni bildirim yok</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
+              Yaklaşan seyahat, bütçe veya hava durumu uyarıların burada görünecek.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {notifications.map(n => {
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
+            {notifications.map((n, idx) => {
               const cfg = levelConfig[n.level];
+              const Icon = cfg.icon;
               return (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 rounded-2xl border pl-0 pr-4 py-4 overflow-hidden ${cfg.bg} ${cfg.border}`}
+                  className={`flex items-start gap-4 px-5 py-4 hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors group ${idx === 0 ? '' : ''}`}
                 >
-                  {/* Seviye çizgisi */}
-                  <div className={`w-1 self-stretch rounded-r-full flex-shrink-0 ${cfg.bar}`} />
+                  {/* Sol renk şeridi */}
+                  <div className={`w-0.5 self-stretch rounded-full flex-shrink-0 ${cfg.bar}`} />
 
-                  {/* Emoji */}
-                  <span className="text-xl leading-none flex-shrink-0 mt-0.5">{n.icon}</span>
+                  {/* İkon */}
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    n.level === 'urgent'  ? 'bg-red-50 dark:bg-red-900/20' :
+                    n.level === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
+                                           'bg-blue-50 dark:bg-blue-900/20'
+                  }`}>
+                    <Icon size={14} className={cfg.iconColor} />
+                  </div>
 
                   {/* İçerik */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-bold leading-tight ${cfg.title}`}>{n.title}</p>
-                      <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wider ${cfg.badge}`}>
-                        {n.level === 'urgent' ? 'Acil' : n.level === 'warning' ? 'Uyarı' : 'Bilgi'}
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">{n.title}</p>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
+                        {cfg.label}
                       </span>
                     </div>
-                    <p className={`text-xs mt-1 leading-relaxed ${cfg.body}`}>{n.body}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
+
+                    {/* Aksiyon butonu */}
+                    {n.actionUrl && (
+                      <a
+                        href={n.actionUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#f8981d] hover:text-[#e08518] transition-colors"
+                      >
+                        {n.actionLabel}
+                        <ExternalLink size={11} />
+                      </a>
+                    )}
+                    {n.actionRoute && (
+                      <Link
+                        to={n.actionRoute}
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#187fe7] hover:text-[#1060b0] transition-colors"
+                      >
+                        {n.actionLabel}
+                      </Link>
+                    )}
                   </div>
 
                   {/* Kapat */}
                   <button
                     onClick={() => dismiss(n.id)}
-                    className="flex-shrink-0 mt-0.5 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 mt-1 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
                     aria-label="Kapat"
                   >
-                    <X size={14} />
+                    <X size={12} />
                   </button>
                 </div>
               );
