@@ -589,7 +589,7 @@ const Hub: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
       <div className="max-w-[1280px] mx-auto px-8 py-10 pl-12">
 
         {/* ── Greeting ── */}

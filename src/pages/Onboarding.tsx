@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -252,7 +252,7 @@ const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-200 dark:bg-slate-900 flex overflow-hidden">
+    <div className="h-screen bg-[#f5f0e8] dark:bg-slate-900 flex overflow-hidden">
 
       {/* ═══ SOL — VİDEO ═══ */}
       <div className="hidden lg:flex lg:w-2/5 relative overflow-hidden shrink-0">

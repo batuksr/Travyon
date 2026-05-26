@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Sağ Panel — Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-slate-200 dark:bg-slate-900 overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-[#f5f0e8] dark:bg-slate-900 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
+﻿import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
@@ -160,7 +160,7 @@ const Dashboard: React.FC = () => {
   const activeDay = plan.dailyPlans[activeDayIndex];
 
   return (
-    <div className="h-screen flex flex-col bg-slate-200 dark:bg-slate-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#f5f0e8] dark:bg-slate-900 overflow-hidden">
 
 
       {/* ── ÇIKIŞ ONAY MODALİ ── */}

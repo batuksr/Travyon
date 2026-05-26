@@ -1,8 +1,8 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+﻿import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Sun, Moon, Plane } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import GlobeAnimation from '../components/GlobeAnimation';
@@ -92,7 +92,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
   }, []);
 
   return (
-    <div className="bg-slate-200 dark:bg-slate-900 text-[#1a1a1a] dark:text-white overflow-x-hidden">
+    <div className="bg-[#f5f0e8] dark:bg-slate-900 text-[#1a1a1a] dark:text-white overflow-x-hidden">
 
       {/* ══════════════════════════════════════════
           NAVBAR — Floating Island
@@ -277,7 +277,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           SCROLL İNDİKATÖRÜ
          ══════════════════════════════════════════ */}
-      <div className="bg-slate-200 dark:bg-slate-900 flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
         <span className="text-[11px] font-semibold tracking-[0.25em] text-slate-900 dark:text-white uppercase select-none">
           Scroll
         </span>
@@ -295,7 +295,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
          ══════════════════════════════════════════ */}
-      <section className="bg-slate-200 dark:bg-slate-900 pt-16 pb-32 lg:pt-24 lg:pb-50">
+      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
@@ -347,13 +347,21 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         </div>
       </section>
 
+      {/* ── PLANE DIVIDER ── */}
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════
           BÖLÜM 3 — NASIL ÇALIŞIR (Globe arka plan)
          ══════════════════════════════════════════ */}
       <section
         id="nasil-calisir"
-        className="relative bg-slate-200 dark:bg-slate-900 overflow-x-hidden"
+        className="relative bg-[#f5f0e8] dark:bg-slate-900 overflow-x-hidden"
         style={{ minHeight: 580 }}
       >
 
@@ -367,11 +375,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         {/* İçerik */}
         <div
           className="relative z-10 w-full mx-auto px-8 flex flex-col"
-          style={{ minHeight: 780, maxWidth: 1280 }}
+          style={{ minHeight: 800, maxWidth: 1280 }}
         >
 
           {/* Başlık — sol üst */}
-          <div className="pt-1 pb-6">
+          <div className="pt-22 pb-2">
             <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">SÜREÇ</span>
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
               Nasıl Çalışır?
@@ -389,7 +397,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
           >
 
             {/* Sol — 01 ve 02 */}
-            <div className="flex flex-col justify-start pt-35 gap-10 pr-7">
+            <div className="flex flex-col justify-start pt-20 gap-10 pr-7">
               {STEPS.slice(0, 2).map((step) => (
                 <div key={step.num}>
                   <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
@@ -403,7 +411,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <div />
 
             {/* Sağ — 03 ve 04 */}
-            <div className="flex flex-col justify-start pt-35 gap-10 pl-15">
+            <div className="flex flex-col justify-start pt-20 gap-10 pl-15">
               {STEPS.slice(2, 4).map((step) => (
                 <div key={step.num}>
                   <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
@@ -417,10 +425,19 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         </div>
       </section>
 
+      {/* ── PLANE DIVIDER ── */}
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+        </div>
+      </div>
+
       {/* ══════════════════════════════════════════
           BÖLÜM 3.5 — POPÜLER DESTİNASYONLAR
          ══════════════════════════════════════════ */}
-      <section className="bg-slate-200 dark:bg-slate-900 py-16 lg:py-20">
+      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <motion.div
@@ -491,10 +508,19 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         </div>
       </section>
 
+      {/* ── PLANE DIVIDER ── */}
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+        </div>
+      </div>
+
       {/* ══════════════════════════════════════════
           BÖLÜM 4 — FİYATLANDIRMA
          ══════════════════════════════════════════ */}
-      <section className="bg-slate-200 dark:bg-slate-900 pt-0 pb-16 lg:pb-24 mt-3">
+      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <motion.div
@@ -621,10 +647,19 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         </div>
       </section>
 
+      {/* ── PLANE DIVIDER ── */}
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+        </div>
+      </div>
+
       {/* ══════════════════════════════════════════
           CTA TEKRARI
          ══════════════════════════════════════════ */}
-      <section className="bg-slate-200 dark:bg-slate-900 py-24 lg:py-32">
+      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}

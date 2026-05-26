@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -129,7 +129,7 @@ const UserProfile: React.FC = () => {
   /* ── Sayfa sınırları dışındaki durumlar ── */
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-200 dark:bg-slate-900">
+      <div className="flex items-center justify-center min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
         <Loader2 size={28} className="animate-spin text-slate-400" />
       </div>
     );
@@ -137,7 +137,7 @@ const UserProfile: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-200 dark:bg-slate-900 gap-3">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f0e8] dark:bg-slate-900 gap-3">
         <p className="text-slate-500">Kullanıcı bulunamadı.</p>
         <button onClick={() => navigate(-1)} className="text-sm font-semibold text-[#187fe7]">← Geri dön</button>
       </div>
@@ -150,7 +150,7 @@ const UserProfile: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
 
       {/* ── Üst Bar ── */}
       <div className="sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800">

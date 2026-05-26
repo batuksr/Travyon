@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
@@ -83,7 +83,7 @@ Bu haklarını kullanmak için iletisim@travyon.app adresine e-posta gönderebil
 
 const Gizlilik: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
 
       {/* Header */}
       <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">

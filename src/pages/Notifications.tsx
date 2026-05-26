@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Bell, X, CheckCheck, AlertTriangle, Info } from 'lucide-react';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
@@ -145,7 +145,7 @@ const Notifications: React.FC = () => {
   const warningCount = notifications.filter(n => n.level === 'warning').length;
 
   return (
-    <div className="min-h-screen bg-slate-200 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
       <div className="max-w-[1150px] mx-auto px-10 py-10">
 
         {/* Başlık */}
