@@ -8,8 +8,97 @@ import { toggleWithCircle } from '../utils/themeTransition';
 import GlobeAnimation from '../components/GlobeAnimation';
 import TravyonLogo from '../components/TravyonLogo';
 
+/* ── Destinasyon kartı — hover'da video oynar ── */
+interface DestData {
+  city: string; planCount: number; img: string; video: string;
+}
+
+const DestinationCard: React.FC<{
+  dest: DestData; index: number; onNavigate: () => void;
+}> = ({ dest, index, onNavigate }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hovered, setHovered] = useState(false);
+
+  const handleEnter = () => {
+    setHovered(true);
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    // Video hazırsa hemen oyna, değilse loadeddata olayını bekle
+    if (v.readyState >= 3) {
+      v.play().catch(() => {});
+    } else {
+      const onReady = () => { v.play().catch(() => {}); v.removeEventListener('loadeddata', onReady); };
+      v.addEventListener('loadeddata', onReady);
+      v.load();
+    }
+  };
+
+  const handleLeave = () => {
+    setHovered(false);
+    const v = videoRef.current;
+    if (!v) return;
+    v.pause();
+    v.currentTime = 0;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.06, duration: 0.35 }}
+      onClick={onNavigate}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+      style={{ aspectRatio: '5/3' }}
+    >
+      {/* Statik fotoğraf */}
+      <img
+        src={dest.img}
+        alt={dest.city}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+          hovered ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+
+      {/* Hover videosu */}
+      <video
+        ref={videoRef}
+        src={dest.video}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+          hovered ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ transform: 'scale(1.35)', objectPosition: 'center center' }}
+      />
+
+      {/* Alt gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+
+      {/* İçerik */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-2">
+        <h3 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow">
+          {dest.city}
+        </h3>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onNavigate(); }}
+          className="shrink-0 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-[11px] sm:text-xs px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-200 shadow-lg whitespace-nowrap group-hover:scale-105 active:scale-95"
+        >
+          Hemen Planla
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 const HERO_VIDEOS = [
-  '/videos/334716.mp4',
+  '/videos/start.mp4',
   'https://videos.pexels.com/video-files/1437396/1437396-uhd_2560_1440_24fps.mp4',
   'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4',
   'https://videos.pexels.com/video-files/3044534/3044534-hd_1920_1080_25fps.mp4',
@@ -454,54 +543,45 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { city: 'Roma',      country: 'İtalya',    flag: '🇮🇹', count: '2.4k', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop' },
-              { city: 'Paris',     country: 'Fransa',    flag: '🇫🇷', count: '3.1k', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop' },
-              { city: 'Tokyo',     country: 'Japonya',   flag: '🇯🇵', count: '1.8k', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop' },
-              { city: 'İstanbul',  country: 'Türkiye',   flag: '🇹🇷', count: '4.2k', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=600&auto=format&fit=crop' },
-              { city: 'Barcelona', country: 'İspanya',   flag: '🇪🇸', count: '1.5k', img: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=600&auto=format&fit=crop' },
-              { city: 'New York',  country: 'ABD',       flag: '🇺🇸', count: '2.0k', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=600&auto=format&fit=crop' },
-              { city: 'Bangkok',   country: 'Tayland',   flag: '🇹🇭', count: '1.2k', img: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?q=80&w=600&auto=format&fit=crop' },
-              { city: 'Dubai',     country: 'BAE',       flag: '🇦🇪', count: '1.7k', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=600&auto=format&fit=crop' },
-            ].map((dest, i) => (
-              <motion.button
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {([
+              {
+                city: 'Roma',      planCount: 2400,
+                img:   'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/roma.mp4',
+              },
+              {
+                city: 'Paris',     planCount: 3100,
+                img:   'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/paris.mp4',
+              },
+              {
+                city: 'Tokyo',     planCount: 1800,
+                img:   'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/tokyo.mp4',
+              },
+              {
+                city: 'İstanbul',  planCount: 4200,
+                img:   'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/istanbul.mp4',
+              },
+              {
+                city: 'Barcelona', planCount: 1500,
+                img:   'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/barselona.mp4',
+              },
+              {
+                city: 'New York',  planCount: 2000,
+                img:   'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800&auto=format&fit=crop',
+                video: '/videos/newyork.mp4',
+              },
+            ] as DestData[]).map((dest, i) => (
+              <DestinationCard
                 key={dest.city}
-                type="button"
-                onClick={() => navigate('/register')}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.35 }}
-                className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[#f8981d]/50 dark:hover:border-[#f8981d]/40 hover:shadow-xl hover:shadow-slate-300/40 dark:hover:shadow-black/40 rounded-2xl overflow-hidden text-left transition-all duration-300 hover:-translate-y-1"
-              >
-                {/* Fotoğraf */}
-                <div className="relative h-34 overflow-hidden">
-                  <img
-                    src={dest.img}
-                    alt={dest.city}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  {/* Plan sayısı — fotoğraf üstünde */}
-                  <span className="absolute top-2 right-2 text-[10px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    {dest.count} plan
-                  </span>
-                  {/* Bayrak */}
-                  <span className="absolute bottom-2 left-2.5 text-xl leading-none drop-shadow">
-                    {dest.flag}
-                  </span>
-                </div>
-
-                {/* Alt bilgi */}
-                <div className="px-3.5 py-3">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{dest.city}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{dest.country}</p>
-                  <p className="text-[10px] text-[#f8981d] font-semibold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Plan oluştur →
-                  </p>
-                </div>
-              </motion.button>
+                dest={dest}
+                index={i}
+                onNavigate={() => navigate('/register')}
+              />
             ))}
           </div>
 
