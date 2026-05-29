@@ -6,8 +6,7 @@ import {
   ArrowRight, ArrowLeft, Check, Sparkles,
   Loader2, Plus, Minus, Plane, Search,
   Backpack, Users, PartyPopper, Briefcase, Coffee, Map,
-  Camera, TrendingUp, Building2, Footprints, Wine,
-  DollarSign, Bus, Sunrise, CloudRain, ChevronDown, X,
+  Footprints, Sunrise,
   Sofa, Mountain, Compass,
 } from 'lucide-react';
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
@@ -185,7 +184,6 @@ const Onboarding: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [hints, setHints] = useState<FieldHints>(EMPTY_HINTS);
   const [allCompleted, setAllCompleted] = useState(false);
-  const [dislikesOpen, setDislikesOpen] = useState(false);
   const [purposesWarning, setPurposesWarning] = useState(false);
 
   /* Destination autocomplete */
@@ -264,7 +262,7 @@ const Onboarding: React.FC = () => {
           autoPlay loop muted playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/videos/video2.mp4" type="video/mp4" />
+          <source src="/videos/onboarding.mp4" type="video/mp4" />
         </video>
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-black/65" />
@@ -443,10 +441,10 @@ const Onboarding: React.FC = () => {
                           onChange={(e) => handleDestinationChange(e.target.value)}
                           onFocus={() => { if (data.destination.trim().length > 0) setShowSuggestions(true); }}
                           placeholder="Örn. Roma, İtalya"
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all text-slate-800 placeholder:text-slate-400
+                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all text-slate-800 dark:text-white placeholder:text-slate-400
                             ${hints.destination
-                              ? 'border-rose-200 bg-rose-50/20'
-                              : 'border-slate-200 bg-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                              ? 'border-rose-200 bg-rose-50/20 dark:bg-rose-900/20'
+                              : 'border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           autoComplete="off"
                         />
                         {showSuggestions && citySuggestions.length > 0 && (
@@ -470,53 +468,53 @@ const Onboarding: React.FC = () => {
                     </div>
 
                     {/* Tarihler + Saatler */}
-                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-3">
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Seyahat Tarihleri</p>
+                    <div className="bg-slate-50/80 dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-white/10 space-y-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">Seyahat Tarihleri</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
+                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             <Calendar size={11} className="text-[#f8981d]" /> Gidiş
                           </label>
                           <input
                             type="date" min={today}
                             value={data.startDate}
                             onChange={(e) => { updateData({ startDate: e.target.value }); setHints((h) => ({ ...h, startDate: false })); }}
-                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white text-slate-800
-                              ${hints.startDate ? 'border-rose-200' : 'border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white dark:placeholder:text-slate-400
+                              ${hints.startDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           />
                           <FieldError msg={hints.startDate ? 'Geçerli bir gidiş tarihi seçin.' : undefined} />
                         </div>
                         <div>
-                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1.5">
+                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             <Calendar size={11} className="text-[#f8981d]" /> Dönüş
                           </label>
                           <input
                             type="date" min={data.startDate || today}
                             value={data.endDate}
                             onChange={(e) => { updateData({ endDate: e.target.value }); setHints((h) => ({ ...h, endDate: false })); }}
-                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white text-slate-800
-                              ${hints.endDate ? 'border-rose-200' : 'border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white
+                              ${hints.endDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           />
                           <FieldError msg={hints.endDate ? 'Geçerli bir dönüş tarihi seçin.' : undefined} />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Varış Saati</label>
+                          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block">Varış Saati</label>
                           <input
                             type="time"
                             value={data.arrivalTime}
                             onChange={(e) => updateData({ arrivalTime: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none text-slate-800 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 text-sm outline-none text-slate-800 dark:text-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Ayrılış Saati</label>
+                          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block">Ayrılış Saati</label>
                           <input
                             type="time"
                             value={data.departureTime}
                             onChange={(e) => updateData({ departureTime: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none text-slate-800 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 text-sm outline-none text-slate-800 dark:text-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
                           />
                         </div>
                       </div>
@@ -525,17 +523,17 @@ const Onboarding: React.FC = () => {
                     {/* Kişi + Bütçe */}
                     <div className="grid grid-cols-2 gap-4 items-start">
                       <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Kişi Sayısı</p>
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Kişi Sayısı</p>
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={() => updateData({ peopleCount: Math.max(1, data.peopleCount - 1) })}
-                            className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-slate-300 hover:text-slate-700 transition-all"
+                            className="w-9 h-9 rounded-xl border border-slate-200 dark:border-white/20 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:border-slate-300 hover:text-slate-700 dark:hover:border-white/40 transition-all"
                           >
                             <Minus size={14} />
                           </button>
                           <div className="flex-1 text-center">
-                            <span className="text-2xl font-black text-slate-900 tabular-nums">{data.peopleCount}</span>
+                            <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">{data.peopleCount}</span>
                             <span className="text-xs text-slate-400 ml-1">kişi</span>
                           </div>
                           <button
@@ -549,9 +547,9 @@ const Onboarding: React.FC = () => {
                       </div>
 
                       <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Toplam Bütçe</p>
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Toplam Bütçe</p>
                         <div className={`flex rounded-xl overflow-hidden border transition-all focus-within:ring-2 focus-within:ring-[#f8981d]/8
-                          ${hints.budget ? 'border-rose-200' : 'border-slate-200 focus-within:border-[#f8981d]'}`}>
+                          ${hints.budget ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus-within:border-[#f8981d]'}`}>
                           <input
                             type="number" min="100"
                             placeholder="15000"
@@ -562,7 +560,7 @@ const Onboarding: React.FC = () => {
                               const n = parseInt(v, 10);
                               if (!isNaN(n)) { updateData({ budget: n }); setHints((h) => ({ ...h, budget: false })); }
                             }}
-                            className="flex-1 px-3 py-2.5 border-0 outline-none text-sm text-slate-800 bg-white placeholder:text-slate-400"
+                            className="flex-1 px-3 py-2.5 border-0 outline-none text-sm text-slate-800 dark:text-white bg-white dark:bg-white/10 placeholder:text-slate-400"
                           />
                           <select
                             value={data.currencyCode}
@@ -571,7 +569,7 @@ const Onboarding: React.FC = () => {
                               const symbols: Record<string, string> = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' };
                               updateData({ currencyCode: code, currencySymbol: symbols[code] || '₺' });
                             }}
-                            className="px-2 py-2.5 border-l border-slate-200 bg-slate-50 text-slate-600 text-xs outline-none"
+                            className="px-2 py-2.5 border-l border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-xs outline-none"
                           >
                             <option value="TRY">TRY</option>
                             <option value="USD">USD</option>
@@ -761,76 +759,6 @@ const Onboarding: React.FC = () => {
                       </div>
                     </button>
 
-                    {/* Uzak Durmak İstediklerin */}
-                    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setDislikesOpen((o) => !o)}
-                        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
-                            <X size={15} className="text-rose-400" />
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-semibold text-slate-700">
-                              Uzak durmak istediklerin
-                              <span className="ml-1.5 text-[10px] font-medium text-slate-400">(İsteğe bağlı)</span>
-                            </p>
-                            {!dislikesOpen && data.dislikes.length > 0 && (
-                              <p className="text-[11px] text-[#f8981d] mt-0.5">{data.dislikes.length} seçim yapıldı</p>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronDown
-                          size={16}
-                          className={`text-slate-400 shrink-0 transition-transform duration-300 ${dislikesOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      <div
-                        className="transition-all duration-300 ease-in-out overflow-hidden"
-                        style={{ maxHeight: dislikesOpen ? '480px' : '0px', opacity: dislikesOpen ? 1 : 0 }}
-                      >
-                        <div className="px-4 pb-4 pt-1 border-t border-slate-100">
-                          <p className="text-[11px] text-slate-400 mb-3">Seçtiklerin AI planını şekillendirecek.</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {([
-                              { val: 'kalabalik_yerler',   Icon: Users,       label: 'Kalabalık yerler' },
-                              { val: 'turistik_noktalar',  Icon: Camera,      label: 'Çok turistik' },
-                              { val: 'yuksek_yerler',      Icon: TrendingUp,  label: 'Yüksek yerler' },
-                              { val: 'muzeler',            Icon: Building2,   label: 'Müzeler' },
-                              { val: 'uzun_yuruyusler',    Icon: Footprints,  label: 'Uzun yürüyüşler' },
-                              { val: 'gece_hayati',        Icon: Wine,        label: 'Gece hayatı' },
-                              { val: 'pahali_restoranlar', Icon: DollarSign,  label: 'Pahalı restoranlar' },
-                              { val: 'toplu_turlar',       Icon: Bus,         label: 'Toplu turlar' },
-                              { val: 'erken_kalkma',       Icon: Sunrise,     label: 'Erken kalkma' },
-                              { val: 'yagmurda_gezme',     Icon: CloudRain,   label: 'Yağmurda gezme' },
-                            ] as const).map(({ val, Icon, label }) => {
-                              const selected = data.dislikes.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  type="button"
-                                  onClick={() => {
-                                    const next = selected
-                                      ? data.dislikes.filter((d) => d !== val)
-                                      : [...data.dislikes, val];
-                                    updateData({ dislikes: next });
-                                  }}
-                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-left transition-all duration-150
-                                    ${selected
-                                      ? 'border-rose-300 bg-rose-50'
-                                      : 'border-slate-200 bg-white hover:border-slate-300'}`}
-                                >
-                                  <Icon size={13} className={`shrink-0 ${selected ? 'text-rose-500' : 'text-slate-400'}`} />
-                                  <span className={`text-xs font-medium leading-tight ${selected ? 'text-rose-600' : 'text-slate-600'}`}>{label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
                   </div>
                 )}

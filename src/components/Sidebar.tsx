@@ -94,31 +94,6 @@ const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      {/* PRO UPGRADE KARTI — Genişlemişken */}
-      {expanded && (
-        <div className="px-3 pb-3">
-          <div className="relative bg-gradient-to-br from-[#187fe7] to-[#0a4d99] rounded-xl p-4 overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-[#f8981d]/20 rounded-full blur-2xl" />
-            <div className="relative">
-              <span className="inline-block px-2 py-0.5 bg-[#f8981d] text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">
-                Pro
-              </span>
-              <p className="text-white font-bold text-sm leading-tight mb-1">
-                Sınırsız Plan
-              </p>
-              <p className="text-blue-100 text-xs leading-relaxed mb-3">
-                Reklamsız deneyim ve gelişmiş AI özellikleri
-              </p>
-              <button
-                type="button"
-                className="w-full py-1.5 bg-white text-[#187fe7] font-bold text-xs rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Yükselt
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* KULLANICI + ALT BUTONLAR */}
       <div className="border-t border-slate-100 px-2 py-3 space-y-1 shrink-0">

@@ -258,7 +258,10 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
     setIsRegenerating(true);
     try {
       const newDay = await regenerateDayWithVibe(
-        day, plan.destination, newVibe,
+        day,
+        plan.dailyPlans,          // tüm günler → tekrar önleme
+        plan.destination,
+        newVibe,
         tripData.startDate, tripData.arrivalTime,
         tripData.endDate,   tripData.departureTime,
         (updatedDay) => updateDayPlan(day.dayNumber, updatedDay)

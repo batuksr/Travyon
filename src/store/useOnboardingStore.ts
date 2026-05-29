@@ -12,13 +12,12 @@ export interface OnboardingData {
   currencySymbol: string;
   peopleCount: number;
 
-  // Adım 2: Seyahat Türü, Tatil Amacı (çoklu), Tempo ve Uzak Durulacaklar
+  // Adım 2: Seyahat Türü, Tatil Amacı (çoklu), Tempo
   travelType: string;
   purposes: string[];       // yeni — çoklu seçim, sıra önceliği belirler
   tripPurpose: string;      // @deprecated — backward compat için korunuyor
   pace: string;
   earlyBird: boolean;
-  dislikes: string[];
 
   // Adım 3: Yeme-İçme
   dietaryRestrictions: string[];
@@ -60,8 +59,7 @@ const defaultData: OnboardingData = {
   tripPurpose: '',
   pace: 'normal',
   earlyBird: false,
-  dislikes: [],
-  
+
   dietaryRestrictions: [],
   foodPhilosophy: '',
   mealBudget: '',

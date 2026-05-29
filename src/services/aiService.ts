@@ -7,17 +7,21 @@ const genAI = new GoogleGenerativeAI(apiKey || "");
 
 // --- YARDIMCI FONKSİYONLAR (HELPERS) ---
 
+/* Production'da console çıktısı yok — sadece DEV modunda logla */
+const log  = import.meta.env.DEV ? (...a: unknown[]) => console.log(...a)  : () => {};
+const warn = import.meta.env.DEV ? (...a: unknown[]) => console.warn(...a) : () => {};
+
 const getFriendlyError = (msg: string): string => {
   const m = msg.toLowerCase();
-  if (m.includes('429')) return 'Sunucu şu an yoğun, 1 dakika sonra tekrar deneyin.';
-  if (m.includes('503') || m.includes('overloaded')) {
-    return 'Yapay zeka sunucusu meşgul, lütfen tekrar deneyin.';
-  }
-  if (m.includes('api') && m.includes('key')) return 'Servis yapılandırma hatası.';
-  if (m.includes('json parse')) {
-    return 'Plan verisi işlenemedi, lütfen tekrar deneyin.';
-  }
-  return 'Plan oluşturulamadı, lütfen tekrar deneyin.';
+  if (m.includes('429'))
+    return 'İstek limiti aşıldı — 1 dakika bekleyip tekrar deneyin.';
+  if (m.includes('503') || m.includes('overloaded'))
+    return 'Yapay zeka sunucusu şu an meşgul — birkaç saniye sonra tekrar deneyin.';
+  if (m.includes('api') && m.includes('key'))
+    return 'Servis yapılandırma hatası — lütfen yöneticinizle iletişime geçin.';
+  if (m.includes('json parse') || m.includes('geçersiz plan'))
+    return 'Plan verisi işlenemedi — tekrar deneyin, farklı bir sonuç gelebilir.';
+  return 'Plan oluşturulamadı — lütfen tekrar deneyin.';
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
@@ -27,27 +31,34 @@ const executeWithFallback = async (prompt: string): Promise<string> => {
   for (const modelName of models) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        console.log(`[AI] ${modelName} deneniyor (Deneme ${attempt + 1}/3)...`);
+        log(`[AI] ${modelName} deneniyor (Deneme ${attempt + 1}/3)...`);
         const model = genAI.getGenerativeModel({
           model: modelName,
           generationConfig: { responseMimeType: "application/json" }
         });
         const result = await model.generateContent(prompt);
-        console.log(`[AI] ✅ ${modelName} başarılı!`);
+        log(`[AI] ✅ ${modelName} başarılı!`);
         return result.response.text();
       } catch (err: unknown) {
         const error = err as Error;
         const msg = error.message.toLowerCase();
-        console.warn(`[AI] ❌ ${modelName} (Deneme ${attempt + 1}) başarısız: ${error.message}`);
+        warn(`[AI] ❌ ${modelName} (Deneme ${attempt + 1}) başarısız: ${error.message}`);
         lastError = error;
 
         if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('invalid_api_key') || msg.includes('json parse')) {
           throw error;
         }
 
-        if (msg.includes('503') || msg.includes('429') || msg.includes('overloaded')) {
+        // 503 = sunucu meşgul → aynı modeli bekleterek tekrar deneme, direkt sonraki modele geç
+        if (msg.includes('503') || msg.includes('overloaded')) {
+          log(`[AI] 503/overloaded — "${modelName}" atlanıyor, alternatif modele geçiliyor`);
+          break;
+        }
+
+        // 429 = rate limit → bekle ve aynı modeli tekrar dene
+        if (msg.includes('429')) {
           const waitMs = (attempt + 1) * 4000;
-          console.log(`[AI] ⏳ ${waitMs / 1000}s bekleniyor...`);
+          log(`[AI] ⏳ Rate limit — ${waitMs / 1000}s bekleniyor...`);
           await new Promise(resolve => setTimeout(resolve, waitMs));
         } else {
           break;
@@ -95,7 +106,7 @@ const extractAndParseJSON = <T>(rawText: string): T => {
     }
     return JSON.parse(extractedJson) as T;
   } catch (e) {
-    console.error("JSON parse hatası. Ham metin:", rawText);
+    warn("JSON parse hatası. Ham metin:", rawText);
     throw new Error("Yapay zeka geçerli bir veri formatı döndüremedi. (JSON Parse Error)");
   }
 };
@@ -103,59 +114,154 @@ const extractAndParseJSON = <T>(rawText: string): T => {
 // TSP ve Zaman (Period) Senkronizasyonu
 const PERIOD_ORDER = ['Sabah', 'Öğle', 'Öğleden Sonra', 'Akşam', 'Gece'];
 
+/** Varış saatine göre günün başlayacağı period index'i döner */
 const getStartPeriodIndex = (
   dayDate: string,
   arrivalDate: string,
   arrivalTime: string,
-  _departureDate: string,
-  _departureTime: string
 ): number => {
   if (dayDate === arrivalDate && arrivalTime) {
     const hour = parseInt(arrivalTime.split(':')[0]);
-    if (hour < 9) return 0;
-    if (hour < 12) return 1;
-    if (hour < 17) return 2;
-    if (hour < 21) return 3;
-    return 4;
+    if (hour < 9)  return 0; // Sabah
+    if (hour < 12) return 1; // Öğle
+    if (hour < 17) return 2; // Öğleden Sonra
+    if (hour < 21) return 3; // Akşam
+    return 4;                 // Gece
   }
   return 0;
 };
 
-const reassignPeriods = (
+/**
+ * Dönüş saatine göre günün en geç period index'ini döner.
+ * -1 → ayrılış 08:00'den önce, bu gün hiç aktivite olmamalı.
+ */
+/**
+ * Dönüş saatine göre günün en geç period index'ini döner.
+ * -1 → ayrılış 08:00'den önce, bu gün hiç aktivite olmamalı.
+ * Dönüş günü kullanıcının boşa gitmemesi için daha geniş pencere:
+ *   < 08 → yok | < 12 → Sabah | < 16 → Öğle | < 19 → Öğleden Sonra | ≥ 19 → Akşam
+ */
+const getMaxPeriodIndex = (
+  dayDate: string,
+  departureDate: string,
+  departureTime: string,
+): number => {
+  if (dayDate === departureDate && departureTime) {
+    const hour = parseInt(departureTime.split(':')[0]);
+    if (hour < 8)  return -1; // çok erken → aktivite yok
+    if (hour < 12) return 0;  // max "Sabah"
+    if (hour < 16) return 1;  // max "Öğle"
+    if (hour < 19) return 2;  // max "Öğleden Sonra"
+    return 3;                 // max "Akşam" (gece uçuşu)
+  }
+  return PERIOD_ORDER.length - 1;
+};
+
+/* ── Yemek sıralama: TSP sonrası yemekleri doğru konuma koy ───────────
+   Sabah / Öğle / Öğleden Sonra  → yemek/kafe başa
+   Akşam / Gece                  → yemek/restoran sona
+──────────────────────────────────────────────────────────────────── */
+const MEAL_KEYWORDS = [
+  // Türkçe
+  'kafe', 'kahvaltı', 'restoran', 'fırın', 'pastane', 'lokanta',
+  'börek', 'kebap', 'pideci', 'çay bahçesi',
+  // Fransızca / İtalyanca / İspanyolca
+  'café', 'boulangerie', 'patisserie', 'bistro', 'brasserie',
+  'trattoria', 'osteria', 'ristorante', 'pizzeria', 'crêperie', 'taverna',
+  // İngilizce
+  'cafe', 'restaurant', 'bakery', 'breakfast', 'brunch', 'diner', 'bar & kitchen',
+];
+
+const isMealActivity = (act: DailyActivity): boolean => {
+  const text = `${act.placeName} ${act.description}`.toLowerCase();
+  return MEAL_KEYWORDS.some(kw => text.includes(kw));
+};
+
+/**
+ * Period içinde yemek aktivitelerini kullanıcı alışkanlığına göre sıralar:
+ *  • Sabah / Öğle / Öğleden Sonra → önce yemek, sonra gezinti
+ *  • Akşam / Gece                 → önce gezinti, sonra yemek
+ */
+const sortMealsInPeriod = (acts: DailyActivity[], period: string): DailyActivity[] => {
+  if (acts.length <= 1) return acts;
+  const periodIdx    = PERIOD_ORDER.indexOf(period);
+  const isEvening    = periodIdx >= 3; // Akşam veya Gece
+
+  const meals  = acts.filter(a =>  isMealActivity(a));
+  const others = acts.filter(a => !isMealActivity(a));
+  if (meals.length === 0) return acts;
+
+  return isEvening
+    ? [...others, ...meals]   // gezinti → yemek
+    : [...meals,  ...others]; // kahvaltı/öğle → gezinti
+};
+
+/**
+ * Aktiviteleri period grupları içinde TSP ile optimize eder.
+ * Sorun #1 + #2 çözümü:
+ *  • Dönüş günü artık doğru şekilde kırpılıyor.
+ *  • TSP tüm listeyi değil, her period grubunu kendi içinde optimize ediyor;
+ *    böylece AI'ın period ataması ile coğrafi sıralama çelişmiyor.
+ *  • TSP sonrası yemek aktiviteleri her period içinde doğru konuma alınır.
+ */
+const optimizeActivitiesForDay = (
   activities: DailyActivity[],
   dayDate: string,
   arrivalDate: string,
   arrivalTime: string,
   departureDate: string,
-  departureTime: string
+  departureTime: string,
 ): DailyActivity[] => {
-  const startIndex = getStartPeriodIndex(
-    dayDate,
-    arrivalDate,
-    arrivalTime,
-    departureDate,
-    departureTime
-  );
-  return activities.map((act, i) => ({
-    ...act,
-    period: PERIOD_ORDER[Math.min(startIndex + i, PERIOD_ORDER.length - 1)],
-  }));
+  const startIdx = getStartPeriodIndex(dayDate, arrivalDate, arrivalTime);
+  const maxIdx   = getMaxPeriodIndex(dayDate, departureDate, departureTime);
+
+  if (maxIdx < 0) return []; // dönüş 08:00'den önce → aktivite yok
+
+  // Period gruplarını oluştur
+  const groups = new Map<string, DailyActivity[]>();
+  for (const p of PERIOD_ORDER) groups.set(p, []);
+
+  const fallbackPeriod = PERIOD_ORDER[startIdx];
+  for (const act of activities) {
+    const pIdx = PERIOD_ORDER.indexOf(act.period);
+    if (pIdx >= startIdx && pIdx <= maxIdx) {
+      groups.get(act.period)!.push(act);
+    } else if (pIdx < startIdx) {
+      // Varıştan önce atanmış → ilk geçerli periode taşı (max 2, geri kalanı düşür)
+      const fallbackGroup = groups.get(fallbackPeriod)!;
+      if (fallbackGroup.length < 2) {
+        fallbackGroup.push(act);
+      } else {
+        warn(`[Optimize] Aktivite düşürüldü (varış öncesi, limit aşıldı): ${act.placeName}`);
+      }
+    } else {
+      // pIdx > maxIdx → dönüşten sonra, düşür
+      warn(`[Optimize] Aktivite düşürüldü (dönüş sonrası period): ${act.placeName} (${act.period})`);
+    }
+  }
+
+  // Her grup: TSP (coğrafi sıra) → yemek yerleştirme → period damgası
+  const result: DailyActivity[] = [];
+  for (let i = startIdx; i <= maxIdx; i++) {
+    const period = PERIOD_ORDER[i];
+    const groupActs = groups.get(period) ?? [];
+    if (groupActs.length === 0) continue;
+    const tspSorted  = optimizeRouteTSP(groupActs);
+    const mealSorted = sortMealsInPeriod(tspSorted, period); // yemek pozisyonu düzelt
+    for (const act of mealSorted) {
+      result.push({ ...act, period });
+    }
+  }
+
+  return result;
 };
 
-const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
-const NOMINATIM_USER_AGENT = 'TravelPlannerApp/1.0';
-const NOMINATIM_REQUEST_DELAY_MS = 1100;
-
-interface NominatimSearchResult {
-  lat: string;
-  lon: string;
-  display_name?: string;
-  class?: string;
-  type?: string;
-}
-
-const nominatimDelay = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+/* ══════════════════════════════════════════════
+   Google Geocoding API — Nominatim'den çok daha
+   doğru koordinatlar (özellikle turistik mekanlar)
+═══════════════════════════════════════════════ */
+const GOOGLE_GEOCODING_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
 const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
   const R = 6371;
@@ -167,146 +273,89 @@ const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: num
   return R * 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1 - a2));
 };
 
-const MAX_GEOCODE_DEVIATION_KM = 4;
+const MAX_GEOCODE_DEVIATION_KM = 30;
 
-const WATER_CLASSES = new Set(['natural', 'waterway', 'water']);
-const WATER_TYPES = new Set(['water', 'sea', 'bay', 'strait', 'river', 'lake', 'coastline', 'wetland']);
+/* Önbellek — aynı yer için tekrar istek atmayı önler (max 500 entry) */
+const MAX_CACHE_SIZE = 500;
+const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
 
-/* Destination merkez koordinatı önbelleği */
-const destinationCenterCache = new Map<string, { lat: number; lng: number } | null>();
-
-const searchNominatimQuery = async (
-  query: string,
-  viewbox?: { minLat: number; maxLat: number; minLng: number; maxLng: number }
-): Promise<{ lat: number; lng: number } | null> => {
-  try {
-    const url = new URL(NOMINATIM_SEARCH_URL);
-    url.searchParams.set('q', query);
-    url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '5');
-
-    if (viewbox) {
-      /* Nominatim viewbox: left,top,right,bottom (west,north,east,south) */
-      url.searchParams.set(
-        'viewbox',
-        `${viewbox.minLng},${viewbox.maxLat},${viewbox.maxLng},${viewbox.minLat}`
-      );
-      url.searchParams.set('bounded', '1');
-    }
-
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'User-Agent': NOMINATIM_USER_AGENT,
-        Accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.warn(`[Geocoding] Nominatim HTTP ${response.status} — sorgu: "${query}"`);
-      return null;
-    }
-
-    const results = (await response.json()) as NominatimSearchResult[];
-
-    if (!Array.isArray(results) || results.length === 0) {
-      return null;
-    }
-
-    /* Su/deniz sonuçlarını filtrele; yoksa ilk sonucu kullan */
-    const landResult = results.find(
-      (r) => !WATER_CLASSES.has(r.class ?? '') && !WATER_TYPES.has(r.type ?? '')
-    ) ?? results[0];
-
-    const lat = parseFloat(landResult.lat);
-    const lng = parseFloat(landResult.lon);
-
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      console.warn(`[Geocoding] Geçersiz koordinat döndü: "${query}"`);
-      return null;
-    }
-
-    return { lat, lng };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[Geocoding] İstek başarısız ("${query}"): ${message}`);
-    return null;
+const setCacheEntry = (key: string, value: { lat: number; lng: number } | null) => {
+  if (geocodeCache.size >= MAX_CACHE_SIZE) {
+    // En eski girişi sil (insertion-order guarantee)
+    const firstKey = geocodeCache.keys().next().value;
+    if (firstKey !== undefined) geocodeCache.delete(firstKey);
   }
+  geocodeCache.set(key, value);
 };
 
-/** Destination şehrinin merkez koordinatını al (önbellekli) */
-const getDestinationCenter = async (
-  destination: string
-): Promise<{ lat: number; lng: number } | null> => {
-  if (destinationCenterCache.has(destination)) {
-    return destinationCenterCache.get(destination)!;
-  }
-  const center = await searchNominatimQuery(destination);
-  destinationCenterCache.set(destination, center);
-  return center;
-};
-
-/** ±delta derece bounding box oluştur (~0.5° ≈ 50 km) */
-const buildViewbox = (
-  center: { lat: number; lng: number },
-  delta = 0.5
-) => ({
-  minLat: center.lat - delta,
-  maxLat: center.lat + delta,
-  minLng: center.lng - delta,
-  maxLng: center.lng + delta,
-});
-
-const fetchNominatimCoordinates = async (
+const fetchGoogleCoordinates = async (
   placeName: string,
   destination: string
 ): Promise<{ lat: number; lng: number } | null> => {
   const trimmedPlace = placeName.trim();
-  const trimmedDestination = destination.trim();
-
+  const trimmedDest  = destination.trim();
   if (!trimmedPlace) return null;
 
-  /* Şehrin merkezini al → viewbox oluştur */
-  const center = trimmedDestination
-    ? await getDestinationCenter(trimmedDestination)
-    : null;
-  const viewbox = center ? buildViewbox(center) : undefined;
+  // 1. "Mekan Adı, Şehir" şeklinde ara (en doğru sonuç)
+  const query1 = trimmedDest ? `${trimmedPlace}, ${trimmedDest}` : trimmedPlace;
+  const cacheKey1 = query1.toLowerCase();
 
-  /* 1. Şehir adıyla birlikte, viewbox içinde ara */
-  if (trimmedDestination) {
-    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
-    const result = await searchNominatimQuery(
-      `${trimmedPlace}, ${trimmedDestination}`,
-      viewbox
-    );
+  if (geocodeCache.has(cacheKey1)) {
+    return geocodeCache.get(cacheKey1)!;
+  }
+
+  const doRequest = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      const url = new URL(GOOGLE_GEOCODING_URL);
+      url.searchParams.set('address', address);
+      url.searchParams.set('key', GOOGLE_MAPS_API_KEY);
+      url.searchParams.set('language', 'tr');
+
+      const res = await fetch(url.toString());
+      if (!res.ok) {
+        warn(`[Geocoding] Google HTTP ${res.status} — "${address}"`);
+        return null;
+      }
+
+      const data = await res.json() as {
+        status: string;
+        results: Array<{ geometry: { location: { lat: number; lng: number } } }>;
+      };
+
+      if (data.status !== 'OK' || !data.results.length) {
+        warn(`[Geocoding] Google status=${data.status} — "${address}"`);
+        return null;
+      }
+
+      const { lat, lng } = data.results[0].geometry.location;
+      return { lat, lng };
+    } catch (e) {
+      warn(`[Geocoding] Google fetch hatası — "${address}":`, e);
+      return null;
+    }
+  };
+
+  // 1. Şehirle birlikte ara
+  let result = await doRequest(query1);
+  setCacheEntry(cacheKey1, result);
+  if (result) {
+    log(`[Geocoding] ✅ Google "${trimmedPlace}" → ${result.lat}, ${result.lng}`);
+    return result;
+  }
+
+  // 2. Yalnızca mekan adıyla ara (fallback)
+  if (trimmedDest) {
+    const cacheKey2 = trimmedPlace.toLowerCase();
+    if (geocodeCache.has(cacheKey2)) return geocodeCache.get(cacheKey2)!;
+    result = await doRequest(trimmedPlace);
+    setCacheEntry(cacheKey2, result);
     if (result) {
-      console.log(`[Geocoding] ✅ "${trimmedPlace}" (bounded) → ${result.lat}, ${result.lng}`);
+      log(`[Geocoding] ✅ Google fallback "${trimmedPlace}" → ${result.lat}, ${result.lng}`);
       return result;
     }
   }
 
-  /* 2. Sadece viewbox içinde adıyla ara */
-  if (viewbox) {
-    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
-    const result = await searchNominatimQuery(trimmedPlace, viewbox);
-    if (result) {
-      console.log(`[Geocoding] ✅ "${trimmedPlace}" (viewbox-only) → ${result.lat}, ${result.lng}`);
-      return result;
-    }
-  }
-
-  /* 3. Bounded olmadan, şehir adıyla birlikte küresel ara */
-  if (trimmedDestination) {
-    await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
-    const result = await searchNominatimQuery(`${trimmedPlace}, ${trimmedDestination}`);
-    if (result) {
-      console.log(`[Geocoding] ✅ "${trimmedPlace}" (unbounded+dest) → ${result.lat}, ${result.lng}`);
-      return result;
-    }
-  }
-
-  /* 4. Hiçbir şekilde bulunamadı — AI'nın orijinal koordinatını koru */
-  console.warn(`[Geocoding] ⚠️ "${trimmedPlace}" bulunamadı — AI koordinatı korunuyor`);
+  warn(`[Geocoding] ⚠️ "${trimmedPlace}" bulunamadı — AI koordinatı korunuyor`);
   return null;
 };
 
@@ -321,16 +370,10 @@ const validateCoordinates = async (
   }
 
   const validatedActivities: DailyActivity[] = [];
-  let isFirstRequest = true;
 
   for (const activity of activities) {
-    if (!isFirstRequest) {
-      await nominatimDelay(NOMINATIM_REQUEST_DELAY_MS);
-    }
-    isFirstRequest = false;
-
     try {
-      const verifiedCoordinates = await fetchNominatimCoordinates(
+      const verifiedCoordinates = await fetchGoogleCoordinates(
         activity.placeName,
         trimmedDestination
       );
@@ -338,22 +381,24 @@ const validateCoordinates = async (
       if (verifiedCoordinates) {
         const distKm = haversineKm(activity.coordinates, verifiedCoordinates);
         if (distKm <= MAX_GEOCODE_DEVIATION_KM) {
+          // Google sonucu mantıklı mesafede → kullan
           validatedActivities.push({
             ...activity,
             coordinates: { lat: verifiedCoordinates.lat, lng: verifiedCoordinates.lng },
           });
-          console.log(`[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng} (${distKm.toFixed(1)} km)`);
+          log(`[Geocoding] ✅ ${activity.placeName} → ${verifiedCoordinates.lat}, ${verifiedCoordinates.lng} (${distKm.toFixed(1)} km)`);
         } else {
+          // Sapma > 30 km → muhtemelen farklı şehirde aynı isimli yer bulundu, AI'ı koru
           validatedActivities.push(activity);
-          console.warn(`[Geocoding] ⚠️ ${activity.placeName} Nominatim sonucu ${distKm.toFixed(1)} km uzakta — AI koordinatı korunuyor`);
+          warn(`[Geocoding] ⚠️ ${activity.placeName}: ${distKm.toFixed(1)} km sapma > ${MAX_GEOCODE_DEVIATION_KM} km — AI koordinatı korunuyor`);
         }
       } else {
         validatedActivities.push(activity);
-        console.log(`[Geocoding] ⚠️ Orijinal koordinat korundu: ${activity.placeName}`);
+        log(`[Geocoding] ⚠️ Koordinat bulunamadı, AI değeri korundu: ${activity.placeName}`);
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[Geocoding] Aktivite atlandı, orijinal koordinat korundu (${activity.placeName}): ${message}`);
+      warn(`[Geocoding] Aktivite atlandı, AI koordinatı korundu (${activity.placeName}): ${message}`);
       validatedActivities.push(activity);
     }
   }
@@ -361,33 +406,36 @@ const validateCoordinates = async (
   return validatedActivities;
 };
 
+/* ── Race-condition koruması ──────────────────────────────────────────
+   Her yeni validation başlatıldığında version artar.
+   Eski bir job tamamlandığında version farklıysa state'i güncellemez.
+──────────────────────────────────────────────────────────────────── */
+let _validationVersion = 0;
+
 const validateDayCoordinatesInBackground = (
   day: DailyPlan,
   destination: string,
   onDayUpdate: (day: DailyPlan) => void
 ): void => {
+  const myVersion = ++_validationVersion;
+
   void (async () => {
     try {
       const trimmedDestination = destination.trim();
-      if (!trimmedDestination || day.activities.length === 0) {
-        return;
-      }
+      if (!trimmedDestination || day.activities.length === 0) return;
 
-      console.log(`[Geocoding] Gün ${day.dayNumber} için arka plan koordinat doğrulaması başladı...`);
+      log(`[Geocoding] Gün ${day.dayNumber} arka plan koordinat doğrulaması başladı...`);
 
       const activities = await validateCoordinates(day.activities, trimmedDestination);
+      if (_validationVersion !== myVersion) return; // iptal: daha yeni bir job var
+
       const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
+      onDayUpdate({ ...day, activities, totalEstimatedCost: dayCost });
 
-      onDayUpdate({
-        ...day,
-        activities,
-        totalEstimatedCost: dayCost,
-      });
-
-      console.log(`[Geocoding] Gün ${day.dayNumber} arka plan koordinat doğrulaması tamamlandı.`);
+      log(`[Geocoding] Gün ${day.dayNumber} arka plan koordinat doğrulaması tamamlandı.`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[Geocoding] Gün ${day.dayNumber} arka plan doğrulama başarısız, orijinal koordinatlar korunuyor: ${message}`);
+      warn(`[Geocoding] Gün ${day.dayNumber} arka plan doğrulama başarısız: ${message}`);
     }
   })();
 };
@@ -396,54 +444,43 @@ export const validateAllCoordinatesInBackground = (
   plan: TravelPlanResponse,
   onPlanUpdate: (plan: TravelPlanResponse) => void
 ): void => {
+  const myVersion = ++_validationVersion;
+
   void (async () => {
     try {
       const destination = plan.destination.trim() || plan.destination;
+      if (!destination || plan.dailyPlans.length === 0) return;
 
-      if (!destination || plan.dailyPlans.length === 0) {
-        return;
-      }
-
-      console.log('[Geocoding] Arka plan koordinat doğrulaması başladı...');
+      log('[Geocoding] Arka plan koordinat doğrulaması başladı...');
 
       const updatedDailyPlans: DailyPlan[] = [];
 
       for (let dayIndex = 0; dayIndex < plan.dailyPlans.length; dayIndex++) {
+        if (_validationVersion !== myVersion) return; // iptal
+
         const day = plan.dailyPlans[dayIndex];
         const activities = await validateCoordinates(day.activities, destination);
-        const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
 
-        updatedDailyPlans.push({
-          ...day,
-          activities,
-          totalEstimatedCost: dayCost,
-        });
+        if (_validationVersion !== myVersion) return; // iptal
+
+        const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
+        updatedDailyPlans.push({ ...day, activities, totalEstimatedCost: dayCost });
 
         const partialDailyPlans = [
           ...updatedDailyPlans,
           ...plan.dailyPlans.slice(dayIndex + 1),
         ];
-        const partialTotalCost = partialDailyPlans.reduce((sum, d) => sum + d.totalEstimatedCost, 0);
-
         onPlanUpdate({
           ...plan,
           dailyPlans: partialDailyPlans,
-          totalEstimatedCost: partialTotalCost,
+          totalEstimatedCost: partialDailyPlans.reduce((s, d) => s + d.totalEstimatedCost, 0),
         });
       }
 
-      const finalTotalCost = updatedDailyPlans.reduce((sum, d) => sum + d.totalEstimatedCost, 0);
-
-      onPlanUpdate({
-        ...plan,
-        dailyPlans: updatedDailyPlans,
-        totalEstimatedCost: finalTotalCost,
-      });
-
-      console.log('[Geocoding] Arka plan koordinat doğrulaması tamamlandı.');
+      log('[Geocoding] Arka plan koordinat doğrulaması tamamlandı.');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[Geocoding] Arka plan doğrulama başarısız, orijinal plan korunuyor: ${message}`);
+      warn(`[Geocoding] Arka plan doğrulama başarısız: ${message}`);
     }
   })();
 };
@@ -458,7 +495,7 @@ const CITY_MAP: Array<{ keywords: string[]; context: string }> = [
     context: 'Milano için: Duomo, Galleria Vittorio Emanuele, Son Akşam Yemeği, Brera kesinlikle dahil edilmelidir.',
   },
   {
-    keywords: ['roma', 'rome', 'rom '],
+    keywords: ['roma', 'rome'],
     context: 'Roma için: Kolezyum, Trevi Çeşmesi (Aşk Çeşmesi), Pantheon, Vatikan kesinlikle dahil edilmelidir.',
   },
   {
@@ -695,7 +732,7 @@ Her günü tek tip yapma, KARMA günler oluştur. Örnek: sabah kültür, öğle
   // KRİTİK KURAL — konaklama tipinden yemek bütçesi veya aktivite lüksü VARSAYILMAZ.
   // Konaklama tipi yalnızca konaklamanın bağlamı için kullanılır.
   // • Yemek bütçesi → SADECE mealBudgetLabel alanından al
-  // • Aktivite tarzı → SADECE travelType, tripPurpose, dislikes alanlarından al
+  // • Aktivite tarzı → SADECE travelType ve purposes alanlarından al
 
   const transportMap: Record<string, string> = {
     public: 'Kullanıcı TOPLU TAŞIMA kullanacak. Aktiviteleri METRO/OTOBÜS hatlarına yakın seç. Her şehir için transit kart/pass bilgisi ver (örn Roma Pass, Paris Navigo, İstanbul Istanbulkart). Ulaşım önerilerinde spesifik hat ve durak belirt (örn "Termini\'den A metro hattı ile Barberini durağı, 3 dk").',
@@ -746,25 +783,6 @@ ${data.hasReservation && data.accommodationLat && data.accommodationLng ? `
 → Akşam dönüşünde bu noktaya yakın aktiviteler bırak.
 → Aktiviteler arası mesafeleri bu noktayı merkez kabul ederek hesapla.` : ''}
 🚇 Ulaşım: ${transportMap[data.transport] || data.transport}
-${data.dislikes && data.dislikes.length > 0 ? `
-🚫 UZAK DURULMASI GEREKENLER (KESİNLİKLE UYGULA):
-Kullanıcı aşağıdakilerden UZAK DURMAK istiyor — bu öğeleri plana KOYMA veya minimize et:
-${data.dislikes.map((d) => {
-  const dislikeGuide: Record<string, string> = {
-    kalabalik_yerler:   '→ Popüler yerlere sabah erken saatte git, kalabalık önle. Alternatif sakin mekanlar tercih et.',
-    turistik_noktalar:  '→ Aşırı turistik tuzak mekanlardan kaçın. Yerel mahalleleri ve az bilinen yerleri öner.',
-    yuksek_yerler:      '→ Kule, gözlem terası, yüksek tepe aktivitesi ÖNERME. Yükseklik gerektirmeyen alternatifler sun.',
-    muzeler:            '→ Müze yerine sokak sanatı turu, parklar, açık hava pazarları, yerel mahalle gezisi öner.',
-    uzun_yuruyusler:    '→ Günlük yürüyüş max 4-5 km. Mekanlar arasında taksi/toplu taşıma kullan.',
-    gece_hayati:        '→ Bar, kulüp, gece kulübü içermesin. Akşamlar sakin restoran veya manzara noktası tercih et.',
-    pahali_restoranlar: '→ Fine dining ve pahalı restoranlardan kaçın. Orta bütçeli, kaliteli yerel mekanlar öner.',
-    toplu_turlar:       '→ Organize tur grubu aktivitelerinden kaçın. Bağımsız keşif rotaları öner.',
-    erken_kalkma:       '→ Günü 10:00-10:30\'dan ÖNCE başlatma. Sabah aktivitesi ekleme.',
-    yagmurda_gezme:     '→ Hava şartlarına karşı önlem al; kapalı alan alternatifleri de listele.',
-  };
-  return `- ${d} ${dislikeGuide[d] || ''}`;
-}).join('\n')}
-` : ''}
 ═══════════════════════════════════════════════
 
 Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
@@ -779,15 +797,15 @@ Kullanıcı profili ile MEKAN seçimi UYUMLU olmalı:
 - earlyBird=true → İlk aktivite 08:00-09:00 (Sabah)
 - earlyBird=false → İlk aktivite 10:00 sonrası (Öğle)
 - travelType=balayi → Fine dining, özel mekanlar (SADECE mealBudget=high ile birlikte)
-- travelType=hostel → Sosyal aktiviteler (yemek bütçesinden BAĞIMSIZ)
+- accommodation=hostel → Sosyal aktiviteler, free walking tour, ortak buluşma noktaları öner (yemek bütçesinden BAĞIMSIZ)
 
 ❌ ASLA YAPMA:
 - mealBudget=low için Michelin restoran önerme (foodPhilosophy=fine_dining olsa bile)
 - mealBudget=high için ucuz fastfood önerme (foodPhilosophy=street_food ise → gourmet/ödüllü sokak lezzetleri öner)
 - mealBudget=low için pahalı yemek önerip "küçük porsiyon al" demek
 - transport=walk seçildiyse şehrin uzak ucuna mekan koyma
-- tripPurpose=relax için yoğun müze maratonu yapma
-- tripPurpose=nightlife için tüm gün kapanış 21:00 olan yer önerme
+- purposes içinde 'relax' varsa yoğun müze maratonu yapma
+- purposes içinde 'nightlife' varsa tüm gün kapanış 21:00 olan yer önerme
 
 ═══════════════════════════════════════════════
 ZORUNLU İÇERİK KURALLARI
@@ -830,6 +848,13 @@ ${getFlexiblePeriodSchedulingRule(data.startDate, data.arrivalTime, data.endDate
 - Şehrin doğu/batı uçlarını aynı güne KOYMA
 - Lat/Lng GERÇEK koordinatlar (denizde nokta olmaz)
 - Bilmediğin mekanlar için ünlü gerçek mekanlar tercih et
+
+8️⃣ GÜNLÜK YEMEKLERİN SIRASI (activities dizisindeki sıra bu kuralı yansıtmalı):
+- Sabah periyodu: kahvaltı/kafe/fırın mekânı DAİMA DİZİNİN İLK ELEMANı olsun; ardından turistik aktiviteler
+- Öğle veya Öğleden Sonra periyodu: öğle yemeği mekânı DİZİNİN BAŞINA gelsin
+- Akşam periyodu: turistik aktiviteler önce, akşam yemeği/restoran mekânı DAİMA DİZİNİN SON ELEMANı olsun
+- Gece periyodu: bar/restoran mekânı sona gelsin
+Coğrafi rota optimizasyonu bu sıralamadan SONRA düşünülür, yemek sıralaması önceliklidir.
 
 ═══════════════════════════════════════════════
 ÇIKTI YAPISI (EXACT FORMAT)
@@ -904,44 +929,63 @@ export const generateTravelPlan = async (
     const textResult = await executeWithFallback(prompt);
     const parsedData = extractAndParseJSON<TravelPlanResponse>(textResult);
 
-    // Matematiksel Güvenlik Katmanı: Yapay zekanın maliyet verisine güvenme, yeniden hesapla.
-    let finalTotalCost = 0;
+    // --- Temel yapı doğrulaması (AI yanlış format dönerse erken hata ver) ---
+    if (!Array.isArray(parsedData.dailyPlans) || parsedData.dailyPlans.length === 0) {
+      throw new Error('Geçersiz plan formatı: günlük planlar eksik');
+    }
+    for (let i = 0; i < parsedData.dailyPlans.length; i++) {
+      const day = parsedData.dailyPlans[i];
+      if (!Array.isArray(day.activities)) {
+        throw new Error(`Gün ${i + 1} için aktivite listesi geçersiz`);
+      }
+      for (let j = 0; j < day.activities.length; j++) {
+        const act = day.activities[j];
+        if (!act.placeName || typeof act.placeName !== 'string') {
+          throw new Error(`Gün ${i + 1}, aktivite ${j + 1}: placeName eksik`);
+        }
+        if (
+          !act.coordinates ||
+          typeof act.coordinates.lat !== 'number' ||
+          typeof act.coordinates.lng !== 'number'
+        ) {
+          throw new Error(`Gün ${i + 1}, aktivite ${j + 1} (${act.placeName}): koordinat eksik`);
+        }
+        if (typeof act.estimatedCost !== 'number') {
+          // Zorlama yerine sıfırla — AI bazen string döndürebilir
+          act.estimatedCost = Number(act.estimatedCost) || 0;
+        }
+      }
+    }
 
+    // --- Güvenli immutable yapı oluştur ---
+    let finalTotalCost = 0;
     const processedDailyPlans: DailyPlan[] = [];
 
     for (const day of parsedData.dailyPlans) {
-      // 1. Koordinatları optimize et (Mesafe bazlı sırala)
-      let activities = optimizeRouteTSP(day.activities);
-
-      // 2. Sıralanmış verilere periyotları (Sabah, Öğle vb.) mantıklı şekilde tekrar dağıt
-      activities = reassignPeriods(
-        activities,
+      // Period grubu içinde TSP + varış/dönüş günü kırpma
+      const activities = optimizeActivitiesForDay(
+        day.activities,
         day.date,
         data.startDate,
         data.arrivalTime,
         data.endDate,
-        data.departureTime
+        data.departureTime,
       );
-
-      // 3. Günlük maliyeti hesapla (geocoding arka planda yapılır)
       const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
       finalTotalCost += dayCost;
-
-      processedDailyPlans.push({
-        ...day,
-        activities,
-        totalEstimatedCost: dayCost,
-      });
+      processedDailyPlans.push({ ...day, activities, totalEstimatedCost: dayCost });
     }
 
-    parsedData.dailyPlans = processedDailyPlans;
+    // Orijinal parsedData'yı mutate etmiyoruz — yeni nesne döndür
+    const resultPlan: TravelPlanResponse = {
+      ...parsedData,
+      dailyPlans: processedDailyPlans,
+      totalEstimatedCost: finalTotalCost,
+    };
 
-    // Toplam plan maliyetini ez (override)
-    parsedData.totalEstimatedCost = finalTotalCost;
+    validateAllCoordinatesInBackground(resultPlan, onPlanUpdate);
 
-    validateAllCoordinatesInBackground(parsedData, onPlanUpdate);
-
-    return parsedData;
+    return resultPlan;
   } catch (error: unknown) {
     const errMsg = (error as Error).message || 'Bilinmeyen bir hata oluştu.';
     throw new Error(getFriendlyError(errMsg));
@@ -950,6 +994,7 @@ export const generateTravelPlan = async (
 
 export const regenerateDayWithVibe = async (
   dayPlan: DailyPlan,
+  allDayPlans: DailyPlan[],        // ← tüm günler: tekrar önleme için
   destination: string,
   vibeId: string,
   arrivalDate: string,
@@ -961,34 +1006,46 @@ export const regenerateDayWithVibe = async (
   if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
 
   const vibeMap: Record<string, string> = {
-    'rest': '😴 Dinlenme Modu (Yorucu olmayan kafeler, parklar, spa, yavaş tempo)',
-    'indoor': '🌧️ Hava/Kapalı Alan Modu (Müzeler, kapalı çarşılar, sergiler, restoranlar)',
-    'budget': '💰 Tasarruf Modu (Çok ucuz veya ücretsiz aktiviteler, sokak lezzetleri)',
-    'explore': '🎉 Keşif Modu (Macera, trekking, sokakları arşınlama, yoğun tempo)'
+    'rest':    '😴 Dinlenme Modu (Yorucu olmayan kafeler, parklar, spa, yavaş tempo)',
+    'indoor':  '🌧️ Hava/Kapalı Alan Modu (Müzeler, kapalı çarşılar, sergiler, restoranlar)',
+    'budget':  '💰 Tasarruf Modu (Çok ucuz veya ücretsiz aktiviteler, sokak lezzetleri)',
+    'explore': '🎉 Keşif Modu (Macera, trekking, sokakları arşınlama, yoğun tempo)',
   };
 
   const cityMustSee = getCityContext(destination);
 
-  const prompt = `
-Sen uzman bir seyahat danışmanısın. Kullanıcı ${destination} şehrinde.
-Aşağıdaki 1 günlük seyahat planını "${vibeMap[vibeId] || vibeId}" moduna göre tamamen yeniden yaz.
+  /* Diğer günlerde ziyaret edilmiş mekanlar — tekrar önleme listesi */
+  const visitedLines = allDayPlans
+    .filter(d => d.dayNumber !== dayPlan.dayNumber)
+    .flatMap(d =>
+      d.activities.map(a => `  - ${a.placeName} (Gün ${d.dayNumber} – ${a.period})`)
+    );
 
+  const visitedBlock = visitedLines.length > 0
+    ? `\n⛔ ZATEN ZİYARET EDİLMİŞ MEKANLAR — KESİNLİKLE TEKRARLAMA:\n${visitedLines.join('\n')}\nBu mekanlar plandan çıkartıldı; eşdeğer veya daha az bilinen alternatiflerini öner.\n`
+    : '';
+
+  const prompt = `
+Sen uzman bir seyahat danışmanısın. Kullanıcı ${destination} şehrinde ${allDayPlans.length} günlük bir gezi yapıyor.
+${allDayPlans.length > 1 ? `Toplam gezi planı ${allDayPlans.length} günden oluşuyor; bu istek Gün ${dayPlan.dayNumber}'ı yeniden oluşturmak için.` : ''}
+Aşağıdaki 1 günlük seyahat planını "${vibeMap[vibeId] || vibeId}" moduna göre tamamen yeniden yaz.
+${visitedBlock}
 KURAL 1: Mekanları yeni moda uygun olarak tamamen değiştir.
-KURAL 2: MUST-SEE / İKONİK SİMGELER ÖNCELİĞİ (ÇOK KRİTİK): Eğer o şehirde dünyaca ünlü ikonik bir simge varsa ve plana uygunsa mutlaka ekle. Bütçe yetmiyorsa dışarıdan fotoğraf molası olarak ekle (0€). ${cityMustSee}
+KURAL 2: MUST-SEE / İKONİK SİMGELER ÖNCELİĞİ: Eğer o şehirde dünyaca ünlü ikonik bir simge varsa, daha önce ziyaret edilmemişse ve moda uygunsa mutlaka ekle. Bütçe yetmiyorsa dışarıdan fotoğraf molası olarak ekle (0€). ${cityMustSee}
 KURAL 3: GERÇEKÇİ MALİYETLER: Aktivite maliyetlerini mantıklı belirle.
 KURAL 4: OTEL VE KONAKLAMA EKLENEMEZ! Plan içine "Otele dönüş", "Dinlenme", "Otelden çıkış" gibi maddeler ASLA EKLEME.
 KURAL 5: ULAŞIM EKLENEMEZ! Günlük planın (activities) içine ASLA "Taksi Transferi", "Yürüyüş", "Metro" gibi yolculuk adımları ekleme.
 KURAL 6: BAĞLAMSIZ AÇIKLAMALAR ZORUNLU! Aktivite açıklamalarında ASLA bir önceki veya bir sonraki mekana atıfta bulunma.
 KURAL 7: ESNEK ZAMANLAMA VE AKTİVİTE SAYISI (KRİTİK):
 ${getFlexiblePeriodSchedulingRule(arrivalDate, arrivalTime, departureDate, departureTime)}
-- Günde 3 öğün şarttır. Sandviççiler, fırınlar, sokak lezzetleri ekle.
+${dayPlan.date !== departureDate ? '- Normal günlerde 3 öğün şarttır. Sandviççiler, fırınlar, sokak lezzetleri ekle.' : '- Bu dönüş günüdür; dönüş saatine göre kaç aktivite sığıyorsa o kadar ekle, 3 öğün zorunluluğu yok.'}
 KURAL 8: Koordinatlar (Lat/Lng) GERÇEĞİ yansıtmalı.
 KURAL 9: SADECE JSON ÇIKTISI VER. Mevcut JSON formatının BİREBİR aynısını (tek bir DailyPlan objesi) döndür.
 
 ÖRNEK AKTİVİTE ÇIKTISI:
 { "period": "Sabah", "placeName": "Eyfel Kulesi", "description": "Demir leydinin ihtişamı...", "coordinates": { "lat": 48.8584, "lng": 2.2945 }, "estimatedCost": 28 }
 
-MEVCUT PLAN:
+MEVCUT PLAN (bu günün mevcut versiyonu — tamamen değiştirilecek):
 ${JSON.stringify(dayPlan, null, 2)}
 `;
 
@@ -996,14 +1053,13 @@ ${JSON.stringify(dayPlan, null, 2)}
     const textResult = await executeWithFallback(prompt);
     const newDayPlan = extractAndParseJSON<DailyPlan>(textResult);
 
-    let activities = optimizeRouteTSP(newDayPlan.activities);
-    activities = reassignPeriods(
-      activities,
+    const activities = optimizeActivitiesForDay(
+      newDayPlan.activities,
       dayPlan.date,
       arrivalDate,
       arrivalTime,
       departureDate,
-      departureTime
+      departureTime,
     );
     const dayCost = activities.reduce((sum, act) => sum + (act.estimatedCost || 0), 0);
 

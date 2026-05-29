@@ -15,12 +15,14 @@ import {
   BookmarkCheck,
   Sun,
   Moon,
+  Cloud,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
+import WeatherView from '../components/WeatherView';
 
 const Dashboard: React.FC = () => {
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
@@ -37,7 +39,8 @@ const Dashboard: React.FC = () => {
   const { dark, toggle: toggleTheme } = useThemeStore();
 
   const [activeDayIndex, setActiveDayIndex] = useState(0);
-  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideOpen, setGuideOpen]     = useState(false);
+  const [weatherOpen, setWeatherOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
   const [showExitModal, setShowExitModal]   = useState(false);
   const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
@@ -272,6 +275,15 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* ── HAVA DURUMU DRAWER ── */}
+      {weatherOpen && (
+        <WeatherView
+          plan={plan}
+          onboardingData={onboardingData}
+          onClose={() => setWeatherOpen(false)}
+        />
+      )}
+
       {/* ── MOBİL HARİTA MODALİ ── */}
       {showMobileMap && (
         <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col">
@@ -315,7 +327,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Orta: Plan / Rehber sekmeleri */}
+        {/* Orta: Plan / Rehber / Hava sekmeleri */}
         <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg">
           <button
             type="button"
@@ -325,10 +337,18 @@ const Dashboard: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setGuideOpen(true)}
+            onClick={() => { setWeatherOpen(false); setGuideOpen(true); }}
             className="px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-md"
           >
             Rehber
+          </button>
+          <button
+            type="button"
+            onClick={() => { setGuideOpen(false); setWeatherOpen(true); }}
+            className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-md"
+          >
+            <Cloud size={11} />
+            Hava
           </button>
         </div>
 

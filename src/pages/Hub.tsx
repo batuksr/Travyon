@@ -407,6 +407,22 @@ const Hub: React.FC = () => {
   const isFuture  = daysUntil !== null && daysUntil > 0;
   const cityName  = nextTrip?.plan.destination.split(',')[0].trim() ?? '';
 
+  /* ── Countdown progress ── */
+  const tripDuration = nextTrip
+    ? Math.round((new Date(nextTrip.onboardingData.endDate).getTime() - new Date(nextTrip.onboardingData.startDate).getTime()) / 86_400_000)
+    : 0;
+  const _createdMs  = nextTrip?.createdAt ? new Date(nextTrip.createdAt).getTime() : null;
+  const _startMs    = nextTrip ? new Date(nextTrip.onboardingData.startDate).getTime() : null;
+  const totalCountdownDays = (_createdMs && _startMs)
+    ? Math.max(1, Math.round((_startMs - _createdMs) / 86_400_000))
+    : null;
+  const elapsedDays = _createdMs
+    ? Math.max(0, Math.round((Date.now() - _createdMs) / 86_400_000))
+    : 0;
+  const countdownProgressPct = totalCountdownDays
+    ? Math.min(100, Math.max(4, (elapsedDays / totalCountdownDays) * 100))
+    : 50;
+
   /* ── Stats + Pins ── */
   const { stats, destPins } = useMemo(() => {
     const now        = new Date();
@@ -631,9 +647,34 @@ const Hub: React.FC = () => {
                   </div>
                 </div>
                 {isFuture ? (
-                  <div className="mt-auto bg-white/20 backdrop-blur-sm rounded-xl px-5 py-3 inline-flex items-baseline gap-2 self-start">
-                    <span className="text-4xl font-black leading-none">{daysUntil}</span>
-                    <span className="text-white/90 font-semibold text-sm">gün kaldı ✈️</span>
+                  <div className="mt-auto space-y-3">
+                    {/* Gün sayacı */}
+                    <div className="flex items-end gap-3">
+                      <span className="text-5xl font-black leading-none">{daysUntil}</span>
+                      <div className="pb-1 space-y-0.5">
+                        <span className="text-white/90 font-bold text-sm block">gün kaldı ✈️</span>
+                        {tripDuration > 0 && (
+                          <span className="text-white/60 text-xs">{tripDuration} günlük seyahat</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white rounded-full"
+                        style={{ width: `${countdownProgressPct}%`, transition: 'width 0.6s ease' }}
+                      />
+                    </div>
+
+                    {/* Checklist linki */}
+                    <button
+                      onClick={() => navigate('/travel-checklist')}
+                      className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2.5 flex items-center justify-between text-sm font-semibold transition-all duration-200"
+                    >
+                      <span>📋 Seyahat Listesi</span>
+                      <ChevronRight size={15} />
+                    </button>
                   </div>
                 ) : (
                   <div className="mt-auto bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 inline-flex items-center gap-2 self-start">

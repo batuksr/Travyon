@@ -29,7 +29,6 @@ export interface PublicPlan {
   pace?:                string;
   purposes?:            string[];
   earlyBird?:           boolean;
-  dislikes?:            string[];
   dietaryRestrictions?: string[];
   foodPhilosophy?:      string;
   accommodation?:       string;
@@ -65,7 +64,6 @@ export const shareplan = async (
     pace:                onboardingData.pace                ?? '',
     purposes:            onboardingData.purposes            ?? [],
     earlyBird:           onboardingData.earlyBird           ?? false,
-    dislikes:            onboardingData.dislikes            ?? [],
     dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
     foodPhilosophy:      onboardingData.foodPhilosophy      ?? '',
     accommodation:       onboardingData.accommodation       ?? '',
@@ -120,7 +118,6 @@ const toPublicPlan = (id: string, data: Record<string, unknown>): PublicPlan => 
   pace:                (data.pace                as string)   || undefined,
   purposes:            (data.purposes            as string[]) || undefined,
   earlyBird:           data.earlyBird            != null ? (data.earlyBird as boolean) : undefined,
-  dislikes:            (data.dislikes            as string[]) || undefined,
   dietaryRestrictions: (data.dietaryRestrictions as string[]) || undefined,
   foodPhilosophy:      (data.foodPhilosophy      as string)   || undefined,
   accommodation:       (data.accommodation       as string)   || undefined,

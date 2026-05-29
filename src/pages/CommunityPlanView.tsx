@@ -266,19 +266,6 @@ const CommunityPlanView: React.FC = () => {
                   street_food: '🌮 Sokak Yemeği',
                   mixed:       '🎲 Karışık / Sürpriz',
                 };
-                const DISLIKES: Record<string, string> = {
-                  kalabalik_yerler:   'Kalabalık yerler',
-                  turistik_noktalar:  'Çok turistik',
-                  yuksek_yerler:      'Yüksek yerler',
-                  muzeler:            'Müzeler',
-                  uzun_yuruyusler:    'Uzun yürüyüşler',
-                  gece_hayati:        'Gece hayatı',
-                  pahali_restoranlar: 'Pahalı restoranlar',
-                  toplu_turlar:       'Toplu turlar',
-                  erken_kalkma:       'Erken kalkma',
-                  yagmurda_gezme:     'Yağmurda gezme',
-                };
-
                 const rows: { label: string; value: string }[] = [];
 
                 // Süre: gün sayısı (tarihleri değil)
@@ -303,8 +290,6 @@ const CommunityPlanView: React.FC = () => {
                   rows.push({ label: 'Yemek', value: FOOD[meta.foodPhilosophy] ?? meta.foodPhilosophy });
                 if (meta.dietaryRestrictions?.length)
                   rows.push({ label: 'Beslenme', value: meta.dietaryRestrictions.join(', ') });
-                if (meta.dislikes?.length)
-                  rows.push({ label: 'Kaçınılanlar', value: meta.dislikes.map(d => DISLIKES[d] ?? d).join(', ') });
 
                 if (rows.length === 0) return (
                   <div className="text-center py-8">
