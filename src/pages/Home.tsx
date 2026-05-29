@@ -81,16 +81,17 @@ const DestinationCard: React.FC<{
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 
       {/* İçerik */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-2">
-        <h3 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow">
+      <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-5 flex items-end justify-between gap-1.5 sm:gap-2">
+        <h3 className="text-sm sm:text-2xl font-black text-white leading-tight drop-shadow">
           {dest.city}
         </h3>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-          className="shrink-0 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-[11px] sm:text-xs px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-200 shadow-lg whitespace-nowrap group-hover:scale-105 active:scale-95"
+          className="shrink-0 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-[9px] sm:text-xs px-2 py-1 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-200 shadow-lg whitespace-nowrap group-hover:scale-105 active:scale-95"
         >
-          Hemen Planla
+          <span className="sm:hidden">Planla</span>
+          <span className="hidden sm:inline">Hemen Planla</span>
         </button>
       </div>
     </motion.div>
@@ -284,7 +285,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             playsInline
             preload="auto"
             onEnded={i === currentVideoIndex ? handleVideoEnded : undefined}
-            onError={handleVideoError}
+            onError={i === currentVideoIndex ? handleVideoError : undefined}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
             style={{
               opacity: i === currentVideoIndex ? 1 : 0,
@@ -796,9 +797,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             Ücretsiz Plan Oluştur
             <ArrowRight size={18} />
           </button>
-          <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
-            50.000+ gezgin zaten kullanıyor ✈️
-          </p>
+         
         </motion.div>
       </section>
 
@@ -816,7 +815,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <Link to="/sss" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">SSS</Link>
             <Link to="/gizlilik" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Gizlilik</Link>
             <Link to="/kullanim-kosullari" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Kullanım Koşulları</Link>
-            <a href="mailto:iletisim@travyon.app" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">İletişim</a>
+            <Link to="/iletisim" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">İletişim</Link>
           </div>
 
           {/* Copyright */}

@@ -126,7 +126,7 @@ const TravelChecklist: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* Geri */}
         <button

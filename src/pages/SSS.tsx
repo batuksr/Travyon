@@ -84,7 +84,7 @@ const SSS: React.FC = () => {
 
       {/* Header */}
       <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/">
             <TravyonLogo size={36} />
           </Link>
@@ -100,7 +100,7 @@ const SSS: React.FC = () => {
 
       {/* Hero */}
       <div className="bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 py-10">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <p className="text-xs font-semibold text-[#f8981d] uppercase tracking-widest mb-2">Yardım</p>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white">Sıkça Sorulan Sorular</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-lg">
@@ -110,7 +110,7 @@ const SSS: React.FC = () => {
       </div>
 
       {/* İçerik */}
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10">
         {FAQ_ITEMS.map((section) => (
           <div key={section.category}>
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#f8981d] mb-4">
@@ -149,7 +149,7 @@ const SSS: React.FC = () => {
 
       {/* Footer mini */}
       <div className="border-t border-slate-200 dark:border-slate-800 mt-8">
-        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center justify-between text-xs text-slate-400">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
           <span>© 2026 Travyon. Tüm hakları saklıdır.</span>
           <div className="flex gap-4">
             <Link to="/gizlilik" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Gizlilik</Link>

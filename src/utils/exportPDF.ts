@@ -354,7 +354,6 @@ export const exportPlanAsPDF = (
   </div>
 
   <script>
-    // Auto-trigger print dialog after a short delay so fonts/layout settle
     window.addEventListener('load', function () {
       setTimeout(function () { window.print(); }, 400);
     });

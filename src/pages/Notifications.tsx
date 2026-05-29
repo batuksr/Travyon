@@ -153,7 +153,7 @@ const Notifications: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
 
         {/* ── Başlık ── */}
         <div className="flex items-center justify-between mb-8">
@@ -250,7 +250,7 @@ const Notifications: React.FC = () => {
                   {/* Kapat */}
                   <button
                     onClick={() => dismiss(n.id)}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 mt-1 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                    className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 mt-1 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
                     aria-label="Kapat"
                   >
                     <X size={12} />

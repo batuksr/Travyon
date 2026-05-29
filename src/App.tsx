@@ -24,6 +24,7 @@ import TravelChecklist from "./pages/TravelChecklist";
 import CommunityPlanView from "./pages/CommunityPlanView";
 import Gizlilik from "./pages/Gizlilik";
 import KullanimKosullari from "./pages/KullanimKosullari";
+import Iletisim from "./pages/Iletisim";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -103,6 +104,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
           <Route path="/plan/:planId"         element={<ProtectedRoute><CommunityPlanView /></ProtectedRoute>} />
           <Route path="/gizlilik"             element={<Gizlilik />} />
           <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
+          <Route path="/iletisim"             element={<Iletisim />} />
         </Routes>
       </main>
       {showBottomNav && <BottomNav />}

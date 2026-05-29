@@ -17,6 +17,7 @@ import {
   Moon,
   Cloud,
   Download,
+  Wallet,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
@@ -110,6 +111,30 @@ const Dashboard: React.FC = () => {
     () => plan?.dailyPlans[activeDayIndex]?.activities ?? [],
     [plan?.dailyPlans, activeDayIndex]
   );
+
+  /* ── Bütçe takibi hesaplamaları ── */
+  const budgetStats = useMemo(() => {
+    if (!plan) return null;
+    const totalBudget  = onboardingData.budget;
+    const allActs      = plan.dailyPlans.flatMap(d => d.activities);
+    const enteredCount = allActs.filter(a => a.actualCost !== undefined).length;
+    const actualSpent  = allActs
+      .filter(a => a.actualCost !== undefined)
+      .reduce((s, a) => s + (a.actualCost ?? 0), 0);
+    const pct       = totalBudget > 0 ? Math.min(100, (actualSpent / totalBudget) * 100) : 0;
+    const remaining = totalBudget - actualSpent;
+    return { totalBudget, actualSpent, enteredCount, pct, remaining };
+  }, [plan, onboardingData.budget]);
+
+  const dayBudgetStats = useMemo(() => {
+    const acts         = plan?.dailyPlans[activeDayIndex]?.activities ?? [];
+    const enteredCount = acts.filter(a => a.actualCost !== undefined).length;
+    const actualSpent  = acts
+      .filter(a => a.actualCost !== undefined)
+      .reduce((s, a) => s + (a.actualCost ?? 0), 0);
+    const estimated    = acts.reduce((s, a) => s + a.estimatedCost, 0);
+    return { enteredCount, actualSpent, estimated };
+  }, [plan, activeDayIndex]);
 
   useEffect(() => {
     if (!plan) {
@@ -306,7 +331,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* ── ÜST BAR ── */}
-      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 bg-white dark:bg-slate-800">
+      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 bg-white dark:bg-slate-800 relative">
 
         {/* Geri butonu */}
         <button
@@ -327,8 +352,8 @@ const Dashboard: React.FC = () => {
           </span>
         </div>
 
-        {/* Orta: Plan / Rehber / Hava sekmeleri — sadece md+ */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg shrink-0">
+        {/* Orta: Plan / Rehber / Hava sekmeleri — tam ortada */}
+        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg absolute left-1/2 -translate-x-1/2">
           <button
             type="button"
             className="px-3 py-1 text-xs font-semibold bg-white dark:bg-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white"
@@ -426,8 +451,8 @@ const Dashboard: React.FC = () => {
 
         {/* SOL PANEL — Plan listesi */}
         <div
-          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200"
-          style={{ width: `${leftWidthPct}%` }}
+          className="flex flex-col w-full lg:w-auto border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200"
+          style={window.innerWidth >= 1024 ? { width: `${leftWidthPct}%` } : undefined}
         >
 
           {/* Gün sekmeleri */}
@@ -468,21 +493,90 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* ── Bütçe takip şeridi — en az 1 gerçek harcama girilince görünür ── */}
+          {budgetStats && budgetStats.enteredCount > 0 && (
+            <div className="shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Wallet size={11} className="text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Bütçe Takibi
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-semibold">
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {plan.currencySymbol}{budgetStats.actualSpent.toLocaleString('tr-TR')} harcandı
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className={budgetStats.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}>
+                    {budgetStats.remaining < 0
+                      ? `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString('tr-TR')} aşıldı ⚠️`
+                      : `${plan.currencySymbol}${budgetStats.remaining.toLocaleString('tr-TR')} kaldı`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    budgetStats.pct < 70  ? 'bg-emerald-400' :
+                    budgetStats.pct < 90  ? 'bg-amber-400'   :
+                                            'bg-red-400'
+                  }`}
+                  style={{ width: `${Math.min(budgetStats.pct, 100)}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[9px] text-slate-400">
+                  {budgetStats.enteredCount} aktivite girildi · %{budgetStats.pct.toFixed(0)}
+                </span>
+                <span className="text-[9px] text-slate-400">
+                  Toplam bütçe: {plan.currencySymbol}{budgetStats.totalBudget.toLocaleString('tr-TR')}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Gün özeti şeridi */}
           {activeDay && (
-            <div className="shrink-0 px-5 py-3 border-b border-slate-100 bg-white">
+            <div className="shrink-0 px-5 py-3 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-[10px] text-slate-400 mb-0.5">{activeDay.date}</p>
-                  <p className="text-sm font-semibold text-slate-700 truncate">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
                     {activeDay.daySummary}
                   </p>
                 </div>
-                <div className="text-right shrink-0 ml-3">
-                  <p className="text-[10px] text-slate-400">Tahmini</p>
-                  <p className="text-sm font-bold text-slate-900">
-                    {plan.currencySymbol}{activeDay.totalEstimatedCost.toLocaleString()}
-                  </p>
+                <div className="text-right shrink-0 ml-3 space-y-0.5">
+                  {dayBudgetStats.enteredCount > 0 ? (
+                    <>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[9px] text-slate-400">Tahmini</span>
+                        <span className="text-xs font-semibold text-slate-400 line-through">
+                          {plan.currencySymbol}{dayBudgetStats.estimated.toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-[9px] text-slate-400">Harcanan</span>
+                        <span className={`text-sm font-bold ${
+                          dayBudgetStats.actualSpent > dayBudgetStats.estimated
+                            ? 'text-red-500'
+                            : 'text-emerald-600'
+                        }`}>
+                          {plan.currencySymbol}{dayBudgetStats.actualSpent.toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-slate-400">Tahmini</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {plan.currencySymbol}{activeDay.totalEstimatedCost.toLocaleString()}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

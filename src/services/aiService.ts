@@ -25,7 +25,7 @@ const getFriendlyError = (msg: string): string => {
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+  const models = ['gemini-2.5-pro', 'gemini-2.5-flash'];
   let lastError;
 
   for (const modelName of models) {
@@ -913,6 +913,65 @@ Coğrafi rota optimizasyonu bu sıralamadan SONRA düşünülür, yemek sıralam
 
 ŞIMDI BU KURALLARA HARFİYEN UYAN PLANI ÜRET.
 `;
+};
+
+// --- TEK AKTİVİTE ÖNERİCİ ---
+
+export const suggestSingleActivity = async (
+  destination: string,
+  period: string,
+  userRequest: string,
+  existingPlaces: string[],
+  currencyCode: string,
+  currencySymbol: string,
+  nearbyCoords?: { lat: number; lng: number },  // o günkü aktivitelerin merkezi
+): Promise<DailyActivity> => {
+  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
+
+  const avoidList = existingPlaces.length > 0
+    ? `\nZaten planda olanlar — BUNLARI ÖNERME:\n${existingPlaces.map(p => `- ${p}`).join('\n')}`
+    : '';
+
+  const proximityRule = nearbyCoords
+    ? `\n⚠️ KRİTİK MESAFE KURALI: Önerilen yer, günün diğer aktivitelerine yakın olmalı.
+Günün aktivitelerinin merkezi: lat=${nearbyCoords.lat.toFixed(4)}, lng=${nearbyCoords.lng.toFixed(4)}
+Bu koordinata en fazla 3 km uzaklıkta bir yer öner. Şehrin uzak köşelerine gitme.`
+    : '';
+
+  const prompt = `Sen ${destination} şehrini bizzat yaşamış yerel rehber seviyesinde bir seyahat uzmanısın.
+Kullanıcı "${period}" periyoduna şunu eklemek istiyor: "${userRequest}"
+${avoidList}${proximityRule}
+
+Tek bir aktivite JSON nesnesi döndür — başka hiçbir şey yazma:
+{
+  "period": "${period}",
+  "placeName": "Gerçek ve tam yer adı (yerel dilde + parantezde Türkçe varsa)",
+  "description": "2-3 cümle, insider tip içeren Türkçe açıklama. Spesifik detay ver.",
+  "coordinates": { "lat": gerçek_enlem_sayı, "lng": gerçek_boylam_sayı },
+  "estimatedCost": makul_sayısal_değer
+}
+
+Kurallar:
+- coordinates ${destination} şehrinde gerçek bir yere ait olmalı (0,0 olamaz)
+- estimatedCost ${currencyCode} cinsinden, 1 kişi için mantıklı değer
+- description'da "Sonra şuraya git" gibi sıralama referansı olmasın
+- SADECE JSON döndür`;
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-pro',
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+
+  try {
+    const result = await model.generateContent(prompt);
+    const activity = extractAndParseJSON<DailyActivity>(result.response.text());
+    if (!activity.placeName || !activity.coordinates?.lat) {
+      throw new Error('Geçersiz aktivite formatı');
+    }
+    return { ...activity, period, currencySymbol } as DailyActivity;
+  } catch (err) {
+    throw new Error(getFriendlyError((err as Error).message));
+  }
 };
 
 // --- ANA SERVİSLER ---
