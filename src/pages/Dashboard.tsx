@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   Cloud,
+  Download,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
@@ -23,6 +24,7 @@ import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 import WeatherView from '../components/WeatherView';
+import { exportPlanAsPDF } from '../utils/exportPDF';
 
 const Dashboard: React.FC = () => {
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
@@ -372,6 +374,16 @@ const Dashboard: React.FC = () => {
           >
             {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
             {justSaved ? 'Kaydedildi' : 'Planı Kaydet'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportPlanAsPDF(plan, onboardingData)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold rounded-lg text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-300 transition-all"
+            title="Planı PDF olarak indir"
+          >
+            <Download size={12} />
+            PDF
           </button>
 
           {/* Gece / Aydınlık Mod Toggle */}

@@ -237,9 +237,26 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       let remaining = gmModes.length;
 
       gmModes.forEach(({ key, mode }) => {
-        service.route({ origin, destination, travelMode: mode }, (result, status) => {
-          seg[key] = status === 'OK' && result?.routes?.[0]?.legs?.[0]?.duration?.value
-            ? Math.ceil(result.routes[0].legs[0].duration.value / 60)
+        const request: google.maps.DirectionsRequest = {
+          origin,
+          destination,
+          travelMode: mode,
+          // Araç için: anlık trafik verisiyle süre (duration_in_traffic)
+          ...(mode === window.google.maps.TravelMode.DRIVING && {
+            drivingOptions: {
+              departureTime: new Date(),
+              trafficModel:  google.maps.TrafficModel.BEST_GUESS,
+            },
+          }),
+        };
+        service.route(request, (result, status) => {
+          const leg = result?.routes?.[0]?.legs?.[0];
+          // Araç: trafik dahil süreyi tercih et (yoksa standart süreye düş)
+          const durationSec = key === 'driving'
+            ? (leg?.duration_in_traffic?.value ?? leg?.duration?.value)
+            : leg?.duration?.value;
+          seg[key] = status === 'OK' && durationSec
+            ? Math.ceil(durationSec / 60)
             : null;
           remaining--;
           if (remaining === 0) {

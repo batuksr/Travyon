@@ -15,9 +15,39 @@ interface MapViewProps {
 
 const containerStyle = { width: '100%', height: '100%', borderRadius: '1rem' };
 
-// Sabit başlangıç değerleri — render'da yeni obje oluşturmaz
 const MAP_INIT_CENTER = { lat: 41.0082, lng: 28.9784 };
 const MAP_INIT_ZOOM   = 12;
+
+// ── Kuadratik Bezier yay ──────────────────────────────────────────────────
+// İki koordinat arasında "bombeli" (kemer) bir eğri üretir.
+// steps: eğri yumuşaklığı  |  h: kemer yüksekliği (mesafenin oranı)
+const generateArcPath = (
+  start: google.maps.LatLngLiteral,
+  end:   google.maps.LatLngLiteral,
+  steps = 28,
+): google.maps.LatLngLiteral[] => {
+  const dLat = end.lat - start.lat;
+  const dLng = end.lng - start.lng;
+  const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+  if (dist < 1e-10) return [start, end];
+
+  // Kemer yüksekliği: mesafenin %22'si, max ~0.009° ≈ 1 km
+  const h = Math.min(dist * 0.22, 0.009);
+
+  // Kontrol noktası: akordan dik (CW rotasyon → doğuya giden segmentte kuzeye kemerer)
+  const ctrlLat = (start.lat + end.lat) / 2 + ( dLng / dist) * h;
+  const ctrlLng = (start.lng + end.lng) / 2 + (-dLat / dist) * h;
+
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const t = i / steps;
+    const u = 1 - t;
+    return {
+      lat: u * u * start.lat + 2 * u * t * ctrlLat + t * t * end.lat,
+      lng: u * u * start.lng + 2 * u * t * ctrlLng + t * t * end.lng,
+    };
+  });
+};
+// ─────────────────────────────────────────────────────────────────────────
 
 const darkMapStyles: google.maps.MapTypeStyle[] = [
   { elementType: 'geometry',                                        stylers: [{ color: '#1a1f2e' }] },
@@ -60,22 +90,64 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
-  // Aktivitelerin gerçekten değişip değişmediğini tespit etmek için anahtar
-  // Sadece gün değişince (koordinatlar değişince) fitBounds yeniden çalışır
+  // ── Animasyon timer — doğrudan Maps API ref üzerinden, React re-render yok ──
+  const animTimerRef = useRef<number | null>(null);
+
+  const stopAnimation = useCallback(() => {
+    if (animTimerRef.current !== null) {
+      clearInterval(animTimerRef.current);
+      animTimerRef.current = null;
+    }
+  }, []);
+
+  // Yavaş akan ok animasyonu — tam tur 8 saniye (~12fps)
+  const handleAnimPolyLoad = useCallback((polyline: google.maps.Polyline) => {
+    stopAnimation();
+    let tick = 0;
+    animTimerRef.current = window.setInterval(() => {
+      tick = (tick + 1) % 100;
+      const icons = polyline.get('icons') as google.maps.IconSequence[] | undefined;
+      if (icons?.[0]) {
+        icons[0].offset = `${tick}%`;
+        polyline.set('icons', icons);
+      }
+    }, 80); // yavaş ve zarif
+  }, [stopAnimation]);
+
+  useEffect(() => () => stopAnimation(), [stopAnimation]);
+
+  // Aktivite anahtarı — sadece koordinatlar değişince fitBounds çalışır
   const activitiesKey = useMemo(
     () => activities.map(a => `${a.coordinates.lat},${a.coordinates.lng}`).join('|'),
     [activities]
   );
   const prevKeyRef = useRef<string>('');
 
-  // Dark mod değişince harita stilini güncelle
+  // Düz nokta dizisi (fitBounds ve arc hesabı için temel)
+  const path = useMemo(
+    () => activities.map(a => ({ lat: a.coordinates.lat, lng: a.coordinates.lng })),
+    [activitiesKey], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // Tüm segment yaylarını birleştiren sürekli eğri
+  const arcPath = useMemo(() => {
+    if (path.length < 2) return path;
+    const pts: { lat: number; lng: number }[] = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const seg = generateArcPath(path[i], path[i + 1]);
+      // İlk segment hariç başlangıç noktasını atla (önceki segmentin son noktasıyla çakışır)
+      pts.push(...(i === 0 ? seg : seg.slice(1)));
+    }
+    return pts;
+  }, [path]);
+
   useEffect(() => {
     if (map) map.setOptions({ styles: dark ? darkMapStyles : [] });
   }, [dark, map]);
 
   const onLoad = useCallback((m: google.maps.Map) => {
     setMap(m);
-    prevKeyRef.current = ''; // yeni instance için sıfırla
+    prevKeyRef.current = '';
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -83,15 +155,14 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
     prevKeyRef.current = '';
   }, []);
 
-  // FitBounds — sadece aktiviteler GERÇEKTEN değişince (gün geçişi) çalışır
+  // FitBounds — sadece gün değişince
   useEffect(() => {
     if (!map || activities.length === 0) return;
-    if (activitiesKey === prevKeyRef.current) return; // aynı gün, re-render — atla
+    if (activitiesKey === prevKeyRef.current) return;
     prevKeyRef.current = activitiesKey;
 
     const bounds = new window.google.maps.LatLngBounds();
     activities.forEach(a => bounds.extend({ lat: a.coordinates.lat, lng: a.coordinates.lng }));
-    // Otel koordinatı varsa bounds'a dahil et
     if (hotel?.lat && hotel?.lng) bounds.extend({ lat: hotel.lat, lng: hotel.lng });
     map.fitBounds(bounds);
 
@@ -109,53 +180,56 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
     );
   }
 
-  const path = activities.map(a => ({ lat: a.coordinates.lat, lng: a.coordinates.lng }));
-
-  // Otel marker SVG — yeşil iğne şeklinde, "H" harfli
   const makeHotelMarkerIcon = () => {
     const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">
+      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="64" viewBox="0 0 80 64">
         <defs>
-          <filter id="hotel-sh" x="-30%" y="-20%" width="160%" height="150%">
-            <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000" flood-opacity="0.25"/>
+          <filter id="hsh" x="-40%" y="-30%" width="180%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.26"/>
           </filter>
         </defs>
-        <path d="M11 1.5 C6 1.5 2 5.5 2 10.5 C2 17.5 11 28.5 11 28.5 C11 28.5 20 17.5 20 10.5 C20 5.5 16 1.5 11 1.5 Z"
-              fill="#10b981" stroke="white" stroke-width="1.8" filter="url(#hotel-sh)"/>
-        <circle cx="11" cy="10.5" r="2.8" fill="white" opacity="0.9"/>
+        <!-- Etiket: beyaz çerçeve + kırmızı dolgu -->
+        <rect x="3" y="1" width="74" height="17" rx="5" ry="5" fill="white" opacity="0.95"/>
+        <rect x="4" y="2" width="72" height="15" rx="4" ry="4" fill="#dc2626"/>
+        <text x="40" y="10" text-anchor="middle" dominant-baseline="middle"
+              font-family="-apple-system,system-ui,sans-serif"
+              font-size="8.5" font-weight="700" fill="white" letter-spacing="0.2">Kaldığınız Yer</text>
+        <!-- Pin gövdesi -->
+        <path d="M40 21 C33 21 27 27 27 34 C27 43.5 40 62 40 62 C40 62 53 43.5 53 34 C53 27 47 21 40 21 Z"
+              fill="#dc2626" stroke="white" stroke-width="2" filter="url(#hsh)"/>
+        <!-- İç beyaz daire -->
+        <circle cx="40" cy="34" r="7" fill="white" opacity="0.95"/>
       </svg>`;
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-      scaledSize: new window.google.maps.Size(22, 30),
-      anchor: new window.google.maps.Point(11, 28),
+      scaledSize: new window.google.maps.Size(80, 64),
+      anchor: new window.google.maps.Point(40, 62),
     };
   };
 
-  // Custom marker SVG — yuvarlak köşeli kare, modern flat
   const makeMarkerIcon = (index: number) => {
-    const num     = index + 1;
-    const isFirst = index === 0;
-    const bg      = isFirst ? '#ff0000' : '#ff0000';
-    const border  = isFirst ? '#ffffff' : '#ffffff';
-    const size    = 22;
-    const r       =  8;
+    const num = index + 1;
     const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="44" viewBox="0 0 32 44">
         <defs>
-          <filter id="sh${num}" x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+          <filter id="sh${num}" x="-40%" y="-20%" width="180%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.28"/>
           </filter>
         </defs>
-        <rect x="2" y="2" width="${size - 4}" height="${size - 4}" rx="${r}" ry="${r}"
-              fill="${bg}" stroke="${border}" stroke-width="1.5" filter="url(#sh${num})"/>
-        <text x="${size / 2}" y="${size / 2 + 5}" text-anchor="middle"
+        <!-- Damla (pin) gövdesi -->
+        <path d="M16 2 C9 2 3 8 3 15 C3 24.5 16 42 16 42 C16 42 29 24.5 29 15 C29 8 23 2 16 2 Z"
+              fill="#ff1e00" stroke="white" stroke-width="2" filter="url(#sh${num})"/>
+        <!-- İç beyaz daire -->
+        <circle cx="16" cy="15" r="8" fill="white" opacity="0.95"/>
+        <!-- Numara -->
+        <text x="16" y="19.5" text-anchor="middle"
               font-family="system-ui,sans-serif"
-              font-size="${num > 9 ? '11' : '13'}" font-weight="800" fill="white">${num}</text>
+              font-size="${num > 9 ? '9' : '11'}" font-weight="800" fill="#f8981d">${num}</text>
       </svg>`;
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-      scaledSize: new window.google.maps.Size(size, size),
-      anchor: new window.google.maps.Point(size / 2, size / 2),
+      scaledSize: new window.google.maps.Size(32, 44),
+      anchor: new window.google.maps.Point(16, 42), // ucun tam altı
     };
   };
 
@@ -169,33 +243,62 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
         onLoad={onLoad}
         onUnmount={onUnmount}
       >
-        {/* Rota çizgisi — temiz kesikli çizgi, ok yok */}
-        {path.length > 1 && (
+        {/* ── Katman 1: Beyaz dış hat — derinlik ve keskinlik ── */}
+        {arcPath.length > 1 && (
           <PolylineF
-            path={path}
+            path={arcPath}
             options={{
-              strokeColor: '#0059ff',
+              strokeColor:   '#ffffff',
+              strokeOpacity: 0.9,
+              strokeWeight:  8,
+              geodesic:      false,
+              zIndex:        1,
+            }}
+          />
+        )}
+
+        {/* ── Katman 2: Mavi ana kemer çizgisi ── */}
+        {arcPath.length > 1 && (
+          <PolylineF
+            path={arcPath}
+            options={{
+              strokeColor:   '#187fe7',
+              strokeOpacity: 1,
+              strokeWeight:  4,
+              geodesic:      false,
+              zIndex:        2,
+            }}
+          />
+        )}
+
+        {/* ── Katman 3: Yavaş akan yön okları ── */}
+        {arcPath.length > 1 && (
+          <PolylineF
+            path={arcPath}
+            onLoad={handleAnimPolyLoad}
+            options={{
               strokeOpacity: 0,
-              strokeWeight: 0,
-              geodesic: true,
+              strokeWeight:  0,
+              geodesic:      false,
+              zIndex:        3,
               icons: [
                 {
                   icon: {
-                    path: 'M 0,-1 0,1',
-                    strokeOpacity: 0.85,
-                    strokeWeight: 3,
-                    scale: 4,
-                    strokeColor: '#0059ff',
+                    path:         google.maps.SymbolPath.FORWARD_OPEN_ARROW,
+                    scale:        3,
+                    strokeColor:  '#ffffff',
+                    strokeWeight: 2.5,
+                    strokeOpacity: 0.95,
                   },
-                  offset: '0',
-                  repeat: '18px',
+                  offset: '15%',
+                  repeat: '250px',
                 },
               ],
             }}
           />
         )}
 
-        {/* Otel / konaklama markeri */}
+        {/* Otel markeri */}
         {hotel?.lat && hotel?.lng && (
           <MarkerF
             position={{ lat: hotel.lat, lng: hotel.lng }}
@@ -205,16 +308,13 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
             options={{ cursor: 'pointer' }}
             onClick={() => {
               if (onActivityClick) {
-                onActivityClick({
-                  placeName: hotel.name,
-                  lat: hotel.lat,
-                  lng: hotel.lng,
-                });
+                onActivityClick({ placeName: hotel.name, lat: hotel.lat, lng: hotel.lng });
               }
             }}
           />
         )}
 
+        {/* Aktivite markerleri */}
         {activities.map((act, index) => (
           <MarkerF
             key={index}
@@ -230,8 +330,8 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
                   lng: act.coordinates.lng,
                 });
               } else {
-                console.log('[MapView] Tıklanan mekan:', act.placeName);
-                console.log('[MapView] Detay:', usePlanStore.getState().plan?.currencySymbol,
+                console.log('[MapView] Tıklanan mekan:', act.placeName,
+                  usePlanStore.getState().plan?.currencySymbol,
                   act.actualCost !== undefined ? act.actualCost : act.estimatedCost);
               }
             }}
