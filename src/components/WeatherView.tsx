@@ -57,10 +57,10 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
   return (
     <div className="fixed inset-0 z-40 flex">
       {/* Backdrop */}
-      <div className="flex-1 bg-black/30" onClick={onClose} />
+      <div className="hidden sm:flex flex-1 bg-black/30" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      <div className="w-full sm:w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">

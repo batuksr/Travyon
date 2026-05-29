@@ -183,10 +183,42 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
   return (
     <div className="bg-[#f5f0e8] dark:bg-slate-900 text-[#1a1a1a] dark:text-white overflow-x-hidden">
 
-      {/* ══════════════════════════════════════════
-          NAVBAR — Floating Island
-         ══════════════════════════════════════════ */}
-      <div className={`fixed inset-x-0 z-50 flex justify-center transition-all duration-500 ease-out
+      {/* ══ MOBİL NAVBAR — sabit, scroll'dan etkilenmez ══ */}
+      <div className="sm:hidden fixed inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
+        <nav className="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/15 h-14 px-4 rounded-2xl">
+          <TravyonLogo size={36} />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => toggleWithCircle(toggleTheme, e)}
+              className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors
+                ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
+              aria-label="Tema değiştir"
+            >
+              <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
+                {dark ? <Moon size={14} /> : <Sun size={14} />}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-white/90 hover:text-white font-semibold text-sm px-3 py-1.5 transition-colors"
+            >
+              Giriş
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className="inline-flex items-center gap-1 font-bold text-white bg-[#f8981d] hover:bg-[#e08518] rounded-xl text-sm px-4 py-2 shadow-md shadow-[#f8981d]/30 transition-colors"
+            >
+              Başla <ArrowRight size={13} />
+            </button>
+          </div>
+        </nav>
+      </div>
+
+      {/* ══ DESKTOP NAVBAR — scroll'da küçülen floating island ══ */}
+      <div className={`hidden sm:flex fixed inset-x-0 z-50 justify-center transition-all duration-500 ease-out
         ${scrollStage === 0 ? 'top-3' : scrollStage <= 2 ? 'top-2' : 'top-1'}`}>
         <nav className={`flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 transition-all duration-500 ease-out
           ${scrollStage === 0
@@ -199,16 +231,10 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             ? 'w-[80%] max-w-[980px] px-5 h-[48px] rounded-xl'
             : 'w-[72%] max-w-[850px] px-4 h-[42px] rounded-lg'
           }`}>
-
-          {/* Logo */}
           <TravyonLogo
             size={scrollStage === 0 ? 56 : scrollStage === 1 ? 50 : scrollStage === 2 ? 44 : scrollStage === 3 ? 37 : 30}
           />
-
-          {/* Auth butonları */}
           <div className="flex items-center gap-2">
-
-            {/* Dark mode toggle */}
             <button
               type="button"
               onClick={(e) => toggleWithCircle(toggleTheme, e)}
@@ -221,7 +247,6 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
                 {dark ? <Moon size={scrollStage === 0 ? 16 : 14} /> : <Sun size={scrollStage === 0 ? 16 : 14} />}
               </span>
             </button>
-
             <button
               type="button"
               onClick={() => navigate('/login')}
@@ -280,14 +305,14 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
           />
         )}
 
-        {/* Overlay */}
+        {/* Overlay — mobilde düz, desktop'ta soldan sağa */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent"
+          className="absolute inset-0 bg-black/55 sm:bg-gradient-to-r sm:from-black/75 sm:via-black/40 sm:to-transparent"
           style={{ zIndex: 2 }}
         />
 
         {/* İçerik */}
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-0" style={{ zIndex: 3 }}>
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-20 sm:pb-16 lg:py-0" style={{ zIndex: 3 }}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12">
             <div className="max-w-xl">
 
@@ -296,7 +321,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               <motion.h1
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight mt-5"
+                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight"
               >
                 Hayalindeki<br />Seyahati<br />
                 <span className="text-[#f8981d]">Planla.</span>
@@ -330,7 +355,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               <motion.div
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="flex flex-wrap items-center gap-6 mt-8 pt-6 border-t border-white/15"
+                className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-white/15"
               >
                 {[['50+', 'Desteklenen Şehir'], ['15sn', 'Ortalama Plan Süresi'], ['%100', 'Kişiselleştirilmiş']].map(([val, label]) => (
                   <div key={label}>
@@ -384,7 +409,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
          ══════════════════════════════════════════ */}
-      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
+      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-10 sm:py-20 lg:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
@@ -411,14 +436,14 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             className="relative rounded-2xl overflow-hidden border border-slate-300/70 dark:border-slate-700 shadow-2xl shadow-slate-400/25 dark:shadow-black/50"
           >
             {/* Browser şerit */}
-            <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex gap-1.5 shrink-0">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
+            <div className="bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-2.5 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-400" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400" />
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-400" />
               </div>
               <div className="flex-1 flex justify-center">
-                <div className="bg-white dark:bg-slate-700 rounded-md px-4 py-1 text-[11px] text-slate-400 dark:text-slate-400 w-48 text-center">
+                <div className="bg-white dark:bg-slate-700 rounded-md px-3 sm:px-4 py-1 text-[10px] sm:text-[11px] text-slate-400 w-32 sm:w-48 text-center">
                   travyon.app
                 </div>
               </div>
@@ -437,7 +462,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
           <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
@@ -451,11 +476,10 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       <section
         id="nasil-calisir"
         className="relative bg-[#f5f0e8] dark:bg-slate-900 overflow-x-hidden"
-        style={{ minHeight: 580 }}
       >
 
-        {/* Globe — yatayda ve dikeyde ortalı */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Globe — sadece lg+ ekranlarda */}
+        <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
           <div style={{ width: 500, height: 500 }}>
             <GlobeAnimation />
           </div>
@@ -463,25 +487,35 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
 
         {/* İçerik */}
         <div
-          className="relative z-10 w-full mx-auto px-8 flex flex-col"
-          style={{ minHeight: 800, maxWidth: 1280 }}
+          className="relative z-10 w-full mx-auto px-4 sm:px-8 flex flex-col lg:min-h-[800px]"
+          style={{ maxWidth: 1280 }}
         >
 
-          {/* Başlık — sol üst */}
-          <div className="pt-22 pb-2">
+          {/* Başlık */}
+          <div className="pt-14 sm:pt-20 lg:pt-22 pb-2">
             <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">SÜREÇ</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-1">
               Nasıl Çalışır?
             </h2>
-            <p className="text-sm text-slate-700 mt-1.5 max-w-xs leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 max-w-xs leading-relaxed">
               Hesap oluşturmaktan mükemmel seyahat planına dört adımda ulaşın.
             </p>
           </div>
 
-          {/* 3 sütun: sol adımlar | boş merkez (dünya) | sağ adımlar */}
-          {/* Merkez sütun tam globe genişliği → yazılar asla üstüne gelmiyor */}
+          {/* Mobil / tablet: 2 sütun grid */}
+          <div className="lg:hidden grid grid-cols-2 gap-6 sm:gap-8 pt-8 pb-14">
+            {STEPS.map((step) => (
+              <div key={step.num}>
+                <div className="text-[#f8981d] text-3xl sm:text-4xl font-bold mb-2 leading-none">{step.num}</div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop (lg+): 3-sütun globe layout */}
           <div
-            className="flex-1 grid pb-10"
+            className="hidden lg:grid flex-1 pb-10"
             style={{ gridTemplateColumns: '1fr 520px 1fr' }}
           >
 
@@ -490,8 +524,8 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               {STEPS.slice(0, 2).map((step) => (
                 <div key={step.num}>
                   <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">{step.desc}</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -504,8 +538,8 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               {STEPS.slice(2, 4).map((step) => (
                 <div key={step.num}>
                   <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">{step.desc}</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -515,7 +549,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
           <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
@@ -589,7 +623,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
           <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
@@ -728,7 +762,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-12 py-2">
+      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
           <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
@@ -772,13 +806,13 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
           FOOTER
          ══════════════════════════════════════════ */}
       <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
 
           {/* Logo */}
-          <TravyonLogo size={40} />
+          <TravyonLogo size={36} />
 
           {/* Linkler */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
             <Link to="/sss" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">SSS</Link>
             <Link to="/gizlilik" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Gizlilik</Link>
             <Link to="/kullanim-kosullari" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Kullanım Koşulları</Link>
@@ -786,7 +820,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
           </div>
 
           {/* Copyright */}
-          <p className="text-sm text-slate-400 whitespace-nowrap">
+          <p className="text-xs sm:text-sm text-slate-400 whitespace-nowrap text-center">
             © 2026 Travyon. Tüm hakları saklıdır.
           </p>
 

@@ -177,14 +177,14 @@ export const AiAssistantWidget: React.FC = () => {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 select-none">
+    <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-3 select-none">
 
       {/* ── Chat Panel ── */}
       {open && (
         <div
           ref={panelRef}
-          className="w-[340px] sm:w-[370px] bg-[#fafafa] rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden"
-          style={{ height: '500px' }}
+          className="w-[calc(100vw-32px)] sm:w-[370px] bg-[#fafafa] rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden"
+          style={{ height: 'clamp(360px, calc(100svh - 160px), 500px)' }}
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-[#f8981d] to-[#e08518] px-4 py-3 flex items-center justify-between flex-shrink-0">

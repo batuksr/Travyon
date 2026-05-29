@@ -224,18 +224,18 @@ const Dashboard: React.FC = () => {
       {guideOpen && plan.cityGuide && (
         <div className="fixed inset-0 z-40 flex">
           <div
-            className="flex-1 bg-black/30"
+            className="hidden sm:flex flex-1 bg-black/30"
             onClick={() => setGuideOpen(false)}
           />
-          <div className="w-80 bg-white border-l border-slate-200 flex flex-col">
+          <div className="w-full sm:w-80 bg-white border-l border-slate-200 flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0">
               <h2 className="text-sm font-bold text-slate-900">Şehir Rehberi</h2>
               <button
                 type="button"
                 onClick={() => setGuideOpen(false)}
-                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
@@ -305,32 +305,30 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ── ÜST BAR — ~56px ── */}
-      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-800">
+      {/* ── ÜST BAR ── */}
+      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 bg-white dark:bg-slate-800">
 
-        {/* Sol: Geri + Şehir adı */}
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={handleBackClick}
-            className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
-          >
-            <ArrowLeft size={15} />
-          </button>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-900 truncate">
-                {plan.destination}
-              </h1>
-              <span className="text-xs text-slate-400 font-medium shrink-0">
-                • {plan.dailyPlans.length} gün
-              </span>
-            </div>
-          </div>
+        {/* Geri butonu */}
+        <button
+          type="button"
+          onClick={handleBackClick}
+          className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+        >
+          <ArrowLeft size={15} />
+        </button>
+
+        {/* Şehir adı */}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+            {plan.destination}
+          </h1>
+          <span className="text-xs text-slate-400 font-medium shrink-0 hidden sm:inline">
+            • {plan.dailyPlans.length} gün
+          </span>
         </div>
 
-        {/* Orta: Plan / Rehber / Hava sekmeleri */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg">
+        {/* Orta: Plan / Rehber / Hava sekmeleri — sadece md+ */}
+        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg shrink-0">
           <button
             type="button"
             className="px-3 py-1 text-xs font-semibold bg-white dark:bg-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white"
@@ -354,39 +352,62 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* Sağ: Toplam maliyet + Yeni Plan */}
-        <div className="flex items-center gap-3">
+        {/* Sağ: aksiyonlar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+
+          {/* Toplam maliyet — sadece md+ */}
           <div className="hidden md:flex items-center gap-1.5 text-xs">
             <span className="text-slate-400">Toplam:</span>
-            <span className="font-bold text-slate-900">
+            <span className="font-bold text-slate-900 dark:text-white">
               {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString()}
             </span>
           </div>
+
+          {/* Mobil sekme butonları (Rehber + Hava) — sadece sm ve altında */}
+          <button
+            type="button"
+            onClick={() => { setWeatherOpen(false); setGuideOpen(g => !g); }}
+            className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            title="Şehir Rehberi"
+          >
+            <Map size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setGuideOpen(false); setWeatherOpen(w => !w); }}
+            className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            title="Hava Durumu"
+          >
+            <Cloud size={14} />
+          </button>
+
+          {/* Kaydet */}
           <button
             type="button"
             onClick={handleSavePlan}
             disabled={justSaved}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
               justSaved
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
                 : 'bg-white dark:bg-slate-700 border border-[#f8981d]/40 text-[#f8981d] hover:bg-[#f8981d]/5 hover:border-[#f8981d]'
             }`}
           >
             {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-            {justSaved ? 'Kaydedildi' : 'Planı Kaydet'}
+            <span className="hidden sm:inline">{justSaved ? 'Kaydedildi' : 'Planı Kaydet'}</span>
           </button>
 
+          {/* PDF */}
           <button
             type="button"
             onClick={() => exportPlanAsPDF(plan, onboardingData)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold rounded-lg text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-300 transition-all"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-300 transition-all"
             title="Planı PDF olarak indir"
           >
             <Download size={12} />
-            PDF
+            <span className="hidden sm:inline">PDF</span>
           </button>
 
-          {/* Gece / Aydınlık Mod Toggle */}
+          {/* Tema toggle */}
           <button
             type="button"
             onClick={(e) => toggleWithCircle(toggleTheme, e)}

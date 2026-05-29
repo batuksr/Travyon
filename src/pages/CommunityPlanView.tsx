@@ -174,8 +174,8 @@ const CommunityPlanView: React.FC = () => {
       {/* ══ ŞEHİR REHBERİ DRAWER ══ */}
       {guideOpen && plan.cityGuide && (
         <div className="fixed inset-0 z-40 flex">
-          <div className="flex-1 bg-black/30" onClick={() => setGuideOpen(false)} />
-          <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col">
+          <div className="hidden sm:flex flex-1 bg-black/30" onClick={() => setGuideOpen(false)} />
+          <div className="w-full sm:w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Şehir Rehberi</h2>
               <button
@@ -215,8 +215,8 @@ const CommunityPlanView: React.FC = () => {
       {/* ══ SEÇİMLER DRAWER ══ */}
       {selectionsOpen && (
         <div className="fixed inset-0 z-40 flex">
-          <div className="flex-1 bg-black/30" onClick={() => setSelectionsOpen(false)} />
-          <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col">
+          <div className="hidden sm:flex flex-1 bg-black/30" onClick={() => setSelectionsOpen(false)} />
+          <div className="w-full sm:w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Seyahat Seçimleri</h2>
               <button onClick={() => setSelectionsOpen(false)} className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition-colors">
@@ -338,7 +338,7 @@ const CommunityPlanView: React.FC = () => {
       )}
 
       {/* ══ ÜST BAR ══ */}
-      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-800">
+      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-800">
 
         {/* Sol: Geri + Plan sahibi + Başlık */}
         <div className="flex items-center gap-3 min-w-0">
@@ -394,8 +394,25 @@ const CommunityPlanView: React.FC = () => {
           </button>
         </div>
 
-        {/* Sağ: Toplam maliyet + Tema */}
-        <div className="flex items-center gap-3">
+        {/* Sağ: Rehber/Seçimler (mobil) + maliyet + Tema */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile: Rehber + Seçimler butonları */}
+          {plan.cityGuide && (
+            <button
+              onClick={() => setGuideOpen(true)}
+              className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+              title="Rehber"
+            >
+              <Bus size={14} />
+            </button>
+          )}
+          <button
+            onClick={() => setSelectionsOpen(true)}
+            className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+            title="Seçimler"
+          >
+            <SlidersHorizontal size={14} />
+          </button>
           {plan.totalEstimatedCost > 0 && (
             <div className="hidden md:flex items-center gap-1.5 text-xs">
               <span className="text-slate-400">Toplam:</span>
@@ -421,8 +438,8 @@ const CommunityPlanView: React.FC = () => {
 
         {/* ── SOL PANEL ── */}
         <div
-          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200"
-          style={{ width: `${leftWidthPct}%` }}
+          className="flex flex-col border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200 w-full lg:w-auto"
+          style={window.innerWidth >= 1024 ? { width: `${leftWidthPct}%` } : undefined}
         >
           {/* Gün sekmeleri */}
           <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-2.5 bg-slate-50/50 dark:bg-slate-800/50">

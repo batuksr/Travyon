@@ -49,9 +49,9 @@ const Sidebar: React.FC = () => {
     <aside
       onMouseEnter={() => { isHoveredRef.current = true; setExpanded(true); }}
       onMouseLeave={() => { isHoveredRef.current = false; if (!transitioningRef.current) setExpanded(false); }}
-      className={`sticky top-0 h-screen shrink-0 z-40
+      className={`hidden sm:flex sm:flex-col sticky top-0 h-screen shrink-0 z-40
                  bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700
-                 flex flex-col transition-all duration-300 ease-out overflow-hidden
+                 transition-all duration-300 ease-out overflow-hidden
                  ${expanded ? 'w-60' : 'w-[84px]'}`}
     >
 

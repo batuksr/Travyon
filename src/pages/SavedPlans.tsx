@@ -235,8 +235,8 @@ const SavedPlans: React.FC = () => {
 
       {/* Üst Bar */}
       <div className="bg-gray border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest mb-1">
                 Kayıtlı Planlar
@@ -252,10 +252,10 @@ const SavedPlans: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/onboarding')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px"
             >
               <Plus size={16} />
-              Yeni Plan
+              <span className="hidden sm:inline">Yeni Plan</span>
             </button>
           </div>
 
@@ -304,7 +304,7 @@ const SavedPlans: React.FC = () => {
       </div>
 
       {/* İçerik */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
         {/* Boş durum */}
         {plans.length === 0 ? (

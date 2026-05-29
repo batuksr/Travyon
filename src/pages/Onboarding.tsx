@@ -20,7 +20,11 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { CURRENCY_MAP } from '../store/useAppSettingsStore';
 
-const today = new Date().toISOString().split('T')[0];
+const getToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const today = getToday();
 const ALL_EATER_OPTION = 'Her Şeyi Yerim';
 
 const STEPS = [
@@ -334,7 +338,7 @@ const Onboarding: React.FC = () => {
         )}
 
         {/* Üst bar — step indikatörleri */}
-        <div className="shrink-0 px-8 lg:px-12 pt-7 pb-5 border-b border-slate-100">
+        <div className="shrink-0 px-4 sm:px-8 lg:px-12 pt-7 pb-5 border-b border-slate-100">
 
           {/* Mobil logo */}
           <div className="lg:hidden mb-5">
@@ -380,7 +384,7 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Form alanı */}
-        <div className="flex-1 overflow-y-auto px-8 lg:px-12 py-8">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-8">
 
           <div className="max-w-2xl" aria-hidden={isGenerating || undefined}>
 
@@ -470,7 +474,7 @@ const Onboarding: React.FC = () => {
                     {/* Tarihler + Saatler */}
                     <div className="bg-slate-50/80 dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-white/10 space-y-3">
                       <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">Seyahat Tarihleri</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             <Calendar size={11} className="text-[#f8981d]" /> Gidiş
@@ -478,7 +482,12 @@ const Onboarding: React.FC = () => {
                           <input
                             type="date" min={today}
                             value={data.startDate}
-                            onChange={(e) => { updateData({ startDate: e.target.value }); setHints((h) => ({ ...h, startDate: false })); }}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val && val < today) return;
+                              updateData({ startDate: val });
+                              setHints((h) => ({ ...h, startDate: false }));
+                            }}
                             className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white dark:placeholder:text-slate-400
                               ${hints.startDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           />
@@ -491,7 +500,13 @@ const Onboarding: React.FC = () => {
                           <input
                             type="date" min={data.startDate || today}
                             value={data.endDate}
-                            onChange={(e) => { updateData({ endDate: e.target.value }); setHints((h) => ({ ...h, endDate: false })); }}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const minDate = data.startDate || today;
+                              if (val && val < minDate) return;
+                              updateData({ endDate: val });
+                              setHints((h) => ({ ...h, endDate: false }));
+                            }}
                             className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white
                               ${hints.endDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
                           />
@@ -590,7 +605,7 @@ const Onboarding: React.FC = () => {
                     {/* Seyahat Türü */}
                     <div>
                       <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Seyahat Türü</p>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
                           { val: 'solo_macera',    Icon: Backpack,    bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Solo' },
                           { val: 'romantik',       Icon: Heart,       bg: 'bg-rose-100',    color: 'text-rose-600',    title: 'Romantik' },
@@ -703,7 +718,7 @@ const Onboarding: React.FC = () => {
                     <div>
                       <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Günlük Tempo</p>
                       <p className="text-[11px] text-slate-400 mb-3">Aktivite yoğunluğunu seç.</p>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
                           { val: 'rahat',  Icon: Sofa,       bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Rahat',  desc: 'Az yürüyüş',     detail: '3–4 km/gün' },
                           { val: 'normal', Icon: Footprints, bg: 'bg-blue-100',    color: 'text-blue-600',    title: 'Normal', desc: 'Standart tempo', detail: '6–8 km/gün' },
@@ -1042,7 +1057,7 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Alt bar — navigasyon */}
-        <div className="shrink-0 border-t border-slate-100 px-8 lg:px-12 py-4 flex items-center justify-between bg-gray">
+        <div className="shrink-0 border-t border-slate-100 px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between bg-gray">
 
           <button
             type="button"

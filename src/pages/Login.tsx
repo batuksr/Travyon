@@ -46,7 +46,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="min-h-screen flex">
       {/* Sol Panel — Fotoğraf */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
         <img

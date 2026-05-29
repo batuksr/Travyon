@@ -152,7 +152,7 @@ const UserProfile: React.FC = () => {
 
       {/* ── Üst Bar ── */}
       <div className="sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -166,7 +166,7 @@ const UserProfile: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 pb-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
 
         {/* ── Profil Kartı ── */}
         <div className="pt-8 pb-6 flex flex-col items-center text-center">

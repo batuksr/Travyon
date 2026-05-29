@@ -314,7 +314,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       )}
 
       {/* ── TİMLİNE ── */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-2">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-5 pt-4 pb-2">
         {day.activities.map((activity, index) => {
           const isLast       = index === day.activities.length - 1;
           const nextActivity = !isLast ? day.activities[index + 1] : null;
@@ -425,7 +425,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       </div>
 
       {/* ── VİBE BAR ── */}
-      <div className="sticky bottom-0 border-t border-slate-100 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-5 py-2.5 flex items-center gap-2 shrink-0">
+      <div className="sticky bottom-0 border-t border-slate-100 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-3 sm:px-5 py-2.5 flex items-center gap-2 shrink-0">
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Vibe:</span>
         <div className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {(Object.keys(vibeConfig) as Array<keyof typeof vibeConfig>).map(key => {

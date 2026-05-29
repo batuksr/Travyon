@@ -1,13 +1,13 @@
 ﻿import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
-import { useSidebarStore } from "./store/useSidebarStore";
 import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
 import Sidebar from "./components/Sidebar";
+import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -31,19 +31,61 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/* ── Mobil alt navigasyon (sm altında gösterilir) ── */
+const BOTTOM_NAV = [
+  { icon: HomeIcon,     label: 'Ana Sayfa',    path: '/hub' },
+  { icon: Sparkles,     label: 'Plan Oluştur', path: '/onboarding' },
+  { icon: Bookmark,     label: 'Planlarım',    path: '/saved-plans' },
+  { icon: Users,        label: 'Topluluk',     path: '/community' },
+  { icon: Bell,         label: 'Bildirim',     path: '/notifications' },
+  { icon: SettingsIcon, label: 'Ayarlar',      path: '/settings' },
+] as const;
+
+const BottomNav: React.FC = () => {
+  const location = useLocation();
+  const navigate  = useNavigate();
+  const { dark }  = useThemeStore();
+  return (
+    <nav className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
+      border-t px-1 h-14 safe-b
+      ${dark
+        ? 'bg-slate-900 border-slate-700'
+        : 'bg-white border-slate-200'}`}
+    >
+      {BOTTOM_NAV.map(({ icon: Icon, label, path }) => {
+        const active = location.pathname === path;
+        return (
+          <button
+            key={path}
+            type="button"
+            onClick={() => navigate(path)}
+            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors
+              ${active
+                ? 'text-[#f8981d]'
+                : dark ? 'text-slate-400' : 'text-slate-500'}`}
+          >
+            <Icon size={18} />
+            <span className="text-[9px] font-semibold">{label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+};
+
 /* Sidebar + layout wrapper — useLocation burada çalışır (BrowserRouter içinde) */
 const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) => {
   const location = useLocation();
-  const { expanded } = useSidebarStore();
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/plan/');
 
   /* Dashboard'da sidebar yok, margin da yok */
-  const showSidebar = isAuthenticated && !isDashboard;
+  const showSidebar   = isAuthenticated && !isDashboard;
+  const showBottomNav = isAuthenticated && !isDashboard;
 
   return (
     <div className="flex min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
       {showSidebar && <Sidebar />}
-      <main className="flex-1 min-w-0">
+      <main className={`flex-1 min-w-0 ${showBottomNav ? 'pb-14 sm:pb-0' : ''}`}>
         <Routes>
           <Route path="/"            element={isAuthenticated ? <Navigate to="/hub" replace /> : <Home />} />
           <Route path="/hub"         element={<ProtectedRoute><Hub /></ProtectedRoute>} />
@@ -63,6 +105,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
           <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
         </Routes>
       </main>
+      {showBottomNav && <BottomNav />}
     </div>
   );
 };

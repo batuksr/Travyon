@@ -7,6 +7,7 @@ import {
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
   deleteUser,
+  signOut,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
@@ -17,7 +18,7 @@ import {
   Settings2, BookOpen, MapPin, Globe, Ruler,
   BellRing, Smartphone, Eye, EyeOff, Database,
   CreditCard, Receipt, Wallet, Download, Trash2,
-  HelpCircle, MessageCircle, Bug,
+  HelpCircle, MessageCircle, Bug, LogOut,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -200,7 +201,7 @@ const ProfileRow: React.FC<{
 }> = ({ label, display, isEditing, onEdit, actionLabel = 'Düzenle', children }) => (
   <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
     <div className="flex items-start py-4 gap-4">
-      <p className="w-40 shrink-0 text-[13px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5 uppercase tracking-wide">{label}</p>
+      <p className="w-24 sm:w-40 shrink-0 text-[11px] sm:text-[13px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5 uppercase tracking-wide">{label}</p>
       <div className="flex-1 min-w-0 text-sm pt-0.5">{display}</div>
       {!isEditing && (
         <button
@@ -213,7 +214,7 @@ const ProfileRow: React.FC<{
       )}
     </div>
     {isEditing && children && (
-      <div className="pb-5 pl-44">{children}</div>
+      <div className="pb-5 sm:pl-44">{children}</div>
     )}
   </div>
 );
@@ -748,6 +749,12 @@ const Settings: React.FC = () => {
     } finally { setBugLoading(false); }
   };
 
+  const handleMobileLogout = async () => {
+    setSettings({ photoURL: null });
+    await signOut(auth);
+    navigate('/login');
+  };
+
   /* ── Helpers ── */
   const inputCls = (err = false) =>
     `w-full px-3.5 py-2.5 rounded-lg border text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all bg-white dark:bg-slate-800
@@ -768,7 +775,7 @@ const Settings: React.FC = () => {
   );
 
   const CardWrap: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
       <div className="mb-5">
         <h2 className="font-bold text-slate-900 dark:text-white text-lg">{title}</h2>
         {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
@@ -781,7 +788,7 @@ const Settings: React.FC = () => {
     <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-950 flex flex-col">
 
       {/* Top bar */}
-      <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-6 shrink-0">
+      <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 sm:px-6 shrink-0">
         <button
           type="button" onClick={() => navigate(-1)}
           className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors flex items-center gap-1.5"
@@ -792,10 +799,10 @@ const Settings: React.FC = () => {
         <span className="ml-4 font-bold text-slate-900 dark:text-white text-sm">Ayarlar</span>
       </div>
 
-      <div className="flex flex-1 max-w-5xl mx-auto w-full px-6 py-8 gap-8">
+      <div className="flex flex-1 flex-col sm:flex-row max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-8 gap-6 sm:gap-8">
 
         {/* ── Left nav ── */}
-        <aside className="w-56 shrink-0 space-y-5">
+        <aside className="hidden sm:block w-56 shrink-0 space-y-5">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5 px-3">
@@ -824,6 +831,23 @@ const Settings: React.FC = () => {
         {/* ── Content ── */}
         <div className="flex-1 min-w-0 space-y-4">
 
+          {/* Mobile section selector */}
+          <div className="sm:hidden mb-2">
+            <select
+              value={activeSection}
+              onChange={e => setActiveSection(e.target.value as Section)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10"
+            >
+              {NAV_GROUPS.map(group => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.items.map(({ id, label }) => (
+                    <option key={id} value={id}>{label}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
           {/* ══ HESAP — Profil ══ */}
           {activeSection === 'profile' && (() => {
             const fmtBirthDate = (d: string) => {
@@ -846,7 +870,7 @@ const Settings: React.FC = () => {
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
 
                 {/* Başlık + avatar */}
-                <div className="flex items-center gap-5 p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-4 p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800">
                   {/* Gizli dosya input */}
                   <input
                     ref={photoInputRef}
@@ -891,14 +915,14 @@ const Settings: React.FC = () => {
 
                 {/* Durum bandı */}
                 {profileStatus && (
-                  <div className={`flex items-center gap-2 px-6 py-2.5 text-sm ${profileStatus.type === 'success' ? 'bg-green-50 text-green-700 border-b border-green-200' : 'bg-rose-50 text-rose-700 border-b border-rose-200'}`}>
+                  <div className={`flex items-center gap-2 px-4 py-2.5 text-sm ${profileStatus.type === 'success' ? 'bg-green-50 text-green-700 border-b border-green-200' : 'bg-rose-50 text-rose-700 border-b border-rose-200'}`}>
                     {profileStatus.type === 'success' ? <Check size={14} /> : <AlertCircle size={14} />}
                     {profileStatus.message}
                   </div>
                 )}
 
                 {/* Satırlar */}
-                <div className="px-6">
+                <div className="px-3 sm:px-6">
 
                   {/* Ad */}
                   <ProfileRow label="Ad"
@@ -1291,7 +1315,7 @@ const Settings: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-2">Varsayılan Tempo</label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { label: '🛋️', sub: 'Rahat', val: 'rahat' },
                       { label: '🚶', sub: 'Normal', val: 'normal' },
@@ -2274,6 +2298,18 @@ const Settings: React.FC = () => {
               </div>
             </CardWrap>
           )}
+
+          {/* Mobile logout button */}
+          <div className="sm:hidden mt-2 pb-4">
+            <button
+              type="button"
+              onClick={handleMobileLogout}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/40 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+            >
+              <LogOut size={16} />
+              Çıkış Yap
+            </button>
+          </div>
 
         </div>
       </div>
