@@ -190,6 +190,7 @@ const Dashboard: React.FC = () => {
   const activeDay = plan.dailyPlans[activeDayIndex];
 
   return (
+  <>
     <div className="h-screen flex flex-col bg-[#f5f0e8] dark:bg-slate-900 overflow-hidden">
 
 
@@ -626,18 +627,20 @@ const Dashboard: React.FC = () => {
         <Map size={18} />
       </button>
 
-      {/* Mekan detay paneli */}
-      <AnimatePresence>
-        {selectedPlace && (
-          <PlaceDetailsPanel
-            placeName={selectedPlace.placeName}
-            lat={selectedPlace.lat}
-            lng={selectedPlace.lng}
-            onClose={() => setSelectedPlace(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
+
+    {/* Mekan detay paneli — overflow-hidden dışında render edilir (iOS fixed pozisyon sorunu) */}
+    <AnimatePresence>
+      {selectedPlace && (
+        <PlaceDetailsPanel
+          placeName={selectedPlace.placeName}
+          lat={selectedPlace.lat}
+          lng={selectedPlace.lng}
+          onClose={() => setSelectedPlace(null)}
+        />
+      )}
+    </AnimatePresence>
+  </>
   );
 };
 

@@ -1,10 +1,12 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
+
+const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +16,19 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect sonucu al (mobil Google kaydı sonrası)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(result => { if (result?.user) navigate('/onboarding'); })
+      .catch(err => {
+        const code = (err as { code?: string }).code;
+        if (code && code !== 'auth/no-auth-event' && code !== 'auth/null-user') {
+          setError('Google ile kayıt oluşturulmadı. Tekrar deneyin.');
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +55,22 @@ const Register: React.FC = () => {
     try {
       await signInWithPopup(auth, googleProvider);
       navigate('/onboarding');
-    } catch {
-      setError('Google ile kayıt oluşturulamadı.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? '';
+      if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user') {
+        if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          setError('Google girişi için uygulamayı HTTPS üzerinden açın.');
+          setLoading(false);
+        }
+      } else if (code === 'auth/unauthorized-domain') {
+        setError('Bu domain Firebase\'de yetkilendirilmemiş. Firebase Console → Authentication → Authorized Domains\'e ekleyin.');
+        setLoading(false);
+      } else {
+        setError('Google ile kayıt oluşturulamadı. (' + (code || 'bilinmeyen hata') + ')');
+        setLoading(false);
+      }
     }
   };
 

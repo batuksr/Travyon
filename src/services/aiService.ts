@@ -25,7 +25,8 @@ const getFriendlyError = (msg: string): string => {
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
-  const models = ['gemini-2.5-pro', 'gemini-2.5-flash'];
+  // Flash önce (güvenilir), Pro fallback (bazı hesaplarda erişim kısıtlı olabilir)
+  const models = ['gemini-2.5-flash', 'gemini-2.5-pro'];
   let lastError;
 
   for (const modelName of models) {
@@ -45,11 +46,18 @@ const executeWithFallback = async (prompt: string): Promise<string> => {
         warn(`[AI] ❌ ${modelName} (Deneme ${attempt + 1}) başarısız: ${error.message}`);
         lastError = error;
 
-        if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('invalid_api_key') || msg.includes('json parse')) {
+        // 400/401 = geçersiz istek veya API anahtarı → hiçbir model çözemez, direkt fırlat
+        if (msg.includes('400') || msg.includes('401') || msg.includes('invalid_api_key') || msg.includes('json parse')) {
           throw error;
         }
 
-        // 503 = sunucu meşgul → aynı modeli bekleterek tekrar deneme, direkt sonraki modele geç
+        // 403 = bu model için erişim yok → sonraki modeli dene
+        if (msg.includes('403')) {
+          log(`[AI] 403 erişim reddi — "${modelName}" atlanıyor, sonraki modele geçiliyor`);
+          break;
+        }
+
+        // 503 = sunucu meşgul → sonraki modele geç
         if (msg.includes('503') || msg.includes('overloaded')) {
           log(`[AI] 503/overloaded — "${modelName}" atlanıyor, alternatif modele geçiliyor`);
           break;

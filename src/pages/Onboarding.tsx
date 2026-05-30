@@ -471,14 +471,21 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.destination ? 'Destinasyon girmelisin.' : undefined} />
                     </div>
 
-                    {/* Tarihler + Saatler */}
-                    <div className="bg-slate-50/80 dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-white/10 space-y-3">
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">Seyahat Tarihleri</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                            <Calendar size={11} className="text-[#f8981d]" /> Gidiş
-                          </label>
+                    {/* Tarihler + Saatler — satır bazlı iOS tarzı layout */}
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                      {/* Başlık şeridi */}
+                      <div className="bg-slate-50 dark:bg-white/5 px-4 py-2 border-b border-slate-100 dark:border-white/10">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                          <Calendar size={10} className="text-[#f8981d]" /> Seyahat Tarihleri
+                        </p>
+                      </div>
+
+                      {/* Satırlar */}
+                      <div className="bg-white dark:bg-white/5 divide-y divide-slate-100 dark:divide-white/10">
+
+                        {/* Gidiş */}
+                        <div className={`flex items-center px-4 py-3 ${hints.startDate ? 'bg-rose-50/50' : ''}`}>
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">✈️ Gidiş</span>
                           <input
                             type="date" min={today}
                             value={data.startDate}
@@ -488,15 +495,13 @@ const Onboarding: React.FC = () => {
                               updateData({ startDate: val });
                               setHints((h) => ({ ...h, startDate: false }));
                             }}
-                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white dark:placeholder:text-slate-400
-                              ${hints.startDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
                           />
-                          <FieldError msg={hints.startDate ? 'Geçerli bir gidiş tarihi seçin.' : undefined} />
                         </div>
-                        <div>
-                          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                            <Calendar size={11} className="text-[#f8981d]" /> Dönüş
-                          </label>
+
+                        {/* Dönüş */}
+                        <div className={`flex items-center px-4 py-3 ${hints.endDate ? 'bg-rose-50/50' : ''}`}>
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🏠 Dönüş</span>
                           <input
                             type="date" min={data.startDate || today}
                             value={data.endDate}
@@ -507,32 +512,40 @@ const Onboarding: React.FC = () => {
                               updateData({ endDate: val });
                               setHints((h) => ({ ...h, endDate: false }));
                             }}
-                            className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-all bg-white dark:bg-white/10 text-slate-800 dark:text-white
-                              ${hints.endDate ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
                           />
-                          <FieldError msg={hints.endDate ? 'Geçerli bir dönüş tarihi seçin.' : undefined} />
                         </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block">Varış Saati</label>
+
+                        {/* Varış Saati */}
+                        <div className="flex items-center px-4 py-3">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🛬 Varış</span>
                           <input
                             type="time"
                             value={data.arrivalTime}
                             onChange={(e) => updateData({ arrivalTime: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 text-sm outline-none text-slate-800 dark:text-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
                           />
                         </div>
-                        <div>
-                          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block">Ayrılış Saati</label>
+
+                        {/* Ayrılış Saati */}
+                        <div className="flex items-center px-4 py-3">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🛫 Ayrılış</span>
                           <input
                             type="time"
                             value={data.departureTime}
                             onChange={(e) => updateData({ departureTime: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 text-sm outline-none text-slate-800 dark:text-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8 transition-all"
+                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
                           />
                         </div>
                       </div>
+
+                      {/* Hata mesajları */}
+                      {(hints.startDate || hints.endDate) && (
+                        <div className="bg-rose-50 dark:bg-rose-900/20 px-4 py-2 border-t border-rose-100 dark:border-rose-800">
+                          {hints.startDate && <p className="text-xs text-rose-500">Gidiş tarihi seçin.</p>}
+                          {hints.endDate   && <p className="text-xs text-rose-500">Dönüş tarihi seçin.</p>}
+                        </div>
+                      )}
                     </div>
 
                     {/* Kişi + Bütçe */}
