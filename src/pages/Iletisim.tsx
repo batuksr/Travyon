@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Clock, ArrowLeft, Send, CheckCircle, Loader2 } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
-import { useThemeStore } from '../store/useThemeStore';
 
 const INFO_CARDS = [
   {
@@ -26,7 +25,6 @@ const INFO_CARDS = [
 ];
 
 const Iletisim: React.FC = () => {
-  const { dark } = useThemeStore();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);

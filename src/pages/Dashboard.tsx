@@ -18,6 +18,8 @@ import {
   Cloud,
   Download,
   Wallet,
+  Link2,
+  Check,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
@@ -26,9 +28,12 @@ import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 import WeatherView from '../components/WeatherView';
 import { exportPlanAsPDF } from '../utils/exportPDF';
+import { sharePlanAsLink } from '../services/socialService';
+import { useAuthStore } from '../store/useAuthStore';
 
 const Dashboard: React.FC = () => {
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
+  const { user } = useAuthStore();
   const { addPlan, updatePlan } = useSavedPlansStore();
   const savedPlans = useUserPlans();
   const { data: currentOnboardingData } = useOnboardingStore();
@@ -48,6 +53,7 @@ const Dashboard: React.FC = () => {
   const [showExitModal, setShowExitModal]   = useState(false);
   const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
   const [justSaved, setJustSaved]           = useState(false);
+  const [linkCopied, setLinkCopied]         = useState(false);
   const hasSaved = useRef(false);
   const [selectedPlace, setSelectedPlace] = useState<{
     placeName: string;
@@ -167,6 +173,19 @@ const Dashboard: React.FC = () => {
     hasSaved.current = true;
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2500);
+  };
+
+  const handleShareLink = async () => {
+    if (!plan || !user || !savedPlanId) return;
+    try {
+      await sharePlanAsLink(savedPlanId, plan, onboardingData, {
+        uid: user.uid, displayName: user.displayName, photoURL: user.photoURL,
+      });
+      const url = `${window.location.origin}/plan/${savedPlanId}`;
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch { /* sessiz hata */ }
   };
 
   /* Exit modal aksiyonları */
@@ -421,6 +440,24 @@ const Dashboard: React.FC = () => {
             {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
             <span className="hidden sm:inline">{justSaved ? 'Kaydedildi' : 'Planı Kaydet'}</span>
           </button>
+
+          {/* Link Paylaş — sadece kayıtlı planlarda */}
+          {savedPlanId && (
+            <button
+              type="button"
+              onClick={handleShareLink}
+              disabled={linkCopied}
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
+                linkCopied
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                  : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:border-[#187fe7]/40 hover:text-[#187fe7]'
+              }`}
+              title="Plan linkini kopyala"
+            >
+              {linkCopied ? <Check size={12} /> : <Link2 size={12} />}
+              <span className="hidden sm:inline">{linkCopied ? 'Kopyalandı!' : 'Link'}</span>
+            </button>
+          )}
 
           {/* PDF */}
           <button

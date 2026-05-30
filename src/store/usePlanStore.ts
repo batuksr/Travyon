@@ -12,6 +12,7 @@ interface PlanState {
   deleteActivity: (dayNumber: number, activityIndex: number) => void;
   moveActivity: (dayNumber: number, fromIndex: number, toIndex: number) => void;
   addActivity: (dayNumber: number, activity: DailyActivity, insertIndex?: number) => void;
+  updateActivityNote: (dayNumber: number, activityIndex: number, note: string) => void;
   clearPlan: () => void;
 }
 
@@ -69,6 +70,19 @@ export const usePlanStore = create<PlanState>()(
           const activities = [...day.activities];
           activities.splice(insertIndex ?? activities.length, 0, activity);
           return { ...day, activities, totalEstimatedCost: recalcCost(activities) };
+        });
+        return { plan: { ...state.plan, dailyPlans: updatedDailyPlans } };
+      }),
+      updateActivityNote: (dayNumber, activityIndex, note) => set((state) => {
+        if (!state.plan) return state;
+        const updatedDailyPlans = state.plan.dailyPlans.map(day => {
+          if (day.dayNumber !== dayNumber) return day;
+          const activities = [...day.activities];
+          activities[activityIndex] = {
+            ...activities[activityIndex],
+            note: note.trim() || undefined,
+          };
+          return { ...day, activities };
         });
         return { plan: { ...state.plan, dailyPlans: updatedDailyPlans } };
       }),

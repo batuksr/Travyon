@@ -25,6 +25,7 @@ import CommunityPlanView from "./pages/CommunityPlanView";
 import Gizlilik from "./pages/Gizlilik";
 import KullanimKosullari from "./pages/KullanimKosullari";
 import Iletisim from "./pages/Iletisim";
+import PwaInstallBanner from "./components/PwaInstallBanner";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -193,6 +194,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppLayout isAuthenticated={!!user} />
+      <PwaInstallBanner />
     </BrowserRouter>
   );
 }

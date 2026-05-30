@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Map as MapIcon, Calendar, Wallet, Users, Trash2, Star,
   StarOff, Pencil, Plus, Search,
-  MapPin, ArrowRight, Sparkles,
+  MapPin, ArrowRight, Sparkles, Link2, Check,
 } from 'lucide-react';
 import { useSavedPlansStore, useUserPlans, type SavedPlan } from '../store/useSavedPlansStore';
 import { usePlanStore } from '../store/usePlanStore';
+import { useAuthStore } from '../store/useAuthStore';
+import { sharePlanAsLink } from '../services/socialService';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
@@ -59,9 +61,11 @@ interface PlanCardProps {
   onToggleFavorite: (id: string) => void;
   onRename: (p: SavedPlan) => void;
   onDelete: (id: string) => void;
+  onShareLink: (p: SavedPlan) => void;
+  linkCopied: boolean;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite, onRename, onDelete }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite, onRename, onDelete, onShareLink, linkCopied }) => {
   const coverPhoto = useCityPhoto(savedPlan.plan.destination);
   return (
     <motion.div
@@ -149,6 +153,19 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
           >
             Aç <ArrowRight size={11} />
           </button>
+          {/* Link kopyala */}
+          <button
+            type="button"
+            onClick={() => onShareLink(savedPlan)}
+            className={`w-9 h-8 border rounded-lg flex items-center justify-center transition-all ${
+              linkCopied
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-600'
+                : 'border-slate-200 hover:border-[#187fe7]/40 hover:bg-blue-50 text-slate-500 hover:text-[#187fe7]'
+            }`}
+            title="Link kopyala"
+          >
+            {linkCopied ? <Check size={12} /> : <Link2 size={12} />}
+          </button>
           <button
             type="button"
             onClick={() => onRename(savedPlan)}
@@ -185,12 +202,15 @@ const SavedPlans: React.FC = () => {
   const plans = useUserPlans();
   const { removePlan, toggleFavorite, renamePlan } = useSavedPlansStore();
   const { setPlan, setSavedPlanId } = usePlanStore();
+  const { user } = useAuthStore();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'favorites'>('all');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [linkCopiedId, setLinkCopiedId] = useState<string | null>(null);
+  const [linkLoading, setLinkLoading] = useState<string | null>(null);
 
   const filteredPlans = plans
     .filter((p) => {
@@ -215,6 +235,26 @@ const SavedPlans: React.FC = () => {
   const handleDelete = (id: string) => {
     removePlan(id);
     setDeleteConfirm(null);
+  };
+
+  const handleShareLink = async (savedPlan: SavedPlan) => {
+    if (!user || linkLoading) return;
+    setLinkLoading(savedPlan.id);
+    try {
+      await sharePlanAsLink(savedPlan.id, savedPlan.plan, savedPlan.onboardingData, {
+        uid: user.uid,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      });
+      const url = `${window.location.origin}/plan/${savedPlan.id}`;
+      await navigator.clipboard.writeText(url);
+      setLinkCopiedId(savedPlan.id);
+      setTimeout(() => setLinkCopiedId(null), 2500);
+    } catch {
+      alert('Link kopyalanamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setLinkLoading(null);
+    }
   };
 
   const startRename = (plan: SavedPlan) => {
@@ -345,6 +385,8 @@ const SavedPlans: React.FC = () => {
                   onToggleFavorite={toggleFavorite}
                   onRename={startRename}
                   onDelete={setDeleteConfirm}
+                  onShareLink={handleShareLink}
+                  linkCopied={linkCopiedId === savedPlan.id}
                 />
               ))}
             </AnimatePresence>

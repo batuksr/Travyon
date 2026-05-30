@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
 
-const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 
 const Register: React.FC = () => {
   const navigate = useNavigate();

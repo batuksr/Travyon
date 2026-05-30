@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
-import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X } from 'lucide-react';
+import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X, StickyNote } from 'lucide-react';
 import type { DailyPlan, DailyActivity } from '../services/aiService';
 import { regenerateDayWithVibe, suggestSingleActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
@@ -280,7 +280,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
    Main Component
 ════════════════════════════════════════ */
 const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
-  const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity } = usePlanStore();
+  const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity, updateActivityNote } = usePlanStore();
   const { data: tripData } = useOnboardingStore();
   const { distanceKm: distKm } = useAppSettingsStore();
   const [isRegenerating, setIsRegenerating] = useState(false);

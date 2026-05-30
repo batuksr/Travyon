@@ -23,6 +23,7 @@ export interface PublicPlan {
   createdAt:       number;   // ms timestamp
   avgRating:       number;
   ratingCount:     number;
+  feedVisible?:    boolean;  // false → sadece link ile görülebilir, community feed'de çıkmaz
   // Onboarding seçimleri (opsiyonel — eski planlar yoksa undefined)
   travelType?:          string;
   peopleCount?:         number;
@@ -85,6 +86,41 @@ export const unshareplan = async (planId: string): Promise<void> => {
   await deleteDoc(doc(db, 'publicPlans', planId));
 };
 
+/** Planı sadece link ile görülebilecek şekilde paylaşır — community feed'e çıkmaz */
+export const sharePlanAsLink = async (
+  planId: string,
+  plan: TravelPlanResponse,
+  onboardingData: OnboardingData,
+  user: { uid: string; displayName: string | null; photoURL: string | null },
+): Promise<void> => {
+  await setDoc(doc(db, 'publicPlans', planId), {
+    userId:          user.uid,
+    userDisplayName: user.displayName ?? 'Gezgin',
+    userPhotoURL:    user.photoURL ?? null,
+    destination:     plan.destination,
+    dailyPlanCount:  plan.dailyPlans.length,
+    budget:          onboardingData.budget,
+    currencySymbol:  onboardingData.currencySymbol ?? '₺',
+    tripPurpose:     onboardingData.tripPurpose ?? '',
+    createdAt:       serverTimestamp(),
+    avgRating:       0,
+    ratingCount:     0,
+    feedVisible:     false,  // community feed'den gizli
+    travelType:          onboardingData.travelType          ?? '',
+    peopleCount:         onboardingData.peopleCount         ?? 1,
+    pace:                onboardingData.pace                ?? '',
+    purposes:            onboardingData.purposes            ?? [],
+    earlyBird:           onboardingData.earlyBird           ?? false,
+    dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
+    foodPhilosophy:      onboardingData.foodPhilosophy      ?? '',
+    accommodation:       onboardingData.accommodation       ?? '',
+    transport:           onboardingData.transport           ?? '',
+    startDate:           onboardingData.startDate           ?? '',
+    endDate:             onboardingData.endDate             ?? '',
+    planData:            plan,
+  });
+};
+
 /** Paylaşılmış plandaki fotoğrafı günceller (profil foto değiştiğinde) */
 export const updatePlanPhoto = async (planId: string, photoURL: string | null): Promise<void> => {
   const { updateDoc } = await import('firebase/firestore');
@@ -133,7 +169,9 @@ export const getPublicFeed = async (limitCount = 10): Promise<PublicPlan[]> => {
     limit(limitCount),
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => toPublicPlan(d.id, d.data() as Record<string, unknown>));
+  return snap.docs
+    .map(d => toPublicPlan(d.id, d.data() as Record<string, unknown>))
+    .filter(p => p.feedVisible !== false); // link-only planları feed'den gizle
 };
 
 /* ══════════════════════════════════════════════

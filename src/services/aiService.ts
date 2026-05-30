@@ -596,6 +596,7 @@ export interface DailyActivity {
   };
   estimatedCost: number;
   actualCost?: number;
+  note?: string;
 }
 
 export interface DailyPlan {
