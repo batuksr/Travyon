@@ -290,6 +290,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
   const [travelTimes, setTravelTimes]       = useState<Record<number, TravelSegment>>({});
   const [deletingIndex, setDeletingIndex]   = useState<number | null>(null);
   const [showAddPanel, setShowAddPanel]     = useState(false);
+  const [noteIndex, setNoteIndex]           = useState<number | null>(null);
+  const [noteText, setNoteText]             = useState('');
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -393,6 +395,18 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
     addActivity(day.dayNumber, activity, insertIndex);
   };
 
+  const openNote = (index: number) => {
+    setNoteIndex(index);
+    setNoteText(day.activities[index].note ?? '');
+    setDeletingIndex(null);
+    setEditingIndex(null);
+  };
+
+  const saveNote = (index: number) => {
+    updateActivityNote(day.dayNumber, index, noteText);
+    setNoteIndex(null);
+  };
+
   return (
     <div className="flex flex-col h-full relative">
 
@@ -443,24 +457,80 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-1' : 'pb-4'}`}>
                   <div className="flex items-start gap-2">
 
-                    {/* Yer adı + açıklama */}
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => {
-                        if (isDeleting) { setDeletingIndex(null); return; }
-                        onActivityClick?.({ placeName: activity.placeName, lat: activity.coordinates.lat, lng: activity.coordinates.lng });
-                      }}
-                    >
-                      <h3 className={`text-sm font-semibold leading-tight transition-colors ${isDeleting ? 'text-red-500' : 'text-slate-900 dark:text-white hover:text-[#f8981d]'}`}>
-                        {activity.placeName}
-                      </h3>
-                      {!isDeleting && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                          {activity.description}
-                        </p>
+                    {/* Yer adı + açıklama + not */}
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => {
+                          if (isDeleting) { setDeletingIndex(null); return; }
+                          if (noteIndex === index) return;
+                          onActivityClick?.({ placeName: activity.placeName, lat: activity.coordinates.lat, lng: activity.coordinates.lng });
+                        }}
+                      >
+                        <h3 className={`text-sm font-semibold leading-tight transition-colors ${isDeleting ? 'text-red-500' : 'text-slate-900 dark:text-white hover:text-[#f8981d]'}`}>
+                          {activity.placeName}
+                        </h3>
+                        {!isDeleting && noteIndex !== index && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                            {activity.description}
+                          </p>
+                        )}
+                        {isDeleting && (
+                          <p className="text-xs text-red-400 mt-0.5 font-medium">Bu aktiviteyi silmek istiyor musun?</p>
+                        )}
+                      </div>
+
+                      {/* Mevcut not gösterimi */}
+                      {activity.note && noteIndex !== index && !isDeleting && (
+                        <div
+                          className="mt-1.5 flex items-start gap-1.5 cursor-pointer group/note"
+                          onClick={() => openNote(index)}
+                        >
+                          <StickyNote size={11} className="text-amber-400 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed line-clamp-2 group-hover/note:line-clamp-none transition-all">
+                            {activity.note}
+                          </p>
+                        </div>
                       )}
-                      {isDeleting && (
-                        <p className="text-xs text-red-400 mt-0.5 font-medium">Bu aktiviteyi silmek istiyor musun?</p>
+
+                      {/* Not düzenleme alanı */}
+                      {noteIndex === index && (
+                        <div className="mt-2">
+                          <textarea
+                            autoFocus
+                            rows={3}
+                            value={noteText}
+                            onChange={e => setNoteText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Escape') setNoteIndex(null); }}
+                            placeholder="Not ekle… (rezervasyon no, anı, ipucu...)"
+                            className="w-full text-xs px-2.5 py-2 rounded-lg border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none transition-all"
+                          />
+                          <div className="flex gap-1.5 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => saveNote(index)}
+                              className="text-[10px] font-bold px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded-lg transition-colors"
+                            >
+                              Kaydet
+                            </button>
+                            {activity.note && (
+                              <button
+                                type="button"
+                                onClick={() => { setNoteText(''); updateActivityNote(day.dayNumber, index, ''); setNoteIndex(null); }}
+                                className="text-[10px] font-semibold px-2.5 py-1 bg-white dark:bg-slate-700 text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 transition-colors"
+                              >
+                                Notu Sil
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setNoteIndex(null)}
+                              className="text-[10px] font-semibold px-2.5 py-1 bg-white dark:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                            >
+                              İptal
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
 
@@ -504,9 +574,22 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             </button>
                           </div>
 
+                          {/* Not butonu */}
+                          <button
+                            onClick={() => noteIndex === index ? setNoteIndex(null) : openNote(index)}
+                            title="Not ekle"
+                            className={`w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded transition-all ${
+                              activity.note
+                                ? 'text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                : 'text-slate-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                            }`}
+                          >
+                            <StickyNote size={13} />
+                          </button>
+
                           {/* Sil butonu */}
                           <button
-                            onClick={() => { setDeletingIndex(index); setEditingIndex(null); }}
+                            onClick={() => { setDeletingIndex(index); setEditingIndex(null); setNoteIndex(null); }}
                             title="Aktiviteyi sil"
                             className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                           >
