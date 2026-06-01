@@ -185,6 +185,17 @@ const isMealActivity = (act: DailyActivity): boolean => {
   return MEAL_KEYWORDS.some(kw => text.includes(kw));
 };
 
+/* Kahvaltıya özgü kelimeler — gün öğleden başlıyorsa bunları düşürürüz */
+const BREAKFAST_KEYWORDS = [
+  'kahvaltı', 'kahvalti', 'breakfast', 'brunch', 'serpme',
+  'fırın', 'firin', 'poğaça', 'pogaca', 'simit', 'börek', 'borek',
+  'pastane', 'bakery', 'boulangerie', 'patisserie',
+];
+const isBreakfastActivity = (act: DailyActivity): boolean => {
+  const text = `${act.placeName} ${act.description}`.toLowerCase();
+  return BREAKFAST_KEYWORDS.some(kw => text.includes(kw));
+};
+
 /**
  * Period içinde yemek aktivitelerini kullanıcı alışkanlığına göre sıralar:
  *  • Sabah / Öğle / Öğleden Sonra → önce yemek, sonra gezinti
@@ -235,6 +246,12 @@ const optimizeActivitiesForDay = (
     if (pIdx >= startIdx && pIdx <= maxIdx) {
       groups.get(act.period)!.push(act);
     } else if (pIdx < startIdx) {
+      // Gün Sabah'tan başlamıyor (öğlen/öğleden sonra varış) ve bu bir kahvaltı mekanı
+      // → öğle yemeğinin yanına kahvaltı koymak mantıksız, düşür
+      if (fallbackPeriod !== 'Sabah' && isBreakfastActivity(act)) {
+        warn(`[Optimize] Kahvaltı düşürüldü (gün ${fallbackPeriod}'den başlıyor): ${act.placeName}`);
+        continue;
+      }
       // Varıştan önce atanmış → ilk geçerli periode taşı (max 2, geri kalanı düşür)
       const fallbackGroup = groups.get(fallbackPeriod)!;
       if (fallbackGroup.length < 2) {
@@ -281,7 +298,7 @@ const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: num
   return R * 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1 - a2));
 };
 
-const MAX_GEOCODE_DEVIATION_KM = 30;
+const MAX_GEOCODE_DEVIATION_KM = 15;
 
 /* Önbellek — aynı yer için tekrar istek atmayı önler (max 500 entry) */
 const MAX_CACHE_SIZE = 500;
@@ -298,7 +315,8 @@ const setCacheEntry = (key: string, value: { lat: number; lng: number } | null) 
 
 const fetchGoogleCoordinates = async (
   placeName: string,
-  destination: string
+  destination: string,
+  bias?: { lat: number; lng: number }   // AI koordinatı — yakındaki sonuçları önceliklendir
 ): Promise<{ lat: number; lng: number } | null> => {
   const trimmedPlace = placeName.trim();
   const trimmedDest  = destination.trim();
@@ -306,7 +324,9 @@ const fetchGoogleCoordinates = async (
 
   // 1. "Mekan Adı, Şehir" şeklinde ara (en doğru sonuç)
   const query1 = trimmedDest ? `${trimmedPlace}, ${trimmedDest}` : trimmedPlace;
-  const cacheKey1 = query1.toLowerCase();
+  // Önbellek anahtarı bias bölgesini de içersin (aynı isim farklı semtte olabilir)
+  const biasKey = bias ? `@${bias.lat.toFixed(2)},${bias.lng.toFixed(2)}` : '';
+  const cacheKey1 = (query1 + biasKey).toLowerCase();
 
   if (geocodeCache.has(cacheKey1)) {
     return geocodeCache.get(cacheKey1)!;
@@ -318,6 +338,11 @@ const fetchGoogleCoordinates = async (
       url.searchParams.set('address', address);
       url.searchParams.set('key', GOOGLE_MAPS_API_KEY);
       url.searchParams.set('language', 'tr');
+      // Konum yanlılığı: AI koordinatının ~±15 km çevresine öncelik ver
+      if (bias) {
+        const d = 0.15; // ~15 km
+        url.searchParams.set('bounds', `${bias.lat - d},${bias.lng - d}|${bias.lat + d},${bias.lng + d}`);
+      }
 
       const res = await fetch(url.toString());
       if (!res.ok) {
@@ -353,7 +378,7 @@ const fetchGoogleCoordinates = async (
 
   // 2. Yalnızca mekan adıyla ara (fallback)
   if (trimmedDest) {
-    const cacheKey2 = trimmedPlace.toLowerCase();
+    const cacheKey2 = (trimmedPlace + biasKey).toLowerCase();
     if (geocodeCache.has(cacheKey2)) return geocodeCache.get(cacheKey2)!;
     result = await doRequest(trimmedPlace);
     setCacheEntry(cacheKey2, result);
@@ -381,9 +406,12 @@ const validateCoordinates = async (
 
   for (const activity of activities) {
     try {
+      // AI koordinatını bias olarak geç — Google'ın uzak/yanlış eşleşmesini önler
+      const hasAiCoord = Math.abs(activity.coordinates.lat) > 0.001 || Math.abs(activity.coordinates.lng) > 0.001;
       const verifiedCoordinates = await fetchGoogleCoordinates(
         activity.placeName,
-        trimmedDestination
+        trimmedDestination,
+        hasAiCoord ? activity.coordinates : undefined,
       );
 
       if (verifiedCoordinates) {
@@ -565,6 +593,7 @@ VARIŞ GÜNÜ (${arrivalDate}, saat ${arrivalTime}):
 - Varış 14:00–17:59 arası → "Öğleden Sonra"dan başla, SADECE 2-3 aktivite üret
 - Varış 18:00–20:59 arası → "Akşam"dan başla, SADECE 1-2 aktivite üret
 - Varış 21:00 ve sonrası → "Gece"den başla, 1 aktivite (hafif yemek)
+⚠️ KAHVALTI KURALI: Kahvaltı / fırın / poğaça / serpme kahvaltı mekanları SADECE "Sabah" periyodunda olabilir. Eğer gün "Öğle" veya daha geç başlıyorsa (öğleden sonra varış) KAHVALTI mekanı EKLEME — o günün ilk yemeği ÖĞLE YEMEĞİ (restoran/lokanta) olmalı. Kahvaltıdan hemen sonra öğle yemeği ASLA koyma.
 DÖNÜŞ GÜNÜ (${departureDate}, saat ${departureTime}):
 - Ayrılış 08:00'den önce → O günü plana EKLEME
 - Ayrılış 08:00–11:59 → "Sabah" 1 aktivite max (kahvaltı)

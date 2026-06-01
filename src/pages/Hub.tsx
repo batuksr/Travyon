@@ -28,29 +28,29 @@ const getGreeting = (): { text: string; emoji: string } => {
   return                         { text: 'İyi Geceler',  emoji: '🌙' };
 };
 
-/* ── Weather helpers (wttr.in codes) ── */
+/* ── Weather helpers (open-meteo WMO codes) ── */
 const weatherIcon = (code: number) => {
-  if (code === 113) return '☀️';
-  if (code === 116) return '🌤️';
-  if (code === 119 || code === 122) return '☁️';
-  if ([143, 248, 260].includes(code)) return '🌫️';
-  if ([176, 263, 266, 293, 296, 353].includes(code)) return '🌦️';
-  if ([299, 302, 305, 308, 356, 359].includes(code)) return '🌧️';
-  if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371].includes(code)) return '❄️';
-  if ([200, 386, 389, 392, 395].includes(code)) return '⛈️';
+  if (code === 0) return '☀️';
+  if (code === 1 || code === 2) return '🌤️';
+  if (code === 3) return '☁️';
+  if ([45, 48].includes(code)) return '🌫️';
+  if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+  if ([95, 96, 99].includes(code)) return '⛈️';
   return '🌡️';
 };
 const weatherLabel = (code: number) => {
-  if (code === 113) return 'Açık Hava';
-  if (code === 116) return 'Az Bulutlu';
-  if (code === 119) return 'Bulutlu';
-  if (code === 122) return 'Kapalı';
-  if ([143, 248, 260].includes(code)) return 'Sisli';
-  if ([263, 266, 293, 296].includes(code)) return 'Çiseleyen';
-  if ([176, 299, 302, 305, 308, 353, 356, 359].includes(code)) return 'Yağmurlu';
-  if ([182, 185, 281, 284, 311, 314, 317, 320, 362, 365].includes(code)) return 'Sağanak';
-  if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371].includes(code)) return 'Karlı';
-  if ([200, 386, 389, 392, 395].includes(code)) return 'Fırtınalı';
+  if (code === 0) return 'Açık Hava';
+  if (code === 1) return 'Az Bulutlu';
+  if (code === 2) return 'Parçalı Bulutlu';
+  if (code === 3) return 'Kapalı';
+  if ([45, 48].includes(code)) return 'Sisli';
+  if ([51, 53, 55, 56, 57].includes(code)) return 'Çiseleyen';
+  if ([61, 63, 65, 66, 67].includes(code)) return 'Yağmurlu';
+  if ([80, 81, 82].includes(code)) return 'Sağanak';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Karlı';
+  if ([95, 96, 99].includes(code)) return 'Fırtınalı';
   return 'Değişken';
 };
 
@@ -545,23 +545,34 @@ const Hub: React.FC = () => {
     (async () => {
       try {
         const alias      = GEO_ALIASES[cityName.toLowerCase()];
-        const candidates = [alias, cityName, nextTrip?.plan.destination]
+        const candidates = [alias, cityName, nextTrip?.plan.destination?.split(',')[0]]
           .filter(Boolean) as string[];
 
         for (const candidate of candidates) {
           try {
-            const res = await withTimeout(
-              fetch(`https://wttr.in/${encodeURIComponent(candidate)}?format=j1`),
+            // 1) Şehri koordinata çevir (open-meteo geocoding — ücretsiz, güvenilir)
+            const geoRes = await withTimeout(
+              fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=tr&format=json`),
               8000,
             );
-            if (!res.ok) continue;
-            const data = await res.json();
-            const cur  = data?.current_condition?.[0];
+            if (!geoRes.ok) continue;
+            const geoData = await geoRes.json();
+            const place   = geoData?.results?.[0];
+            if (!place) continue;
+
+            // 2) Güncel hava durumunu al
+            const wRes = await withTimeout(
+              fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current_weather=true`),
+              8000,
+            );
+            if (!wRes.ok) continue;
+            const wData = await wRes.json();
+            const cur   = wData?.current_weather;
             if (cur) {
               setWeather({
-                temp:      parseInt(cur.temp_C,        10),
-                code:      parseInt(cur.weatherCode,   10),
-                windspeed: parseInt(cur.windspeedKmph, 10),
+                temp:      Math.round(cur.temperature),
+                code:      cur.weathercode,
+                windspeed: Math.round(cur.windspeed),
               });
               return;
             }

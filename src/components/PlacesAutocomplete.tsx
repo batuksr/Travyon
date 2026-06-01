@@ -259,15 +259,78 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     }
   }, []);
 
-  /* ── Places API isteği ── */
-  const fetchPredictions = useCallback((query: string) => {
+  /* ── Sonuçları state'e yaz ── */
+  const applyPredictions = useCallback((preds: Prediction[]) => {
+    if (!isMountedRef.current) return;
+    if (preds.length > 0) {
+      setPredictions(preds);
+      setNoResults(false);
+    } else {
+      setPredictions([]);
+      setNoResults(true);
+    }
+    setIsOpen(true);
+    setActiveIndex(-1);
+  }, []);
+
+  /* ── YENİ Places API (AutocompleteSuggestion) ── */
+  const fetchNew = useCallback(async (query: string, countryCode?: string): Promise<Prediction[] | null> => {
+    const places = window.google?.maps?.places as unknown as {
+      AutocompleteSuggestion?: {
+        fetchAutocompleteSuggestions: (req: Record<string, unknown>) => Promise<{ suggestions: Array<{ placePrediction?: { placeId: string; mainText?: { text: string }; secondaryText?: { text: string }; text?: { text: string } } }> }>;
+      };
+    };
+    if (!places?.AutocompleteSuggestion) return null; // yeni API yok → legacy'ye düş
+
+    const req: Record<string, unknown> = {
+      input: query,
+      sessionToken: sessionTokenRef.current ?? undefined,
+    };
+    if (countryCode) req.includedRegionCodes = [countryCode];
+
+    const res = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+    return (res.suggestions ?? [])
+      .filter(s => s.placePrediction)
+      .map(s => ({
+        placeId:       s.placePrediction!.placeId,
+        mainText:      s.placePrediction!.mainText?.text ?? s.placePrediction!.text?.text ?? '',
+        secondaryText: s.placePrediction!.secondaryText?.text ?? '',
+      }));
+  }, []);
+
+  /* ── ESKİ Places API (AutocompleteService) — fallback ── */
+  const fetchLegacy = useCallback((query: string, countryCode?: string): Promise<Prediction[]> => {
+    return new Promise((resolve) => {
+      if (!ensureServices() || !autocompleteServiceRef.current) { resolve([]); return; }
+      const request: google.maps.places.AutocompletionRequest = {
+        input: query,
+        types: ['establishment'],
+        sessionToken: sessionTokenRef.current ?? undefined,
+      };
+      if (countryCode) request.componentRestrictions = { country: countryCode };
+      autocompleteServiceRef.current.getPlacePredictions(request, (results, status) => {
+        const ok = window.google.maps.places.PlacesServiceStatus.OK;
+        if (status === ok && results) {
+          resolve(results.map((r) => ({
+            placeId:       r.place_id,
+            mainText:      r.structured_formatting.main_text,
+            secondaryText: r.structured_formatting.secondary_text || '',
+          })));
+        } else {
+          resolve([]);
+        }
+      });
+    });
+  }, [ensureServices]);
+
+  /* ── Ana istek: önce yeni API, olmazsa eski; her durumda spinner kapanır ── */
+  const fetchPredictions = useCallback(async (query: string) => {
     if (query.length < 3) {
       setPredictions([]); setNoResults(false); setIsOpen(false);
       return;
     }
-
-    if (!ensureServices()) {
-      console.warn('[PlacesAutocomplete] Servisler hazır değil, atlanıyor.');
+    if (!window.google?.maps?.places) {
+      console.warn('[PlacesAutocomplete] Google Maps places yüklü değil.');
       return;
     }
 
@@ -275,39 +338,37 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     setNoResults(false);
 
     const countryCode = destination ? getCountryCode(destination) : undefined;
-    // NOT: AutocompleteService geçerli tipler → 'establishment' | 'geocode' | 'address'
-    // 'lodging' doğrudan tip olarak geçersiz — bunun yerine 'establishment' kullan.
-    const request: google.maps.places.AutocompletionRequest = {
-      input: query,
-      types: ['establishment'],
-      sessionToken: sessionTokenRef.current ?? undefined,
-    };
-    if (countryCode) request.componentRestrictions = { country: countryCode };
 
-    autocompleteServiceRef.current!.getPlacePredictions(request, (results, status) => {
-      if (!isMountedRef.current) return;
-      setIsLoading(false);
+    // 8 sn güvenlik zaman aşımı — hiçbir koşulda spinner takılı kalmaz
+    let settled = false;
+    const safety = setTimeout(() => {
+      if (!settled && isMountedRef.current) { setIsLoading(false); applyPredictions([]); }
+    }, 8000);
 
-      const ok = window.google.maps.places.PlacesServiceStatus.OK;
-      if (status !== ok) {
-        console.warn('[PlacesAutocomplete] getPlacePredictions status:', status);
+    try {
+      let preds = await fetchNew(query, countryCode);
+      if (preds === null) {
+        // yeni API mevcut değil → eski API'yi dene
+        preds = await fetchLegacy(query, countryCode);
       }
-      if (status === ok && results && results.length > 0) {
-        setPredictions(results.map((r) => ({
-          placeId:       r.place_id,
-          mainText:      r.structured_formatting.main_text,
-          secondaryText: r.structured_formatting.secondary_text || '',
-        })));
-        setNoResults(false);
-        setIsOpen(true);
-        setActiveIndex(-1);
-      } else {
-        setPredictions([]);
-        setNoResults(true);
-        setIsOpen(true);
+      settled = true;
+      clearTimeout(safety);
+      if (isMountedRef.current) { setIsLoading(false); applyPredictions(preds); }
+    } catch (err) {
+      // yeni API hata verdiyse eski API'yi dene
+      console.warn('[PlacesAutocomplete] Yeni API hatası, legacy deneniyor:', err);
+      try {
+        const preds = await fetchLegacy(query, countryCode);
+        settled = true;
+        clearTimeout(safety);
+        if (isMountedRef.current) { setIsLoading(false); applyPredictions(preds); }
+      } catch {
+        settled = true;
+        clearTimeout(safety);
+        if (isMountedRef.current) { setIsLoading(false); applyPredictions([]); }
       }
-    });
-  }, [destination, ensureServices]);
+    }
+  }, [destination, fetchNew, fetchLegacy, applyPredictions]);
 
   /* ── Input değişimi ── */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,38 +379,78 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     debounceRef.current = setTimeout(() => fetchPredictions(val), 300);
   };
 
-  /* ── Öneri seçimi ── */
-  const handleSelectPrediction = useCallback((pred: Prediction, index: number) => {
-    if (!placesServiceRef.current) return;
-
+  /* ── Öneri seçimi: yeni Place API → legacy getDetails → koordinatsız ── */
+  const handleSelectPrediction = useCallback(async (pred: Prediction, index: number) => {
     setFlashIndex(index);
     setTimeout(() => { if (isMountedRef.current) setFlashIndex(null); }, 200);
     setIsOpen(false);
     setActiveIndex(-1);
     setInputValue(pred.mainText);
 
-    const req: google.maps.places.PlaceDetailsRequest = {
-      placeId: pred.placeId,
-      fields:  ['name', 'formatted_address', 'geometry'],
-      sessionToken: sessionTokenRef.current ?? undefined,
-    };
-    sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
-
-    placesServiceRef.current.getDetails(req, (result, status) => {
+    const finish = (name: string, address: string, lat: number, lng: number) => {
       if (!isMountedRef.current) return;
-      const ok = window.google.maps.places.PlacesServiceStatus.OK;
-      if (status === ok && result) {
-        const lat     = result.geometry?.location?.lat() ?? 0;
-        const lng     = result.geometry?.location?.lng() ?? 0;
-        const name    = result.name ?? pred.mainText;
-        const address = result.formatted_address ?? pred.secondaryText;
-        setInputValue(`${name}, ${address}`);
-        onChange({ name, address, lat, lng });
-      } else {
-        console.warn('[PlacesAutocomplete] getDetails başarısız, koordinatsız devam.');
-        onChange({ name: pred.mainText, address: pred.secondaryText, lat: 0, lng: 0 });
+      setInputValue(address ? `${name}, ${address}` : name);
+      onChange({ name, address, lat, lng });
+    };
+
+    // Oturum tokenını yenile (yeni arama için)
+    const renewToken = () => {
+      try { sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken(); } catch { /* yoksay */ }
+    };
+
+    // 1) YENİ API: Place.fetchFields
+    const PlaceCls = (window.google?.maps?.places as unknown as {
+      Place?: new (opts: { id: string }) => {
+        fetchFields: (req: { fields: string[] }) => Promise<unknown>;
+        displayName?: string;
+        formattedAddress?: string;
+        location?: { lat: () => number; lng: () => number };
+      };
+    })?.Place;
+
+    if (PlaceCls) {
+      try {
+        const place = new PlaceCls({ id: pred.placeId });
+        await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+        renewToken();
+        finish(
+          place.displayName ?? pred.mainText,
+          place.formattedAddress ?? pred.secondaryText,
+          place.location?.lat() ?? 0,
+          place.location?.lng() ?? 0,
+        );
+        return;
+      } catch (err) {
+        console.warn('[PlacesAutocomplete] Yeni Place.fetchFields hatası, legacy deneniyor:', err);
       }
-    });
+    }
+
+    // 2) LEGACY: PlacesService.getDetails
+    if (placesServiceRef.current) {
+      const req: google.maps.places.PlaceDetailsRequest = {
+        placeId: pred.placeId,
+        fields:  ['name', 'formatted_address', 'geometry'],
+        sessionToken: sessionTokenRef.current ?? undefined,
+      };
+      renewToken();
+      placesServiceRef.current.getDetails(req, (result, status) => {
+        const ok = window.google.maps.places.PlacesServiceStatus.OK;
+        if (status === ok && result) {
+          finish(
+            result.name ?? pred.mainText,
+            result.formatted_address ?? pred.secondaryText,
+            result.geometry?.location?.lat() ?? 0,
+            result.geometry?.location?.lng() ?? 0,
+          );
+        } else {
+          finish(pred.mainText, pred.secondaryText, 0, 0);
+        }
+      });
+      return;
+    }
+
+    // 3) Hiçbiri yoksa koordinatsız devam (AI yine de adres metnini kullanır)
+    finish(pred.mainText, pred.secondaryText, 0, 0);
   }, [onChange]);
 
   /* ── Klavye navigasyonu ── */

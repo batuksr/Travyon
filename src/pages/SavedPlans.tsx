@@ -9,7 +9,7 @@ import {
 import { useSavedPlansStore, useUserPlans, type SavedPlan } from '../store/useSavedPlansStore';
 import { usePlanStore } from '../store/usePlanStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { sharePlanAsLink } from '../services/socialService';
+import { sharePlanAsLink, unshareplan } from '../services/socialService';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
@@ -235,6 +235,8 @@ const SavedPlans: React.FC = () => {
   const handleDelete = (id: string) => {
     removePlan(id);
     setDeleteConfirm(null);
+    // Plan paylaşılmışsa topluluktan da kaldır (paylaşılmamışsa no-op)
+    unshareplan(id).catch(() => { /* paylaşılmamış olabilir, sessizce geç */ });
   };
 
   const handleShareLink = async (savedPlan: SavedPlan) => {

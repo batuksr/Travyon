@@ -65,15 +65,17 @@ const Community: React.FC = () => {
       if (planIds.length) {
         getUserRatings(user.uid, planIds).then(setUserRatings).catch(() => {});
       }
-      // Eski paylaşımlardaki fotoğrafı arka planda güncelle
+      // Eski paylaşımlardaki isim/fotoğrafı arka planda güncelle
       const latestPhoto = useAppSettingsStore.getState().photoURL || user.photoURL || null;
-      feed
-        .filter(p => p.userId === user.uid && p.userPhotoURL !== latestPhoto)
-        .forEach(p => {
-          import('../services/socialService').then(({ updatePlanPhoto }) =>
-            updatePlanPhoto(p.id, latestPhoto).catch(() => {})
-          );
-        });
+      const latestName  = user.displayName ?? 'Gezgin';
+      const needsSync = feed.some(p =>
+        p.userId === user.uid && (p.userPhotoURL !== latestPhoto || p.userDisplayName !== latestName)
+      );
+      if (needsSync) {
+        import('../services/socialService').then(({ syncSharedPlansIdentity }) =>
+          syncSharedPlansIdentity(user.uid, latestName, latestPhoto).catch(() => {})
+        );
+      }
     })
     .catch(() => setFeedError(true))
     .finally(() => setFeedLoading(false));
@@ -403,9 +405,6 @@ const Community: React.FC = () => {
                       {/* İsim */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-800 truncate">{profile.displayName}</p>
-                        {profile.email && (
-                          <p className="text-xs text-slate-400 truncate">{profile.email}</p>
-                        )}
                       </div>
                       {/* Takipten çık — onay popup */}
                       {isPending ? (

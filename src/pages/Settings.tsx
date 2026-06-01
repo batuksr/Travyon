@@ -505,7 +505,13 @@ const Settings: React.FC = () => {
     setProfileLoading(true); setProfileStatus(null);
     try {
       if ('displayName' in data) {
-        await updateProfile(auth.currentUser, { displayName: data.displayName as string });
+        const newName = data.displayName as string;
+        await updateProfile(auth.currentUser, { displayName: newName });
+        // Paylaşılmış planlardaki ismi de güncelle (toplulukta yansısın)
+        const currentPhoto = useAppSettingsStore.getState().photoURL || auth.currentUser.photoURL || null;
+        import('../services/socialService').then(({ syncSharedPlansIdentity }) =>
+          syncSharedPlansIdentity(user.uid, newName, currentPhoto).catch(() => {})
+        );
       }
       await setDoc(doc(db, 'users', user.uid), data, { merge: true });
       setProfileStatus({ type: 'success', message: 'Kaydedildi.' });

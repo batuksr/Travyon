@@ -168,9 +168,6 @@ const Sidebar: React.FC = () => {
               <p className="text-xs font-bold text-slate-900 truncate">
                 {user.displayName || 'Kullanıcı'}
               </p>
-              <p className="text-[10px] text-slate-500 truncate">
-                {user.email}
-              </p>
             </div>
           </div>
         )}

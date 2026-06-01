@@ -127,6 +127,26 @@ export const updatePlanPhoto = async (planId: string, photoURL: string | null): 
   await updateDoc(doc(db, 'publicPlans', planId), { userPhotoURL: photoURL ?? null });
 };
 
+/** Kullanıcının TÜM paylaşılmış planlarında isim/foto bilgisini günceller
+ *  (profil adı veya fotoğrafı değiştiğinde toplulukta da yansısın) */
+export const syncSharedPlansIdentity = async (
+  userId: string,
+  displayName: string | null,
+  photoURL: string | null,
+): Promise<void> => {
+  const { updateDoc } = await import('firebase/firestore');
+  const q = query(collection(db, 'publicPlans'), where('userId', '==', userId));
+  const snap = await getDocs(q);
+  await Promise.all(
+    snap.docs.map(d =>
+      updateDoc(doc(db, 'publicPlans', d.id), {
+        userDisplayName: displayName ?? 'Gezgin',
+        userPhotoURL:    photoURL ?? null,
+      }).catch(() => { /* tek tek hatayı yoksay */ })
+    )
+  );
+};
+
 export const getMySharedPlanIds = async (userId: string): Promise<Set<string>> => {
   const q = query(collection(db, 'publicPlans'), where('userId', '==', userId));
   const snap = await getDocs(q);
