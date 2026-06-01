@@ -267,16 +267,20 @@ const optimizeActivitiesForDay = (
   }
 
   // Her grup: TSP (coğrafi sıra) → yemek yerleştirme → period damgası
+  // lastPos: bir önceki periyodun bitiş koordinatı → yeni periyod en yakın aktiviteden başlar
   const result: DailyActivity[] = [];
+  let lastPos: { lat: number; lng: number } | undefined = undefined;
   for (let i = startIdx; i <= maxIdx; i++) {
     const period = PERIOD_ORDER[i];
     const groupActs = groups.get(period) ?? [];
     if (groupActs.length === 0) continue;
-    const tspSorted  = optimizeRouteTSP(groupActs);
+    const tspSorted  = optimizeRouteTSP(groupActs, lastPos);
     const mealSorted = sortMealsInPeriod(tspSorted, period); // yemek pozisyonu düzelt
     for (const act of mealSorted) {
       result.push({ ...act, period });
     }
+    // Bu periyodun son aktivitesinin konumunu bir sonraki periyod için sakla
+    lastPos = mealSorted[mealSorted.length - 1]?.coordinates;
   }
 
   return result;
