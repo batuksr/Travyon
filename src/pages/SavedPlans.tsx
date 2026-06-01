@@ -10,6 +10,7 @@ import { useSavedPlansStore, useUserPlans, type SavedPlan } from '../store/useSa
 import { usePlanStore } from '../store/usePlanStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { sharePlanAsLink, unshareplan } from '../services/socialService';
+import { isEmailVerified, resendVerification } from '../utils/authUtils';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
@@ -241,6 +242,12 @@ const SavedPlans: React.FC = () => {
 
   const handleShareLink = async (savedPlan: SavedPlan) => {
     if (!user || linkLoading) return;
+    // E-posta doğrulama — link paylaşmak için zorunlu
+    if (!(await isEmailVerified())) {
+      resendVerification().catch(() => {});
+      alert('Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.');
+      return;
+    }
     setLinkLoading(savedPlan.id);
     try {
       await sharePlanAsLink(savedPlan.id, savedPlan.plan, savedPlan.onboardingData, {

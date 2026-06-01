@@ -285,6 +285,29 @@ const NAV_GROUPS: { label: string; items: { id: Section; icon: LucideIcon; label
   },
 ];
 
+/* Sunum bileşenleri — modül seviyesinde (render içinde tanımlanırsa input focus kaybeder) */
+const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label?: string; disabled?: boolean }> = ({
+  onClick, loading, label = 'Kaydet', disabled = false,
+}) => (
+  <button
+    type="button" onClick={onClick} disabled={loading || disabled}
+    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-[#f8981d] hover:bg-[#e08518] text-white shadow-md shadow-[#f8981d]/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+  >
+    {loading && <Loader2 size={14} className="animate-spin" />}
+    {label}
+  </button>
+);
+
+const CardWrap: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
+  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+    <div className="mb-5">
+      <h2 className="font-bold text-slate-900 dark:text-white text-lg">{title}</h2>
+      {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+    </div>
+    {children}
+  </div>
+);
+
 /* ══════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════ */
@@ -767,28 +790,6 @@ const Settings: React.FC = () => {
     ${err
       ? 'border-rose-200 focus:border-rose-300 focus:ring-2 focus:ring-rose-200/30'
       : 'border-slate-200 dark:border-slate-700 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10'}`;
-
-  const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label?: string; disabled?: boolean }> = ({
-    onClick, loading, label = 'Kaydet', disabled = false,
-  }) => (
-    <button
-      type="button" onClick={onClick} disabled={loading || disabled}
-      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-[#f8981d] hover:bg-[#e08518] text-white shadow-md shadow-[#f8981d]/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-    >
-      {loading && <Loader2 size={14} className="animate-spin" />}
-      {label}
-    </button>
-  );
-
-  const CardWrap: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
-      <div className="mb-5">
-        <h2 className="font-bold text-slate-900 dark:text-white text-lg">{title}</h2>
-        {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
-      </div>
-      {children}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-950 flex flex-col">

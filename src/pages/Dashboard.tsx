@@ -30,6 +30,7 @@ import WeatherView from '../components/WeatherView';
 import { exportPlanAsPDF } from '../utils/exportPDF';
 import { sharePlanAsLink } from '../services/socialService';
 import { useAuthStore } from '../store/useAuthStore';
+import { isEmailVerified, resendVerification } from '../utils/authUtils';
 
 const Dashboard: React.FC = () => {
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
@@ -177,6 +178,12 @@ const Dashboard: React.FC = () => {
 
   const handleShareLink = async () => {
     if (!plan || !user || !savedPlanId) return;
+    // E-posta doğrulama — link paylaşmak için zorunlu
+    if (!(await isEmailVerified())) {
+      resendVerification().catch(() => {});
+      alert('Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.');
+      return;
+    }
     try {
       await sharePlanAsLink(savedPlanId, plan, onboardingData, {
         uid: user.uid, displayName: user.displayName, photoURL: user.photoURL,

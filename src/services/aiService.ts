@@ -25,8 +25,9 @@ const getFriendlyError = (msg: string): string => {
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
-  // Flash önce (güvenilir), Pro fallback (bazı hesaplarda erişim kısıtlı olabilir)
-  const models = ['gemini-2.5-flash', 'gemini-2.5-pro'];
+  // Sadece flash — free tier'da pro çalışmaz, gereksiz başarısız denemeleri önler.
+  // Flash de meşgulse yedek olarak 1.5-flash denenir (o da ücretsiz).
+  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
   let lastError;
 
   for (const modelName of models) {
@@ -599,6 +600,7 @@ DÖNÜŞ GÜNÜ (${departureDate}, saat ${departureTime}):
 - Ayrılış 08:00–11:59 → "Sabah" 1 aktivite max (kahvaltı)
 - Ayrılış 12:00–15:59 → "Sabah" 2 aktivite
 - Ayrılış 16:00 ve sonrası → "Sabah" + "Öğle" 3 aktivite
+⚠️ DÖNÜŞ GÜNÜ MESAFE KURALI: Kişi o gün yola çıkacak. Aktiviteler MUTLAKA konaklama/şehir merkezine YAKIN (max 10-15 dk) olmalı. Şehir dışı uzak geziler (şelale, kasaba, doğa rotası, 30+ dk mesafedeki yerler) ASLA dönüş gününe KOYMA. Düşük tempo, rahat, valiz toplamaya zaman bırakan bir gün olsun.
 NORMAL GÜNLER: "Sabah"tan başla, tam 5-6 aktivite üret.`;
 
 const getCityContext = (destination: string): string => {
@@ -886,6 +888,7 @@ ${getFlexiblePeriodSchedulingRule(data.startDate, data.arrivalTime, data.endDate
 - Şehrin doğu/batı uçlarını aynı güne KOYMA
 - Lat/Lng GERÇEK koordinatlar (denizde nokta olmaz)
 - Bilmediğin mekanlar için ünlü gerçek mekanlar tercih et
+- ŞEHİR DIŞI / UZAK GEZİLERİN GÜN DAĞILIMI (KRİTİK): Şehre 30+ dk mesafedeki uzak geziler (şelale, kasaba, doğa rotası, day-trip) SADECE seyahatin ORTA günlerine konur. İLK GÜN (varış) ve SON GÜN (dönüş) ASLA uzak geziye ayrılmaz — bu günler şehir merkezine yakın, düşük tempolu olmalı. Mantık: kişi vardığı ve ayrıldığı gün uzağa gidip dönemez; uzak yerler tatilin ortasında, enerji ve zaman varken gezilir.
 
 8️⃣ GÜNLÜK YEMEKLERİN SIRASI (activities dizisindeki sıra bu kuralı yansıtmalı):
 - Sabah periyodu: kahvaltı/kafe/fırın mekânı DAİMA DİZİNİN İLK ELEMANı olsun; ardından turistik aktiviteler

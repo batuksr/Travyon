@@ -54,7 +54,7 @@ const defaults: AppSettingsData = {
   pushSoundEnabled: true,
   pushPermission: 'default',
   profilePublic: true,
-  plansPublic: false,
+  plansPublic: true,
   followPublic: true,
   locationEnabled: true,
   locationHistory: false,

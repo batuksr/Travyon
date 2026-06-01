@@ -80,9 +80,12 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/plan/');
 
-  /* Dashboard'da sidebar yok, margin da yok */
-  const showSidebar   = isAuthenticated && !isDashboard;
-  const showBottomNav = isAuthenticated && !isDashboard;
+  /* Sidebar/alt nav gösterilmeyecek sayfalar — Dashboard, auth ve genel sayfalar */
+  const noChromePaths = ['/login', '/register', '/', '/sss', '/gizlilik', '/kullanim-kosullari', '/iletisim'];
+  const hideChrome = isDashboard || noChromePaths.includes(location.pathname);
+
+  const showSidebar   = isAuthenticated && !hideChrome;
+  const showBottomNav = isAuthenticated && !hideChrome;
 
   return (
     <div className="flex min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
@@ -170,7 +173,7 @@ function App() {
             pushSoundEnabled:   d.pushSoundEnabled     ?? true,
             pushPermission:     pushPerm,
             profilePublic:      d.profilePublic        ?? true,
-            plansPublic:        d.plansPublic          ?? false,
+            plansPublic:        d.plansPublic          ?? true,
             followPublic:       d.followPublic         ?? true,
             locationEnabled:    d.locationEnabled      ?? true,
             locationHistory:    d.locationHistory      ?? false,

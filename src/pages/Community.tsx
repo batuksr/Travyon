@@ -13,6 +13,7 @@ import {
   type PublicPlan, type UserProfile,
 } from '../services/socialService';
 import { PublicPlanCard } from '../components/PublicPlanCard';
+import { isEmailVerified, resendVerification } from '../utils/authUtils';
 
 const FEED_INITIAL = 3;
 
@@ -97,6 +98,13 @@ const Community: React.FC = () => {
   /* Social handlers */
   const handleShare = useCallback(async (planId: string) => {
     if (!user) return;
+    // E-posta doğrulama — paylaşmak için zorunlu (geri alma serbest)
+    if (!sharedPlanIds.has(planId) && !(await isEmailVerified())) {
+      resendVerification().catch(() => {});
+      setShareError('Plan paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.');
+      setTimeout(() => setShareError(null), 6000);
+      return;
+    }
     // Gizlilik ayarı — plan paylaşımı kapalı, sadece geri almaya izin ver
     if (!plansPublic && !sharedPlanIds.has(planId)) {
       setShareError('Plan paylaşımı gizlilik ayarlarınızda kapalı. Ayarlar → Gizlilik → Planlarım herkese açık seçeneğini etkinleştirin.');

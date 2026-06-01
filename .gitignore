@@ -29,8 +29,3 @@ public/videos/*.mp4
 public/videos/*.webm
 public/videos/*.mov
 
-# Geçici script/çıktı dosyaları
-fill_docx.py
-read_docx.py
-fill_pptx.py
-*.docx

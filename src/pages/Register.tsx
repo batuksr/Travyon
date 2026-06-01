@@ -1,10 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User, MailCheck, RefreshCw, Check } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
+import { useAuthStore } from '../store/useAuthStore';
 
 
 const Register: React.FC = () => {
@@ -15,6 +16,14 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { setUser } = useAuthStore();
+
+  /* E-posta doğrulama popup durumu */
+  const [showVerify, setShowVerify]   = useState(false);
+  const [checking, setChecking]       = useState(false);
+  const [resending, setResending]     = useState(false);
+  const [resent, setResent]           = useState(false);
+  const [verifyMsg, setVerifyMsg]     = useState('');
 
   // Redirect sonucu al (mobil Google kaydı sonrası)
   useEffect(() => {
@@ -37,7 +46,13 @@ const Register: React.FC = () => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
-      navigate('/onboarding');
+      // Doğrulama maili gönder — doğrulayınca uygulamaya geri dönsün
+      sendEmailVerification(cred.user, {
+        url: `${window.location.origin}/hub`,
+        handleCodeInApp: false,
+      }).catch(() => { /* sessizce geç */ });
+      // Navigate yerine doğrulama popup'ı göster
+      setShowVerify(true);
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string };
       if (firebaseErr.code === 'auth/email-already-in-use') setError('Bu e-posta zaten kayıtlı.');
@@ -73,8 +88,109 @@ const Register: React.FC = () => {
     }
   };
 
+  /* Doğrulama popup — "Doğruladım" kontrolü */
+  const handleVerifyCheck = async () => {
+    if (!auth.currentUser || checking) return;
+    setVerifyMsg('');
+    setChecking(true);
+    try {
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        setUser(auth.currentUser);
+        navigate('/onboarding');
+      } else {
+        setVerifyMsg('Henüz doğrulanmamış. Mailindeki linke tıkladın mı? (Spam klasörüne de bak)');
+      }
+    } catch {
+      setVerifyMsg('Kontrol edilemedi, tekrar dene.');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  /* Doğrulama popup — maili tekrar gönder */
+  const handleVerifyResend = async () => {
+    if (!auth.currentUser || resending) return;
+    setVerifyMsg('');
+    setResending(true);
+    try {
+      await sendEmailVerification(auth.currentUser, {
+        url: `${window.location.origin}/hub`,
+        handleCodeInApp: false,
+      });
+      setResent(true);
+      setTimeout(() => setResent(false), 4000);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      setVerifyMsg(code === 'auth/too-many-requests'
+        ? 'Çok fazla istek — birkaç dakika sonra dene.'
+        : 'Mail gönderilemedi, tekrar dene.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
+
+      {/* ── E-POSTA DOĞRULAMA POPUP ── */}
+      {showVerify && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#f8981d]/10 flex items-center justify-center">
+              <MailCheck size={30} className="text-[#f8981d]" />
+            </div>
+            <h2 className="text-xl font-extrabold text-slate-900 mb-1.5">E-postanı Doğrula</h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-1">
+              <span className="font-semibold text-slate-700">{email}</span> adresine bir doğrulama linki gönderdik.
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed mb-6">
+              Mailindeki linke tıkla, sonra aşağıdaki <span className="font-semibold">"Doğruladım"</span> butonuna bas.
+              <br />📥 Mail gelmedi mi? <span className="font-semibold">Spam / Gereksiz</span> klasörüne bak.
+            </p>
+
+            {verifyMsg && (
+              <p className="text-xs text-rose-500 font-medium mb-4 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+                {verifyMsg}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleVerifyCheck}
+              disabled={checking}
+              className="w-full py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-60 shadow-lg shadow-[#f8981d]/30 mb-2.5"
+            >
+              {checking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+              Doğruladım, Devam Et
+            </button>
+
+            <button
+              type="button"
+              onClick={handleVerifyResend}
+              disabled={resending || resent}
+              className="w-full py-2.5 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-600 font-semibold rounded-xl flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-60"
+            >
+              {resending ? <Loader2 size={15} className="animate-spin" />
+                : resent ? <><Check size={15} className="text-emerald-500" /> Gönderildi</>
+                : <><RefreshCw size={15} /> Maili Tekrar Gönder</>}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/onboarding')}
+              className="mt-4 text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+            >
+              Daha sonra doğrularım →
+            </button>
+          </motion.div>
+        </div>
+      )}
+
       {/* Sol Panel — Fotoğraf */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
         <img
