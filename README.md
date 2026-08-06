@@ -1,73 +1,106 @@
-# React + TypeScript + Vite
+# 🧭 Travyon — Yapay Zeka Destekli Seyahat Planlayıcı
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Travyon; yurt dışına seyahat eden kullanıcıları önce derinlemesine tanıyan, ardından bu kişisel profile göre coğrafi olarak optimize edilmiş, tamamen kişiye özel günlük seyahat planları oluşturan bir web uygulamasıdır.
 
-Currently, two official plugins are available:
+Google Maps, TripAdvisor veya Wanderlog gibi araçlar yalnızca destinasyon ve tarih bilgisiyle herkese benzer planlar üretir. Travyon ise kullanıcının tatil amacını, günlük temposunu, yeme-içme profilini ve konfor tercihlerini öğrenerek plan oluşturur ve bu planı akıllı rota optimizasyonuyla şehrin coğrafyasına göre sıralar.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> "Diğer uygulamalar destinasyon sorar. Travyon insanı tanır — sonra şehri de onun için optimize eder."
 
-## React Compiler
+## ✨ Öne Çıkan Özellikler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Kişiselleştirilmiş Onboarding** — 4 kategoride (temel bilgiler, tatil amacı/tempo, yeme-içme profili, konfor/ulaşım) sorularla kullanıcı profili çıkarılır.
+- **Uzlaşı Modu (Multiplayer Onboarding)** — Grup/aile seyahatlerinde her katılımcı kendi tercihlerini girer, plan tüm grubun ortak noktasına göre optimize edilir.
+- **Coğrafi Rota Optimizasyonu** — Haversine formülü ile ön filtreleme, ardından greedy nearest-neighbor + 2-opt yaklaşımıyla günlük aktiviteler mantıklı bir sırada dizilir.
+- **Dinamik Vibe Sistemi** — 😴 Dinlenme, 🌧️ Hava (anlık hava durumuna göre), 💰 Tasarruf ve 🎉 Keşif modlarıyla plan tek tıkla yeniden şekillenir.
+- **Bütçe Takip Sistemi** — Toplam bütçe kategorilere (yemek, konaklama, aktivite, ulaşım) bölünür ve gerçek harcamalarla karşılaştırılır.
+- **Topluluk & Paylaşım** — Kullanıcılar planlarını topluluğa açabilir, başka planları inceleyebilir.
+- **Seyahat Kontrol Listesi, PDF/Offline Export, PWA desteği** — Uygulama internet bağlantısı olmadan da kullanılabilir.
+- **AI Asistan Widget'ı** — Plan üzerinde AI ile aktivite ekleme/düzenleme.
 
-## Expanding the ESLint configuration
+## 🛠️ Teknoloji Yığını
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Katman | Teknoloji |
+| --- | --- |
+| Frontend | React 19 + TypeScript, Vite, Tailwind CSS, Framer Motion |
+| State Yönetimi | Zustand |
+| Backend / BaaS | Firebase (Auth + Firestore) |
+| Yapay Zeka | Google Gemini API |
+| Harita & Konum | Google Maps JavaScript API, `@react-google-maps/api` |
+| Hava Durumu | Weather API entegrasyonu |
+| 3D / Görsel | Three.js, `@react-three/fiber`, `@react-three/drei` |
+| PWA | `vite-plugin-pwa` |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📁 Proje Yapısı
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── components/   # Yeniden kullanılabilir UI bileşenleri (Sidebar, MapView, DailyPlanView, ...)
+├── pages/        # Sayfalar (Home, Onboarding, Dashboard, Community, Settings, ...)
+├── services/     # Dış servis entegrasyonları (aiService, firebase, placesService, weatherService, ...)
+├── store/        # Zustand store'ları (auth, onboarding, plan, tema, ayarlar, ...)
+├── hooks/        # Özel React hook'ları
+├── utils/        # Yardımcı fonksiyonlar (ör. exportPDF)
+├── data/         # Statik veri (şehir listesi vb.)
+└── assets/       # Görseller ve statik varlıklar
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Kurulum
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Gereksinimler
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 20+
+- npm
+
+### Adımlar
+
+```bash
+# Depoyu klonla
+git clone https://github.com/batuksr/Travyon.git
+cd Travyon
+
+# Bağımlılıkları yükle
+npm install
 ```
+
+Proje kök dizininde bir `.env` dosyası oluşturup aşağıdaki değişkenleri kendi anahtarlarınla doldur:
+
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_GEMINI_API_KEY=
+VITE_GOOGLE_MAPS_API_KEY=
+```
+
+Ardından geliştirme sunucusunu başlat:
+
+```bash
+npm run dev
+```
+
+### Diğer komutlar
+
+```bash
+npm run build     # Production build (tsc -b && vite build)
+npm run lint      # ESLint kontrolü
+npm run preview   # Production build'i yerelde önizle
+```
+
+## 🔥 Firebase Kuralları
+
+Firestore ve Storage güvenlik kuralları `firestore.rules` ve `storage.rules` dosyalarında tanımlıdır; `firebase.json` üzerinden deploy edilebilir:
+
+```bash
+firebase deploy --only firestore:rules,storage:rules
+```
+
+## 🔒 Gizlilik
+
+Uygulama, kullanıcıların diyet tercihleri, fiziksel uygunlukları ve bütçeleri gibi hassas verilerini işlediği için KVKK/GDPR uyumluluğu göz önünde bulundurularak geliştirilmiştir. Detaylar için uygulama içindeki Gizlilik sayfasına bakabilirsin.
+
+## 📄 Lisans
+
+Bu proje bir Mühendislik Tasarımı dersi kapsamında geliştirilmiştir.
