@@ -29,3 +29,6 @@ public/videos/*.mp4
 public/videos/*.webm
 public/videos/*.mov
 
+# Firebase CLI local cache
+.firebase
+

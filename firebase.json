@@ -1,11 +1,23 @@
 {
-  "projects": {
-    "default": "travyon-5fb01"
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   },
   "firestore": {
     "rules": "firestore.rules"
   },
   "storage": {
+    "target": "travyon-storage",
     "rules": "storage.rules"
   }
 }

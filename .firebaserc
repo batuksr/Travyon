@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "travyon-5fb01"
+  },
+  "targets": {
+    "travyon-5fb01": {
+      "storage": {
+        "travyon-storage": [
+          "travyon-5fb01.firebasestorage.app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
