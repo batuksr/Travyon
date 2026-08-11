@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
 
 const FAQ_ITEMS = [
@@ -74,70 +74,89 @@ const FAQ_ITEMS = [
   },
 ];
 
+const TABS = [
+  { to: '/sss', label: 'SSS' },
+  { to: '/gizlilik', label: 'Gizlilik' },
+  { to: '/kullanim-kosullari', label: 'Kullanım Koşulları' },
+  { to: '/iletisim', label: 'İletişim' },
+];
+
+const PageTabs: React.FC<{ active: string }> = ({ active }) => (
+  <div className="flex gap-1.5 flex-wrap justify-center bg-surface-2 p-[5px] rounded-full w-fit mx-auto mt-6">
+    {TABS.map(t => (
+      <Link
+        key={t.to}
+        to={t.to}
+        className={`font-heading text-sm px-5 py-2.5 rounded-full whitespace-nowrap transition-colors ${
+          active === t.to ? 'bg-accent text-white' : 'text-muted hover:text-text'
+        }`}
+      >
+        {t.label}
+      </Link>
+    ))}
+  </div>
+);
+
 const SSS: React.FC = () => {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
   const toggle = (key: string) => setOpenItem(prev => prev === key ? null : key);
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
 
       {/* Header */}
-      <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <header className="bg-surface border-b border-divider sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[74px] flex items-center justify-between">
           <Link to="/">
             <TravyonLogo size={36} />
           </Link>
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-sm text-text bg-surface-2 border border-divider rounded-full px-4 py-2.5 hover:bg-surface transition-colors"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={14} strokeWidth={2.5} />
             Ana Sayfa
           </Link>
         </div>
       </header>
 
       {/* Hero */}
-      <div className="bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 py-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <p className="text-xs font-semibold text-[#f8981d] uppercase tracking-widest mb-2">Yardım</p>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Sıkça Sorulan Sorular</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-lg">
-            Travyon hakkında merak ettiğin her şeyin cevabını burada bulabilirsin.
-          </p>
-        </div>
+      <div className="text-center py-10 sm:py-12 px-4 sm:px-6">
+        <p className="text-xs font-heading text-accent-700 uppercase tracking-widest mb-2">Yardım & Yasal</p>
+        <h1 className="font-heading text-3xl sm:text-4xl text-text">Sıkça Sorulan Sorular</h1>
+        <p className="text-muted mt-3.5 text-sm max-w-lg mx-auto">
+          Aklına takılanların yanıtı burada. Bulamazsan bize yazabilirsin.
+        </p>
+        <PageTabs active="/sss" />
       </div>
 
       {/* İçerik */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10">
         {FAQ_ITEMS.map((section) => (
           <div key={section.category}>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#f8981d] mb-4">
+            <h2 className="text-xs font-heading uppercase tracking-widest text-accent mb-4">
               {section.category}
             </h2>
-            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="flex flex-col gap-2.5">
               {section.items.map((item, i) => {
                 const key = `${section.category}-${i}`;
                 const isOpen = openItem === key;
                 return (
-                  <div key={key}>
+                  <div key={key} className="bg-surface border border-divider rounded-2xl overflow-hidden">
                     <button
                       onClick={() => toggle(key)}
-                      className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
+                      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-2 transition-colors group"
                     >
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 pr-4">
+                      <span className="font-heading text-[15.5px] text-text pr-4">
                         {item.q}
                       </span>
-                      <ChevronDown
-                        size={16}
-                        className={`shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#f8981d]' : ''}`}
-                      />
+                      <span className={`shrink-0 text-accent text-lg transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
                     </button>
                     {isOpen && (
-                      <div className="px-6 pb-5 pt-1 text-sm text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-700">
+                      <p className="px-5 pb-[18px] text-[14.5px] text-muted leading-relaxed">
                         {item.a}
-                      </div>
+                      </p>
                     )}
                   </div>
                 );
@@ -148,15 +167,12 @@ const SSS: React.FC = () => {
       </div>
 
       {/* Footer mini */}
-      <div className="border-t border-slate-200 dark:border-slate-800 mt-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-          <span>© 2026 Travyon. Tüm hakları saklıdır.</span>
-          <div className="flex gap-4">
-            <Link to="/gizlilik" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Gizlilik</Link>
-            <Link to="/kullanim-kosullari" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Kullanım Koşulları</Link>
-          </div>
+      <footer className="border-t border-divider mt-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-[22px] flex flex-wrap items-center justify-between gap-3">
+          <TravyonLogo size={28} />
+          <span className="text-xs text-muted">© 2026 Travyon. Tüm hakları saklıdır.</span>
         </div>
-      </div>
+      </footer>
 
     </div>
   );

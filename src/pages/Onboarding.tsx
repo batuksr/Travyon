@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -254,13 +254,13 @@ const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-[#f5f0e8] dark:bg-slate-900 flex overflow-hidden">
+    <div className="h-screen bg-bg flex overflow-hidden">
 
       {/* ═══ SOL — VİDEO ═══ */}
       <div className="hidden lg:flex lg:w-2/5 relative overflow-hidden shrink-0">
 
         {/* Fallback gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2b241d] via-[#211c17] to-[#2b241d]" />
 
         <video
           autoPlay loop muted playsInline
@@ -269,15 +269,15 @@ const Onboarding: React.FC = () => {
           <source src="/videos/onboarding.mp4" type="video/mp4" />
         </video>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-black/65" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/40 via-[#1c140c]/25 to-[#1c140c]/72" />
 
         <div className="relative z-10 flex flex-col justify-end p-10 w-full">
 
           {/* Adıma özel mesaj */}
           <motion.div key={currentStep} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-md border border-white/20 rounded-full mb-5">
-              <Sparkles size={11} className="text-[#f8981d]" />
-              <span className="text-white text-[10px] font-bold uppercase tracking-widest">AI Destekli Plan</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-[7px] bg-white/16 backdrop-blur-md border border-white/25 rounded-full mb-5">
+              <Sparkles size={11} className="text-white" />
+              <span className="text-white text-[11px] font-heading uppercase tracking-widest">AI Destekli Plan</span>
             </div>
 
             <div className="text-4xl mb-4">
@@ -287,13 +287,13 @@ const Onboarding: React.FC = () => {
               {currentStep === 4 && '🏨'}
             </div>
 
-            <h1 className="text-3xl font-black text-white mb-3 leading-tight whitespace-pre-line">
+            <h1 className="font-heading text-3xl text-white mb-3 leading-tight whitespace-pre-line">
               {currentStep === 1 && 'Hayalindeki\nDestinasyon'}
               {currentStep === 2 && 'Seyahat\nTarzın'}
               {currentStep === 3 && 'Damak\nZevkin'}
               {currentStep === 4 && 'Konfor\nTercihin'}
             </h1>
-            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
+            <p className="text-white/75 text-sm leading-relaxed max-w-xs">
               {currentStep === 1 && 'Nereye gideceğini ve ne kadar kalacağını söyle, gerisini biz planlayalım.'}
               {currentStep === 2 && 'Hızlı mı yavaş mı? Kültür mü macera mı? Sana özel tempo belirleyelim.'}
               {currentStep === 3 && 'Beslenme tercihlerini bilmeden mükemmel restoran öneremeyiz.'}
@@ -311,24 +311,24 @@ const Onboarding: React.FC = () => {
         {isGenerating && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white dark:bg-slate-900 px-8 text-center"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-bg px-8 text-center"
           >
             <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
-              <div className="absolute inset-0 rounded-full border-4 border-[#f8981d] border-t-transparent animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-accent-200" />
+              <div className="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin" />
               <div className="absolute inset-0 flex items-center justify-center text-2xl">✈️</div>
             </div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Planınız Hazırlanıyor</h3>
-            <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+            <h3 className="font-heading text-2xl text-text mb-2">Planınız Hazırlanıyor</h3>
+            <p className="text-sm text-muted mb-6 max-w-xs leading-relaxed">
               Yapay zekamız rotaları, gizli mekanları ve aktiviteleri seçiyor.
             </p>
-            <div className="bg-orange-50 border border-orange-100 rounded-full px-5 py-2.5 min-w-[220px]">
+            <div className="bg-accent-100 border border-accent-200 rounded-full px-5 py-2.5 min-w-[220px]">
               <AnimatePresence mode="wait">
                 <motion.p
                   key={loadingIdx}
                   initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.25 }}
-                  className="text-sm text-[#e08518] font-semibold"
+                  className="text-sm text-accent-700 font-semibold"
                 >
                   {loadingMessages[loadingIdx]}
                 </motion.p>
@@ -338,7 +338,7 @@ const Onboarding: React.FC = () => {
         )}
 
         {/* Üst bar — step indikatörleri */}
-        <div className="shrink-0 px-4 sm:px-8 lg:px-12 pt-7 pb-5 border-b border-slate-100">
+        <div className="shrink-0 px-4 sm:px-8 lg:px-12 pt-7 pb-5 border-b border-divider">
 
           {/* Mobil logo */}
           <div className="lg:hidden mb-5">
@@ -353,20 +353,20 @@ const Onboarding: React.FC = () => {
               return (
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center gap-1.5 shrink-0">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300
-                      ${completed  ? 'bg-emerald-500 text-white'
-                      : active     ? 'bg-[#f8981d] text-white shadow-lg shadow-[#f8981d]/30'
-                                   : 'bg-slate-100 text-slate-400'}`}>
-                      {completed ? <Check size={15} strokeWidth={3} /> : <Icon size={15} />}
+                    <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-300
+                      ${completed  ? 'bg-sage text-white'
+                      : active     ? 'bg-accent text-white shadow-[0_10px_22px_rgba(198,113,57,0.28)]'
+                                   : 'bg-surface-2 text-muted'}`}>
+                      {completed ? <Check size={15} strokeWidth={3} /> : <Icon size={15} strokeWidth={2.5} />}
                     </div>
-                    <span className={`text-[11px] font-bold transition-colors
-                      ${active ? 'text-[#f8981d]' : completed ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] font-heading transition-colors
+                      ${active ? 'text-accent' : completed ? 'text-sage-700' : 'text-muted'}`}>
                       {step.label}
                     </span>
                   </div>
                   {idx < STEPS.length - 1 && (
                     <div className={`h-px flex-1 mx-2 mb-[18px] transition-all duration-500
-                      ${currentStep > step.id ? 'bg-emerald-400' : 'bg-slate-200'}`} />
+                      ${currentStep > step.id ? 'bg-sage' : 'bg-divider'}`} />
                   )}
                 </React.Fragment>
               );
@@ -374,9 +374,9 @@ const Onboarding: React.FC = () => {
           </div>
 
           {/* Thin progress bar */}
-          <div className="mt-4 h-px bg-slate-100 rounded-full overflow-hidden max-w-2xl">
+          <div className="mt-4 h-px bg-divider rounded-full overflow-hidden max-w-2xl">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#f8981d] to-[#f8981d]"
+              className="h-full bg-accent"
               animate={{ width: `${(currentStep / 4) * 100}%` }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />
@@ -393,7 +393,7 @@ const Onboarding: React.FC = () => {
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                  className="flex items-center gap-2.5 p-3 mb-5 bg-rose-50 border border-rose-100 rounded-lg"
+                  className="flex items-center gap-2.5 p-3 mb-5 bg-rose-50 border border-rose-100 rounded-2xl"
                 >
                   <div className="w-5 h-5 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-rose-500 text-xs font-black">!</span>
@@ -413,16 +413,16 @@ const Onboarding: React.FC = () => {
               >
                 {/* ── Adım Başlığı ── */}
                 <div className="mb-8">
-                  <p className="text-[10px] font-bold text-[#f8981d] uppercase tracking-widest mb-2.5">
+                  <p className="text-[11px] font-heading text-accent uppercase tracking-widest mb-2.5">
                     Adım {currentStep} / 4
                   </p>
-                  <h2 className="text-2xl font-black text-slate-900 mb-1.5 leading-tight">
+                  <h2 className="font-heading text-2xl text-text mb-1.5 leading-tight">
                     {currentStep === 1 && 'Nereye gidiyorsun?'}
                     {currentStep === 2 && 'Tercihlerini söyle'}
                     {currentStep === 3 && 'Yemek tarzın nasıl?'}
                     {currentStep === 4 && 'Nerede kalmak istersin?'}
                   </h2>
-                  <p className="text-sm text-slate-500 leading-relaxed">
+                  <p className="text-sm text-muted leading-relaxed">
                     {currentStep === 1 && 'Destinasyon ve tarihleri belirle.'}
                     {currentStep === 2 && 'Seyahat tarzını ve ilgi alanlarını seç.'}
                     {currentStep === 3 && 'Damak zevkine göre öneriler oluşturalım.'}
@@ -436,33 +436,33 @@ const Onboarding: React.FC = () => {
 
                     {/* Destinasyon */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-2.5">Destinasyon</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2.5">Destinasyon</p>
                       <div className="relative" ref={destinationRef}>
-                        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+                        <Search size={15} strokeWidth={2.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" />
                         <input
                           type="text"
                           value={data.destination}
                           onChange={(e) => handleDestinationChange(e.target.value)}
                           onFocus={() => { if (data.destination.trim().length > 0) setShowSuggestions(true); }}
                           placeholder="Örn. Roma, İtalya"
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-all text-slate-800 dark:text-white placeholder:text-slate-400
+                          className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border-[1.5px] text-sm outline-none transition-all text-text placeholder:text-muted
                             ${hints.destination
-                              ? 'border-rose-200 bg-rose-50/20 dark:bg-rose-900/20'
-                              : 'border-slate-200 dark:border-white/15 bg-white dark:bg-white/10 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/8'}`}
+                              ? 'border-rose-300 bg-rose-50/20'
+                              : 'border-divider bg-surface-2 focus:border-accent'}`}
                           autoComplete="off"
                         />
                         {showSuggestions && citySuggestions.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                          <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface border border-divider rounded-2xl shadow-xl z-50 overflow-hidden">
                             {citySuggestions.map((c, i) => (
                               <button
                                 key={i}
                                 type="button"
                                 onMouseDown={(e) => { e.preventDefault(); handleCitySelect(c); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2 transition-colors text-left"
                               >
-                                <MapPin size={13} className="text-[#f8981d] shrink-0" />
-                                <span className="text-sm font-semibold text-slate-800">{c.city}</span>
-                                <span className="text-xs text-slate-400 ml-auto shrink-0">{c.country}</span>
+                                <MapPin size={13} strokeWidth={2.5} className="text-accent shrink-0" />
+                                <span className="text-sm font-semibold text-text">{c.city}</span>
+                                <span className="text-xs text-muted ml-auto shrink-0">{c.country}</span>
                               </button>
                             ))}
                           </div>
@@ -472,20 +472,20 @@ const Onboarding: React.FC = () => {
                     </div>
 
                     {/* Tarihler + Saatler — satır bazlı iOS tarzı layout */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <div className="rounded-2xl border border-divider overflow-hidden">
                       {/* Başlık şeridi */}
-                      <div className="bg-slate-50 dark:bg-white/5 px-4 py-2 border-b border-slate-100 dark:border-white/10">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                          <Calendar size={10} className="text-[#f8981d]" /> Seyahat Tarihleri
+                      <div className="bg-surface-2 px-4 py-2.5 border-b border-divider">
+                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted flex items-center gap-1.5">
+                          <Calendar size={11} strokeWidth={2.5} className="text-accent" /> Seyahat Tarihleri
                         </p>
                       </div>
 
                       {/* Satırlar */}
-                      <div className="bg-white dark:bg-white/5 divide-y divide-slate-100 dark:divide-white/10">
+                      <div className="bg-surface divide-y divide-divider">
 
                         {/* Gidiş */}
-                        <div className={`flex items-center px-4 py-3 ${hints.startDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">✈️ Gidiş</span>
+                        <div className={`flex items-center px-4 py-3.5 ${hints.startDate ? 'bg-rose-50/50' : ''}`}>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">✈️ Gidiş</span>
                           <input
                             type="date" min={today}
                             value={data.startDate}
@@ -495,13 +495,13 @@ const Onboarding: React.FC = () => {
                               updateData({ startDate: val });
                               setHints((h) => ({ ...h, startDate: false }));
                             }}
-                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
+                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
                           />
                         </div>
 
                         {/* Dönüş */}
-                        <div className={`flex items-center px-4 py-3 ${hints.endDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🏠 Dönüş</span>
+                        <div className={`flex items-center px-4 py-3.5 ${hints.endDate ? 'bg-rose-50/50' : ''}`}>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">🏠 Dönüş</span>
                           <input
                             type="date" min={data.startDate || today}
                             value={data.endDate}
@@ -512,36 +512,36 @@ const Onboarding: React.FC = () => {
                               updateData({ endDate: val });
                               setHints((h) => ({ ...h, endDate: false }));
                             }}
-                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
+                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
                           />
                         </div>
 
                         {/* Varış Saati */}
-                        <div className="flex items-center px-4 py-3">
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🛬 Varış</span>
+                        <div className="flex items-center px-4 py-3.5">
+                          <span className="text-[14.5px] text-text w-24 shrink-0">🛬 Varış</span>
                           <input
                             type="time"
                             value={data.arrivalTime}
                             onChange={(e) => updateData({ arrivalTime: e.target.value })}
-                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
+                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
                           />
                         </div>
 
                         {/* Ayrılış Saati */}
-                        <div className="flex items-center px-4 py-3">
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 w-24 shrink-0">🛫 Ayrılış</span>
+                        <div className="flex items-center px-4 py-3.5">
+                          <span className="text-[14.5px] text-text w-24 shrink-0">🛫 Ayrılış</span>
                           <input
                             type="time"
                             value={data.departureTime}
                             onChange={(e) => updateData({ departureTime: e.target.value })}
-                            className="flex-1 text-sm text-slate-800 dark:text-white bg-transparent outline-none text-right"
+                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
                           />
                         </div>
                       </div>
 
                       {/* Hata mesajları */}
                       {(hints.startDate || hints.endDate) && (
-                        <div className="bg-rose-50 dark:bg-rose-900/20 px-4 py-2 border-t border-rose-100 dark:border-rose-800">
+                        <div className="bg-rose-50 px-4 py-2 border-t border-rose-100">
                           {hints.startDate && <p className="text-xs text-rose-500">Gidiş tarihi seçin.</p>}
                           {hints.endDate   && <p className="text-xs text-rose-500">Dönüş tarihi seçin.</p>}
                         </div>
@@ -551,33 +551,33 @@ const Onboarding: React.FC = () => {
                     {/* Kişi + Bütçe */}
                     <div className="grid grid-cols-2 gap-4 items-start">
                       <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Kişi Sayısı</p>
+                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Kişi Sayısı</p>
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={() => updateData({ peopleCount: Math.max(1, data.peopleCount - 1) })}
-                            className="w-9 h-9 rounded-xl border border-slate-200 dark:border-white/20 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:border-slate-300 hover:text-slate-700 dark:hover:border-white/40 transition-all"
+                            className="w-9 h-9 rounded-2xl border-[1.5px] border-divider flex items-center justify-center text-text hover:border-accent/40 transition-all"
                           >
-                            <Minus size={14} />
+                            <Minus size={14} strokeWidth={2.5} />
                           </button>
                           <div className="flex-1 text-center">
-                            <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">{data.peopleCount}</span>
-                            <span className="text-xs text-slate-400 ml-1">kişi</span>
+                            <span className="font-heading text-2xl text-text tabular-nums">{data.peopleCount}</span>
+                            <span className="text-xs text-muted ml-1">kişi</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => updateData({ peopleCount: Math.min(MAX_PEOPLE, data.peopleCount + 1) })}
-                            className="w-9 h-9 rounded-xl border border-[#f8981d] flex items-center justify-center text-[#f8981d] hover:bg-[#f8981d]/5 transition-all"
+                            className="w-9 h-9 rounded-2xl border-[1.5px] border-accent flex items-center justify-center text-accent hover:bg-accent-100 transition-all"
                           >
-                            <Plus size={14} />
+                            <Plus size={14} strokeWidth={2.5} />
                           </button>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Toplam Bütçe</p>
-                        <div className={`flex rounded-xl overflow-hidden border transition-all focus-within:ring-2 focus-within:ring-[#f8981d]/8
-                          ${hints.budget ? 'border-rose-200' : 'border-slate-200 dark:border-white/15 focus-within:border-[#f8981d]'}`}>
+                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Toplam Bütçe</p>
+                        <div className={`flex rounded-2xl overflow-hidden border-[1.5px] transition-all
+                          ${hints.budget ? 'border-rose-300' : 'border-divider focus-within:border-accent'}`}>
                           <input
                             type="number" min="100"
                             placeholder="15000"
@@ -588,7 +588,7 @@ const Onboarding: React.FC = () => {
                               const n = parseInt(v, 10);
                               if (!isNaN(n)) { updateData({ budget: n }); setHints((h) => ({ ...h, budget: false })); }
                             }}
-                            className="flex-1 px-3 py-2.5 border-0 outline-none text-sm text-slate-800 dark:text-white bg-white dark:bg-white/10 placeholder:text-slate-400"
+                            className="flex-1 px-3 py-3 border-0 outline-none text-sm text-text bg-surface-2 placeholder:text-muted"
                           />
                           <select
                             value={data.currencyCode}
@@ -597,7 +597,7 @@ const Onboarding: React.FC = () => {
                               const symbols: Record<string, string> = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' };
                               updateData({ currencyCode: code, currencySymbol: symbols[code] || '₺' });
                             }}
-                            className="px-2 py-2.5 border-l border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-xs outline-none"
+                            className="px-2 py-3 border-l border-divider bg-surface-2 text-muted text-xs outline-none"
                           >
                             <option value="TRY">TRY</option>
                             <option value="USD">USD</option>
@@ -617,33 +617,33 @@ const Onboarding: React.FC = () => {
 
                     {/* Seyahat Türü */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Seyahat Türü</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Seyahat Türü</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
-                          { val: 'solo_macera',    Icon: Backpack,    bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Solo' },
-                          { val: 'romantik',       Icon: Heart,       bg: 'bg-rose-100',    color: 'text-rose-600',    title: 'Romantik' },
-                          { val: 'balayi',         Icon: Sparkles,    bg: 'bg-amber-100',   color: 'text-amber-600',   title: 'Balayı' },
-                          { val: 'aile',           Icon: Users,       bg: 'bg-blue-100',    color: 'text-blue-600',    title: 'Aile' },
-                          { val: 'arkadas_grubu',  Icon: PartyPopper, bg: 'bg-purple-100',  color: 'text-purple-600',  title: 'Arkadaşlar' },
-                          { val: 'is_seyahati',    Icon: Briefcase,   bg: 'bg-slate-100',   color: 'text-slate-600',   title: 'İş' },
-                          { val: 'sehir_kacamagi', Icon: Coffee,      bg: 'bg-teal-100',    color: 'text-teal-600',    title: 'Kaçamak' },
-                          { val: 'klasik_tatil',   Icon: Map,         bg: 'bg-indigo-100',  color: 'text-indigo-600',  title: 'Klasik' },
-                        ] as const).map(({ val, Icon, bg, color, title }) => {
+                          { val: 'solo_macera',    Icon: Backpack,    title: 'Solo' },
+                          { val: 'romantik',       Icon: Heart,       title: 'Romantik' },
+                          { val: 'balayi',         Icon: Sparkles,    title: 'Balayı' },
+                          { val: 'aile',           Icon: Users,       title: 'Aile' },
+                          { val: 'arkadas_grubu',  Icon: PartyPopper, title: 'Arkadaşlar' },
+                          { val: 'is_seyahati',    Icon: Briefcase,   title: 'İş' },
+                          { val: 'sehir_kacamagi', Icon: Coffee,      title: 'Kaçamak' },
+                          { val: 'klasik_tatil',   Icon: Map,         title: 'Klasik' },
+                        ] as const).map(({ val, Icon, title }) => {
                           const selected = data.travelType === val;
                           return (
                             <button
                               key={val}
                               type="button"
                               onClick={() => { updateData({ travelType: val }); setHints((h) => ({ ...h, travelType: false })); }}
-                              className={`flex flex-col items-center gap-2 py-3 px-1 rounded-xl border-2 transition-all duration-150
+                              className={`flex flex-col items-center gap-2 py-3 px-1 rounded-2xl border-2 transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-[#f8981d]/15' : bg}`}>
-                                <Icon size={17} className={selected ? 'text-[#f8981d]' : color} />
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-accent-200' : 'bg-surface-2'}`}>
+                                <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
                               </div>
-                              <span className={`text-[10px] font-bold leading-tight text-center ${selected ? 'text-[#f8981d]' : 'text-slate-600'}`}>
+                              <span className={`text-[10px] font-heading leading-tight text-center ${selected ? 'text-accent-700' : 'text-text'}`}>
                                 {title}
                               </span>
                             </button>
@@ -655,8 +655,8 @@ const Onboarding: React.FC = () => {
 
                     {/* İlgi Alanları */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">İlgi Alanları</p>
-                      <p className="text-[11px] text-slate-400 mb-3">En fazla 3 tane. Seçim sırası önceliği belirler.</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">İlgi Alanları</p>
+                      <p className="text-[11px] text-muted mb-3">En fazla 3 tane. Seçim sırası önceliği belirler.</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
                           { val: 'culture',   emoji: '🏛️', title: 'Kültür & Tarih', sub: 'Müzeler, tarihi mekanlar' },
@@ -692,18 +692,18 @@ const Onboarding: React.FC = () => {
                                   setPurposesWarning(false);
                                 }
                               }}
-                              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all duration-150
+                              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-left transition-all duration-150
                                 ${isSelected
-                                  ? 'border-[#f8981d] bg-orange-50/30'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
+                                <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{sub}</p>
                               </div>
                               {isSelected && (
-                                <div className="w-6 h-6 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0 text-white text-xs font-black">
+                                <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center shrink-0 text-white text-xs font-black">
                                   {rank + 1}
                                 </div>
                               )}
@@ -729,33 +729,33 @@ const Onboarding: React.FC = () => {
 
                     {/* Tempo */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Günlük Tempo</p>
-                      <p className="text-[11px] text-slate-400 mb-3">Aktivite yoğunluğunu seç.</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">Günlük Tempo</p>
+                      <p className="text-[11px] text-muted mb-3">Aktivite yoğunluğunu seç.</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
-                          { val: 'rahat',  Icon: Sofa,       bg: 'bg-emerald-100', color: 'text-emerald-600', title: 'Rahat',  desc: 'Az yürüyüş',     detail: '3–4 km/gün' },
-                          { val: 'normal', Icon: Footprints, bg: 'bg-blue-100',    color: 'text-blue-600',    title: 'Normal', desc: 'Standart tempo', detail: '6–8 km/gün' },
-                          { val: 'aktif',  Icon: Mountain,   bg: 'bg-orange-100',  color: 'text-orange-600',  title: 'Aktif',  desc: 'Her şeyi gör',   detail: '10–15 km/gün' },
-                          { val: 'esnek',  Icon: Compass,    bg: 'bg-purple-100',  color: 'text-purple-600',  title: 'Esnek',  desc: 'AI karar versin', detail: 'Değişken' },
-                        ] as const).map(({ val, Icon, bg, color, title, desc, detail }) => {
+                          { val: 'rahat',  Icon: Sofa,       title: 'Rahat',  desc: 'Az yürüyüş',     detail: '3–4 km/gün' },
+                          { val: 'normal', Icon: Footprints, title: 'Normal', desc: 'Standart tempo', detail: '6–8 km/gün' },
+                          { val: 'aktif',  Icon: Mountain,   title: 'Aktif',  desc: 'Her şeyi gör',   detail: '10–15 km/gün' },
+                          { val: 'esnek',  Icon: Compass,    title: 'Esnek',  desc: 'AI karar versin', detail: 'Değişken' },
+                        ] as const).map(({ val, Icon, title, desc, detail }) => {
                           const selected = data.pace === val;
                           return (
                             <button
                               key={val}
                               type="button"
                               onClick={() => { updateData({ pace: val }); setHints((h) => ({ ...h, pace: false })); }}
-                              className={`flex flex-col items-center gap-2 py-4 px-2 rounded-xl border-2 text-center transition-all duration-150
+                              className={`flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 text-center transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-[#f8981d]/15' : bg}`}>
-                                <Icon size={17} className={selected ? 'text-[#f8981d]' : color} />
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-accent-200' : 'bg-surface-2'}`}>
+                                <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
                               </div>
                               <div>
-                                <p className={`font-bold text-xs ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>{title}</p>
-                                <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-[#f8981d]/70' : 'text-slate-500'}`}>{desc}</p>
-                                <p className="text-[10px] text-slate-400 mt-0.5">{detail}</p>
+                                <p className={`font-heading text-xs ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{desc}</p>
+                                <p className="text-[10px] text-muted mt-0.5">{detail}</p>
                               </div>
                             </button>
                           );
@@ -768,20 +768,20 @@ const Onboarding: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => updateData({ earlyBird: !data.earlyBird })}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-colors
-                        ${data.earlyBird ? 'border-[#f8981d] bg-[#f8981d]/[0.04]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                      className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-colors
+                        ${data.earlyBird ? 'border-accent bg-accent-100' : 'border-divider bg-surface hover:border-accent/45'}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${data.earlyBird ? 'bg-[#f8981d]/15' : 'bg-amber-100'}`}>
-                          <Sunrise size={17} className={data.earlyBird ? 'text-[#f8981d]' : 'text-amber-600'} />
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${data.earlyBird ? 'bg-accent-200' : 'bg-surface-2'}`}>
+                          <Sunrise size={17} strokeWidth={2.5} className={data.earlyBird ? 'text-accent-700' : 'text-muted'} />
                         </div>
                         <div className="text-left">
-                          <p className={`text-sm font-semibold ${data.earlyBird ? 'text-[#f8981d]' : 'text-slate-700'}`}>Erken kalkmayı severim</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">Sabah erken aktivite planlanabilir</p>
+                          <p className={`text-sm font-semibold ${data.earlyBird ? 'text-accent-700' : 'text-text'}`}>Erken kalkmayı severim</p>
+                          <p className="text-[11px] text-muted mt-0.5">Sabah erken aktivite planlanabilir</p>
                         </div>
                       </div>
                       <div className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-                        ${data.earlyBird ? 'bg-[#f8981d]' : 'bg-slate-200'}`}>
+                        ${data.earlyBird ? 'bg-accent' : 'bg-divider'}`}>
                         <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out
                           ${data.earlyBird ? 'translate-x-5' : 'translate-x-0'}`} />
                       </div>
@@ -797,7 +797,7 @@ const Onboarding: React.FC = () => {
 
                     {/* Beslenme Tercihleri */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Beslenme Tercihleri</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Beslenme Tercihleri</p>
                       <div className="grid grid-cols-3 gap-2">
                         {['Vegan', 'Vejetaryen', 'Helal', 'Glutensiz', 'Pesketaryen', ALL_EATER_OPTION].map((diet) => {
                           const selected = data.dietaryRestrictions.includes(diet);
@@ -809,13 +809,13 @@ const Onboarding: React.FC = () => {
                                 updateData({ dietaryRestrictions: toggleDietaryRestriction(diet, data.dietaryRestrictions) });
                                 setHints((h) => ({ ...h, dietary: false }));
                               }}
-                              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-150
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-base leading-none shrink-0">{DIET_EMOJIS[diet]}</span>
-                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{diet}</span>
+                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-accent-700' : 'text-text'}`}>{diet}</span>
                             </button>
                           );
                         })}
@@ -825,8 +825,8 @@ const Onboarding: React.FC = () => {
 
                     {/* Yemek Felsefesi */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Yemek Felsefesi</p>
-                      <p className="text-[11px] text-slate-400 mb-3">AI sana hangi mekanları önersin?</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">Yemek Felsefesi</p>
+                      <p className="text-[11px] text-muted mb-3">AI sana hangi mekanları önersin?</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {([
                           { val: 'iconic',      emoji: '⭐', title: 'İkonik Lezzetler', subtitle: 'Şehrin ünlü mekanları' },
@@ -844,19 +844,19 @@ const Onboarding: React.FC = () => {
                                 updateData({ foodPhilosophy: val });
                                 setHints((h) => ({ ...h, foodPhilosophy: false }));
                               }}
-                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-xl border-2 text-left transition-all duration-150
+                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-2xl border-2 text-left transition-all duration-150
                                 ${val === 'mixed' ? 'col-span-2' : ''}
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm leading-tight ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{subtitle}</p>
+                                <p className={`font-semibold text-sm leading-tight ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{subtitle}</p>
                               </div>
                               {selected && (
-                                <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
                                   <Check size={9} className="text-white" strokeWidth={3} />
                                 </div>
                               )}
@@ -869,7 +869,7 @@ const Onboarding: React.FC = () => {
 
                     {/* Öğün Başı Bütçe */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Öğün Başı Bütçe</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Öğün Başı Bütçe</p>
                       <div className="grid grid-cols-3 gap-2.5">
                         {[
                           { val: 'low',    emoji: '💵',     title: 'Düşük',  sub: 'Uygun fiyatlı' },
@@ -882,14 +882,14 @@ const Onboarding: React.FC = () => {
                               key={val}
                               type="button"
                               onClick={() => { updateData({ mealBudget: val as OnboardingData['mealBudget'] }); setHints((h) => ({ ...h, mealBudget: false })); }}
-                              className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl border-2 text-center transition-all duration-150
+                              className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl border-2 text-center transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-lg leading-none">{emoji}</span>
-                              <p className={`font-bold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-800'}`}>{title}</p>
-                              <p className={`text-[10px] ${selected ? 'text-[#f8981d]/70' : 'text-slate-400'}`}>{sub}</p>
+                              <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                              <p className={`text-[10px] ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{sub}</p>
                             </button>
                           );
                         })}
@@ -905,7 +905,7 @@ const Onboarding: React.FC = () => {
 
                     {/* Rezervasyon sorusu */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Rezervasyon Durumu</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Rezervasyon Durumu</p>
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           { val: true,  emoji: '✅', title: 'Rezervasyonum var', sub: 'Konaklama yerim belli' },
@@ -920,15 +920,15 @@ const Onboarding: React.FC = () => {
                                 updateData({ hasReservation: val, ...(!val ? { accommodationAddress: '' } : {}) });
                                 setHints((h) => ({ ...h, accommodation: false }));
                               }}
-                              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-xl border-2 text-center transition-all duration-150
+                              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-2xl border-2 text-center transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-3xl leading-none">{emoji}</span>
                               <div>
-                                <p className={`font-bold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
+                                <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{sub}</p>
                               </div>
                             </button>
                           );
@@ -947,7 +947,7 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-2">Konaklama Yeri</p>
+                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2">Konaklama Yeri</p>
                           <PlacesAutocomplete
                             value={data.accommodationAddress || ''}
                             onChange={(place) => {
@@ -963,7 +963,7 @@ const Onboarding: React.FC = () => {
                             hasError={hints.accommodation && !data.accommodationAddress.trim()}
                           />
                           <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? 'Konaklama adresini girin.' : undefined} />
-                          <p className="text-[11px] text-slate-400 mt-1.5">
+                          <p className="text-[11px] text-muted mt-1.5">
                             AI günlük rotaları bu konuma göre optimize edecek.
                           </p>
                         </motion.div>
@@ -980,7 +980,7 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Konaklama Tercihi</p>
+                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Konaklama Tercihi</p>
                           <div className="grid grid-cols-2 gap-2.5">
                             {[
                               { val: 'hotel',  emoji: '🏨', title: 'Otel',               sub: 'Konforlu, tam servis' },
@@ -997,18 +997,18 @@ const Onboarding: React.FC = () => {
                                     updateData({ accommodation: val as OnboardingData['accommodation'] });
                                     setHints((h) => ({ ...h, accommodation: false }));
                                   }}
-                                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-150
+                                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
                                     ${selected
-                                      ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                      : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                      ? 'border-accent bg-accent-100'
+                                      : 'border-divider bg-surface hover:border-accent/45'}`}
                                 >
                                   <span className="text-2xl shrink-0 leading-none">{emoji}</span>
                                   <div className="flex-1 min-w-0">
-                                    <p className={`font-semibold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>
+                                    <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                    <p className="text-[11px] text-muted mt-0.5">{sub}</p>
                                   </div>
                                   {selected && (
-                                    <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                    <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
                                       <Check size={9} className="text-white" strokeWidth={3} />
                                     </div>
                                   )}
@@ -1023,7 +1023,7 @@ const Onboarding: React.FC = () => {
 
                     {/* Şehir İçi Ulaşım */}
                     <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 mb-3">Şehir İçi Ulaşım</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Şehir İçi Ulaşım</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
                           { val: 'public', emoji: '🚇', title: 'Toplu Taşıma',  sub: 'Metro, otobüs' },
@@ -1040,18 +1040,18 @@ const Onboarding: React.FC = () => {
                                 updateData({ transport: val as OnboardingData['transport'] });
                                 setHints((h) => ({ ...h, transport: false }));
                               }}
-                              className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-150
+                              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
                                 ${selected
-                                  ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                                  : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                  ? 'border-accent bg-accent-100'
+                                  : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-2xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm ${selected ? 'text-[#f8981d]' : 'text-slate-700'}`}>{title}</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>
+                                <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
+                                <p className="text-[11px] text-muted mt-0.5">{sub}</p>
                               </div>
                               {selected && (
-                                <div className="w-4 h-4 rounded-full bg-[#f8981d] flex items-center justify-center shrink-0">
+                                <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
                                   <Check size={9} className="text-white" strokeWidth={3} />
                                 </div>
                               )}
@@ -1070,24 +1070,24 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Alt bar — navigasyon */}
-        <div className="shrink-0 border-t border-slate-100 px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between bg-gray">
+        <div className="shrink-0 border-t border-divider px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between">
 
           <button
             type="button"
             onClick={handleBack}
             disabled={currentStep === 1 || isGenerating}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 text-slate-600 hover:text-slate-900 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-text hover:text-accent font-heading text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={14} strokeWidth={2.75} />
             Geri
           </button>
 
           <div className="flex gap-1.5">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className={`rounded-full transition-all duration-300
-                ${currentStep === s ? 'w-5 h-2 bg-[#f8981d]'
-                : currentStep > s  ? 'w-2 h-2 bg-[#f8981d]/40'
-                                   : 'w-2 h-2 bg-slate-200'}`} />
+                ${currentStep === s ? 'w-5 h-2 bg-accent'
+                : currentStep > s  ? 'w-2 h-2 bg-accent/40'
+                                   : 'w-2 h-2 bg-divider'}`} />
             ))}
           </div>
 
@@ -1095,24 +1095,24 @@ const Onboarding: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px"
             >
               İleri
-              <ArrowRight size={14} />
+              <ArrowRight size={14} strokeWidth={2.75} />
             </button>
           ) : (
             <button
               type="button"
               onClick={handleFinish}
               disabled={isGenerating}
-              className={`inline-flex items-center gap-2 px-6 py-2.5 font-bold rounded-xl text-sm transition-all
+              className={`inline-flex items-center gap-2 px-6 py-3 font-heading rounded-full text-sm transition-all
                 ${isGenerating
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-[#f8981d] hover:bg-[#e08518] text-white shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px'}`}
+                  ? 'bg-surface-2 text-muted cursor-not-allowed'
+                  : 'bg-accent hover:brightness-105 text-white shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px'}`}
             >
               {isGenerating
                 ? <><Loader2 size={14} className="animate-spin" /> Planlanıyor</>
-                : <><Plane size={14} /> Planı Oluştur</>}
+                : <><Plane size={14} strokeWidth={2.75} /> Planı Oluştur</>}
             </button>
           )}
         </div>

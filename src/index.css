@@ -3,6 +3,50 @@
 /* ── Tailwind v4: class-based dark mode ─────────── */
 @custom-variant dark (&:is(.dark, .dark *));
 
+/* ══════════════════════════════════════════════
+   Design tokens — Organic tema (TEK kaynak)
+   Çalışma zamanı değişkenleri: tema burada değişir
+═══════════════════════════════════════════════ */
+:root {
+  --bg:        #f5ead8;  --surface:  #fffaf2;  --surface-2: #ebddc5;
+  --text:      #201e1d;  --muted:    rgba(32,30,29,.58);
+  --divider:   rgba(32,30,29,.16);
+  --accent:    #c67139;  --accent-100:#fff2eb; --accent-200:#ffe1d0;
+  --accent-600:#b2622d;  --accent-700:#8c491a;
+  --sage:      #7a8a5e;  --sage-200: #e1eecc;  --sage-700:  #56633f;
+}
+.dark {
+  --bg:        #211c17;  --surface:  #2b241d;  --surface-2: #2f2820;
+  --text:      #f2e8da;  --muted:    rgba(242,232,218,.6);
+  --divider:   rgba(242,232,218,.14);
+  --accent:    #e08a4f;  --accent-100:rgba(224,138,79,.16); --accent-200:rgba(224,138,79,.28);
+  --accent-600:#f0a068;  --accent-700:#f0b184;
+  --sage:      #9fb37e;  --sage-200: rgba(159,179,126,.2);  --sage-700:  #b6c795;
+}
+
+/* @theme inline → yukarıdaki değişkenleri Tailwind utility'lerine bağlar.
+   inline sayesinde bg-bg / text-accent, tema değişince canlı güncellenir. */
+@theme inline {
+  --color-bg:         var(--bg);
+  --color-surface:    var(--surface);
+  --color-surface-2:  var(--surface-2);
+  --color-text:       var(--text);
+  --color-muted:      var(--muted);
+  --color-divider:    var(--divider);
+  --color-accent:     var(--accent);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-sage:       var(--sage);
+  --color-sage-200:   var(--sage-200);
+  --color-sage-700:   var(--sage-700);
+  --font-heading: "Caprasimo", system-ui, serif;
+  --font-body:    "Figtree", system-ui, sans-serif;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+}
+
 /* ── Smooth transitions on theme change ─────────── */
 body, div, section, article, aside, header, nav, main, footer,
 button, input, textarea, select, a, p, h1, h2, h3, h4, h5, h6,
@@ -64,12 +108,12 @@ html.dark .bg-red-50         { background-color: #1f0f0f !important; }
 html.dark input:not([type="range"]),
 html.dark textarea,
 html.dark select {
-  background-color: #1e293b;
-  border-color: #334155;
-  color: #f1f5f9;
+  background-color: var(--surface-2);
+  border-color: var(--divider);
+  color: var(--text);
 }
 html.dark input::placeholder,
-html.dark textarea::placeholder { color: #64748b; }
+html.dark textarea::placeholder { color: var(--muted); }
 
 /* Hover bg */
 html.dark .hover\:bg-slate-50:hover  { background-color: #1e293b !important; }
@@ -126,7 +170,7 @@ html.no-transitions *:not(.pill-circle)::after {
 
 body {
   margin: 0;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

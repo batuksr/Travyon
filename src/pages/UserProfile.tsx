@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -127,17 +127,17 @@ const UserProfile: React.FC = () => {
   /* ── Sayfa sınırları dışındaki durumlar ── */
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
-        <Loader2 size={28} className="animate-spin text-slate-400" />
+      <div className="flex items-center justify-center min-h-screen bg-bg">
+        <Loader2 size={28} className="animate-spin text-accent" />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f0e8] dark:bg-slate-900 gap-3">
-        <p className="text-slate-500">Kullanıcı bulunamadı.</p>
-        <button onClick={() => navigate(-1)} className="text-sm font-semibold text-[#187fe7]">← Geri dön</button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-bg gap-3">
+        <p className="text-muted">Kullanıcı bulunamadı.</p>
+        <button onClick={() => navigate(-1)} className="text-sm font-heading text-accent">← Geri dön</button>
       </div>
     );
   }
@@ -148,20 +148,20 @@ const UserProfile: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
 
       {/* ── Üst Bar ── */}
-      <div className="sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800">
+      <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur border-b border-divider">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-2 transition-colors"
           >
-            <ArrowLeft size={18} className="text-slate-600 dark:text-slate-300" />
+            <ArrowLeft size={18} strokeWidth={2.5} className="text-text" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{profile.displayName}</p>
-            <p className="text-[11px] text-slate-400">{plans.length} paylaşılan plan</p>
+            <p className="text-sm font-heading text-text truncate">{profile.displayName}</p>
+            <p className="text-[11px] text-muted">{plans.length} paylaşılan plan</p>
           </div>
         </div>
       </div>
@@ -172,22 +172,22 @@ const UserProfile: React.FC = () => {
         <div className="pt-8 pb-6 flex flex-col items-center text-center">
 
           {/* Avatar */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center overflow-hidden mb-4 ring-4 ring-white dark:ring-slate-800 shadow-lg">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent to-sage flex items-center justify-center overflow-hidden mb-4 ring-4 ring-surface shadow-lg">
             {profile.photoURL ? (
               <img src={profile.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <span className="text-white text-2xl font-black">{initials}</span>
+              <span className="text-white text-2xl font-heading">{initials}</span>
             )}
           </div>
 
           {/* İsim */}
-          <h1 className="text-xl font-black text-slate-900 dark:text-white">{profile.displayName}</h1>
+          <h1 className="font-heading text-xl text-text">{profile.displayName}</h1>
           {profile.email && (
-            <p className="text-sm text-slate-400 mt-0.5">{profile.email}</p>
+            <p className="text-sm text-muted mt-0.5">{profile.email}</p>
           )}
           {profile.createdAt && (
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-              <Calendar size={11} />
+            <p className="text-xs text-muted mt-1 flex items-center gap-1">
+              <Calendar size={11} strokeWidth={2.5} />
               {new Date(profile.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })} tarihinde katıldı
             </p>
           )}
@@ -197,7 +197,7 @@ const UserProfile: React.FC = () => {
             <div className="mt-4">
               {unfollowConfirm ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">Takibi bırak?</span>
+                  <span className="text-xs text-muted">Takibi bırak?</span>
                   <button
                     onClick={handleToggleFollow}
                     disabled={followLoading}
@@ -207,7 +207,7 @@ const UserProfile: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setUnfollowConfirm(false)}
-                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all"
+                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-surface-2 text-muted hover:bg-divider transition-all"
                   >
                     İptal
                   </button>
@@ -215,17 +215,17 @@ const UserProfile: React.FC = () => {
               ) : isFollowing ? (
                 <button
                   onClick={() => setUnfollowConfirm(true)}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-slate-100 text-slate-600 font-bold text-sm hover:bg-red-50 hover:text-red-500 transition-all"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-surface-2 text-text font-heading text-sm hover:bg-red-50 hover:text-red-500 transition-all"
                 >
-                  <Users size={14} /> Takip Ediliyor
+                  <Users size={14} strokeWidth={2.5} /> Takip Ediliyor
                 </button>
               ) : (
                 <button
                   onClick={handleToggleFollow}
                   disabled={followLoading}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#187fe7] text-white font-bold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg shadow-blue-200"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-accent text-white font-heading text-sm hover:brightness-105 transition-all disabled:opacity-50 shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
                 >
-                  {followLoading ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+                  {followLoading ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} strokeWidth={2.5} />}
                   Takip Et
                 </button>
               )}
@@ -235,30 +235,30 @@ const UserProfile: React.FC = () => {
 
         {/* ── İstatistikler ── */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 text-center">
-            <p className="text-2xl font-black text-[#187fe7]">{plans.length}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Paylaşılan Plan</p>
+          <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
+            <p className="font-heading text-2xl text-accent">{plans.length}</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">Paylaşılan Plan</p>
           </div>
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 text-center">
-            <p className="text-2xl font-black text-[#f8981d]">{totalDays}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Toplam Gün</p>
+          <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
+            <p className="font-heading text-2xl text-sage-700">{totalDays}</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">Toplam Gün</p>
           </div>
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 text-center">
-            <p className="text-2xl font-black text-emerald-500">{destinations.length}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Farklı Şehir</p>
+          <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
+            <p className="font-heading text-2xl text-emerald-500">{destinations.length}</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">Farklı Şehir</p>
           </div>
         </div>
 
         {/* ── Ziyaret edilen şehirler ── */}
         {destinations.length > 0 && (
           <div className="mb-6">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <MapPin size={12} className="text-[#f8981d]" /> Gezilen Yerler
+            <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <MapPin size={12} strokeWidth={2.5} className="text-accent" /> Gezilen Yerler
             </p>
             <div className="flex flex-wrap gap-2">
               {destinations.map(dest => (
-                <span key={dest} className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300">
-                  <Globe size={11} className="text-[#187fe7]" /> {dest}
+                <span key={dest} className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-surface border border-divider rounded-full text-text">
+                  <Globe size={11} strokeWidth={2.5} className="text-sage-700" /> {dest}
                 </span>
               ))}
             </div>
@@ -267,14 +267,14 @@ const UserProfile: React.FC = () => {
 
         {/* ── Planlar ── */}
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Globe size={12} className="text-[#187fe7]" /> Paylaşılan Planlar
+          <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Globe size={12} strokeWidth={2.5} className="text-sage-700" /> Paylaşılan Planlar
           </p>
 
           {plans.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-10 text-center">
+            <div className="bg-surface border border-dashed border-divider rounded-3xl p-10 text-center">
               <p className="text-2xl mb-2">🗺️</p>
-              <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Henüz paylaşılan plan yok</p>
+              <p className="text-sm font-heading text-text">Henüz paylaşılan plan yok</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -285,32 +285,32 @@ const UserProfile: React.FC = () => {
                   <div
                     key={plan.id}
                     onClick={() => navigate(`/plan/${plan.id}`)}
-                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 cursor-pointer hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all"
+                    className="bg-surface border border-divider rounded-3xl p-4 cursor-pointer hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                          <p className="text-sm font-bold text-slate-800 dark:text-white">
+                          <p className="text-sm font-bold text-text">
                             {plan.destination.split(',')[0]}
                           </p>
                           {purposeLabel && (
-                            <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-full">
+                            <span className="text-[9px] font-bold bg-surface-2 text-muted px-1.5 py-0.5 rounded-full">
                               {purposeLabel}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-muted">
                           {plan.dailyPlanCount} gün · {plan.currencySymbol}{plan.budget.toLocaleString('tr-TR')}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] text-slate-400">{relativeTime(plan.createdAt)}</p>
+                        <p className="text-[10px] text-muted">{relativeTime(plan.createdAt)}</p>
                         {avgDisplay && (
                           <p className="text-xs font-bold text-amber-500 mt-0.5">★ {avgDisplay}</p>
                         )}
                       </div>
                     </div>
-                    <p className="text-[11px] text-[#187fe7] font-semibold mt-2">Planı gör →</p>
+                    <p className="text-[11px] text-accent font-semibold mt-2">Planı gör →</p>
                   </div>
                 );
               })}

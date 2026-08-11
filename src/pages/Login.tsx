@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
@@ -75,28 +75,30 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Sol Panel — Fotoğraf */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-[#1c140c]">
         <img
-          src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=100&w=3840&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=75&w=1600&auto=format&fit=crop"
           alt="İstanbul Galata Kulesi"
           className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
+          fetchPriority="high"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/75" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/50 via-[#1c140c]/28 to-[#1c140c]/78" />
         <div className="relative z-10 flex flex-col h-full p-10">
           <Link to="/">
             <TravyonLogo size={64} dark />
           </Link>
           <div className="mt-auto">
-            <blockquote className="text-white text-xl font-semibold leading-snug max-w-xs">
+            <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">
               "Dünyanın en güzel köşeleri,<br />seni beklemeye devam ediyor."
             </blockquote>
-            <p className="mt-3 text-white/55 text-sm">Travyon ile seyahatini planla, anılarını yarat.</p>
+            <p className="mt-3.5 text-white/60 text-sm">Travyon ile seyahatini planla, anılarını yarat.</p>
           </div>
         </div>
       </div>
 
       {/* Sağ Panel — Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-[#f5f0e8] dark:bg-slate-900 overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 py-10 bg-bg overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -110,24 +112,24 @@ const Login: React.FC = () => {
             </Link>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-slate-900">Tekrar Hoş Geldiniz 👋</h1>
-          <p className="text-slate-500 text-sm mt-1.5 mb-8">Hesabınıza giriş yapın ve planlamaya devam edin.</p>
+          <h1 className="font-heading text-3xl text-text">Tekrar hoş geldin 👋</h1>
+          <p className="text-muted text-[15px] mt-2.5 mb-7">Hesabına giriş yap ve planlamaya devam et.</p>
 
           {error && (
-            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-posta</label>
+              <label className="block font-heading text-[13px] text-text mb-2">E-posta</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={17} strokeWidth={2.5} />
                 <input
                   type="email"
                   placeholder="ornek@email.com"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 outline-none focus:bg-white focus:border-[#187fe7] focus:ring-4 focus:ring-[#187fe7]/10 transition-all"
+                  className="w-full pl-10 pr-4 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -136,18 +138,18 @@ const Login: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-semibold text-slate-700">Şifre</label>
-                <button type="button" className="text-xs text-[#187fe7] hover:text-blue-700 font-medium transition-colors">
-                  Şifremi Unuttum
+              <div className="flex items-center justify-between mb-2">
+                <label className="block font-heading text-[13px] text-text">Şifre</label>
+                <button type="button" className="text-xs text-accent font-heading transition-colors">
+                  Şifremi unuttum
                 </button>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={17} strokeWidth={2.5} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 outline-none focus:bg-white focus:border-[#187fe7] focus:ring-4 focus:ring-[#187fe7]/10 transition-all"
+                  className="w-full pl-10 pr-10 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -155,9 +157,9 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={17} strokeWidth={2.5} /> : <Eye size={17} strokeWidth={2.5} />}
                 </button>
               </div>
             </div>
@@ -165,25 +167,25 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-50 shadow-lg shadow-[#f8981d]/30"
+              className="w-full py-3.5 mt-1 bg-accent hover:brightness-105 text-white font-heading rounded-full flex items-center justify-center gap-2 text-[15px] transition-all disabled:opacity-50 shadow-[0_12px_26px_rgba(198,113,57,0.3)] active:translate-y-px"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} strokeWidth={2.75} />}
               {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
 
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-slate-100" />
-            <span className="text-xs text-slate-400 uppercase tracking-wider">veya</span>
-            <div className="flex-1 h-px bg-slate-100" />
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-divider" />
+            <span className="text-xs text-muted uppercase tracking-wider">veya</span>
+            <div className="flex-1 h-px bg-divider" />
           </div>
 
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-semibold rounded-xl flex items-center justify-center gap-2.5 text-sm transition-all disabled:opacity-50"
+            className="w-full py-3.5 bg-surface hover:bg-surface-2 border-[1.5px] border-divider text-text font-heading rounded-full flex items-center justify-center gap-2.5 text-[14.5px] transition-all disabled:opacity-50"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -192,9 +194,9 @@ const Login: React.FC = () => {
             Google ile Devam Et
           </button>
 
-          <p className="text-center text-slate-500 text-sm mt-7">
+          <p className="text-center text-muted text-sm mt-7">
             Hesabın yok mu?{' '}
-            <Link to="/register" className="text-[#187fe7] hover:text-blue-700 font-semibold transition-colors">
+            <Link to="/register" className="text-accent font-heading transition-colors">
               Kayıt Ol
             </Link>
           </p>

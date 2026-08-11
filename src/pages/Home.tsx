@@ -1,12 +1,15 @@
-﻿import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sun, Moon, Plane } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
-import GlobeAnimation from '../components/GlobeAnimation';
 import TravyonLogo from '../components/TravyonLogo';
+
+// three.js + @react-three/fiber ağır olduğu için sadece bölüm görünüme
+// yaklaşınca ve yalnızca masaüstünde yükleniyor — hero animasyonuyla çakışmasın.
+const GlobeAnimation = lazy(() => import('../components/GlobeAnimation'));
 
 /* ── Destinasyon kartı — hover'da video oynar ── */
 interface DestData {
@@ -51,7 +54,7 @@ const DestinationCard: React.FC<{
       onClick={onNavigate}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
-      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+      className="group relative rounded-3xl overflow-hidden cursor-pointer shadow-[0_10px_26px_rgba(46,43,37,0.16)]"
       style={{ aspectRatio: '5/3' }}
     >
       {/* Statik fotoğraf */}
@@ -61,6 +64,7 @@ const DestinationCard: React.FC<{
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
           hovered ? 'opacity-0' : 'opacity-100'
         }`}
+        style={{ filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
       />
 
       {/* Hover videosu */}
@@ -74,21 +78,21 @@ const DestinationCard: React.FC<{
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
           hovered ? 'opacity-100' : 'opacity-0'
         }`}
-        style={{ transform: 'scale(1.35)', objectPosition: 'center center' }}
+        style={{ transform: 'scale(1.35)', objectPosition: 'center center', filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
       />
 
       {/* Alt gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
 
       {/* İçerik */}
       <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-5 flex items-end justify-between gap-1.5 sm:gap-2">
-        <h3 className="text-sm sm:text-2xl font-black text-white leading-tight drop-shadow">
+        <h3 className="font-heading text-sm sm:text-2xl text-white leading-tight">
           {dest.city}
         </h3>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-          className="shrink-0 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-[9px] sm:text-xs px-2 py-1 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-200 shadow-lg whitespace-nowrap group-hover:scale-105 active:scale-95"
+          className="shrink-0 bg-accent hover:brightness-105 text-white font-heading text-[9px] sm:text-xs px-2 py-1 sm:px-4 sm:py-2.5 rounded-full transition-all duration-200 whitespace-nowrap group-hover:scale-105 active:scale-95"
         >
           <span className="sm:hidden">Planla</span>
           <span className="hidden sm:inline">Hemen Planla</span>
@@ -155,6 +159,29 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  /* 3D glob — yalnızca "Nasıl Çalışır" bölümü görünüme yaklaşınca ve
+     yalnızca masaüstünde (lg+) yüklensin; hero ilk açılışta onunla
+     yarışmasın ve mobilde boşa WebGL render loop'u çalışmasın. */
+  const globeSectionRef = useRef<HTMLElement>(null);
+  const [loadGlobe, setLoadGlobe] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) return;
+    const el = globeSectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setLoadGlobe(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '300px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleCTA = () => {
     navigate(user ? '/onboarding' : '/register');
   };
@@ -182,12 +209,12 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
   }, []);
 
   return (
-    <div className="bg-[#f5f0e8] dark:bg-slate-900 text-[#1a1a1a] dark:text-white overflow-x-hidden">
+    <div className="bg-bg text-text overflow-x-hidden">
 
       {/* ══ MOBİL NAVBAR — sabit, scroll'dan etkilenmez ══ */}
       <div className="sm:hidden fixed inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
         <nav className="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/15 h-14 px-4 rounded-2xl">
-          <TravyonLogo size={36} />
+          <TravyonLogo size={36} dark />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -203,14 +230,14 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="text-white/90 hover:text-white font-semibold text-sm px-3 py-1.5 transition-colors"
+              className="text-white/90 hover:text-white font-heading text-sm px-3 py-1.5 transition-colors"
             >
               Giriş
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
-              className="inline-flex items-center gap-1 font-bold text-white bg-[#f8981d] hover:bg-[#e08518] rounded-xl text-sm px-4 py-2 shadow-md shadow-[#f8981d]/30 transition-colors"
+              className="inline-flex items-center gap-1 font-heading text-white bg-accent hover:brightness-105 rounded-full text-sm px-4 py-2 shadow-[0_8px_20px_rgba(198,113,57,0.3)] transition-colors"
             >
               Başla <ArrowRight size={13} />
             </button>
@@ -223,16 +250,17 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         ${scrollStage === 0 ? 'top-3' : scrollStage <= 2 ? 'top-2' : 'top-1'}`}>
         <nav className={`flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 transition-all duration-500 ease-out
           ${scrollStage === 0
-            ? 'w-[97%] max-w-[1300px] px-6 h-[72px] rounded-2xl'
+            ? 'w-[97%] max-w-[1300px] px-6 h-[72px] rounded-3xl'
             : scrollStage === 1
-            ? 'w-[94%] max-w-[1230px] px-6 h-[64px] rounded-2xl'
+            ? 'w-[94%] max-w-[1230px] px-6 h-[64px] rounded-3xl'
             : scrollStage === 2
-            ? 'w-[88%] max-w-[1100px] px-5 h-[56px] rounded-xl'
+            ? 'w-[88%] max-w-[1100px] px-5 h-[56px] rounded-2xl'
             : scrollStage === 3
-            ? 'w-[80%] max-w-[980px] px-5 h-[48px] rounded-xl'
-            : 'w-[72%] max-w-[850px] px-4 h-[42px] rounded-lg'
+            ? 'w-[80%] max-w-[980px] px-5 h-[48px] rounded-2xl'
+            : 'w-[72%] max-w-[850px] px-4 h-[42px] rounded-2xl'
           }`}>
           <TravyonLogo
+            dark
             size={scrollStage === 0 ? 56 : scrollStage === 1 ? 50 : scrollStage === 2 ? 44 : scrollStage === 3 ? 37 : 30}
           />
           <div className="flex items-center gap-2">
@@ -251,7 +279,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className={`text-slate-600 hover:text-slate-900 font-semibold transition-all duration-500
+              className={`text-white/90 hover:text-white font-heading transition-all duration-500
                 ${scrollStage === 0 ? 'text-sm px-4 py-2' : scrollStage <= 1 ? 'text-sm px-4 py-1.5' : scrollStage <= 3 ? 'text-xs px-3 py-1.5' : 'text-[11px] px-2.5 py-1'}`}
             >
               Giriş Yap
@@ -259,7 +287,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <button
               type="button"
               onClick={() => navigate('/register')}
-              className={`inline-flex items-center gap-1.5 font-bold text-white bg-[#f8981d] hover:bg-[#e08518] rounded-xl transition-all duration-500 shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px
+              className={`inline-flex items-center gap-1.5 font-heading text-white bg-accent hover:brightness-105 rounded-full transition-all duration-500 shadow-[0_10px_22px_rgba(198,113,57,0.28)] hover:-translate-y-px
                 ${scrollStage === 0 ? 'text-sm px-5 py-2' : scrollStage <= 1 ? 'text-sm px-5 py-1.5' : scrollStage <= 3 ? 'text-xs px-4 py-1.5' : 'text-[11px] px-3 py-1'}`}
             >
               Ücretsiz Başla
@@ -272,7 +300,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           BÖLÜM 1 — HERO (Video)
          ══════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-[#1c140c]">
 
         {/* Video arka planlar */}
         {!showFallback && HERO_VIDEOS.map((src, i) => (
@@ -283,7 +311,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             autoPlay={i === 0}
             muted
             playsInline
-            preload="auto"
+            preload={
+              i === currentVideoIndex || i === (currentVideoIndex + 1) % HERO_VIDEOS.length
+                ? 'auto'
+                : 'none'
+            }
             onEnded={i === currentVideoIndex ? handleVideoEnded : undefined}
             onError={i === currentVideoIndex ? handleVideoError : undefined}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
@@ -315,17 +347,16 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         {/* İçerik */}
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-20 sm:pb-16 lg:py-0" style={{ zIndex: 3 }}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12">
-            <div className="max-w-xl">
+            <div className="max-w-xl lg:mt-16">
 
-              {/* Badge */}
               {/* Başlık */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight"
+                className="font-heading text-4xl md:text-5xl lg:text-6xl text-white leading-[1.06] tracking-tight"
               >
                 Hayalindeki<br />Seyahati<br />
-                <span className="text-[#f8981d]">Planla.</span>
+                <span className="text-accent-200">Planla.</span>
               </motion.h1>
 
               {/* Alt metin */}
@@ -345,7 +376,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               >
                 <button
                   type="button" onClick={handleCTA}
-                  className="group inline-flex items-center gap-2 px-7 py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-semibold rounded-xl text-base transition-all shadow-xl shadow-[#f8981d]/30 hover:-translate-y-0.5"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-accent hover:brightness-105 text-white font-heading text-base rounded-full transition-all shadow-[0_12px_28px_rgba(198,113,57,0.3)] hover:-translate-y-0.5 active:translate-y-px"
                 >
                   Ücretsiz Plan Oluştur
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
@@ -360,7 +391,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               >
                 {[['50+', 'Desteklenen Şehir'], ['15sn', 'Ortalama Plan Süresi'], ['%100', 'Kişiselleştirilmiş']].map(([val, label]) => (
                   <div key={label}>
-                    <p className="text-2xl font-bold text-[#f8981d]">{val}</p>
+                    <p className="font-heading text-2xl text-accent-200">{val}</p>
                     <p className="text-sm text-white/60 mt-0.5">{label}</p>
                   </div>
                 ))}
@@ -392,14 +423,14 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           SCROLL İNDİKATÖRÜ
          ══════════════════════════════════════════ */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
-        <span className="text-[11px] font-semibold tracking-[0.25em] text-slate-900 dark:text-white uppercase select-none">
+      <div className="bg-bg flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
+        <span className="text-[11px] font-heading tracking-[0.25em] text-text uppercase select-none">
           Scroll
         </span>
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          className="text-slate-900 dark:text-white"
+          className="text-text"
         >
           <svg width="20" height="12" viewBox="0 0 20 12" fill="none">
             <path d="M1 1L10 10L19 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -410,7 +441,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       {/* ══════════════════════════════════════════
           BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
          ══════════════════════════════════════════ */}
-      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-10 sm:py-20 lg:py-24">
+      <section className="bg-bg py-10 sm:py-20 lg:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
@@ -419,11 +450,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">ÜRÜN</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">ÜRÜN</span>
+            <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
               Travyon'u Keşfedin
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
+            <p className="text-sm text-muted mt-2 max-w-md mx-auto leading-relaxed">
               Dakikalar içinde kişiselleştirilmiş seyahat planın hazır.
             </p>
           </motion.div>
@@ -434,17 +465,17 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="relative rounded-2xl overflow-hidden border border-slate-300/70 dark:border-slate-700 shadow-2xl shadow-slate-400/25 dark:shadow-black/50"
+            className="relative rounded-3xl overflow-hidden border border-divider shadow-[0_20px_50px_rgba(46,43,37,0.18)]"
           >
             {/* Browser şerit */}
-            <div className="bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-2.5 border-b border-slate-200 dark:border-slate-700">
+            <div className="bg-surface-2 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-2.5 border-b border-divider">
               <div className="flex gap-1 sm:gap-1.5 shrink-0">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-400" />
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400" />
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-400" />
               </div>
               <div className="flex-1 flex justify-center">
-                <div className="bg-white dark:bg-slate-700 rounded-md px-3 sm:px-4 py-1 text-[10px] sm:text-[11px] text-slate-400 w-32 sm:w-48 text-center">
+                <div className="bg-surface rounded-md px-3 sm:px-4 py-1 text-[10px] sm:text-[11px] text-muted w-32 sm:w-48 text-center">
                   travyon.app
                 </div>
               </div>
@@ -456,18 +487,18 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               muted
               loop
               playsInline
-              className="w-full block bg-slate-900"
+              className="w-full block bg-surface-2"
             />
           </motion.div>
         </div>
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
+      <div className="bg-bg px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
-          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <div className="flex-1 h-px bg-divider" />
+          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-divider" />
         </div>
       </div>
 
@@ -476,15 +507,20 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
          ══════════════════════════════════════════ */}
       <section
         id="nasil-calisir"
-        className="relative bg-[#f5f0e8] dark:bg-slate-900 overflow-x-hidden"
+        ref={globeSectionRef}
+        className="relative bg-bg overflow-x-hidden"
       >
 
-        {/* Globe — sadece lg+ ekranlarda */}
-        <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
-          <div style={{ width: 500, height: 500 }}>
-            <GlobeAnimation />
+        {/* Globe — sadece lg+ ekranlarda, görünüme yaklaşınca yüklenir */}
+        {loadGlobe && (
+          <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
+            <div style={{ width: 500, height: 500 }}>
+              <Suspense fallback={null}>
+                <GlobeAnimation />
+              </Suspense>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* İçerik */}
         <div
@@ -494,11 +530,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
 
           {/* Başlık */}
           <div className="pt-14 sm:pt-20 lg:pt-22 pb-2">
-            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">SÜREÇ</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-1">
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">SÜREÇ</span>
+            <h2 className="font-heading text-2xl md:text-3xl text-text mt-1">
               Nasıl Çalışır?
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 max-w-xs leading-relaxed">
+            <p className="text-sm text-muted mt-1.5 max-w-xs leading-relaxed">
               Hesap oluşturmaktan mükemmel seyahat planına dört adımda ulaşın.
             </p>
           </div>
@@ -507,9 +543,9 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
           <div className="lg:hidden grid grid-cols-2 gap-6 sm:gap-8 pt-8 pb-14">
             {STEPS.map((step) => (
               <div key={step.num}>
-                <div className="text-[#f8981d] text-3xl sm:text-4xl font-bold mb-2 leading-none">{step.num}</div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
+                <div className="font-heading text-accent text-3xl sm:text-4xl mb-2 leading-none">{step.num}</div>
+                <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
+                <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -524,9 +560,9 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <div className="flex flex-col justify-start pt-20 gap-10 pr-7">
               {STEPS.slice(0, 2).map((step) => (
                 <div key={step.num}>
-                  <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
+                  <div className="font-heading text-accent text-4xl mb-2 leading-none">{step.num}</div>
+                  <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
+                  <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -538,9 +574,9 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <div className="flex flex-col justify-start pt-20 gap-10 pl-15">
               {STEPS.slice(2, 4).map((step) => (
                 <div key={step.num}>
-                  <div className="text-[#f8981d] text-4xl font-bold mb-2 leading-none">{step.num}</div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{step.title}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
+                  <div className="font-heading text-accent text-4xl mb-2 leading-none">{step.num}</div>
+                  <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
+                  <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -550,18 +586,18 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
+      <div className="bg-bg px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
-          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <div className="flex-1 h-px bg-divider" />
+          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-divider" />
         </div>
       </div>
 
       {/* ══════════════════════════════════════════
           BÖLÜM 3.5 — POPÜLER DESTİNASYONLAR
          ══════════════════════════════════════════ */}
-      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
+      <section className="bg-bg py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <motion.div
@@ -569,11 +605,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">Destinasyonlar</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">Destinasyonlar</span>
+            <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
               En Popüler Destinasyonlar
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            <p className="text-sm text-muted mt-2">
               AI bu şehirlerde uzman — saniyeler içinde optimize planlar üretir.
             </p>
           </motion.div>
@@ -624,18 +660,18 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
+      <div className="bg-bg px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
-          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <div className="flex-1 h-px bg-divider" />
+          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-divider" />
         </div>
       </div>
 
       {/* ══════════════════════════════════════════
           BÖLÜM 4 — FİYATLANDIRMA
          ══════════════════════════════════════════ */}
-      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
+      <section className="bg-bg py-20 lg:py-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <motion.div
@@ -643,11 +679,11 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <span className="text-[#f8981d] text-xs font-semibold uppercase tracking-widest">Fiyatlandırma</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-2">
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">Fiyatlandırma</span>
+            <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
               Seyahatine uygun plan seç
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
+            <p className="text-sm text-muted mt-2 max-w-md mx-auto">
               Ücretsiz başla, ihtiyacın büyüdükçe yükselt.
             </p>
           </motion.div>
@@ -658,30 +694,30 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <motion.div
               initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.4, delay: 0 }}
-              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col"
+              className="bg-surface border border-divider rounded-3xl p-6 flex flex-col"
             >
               <div className="mb-5">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Free</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-muted">Free</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">₺0</span>
-                  <span className="text-slate-400 text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-text">₺0</span>
+                  <span className="text-muted text-sm">/ay</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">Sonsuza kadar ücretsiz</p>
+                <p className="text-xs text-muted mt-1">Sonsuza kadar ücretsiz</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
                 {['3 plan hakkı', 'Temel AI planlama', 'İnteraktif harita', 'Plan kaydetme'].map(f => (
                   <div key={f} className="flex items-center gap-2.5">
-                    <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div className="w-4 h-4 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
+                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
-                    <span className="text-sm text-slate-600 dark:text-slate-300">{f}</span>
+                    <span className="text-sm text-text">{f}</span>
                   </div>
                 ))}
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/register')}
-                className="w-full py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                className="w-full py-3 rounded-full border-[1.5px] border-divider bg-transparent text-text font-heading text-sm hover:bg-surface-2 transition-all"
               >
                 Ücretsiz Başla
               </button>
@@ -691,25 +727,25 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <motion.div
               initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.1 }}
-              className="relative bg-gradient-to-b from-[#f8981d] to-[#e08518] rounded-2xl p-6 flex flex-col shadow-2xl shadow-[#f8981d]/30 scale-[1.03]"
+              className="relative bg-accent rounded-3xl p-6 flex flex-col shadow-[0_22px_48px_rgba(198,113,57,0.34)] scale-[1.03]"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                <span className="bg-accent-700 text-white text-[10px] font-heading uppercase tracking-widest px-3.5 py-1.5 rounded-full">
                   En Popüler
                 </span>
               </div>
               <div className="mb-5">
-                <span className="text-xs font-bold uppercase tracking-widest text-white/70">Pro</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-white/75">Pro</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black text-white">₺99</span>
-                  <span className="text-white/70 text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-white">₺99</span>
+                  <span className="text-white/75 text-sm">/ay</span>
                 </div>
-                <p className="text-xs text-white/60 mt-1">Yıllık ödemede %20 indirim</p>
+                <p className="text-xs text-white/70 mt-1">Yıllık ödemede %20 indirim</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
                 {['Sınırsız plan', 'Reklamsız deneyim', 'Gelişmiş AI modeli', 'Seyahat süreleri', 'Öncelikli destek'].map(f => (
                   <div key={f} className="flex items-center gap-2.5">
-                    <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-white/22 flex items-center justify-center shrink-0">
                       <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     <span className="text-sm text-white">{f}</span>
@@ -719,7 +755,7 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
               <button
                 type="button"
                 onClick={() => navigate('/register')}
-                className="w-full py-2.5 rounded-xl bg-white text-[#e08518] text-sm font-bold hover:bg-white/90 transition-all shadow-lg"
+                className="w-full py-3 rounded-full bg-white text-accent-700 font-heading text-sm hover:brightness-105 transition-all"
               >
                 Pro'ya Geç →
               </button>
@@ -729,30 +765,30 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
             <motion.div
               initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}
-              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col"
+              className="bg-surface border border-divider rounded-3xl p-6 flex flex-col"
             >
               <div className="mb-5">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Team</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-muted">Team</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">₺299</span>
-                  <span className="text-slate-400 text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-text">₺299</span>
+                  <span className="text-muted text-sm">/ay</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">5 kullanıcıya kadar</p>
+                <p className="text-xs text-muted mt-1">5 kullanıcıya kadar</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
                 {['5 kişiye kadar', 'Sınırsız plan', 'Ortak düzenleme', 'Paylaşılabilir planlar', 'Özel destek hattı'].map(f => (
                   <div key={f} className="flex items-center gap-2.5">
-                    <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div className="w-4 h-4 rounded-full bg-sage-200 flex items-center justify-center shrink-0">
+                      <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="var(--color-sage-700)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
-                    <span className="text-sm text-slate-600 dark:text-slate-300">{f}</span>
+                    <span className="text-sm text-text">{f}</span>
                   </div>
                 ))}
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/register')}
-                className="w-full py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:border-[#f8981d]/40 hover:bg-orange-50 dark:hover:bg-slate-700 transition-all"
+                className="w-full py-3 rounded-full border-[1.5px] border-divider bg-transparent text-text font-heading text-sm hover:bg-surface-2 transition-all"
               >
                 Team'e Başla
               </button>
@@ -763,48 +799,46 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
       </section>
 
       {/* ── PLANE DIVIDER ── */}
-      <div className="bg-[#f5f0e8] dark:bg-slate-900 px-4 sm:px-12 py-2">
+      <div className="bg-bg px-4 sm:px-12 py-2">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
-          <Plane size={15} className="text-slate-400 dark:text-slate-500 -rotate-45 shrink-0" />
-          <div className="flex-1 h-px bg-slate-400/40 dark:bg-slate-600" />
+          <div className="flex-1 h-px bg-divider" />
+          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-divider" />
         </div>
       </div>
 
       {/* ══════════════════════════════════════════
           CTA TEKRARI
          ══════════════════════════════════════════ */}
-      <section className="bg-[#f5f0e8] dark:bg-slate-900 py-20 lg:py-24">
+      <section className="relative bg-bg py-20 lg:py-24 overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="max-w-2xl mx-auto px-6 text-center"
+          className="relative max-w-2xl mx-auto px-8 sm:px-10 py-16 text-center bg-sage rounded-[40px] overflow-hidden"
         >
-          <p className="text-xs font-semibold text-[#f8981d] uppercase tracking-widest mb-4">Başlamaya hazır mısın?</p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight">
-            Hayalindeki seyahat<br />sadece <span className="text-[#f8981d]">1 tık</span> ötede.
+          <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-white/12 pointer-events-none" />
+          <div className="absolute -bottom-20 -left-8 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
+          <p className="relative text-xs font-heading text-white/80 uppercase tracking-widest mb-3.5">Başlamaya hazır mısın?</p>
+          <h2 className="relative font-heading text-3xl md:text-4xl lg:text-5xl text-white leading-tight">
+            Sıradaki durağın<br />sadece bir tık ötede.
           </h2>
-          <p className="mt-4 text-slate-500 dark:text-slate-400 text-base leading-relaxed">
-            Kredi kartı gerekmez. Dakikalar içinde ücretsiz planını oluştur.
-          </p>
           <button
             type="button"
             onClick={handleCTA}
-            className="mt-8 inline-flex items-center gap-2.5 px-8 py-4 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-2xl text-base transition-all shadow-2xl shadow-[#f8981d]/30 hover:-translate-y-0.5 active:scale-95"
+            className="relative mt-8 inline-flex items-center gap-2.5 px-8 py-4 bg-white hover:brightness-105 text-accent-700 font-heading text-base rounded-full transition-all shadow-[0_16px_34px_rgba(46,43,37,0.24)] active:scale-95"
           >
             Ücretsiz Plan Oluştur
             <ArrowRight size={18} />
           </button>
-         
         </motion.div>
       </section>
 
       {/* ══════════════════════════════════════════
           FOOTER
          ══════════════════════════════════════════ */}
-      <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+      <footer className="bg-surface border-t border-divider">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
 
           {/* Logo */}
@@ -812,14 +846,14 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
 
           {/* Linkler */}
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <Link to="/sss" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">SSS</Link>
-            <Link to="/gizlilik" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Gizlilik</Link>
-            <Link to="/kullanim-kosullari" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Kullanım Koşulları</Link>
-            <Link to="/iletisim" className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">İletişim</Link>
+            <Link to="/sss" className="text-sm text-muted hover:text-text transition-colors">SSS</Link>
+            <Link to="/gizlilik" className="text-sm text-muted hover:text-text transition-colors">Gizlilik</Link>
+            <Link to="/kullanim-kosullari" className="text-sm text-muted hover:text-text transition-colors">Kullanım Koşulları</Link>
+            <Link to="/iletisim" className="text-sm text-muted hover:text-text transition-colors">İletişim</Link>
           </div>
 
           {/* Copyright */}
-          <p className="text-xs sm:text-sm text-slate-400 whitespace-nowrap text-center">
+          <p className="text-xs sm:text-sm text-muted whitespace-nowrap text-center">
             © 2026 Travyon. Tüm hakları saklıdır.
           </p>
 

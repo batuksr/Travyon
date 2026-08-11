@@ -141,7 +141,7 @@ const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ 
     aria-checked={value}
     onClick={() => onChange(!value)}
     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none
-      ${value ? 'bg-[#f8981d]' : 'bg-slate-200 dark:bg-slate-700'}`}
+      ${value ? 'bg-accent' : 'bg-divider'}`}
   >
     <span
       aria-hidden="true"
@@ -167,27 +167,27 @@ const SegmentedControl: React.FC<{
   value: boolean;
   onChange: (v: boolean) => void;
 }> = ({ options, value, onChange }) => (
-  <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
+  <div className="flex rounded-lg border border-divider overflow-hidden text-xs font-semibold">
     {options.map(({ label, val }) => (
       <button key={label} type="button" onClick={() => onChange(val)}
-        className={`flex-1 py-2 transition-colors ${value === val ? 'bg-[#f8981d] text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+        className={`flex-1 py-2 transition-colors ${value === val ? 'bg-accent text-white' : 'text-muted hover:bg-surface-2'}`}
       >{label}</button>
     ))}
   </div>
 );
 
 const SettingRow: React.FC<{ title: string; desc: string; children: React.ReactNode }> = ({ title, desc, children }) => (
-  <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-0">
+  <div className="flex items-center justify-between py-4 border-b border-divider last:border-0">
     <div>
-      <p className="text-sm font-medium text-slate-800">{title}</p>
-      <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+      <p className="text-sm font-medium text-text">{title}</p>
+      <p className="text-xs text-muted mt-0.5">{desc}</p>
     </div>
     {children}
   </div>
 );
 
 const ComingSoonBadge = () => (
-  <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest">Yakında</span>
+  <span className="text-[10px] font-bold bg-surface-2 text-muted px-2 py-0.5 rounded-full uppercase tracking-widest">Yakında</span>
 );
 
 /* Profil sayfası satır bileşeni — Airbnb tarzı inline edit */
@@ -199,15 +199,15 @@ const ProfileRow: React.FC<{
   actionLabel?: string;
   children?: React.ReactNode;
 }> = ({ label, display, isEditing, onEdit, actionLabel = 'Düzenle', children }) => (
-  <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+  <div className="border-b border-divider last:border-0">
     <div className="flex items-start py-4 gap-4">
-      <p className="w-24 sm:w-40 shrink-0 text-[11px] sm:text-[13px] font-semibold text-slate-500 dark:text-slate-400 pt-0.5 uppercase tracking-wide">{label}</p>
+      <p className="w-24 sm:w-40 shrink-0 text-[11px] sm:text-[13px] font-semibold text-muted pt-0.5 uppercase tracking-wide">{label}</p>
       <div className="flex-1 min-w-0 text-sm pt-0.5">{display}</div>
       {!isEditing && (
         <button
           type="button"
           onClick={onEdit}
-          className="shrink-0 text-sm font-bold text-[#f8981d] hover:text-[#e08518] transition-colors underline underline-offset-2 decoration-[#f8981d]/40"
+          className="shrink-0 text-sm font-bold text-accent hover:text-accent-700 transition-colors underline underline-offset-2 decoration-accent/40"
         >
           {actionLabel}
         </button>
@@ -291,7 +291,7 @@ const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label?: string;
 }) => (
   <button
     type="button" onClick={onClick} disabled={loading || disabled}
-    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-[#f8981d] hover:bg-[#e08518] text-white shadow-md shadow-[#f8981d]/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-heading transition-all bg-accent hover:brightness-105 text-white shadow-md shadow-accent/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
   >
     {loading && <Loader2 size={14} className="animate-spin" />}
     {label}
@@ -299,10 +299,10 @@ const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label?: string;
 );
 
 const CardWrap: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+  <div className="bg-surface rounded-2xl border border-divider p-4 sm:p-6">
     <div className="mb-5">
-      <h2 className="font-bold text-slate-900 dark:text-white text-lg">{title}</h2>
-      {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+      <h2 className="font-bold text-text text-lg">{title}</h2>
+      {subtitle && <p className="text-sm text-muted mt-0.5">{subtitle}</p>}
     </div>
     {children}
   </div>
@@ -786,24 +786,24 @@ const Settings: React.FC = () => {
 
   /* ── Helpers ── */
   const inputCls = (err = false) =>
-    `w-full px-3.5 py-2.5 rounded-lg border text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all bg-white dark:bg-slate-800
+    `w-full px-3.5 py-2.5 rounded-2xl border-[1.5px] text-sm text-text placeholder:text-muted outline-none transition-all bg-surface-2
     ${err
-      ? 'border-rose-200 focus:border-rose-300 focus:ring-2 focus:ring-rose-200/30'
-      : 'border-slate-200 dark:border-slate-700 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10'}`;
+      ? 'border-rose-300 focus:border-rose-400'
+      : 'border-divider focus:border-accent'}`;
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-bg flex flex-col">
 
       {/* Top bar */}
-      <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 sm:px-6 shrink-0">
+      <div className="h-14 bg-surface border-b border-divider flex items-center px-4 sm:px-6 shrink-0">
         <button
           type="button" onClick={() => navigate(-1)}
-          className="text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors flex items-center gap-1.5"
+          className="text-sm text-muted hover:text-text transition-colors flex items-center gap-1.5"
         >
           <ChevronRight size={14} className="rotate-180" />
           Geri
         </button>
-        <span className="ml-4 font-bold text-slate-900 dark:text-white text-sm">Ayarlar</span>
+        <span className="ml-4 font-heading text-text text-sm">Ayarlar</span>
       </div>
 
       <div className="flex flex-1 flex-col sm:flex-row max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-8 gap-6 sm:gap-8">
@@ -812,7 +812,7 @@ const Settings: React.FC = () => {
         <aside className="hidden sm:block w-56 shrink-0 space-y-5">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5 px-3">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-1.5 px-3">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -823,8 +823,8 @@ const Settings: React.FC = () => {
                     onClick={() => setActiveSection(id)}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all
                       ${activeSection === id
-                        ? 'bg-[#f8981d]/10 text-[#f8981d] font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'}`}
+                        ? 'bg-accent-100 text-accent-700 font-semibold'
+                        : 'text-muted hover:bg-surface-2 font-medium'}`}
                   >
                     <Icon size={15} className="shrink-0" />
                     <span className="truncate">{label}</span>
@@ -843,7 +843,7 @@ const Settings: React.FC = () => {
             <select
               value={activeSection}
               onChange={e => setActiveSection(e.target.value as Section)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10"
+              className="w-full px-3.5 py-2.5 rounded-2xl border-[1.5px] border-divider bg-surface-2 text-sm font-medium text-text outline-none focus:border-accent"
             >
               {NAV_GROUPS.map(group => (
                 <optgroup key={group.label} label={group.label}>
@@ -864,20 +864,20 @@ const Settings: React.FC = () => {
             const EditBtns = ({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) => (
               <div className="flex gap-2 mt-3">
                 <button type="button" onClick={onSave} disabled={profileLoading}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity disabled:opacity-40">
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity disabled:opacity-40">
                   {profileLoading && <Loader2 size={13} className="animate-spin" />} Kaydet
                 </button>
                 <button type="button" onClick={onCancel}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-muted border border-divider hover:bg-surface-2 transition-colors">
                   İptal
                 </button>
               </div>
             );
             return (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div className="bg-surface rounded-2xl border border-divider overflow-hidden">
 
                 {/* Başlık + avatar */}
-                <div className="flex items-center gap-4 p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-4 p-4 sm:p-6 border-b border-divider">
                   {/* Gizli dosya input */}
                   <input
                     ref={photoInputRef}
@@ -889,7 +889,7 @@ const Settings: React.FC = () => {
 
                   {/* Avatar */}
                   <div className="relative shrink-0 group">
-                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center text-white text-2xl font-black ring-4 ring-white dark:ring-slate-900 shadow-md">
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-accent to-sage flex items-center justify-center text-white text-2xl font-heading ring-4 ring-surface shadow-md">
                       {(localPhotoURL || user?.photoURL)
                         ? <img src={localPhotoURL || user?.photoURL!} alt="avatar" className="w-full h-full object-cover" />
                         : (displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U')
@@ -908,15 +908,15 @@ const Settings: React.FC = () => {
                       }
                     </button>
                     {/* Alt köşe chip */}
-                    <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#f8981d] rounded-full flex items-center justify-center shadow-md pointer-events-none">
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-accent rounded-full flex items-center justify-center shadow-md pointer-events-none">
                       <Camera size={12} className="text-white" />
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-bold text-slate-900 dark:text-white text-lg leading-tight truncate">{displayName || 'Profil Bilgileri'}</h2>
-                    {username && <p className="text-sm text-slate-400 mt-0.5">@{username}</p>}
-                    <p className="text-[11px] text-slate-400 mt-1.5">PNG, JPG veya WebP — maks. 2 MB</p>
+                    <h2 className="font-bold text-text text-lg leading-tight truncate">{displayName || 'Profil Bilgileri'}</h2>
+                    {username && <p className="text-sm text-muted mt-0.5">@{username}</p>}
+                    <p className="text-[11px] text-muted mt-1.5">PNG, JPG veya WebP — maks. 2 MB</p>
                   </div>
                 </div>
 
@@ -934,8 +934,8 @@ const Settings: React.FC = () => {
                   {/* Ad */}
                   <ProfileRow label="Ad"
                     display={displayName
-                      ? <span className="font-semibold text-slate-800 dark:text-white">{displayName}</span>
-                      : <span className="text-slate-400">Adınızı girin</span>}
+                      ? <span className="font-semibold text-text">{displayName}</span>
+                      : <span className="text-muted">Adınızı girin</span>}
                     isEditing={editingField === 'displayName'}
                     onEdit={() => { setEditingField('displayName'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
@@ -947,13 +947,13 @@ const Settings: React.FC = () => {
                   {/* Profil adı */}
                   <ProfileRow label="Profil adı"
                     display={username
-                      ? <span className="font-medium text-slate-800 dark:text-white">@{username}</span>
-                      : <span className="text-slate-400">Bir profil adı seçin</span>}
+                      ? <span className="font-medium text-text">@{username}</span>
+                      : <span className="text-muted">Bir profil adı seçin</span>}
                     isEditing={editingField === 'username'}
                     onEdit={() => { setEditingField('username'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted text-sm">@</span>
                         <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} className={`${inputCls()} pl-8`} placeholder="kullaniciadi" />
                       </div>
                       <EditBtns onSave={() => handleFieldSave({ username })} onCancel={() => setEditingField(null)} />
@@ -963,20 +963,20 @@ const Settings: React.FC = () => {
                   {/* Telefon */}
                   <ProfileRow label="Telefon numarası"
                     display={phone
-                      ? <span className="font-medium text-slate-800 dark:text-white">🇹🇷 +90 {phone}</span>
-                      : <span className="text-slate-400">Telefon numarası ekleyin</span>}
+                      ? <span className="font-medium text-text">🇹🇷 +90 {phone}</span>
+                      : <span className="text-muted">Telefon numarası ekleyin</span>}
                     isEditing={editingField === 'phone'}
                     actionLabel={phone ? 'Düzenle' : 'Ekle'}
                     onEdit={() => { setEditingField('phone'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <div className="flex gap-2">
-                        <span className="flex items-center px-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+                        <span className="flex items-center px-3.5 rounded-lg border border-divider bg-surface-2 text-sm text-muted shrink-0 whitespace-nowrap">
                           🇹🇷 +90
                         </span>
                         <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                           className={inputCls()} placeholder="530 823 45 96" />
                       </div>
-                      <p className="text-[11px] text-slate-400">Rezervasyon ve seyahat uyarıları için kullanılır.</p>
+                      <p className="text-[11px] text-muted">Rezervasyon ve seyahat uyarıları için kullanılır.</p>
                       <EditBtns onSave={() => handleFieldSave({ phone })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
@@ -984,22 +984,22 @@ const Settings: React.FC = () => {
                   {/* Doğum tarihi */}
                   <ProfileRow label="Doğum tarihi"
                     display={birthDate
-                      ? <span className="font-medium text-slate-800 dark:text-white">{fmtBirthDate(birthDate)}</span>
-                      : <span className="text-slate-400">Doğum tarihinizi girin</span>}
+                      ? <span className="font-medium text-text">{fmtBirthDate(birthDate)}</span>
+                      : <span className="text-muted">Doğum tarihinizi girin</span>}
                     isEditing={editingField === 'birthDate'}
                     actionLabel={birthDate ? 'Düzenle' : 'Ekle'}
                     onEdit={() => { setEditingField('birthDate'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls()}
                         max={new Date().toISOString().split('T')[0]} />
-                      <p className="text-[11px] text-slate-400">18 yaşından büyük olmak gerekmektedir.</p>
+                      <p className="text-[11px] text-muted">18 yaşından büyük olmak gerekmektedir.</p>
                       <EditBtns onSave={() => handleFieldSave({ birthDate })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Uyruk */}
                   <ProfileRow label="Uyruk"
-                    display={<span className="font-medium text-slate-800 dark:text-white">{nationality}</span>}
+                    display={<span className="font-medium text-text">{nationality}</span>}
                     isEditing={editingField === 'nationality'}
                     onEdit={() => { setEditingField('nationality'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
@@ -1013,8 +1013,8 @@ const Settings: React.FC = () => {
                   {/* Cinsiyet */}
                   <ProfileRow label="Cinsiyet"
                     display={gender
-                      ? <span className="font-medium text-slate-800 dark:text-white">{gender}</span>
-                      : <span className="text-slate-400">Cinsiyetinizi seçin</span>}
+                      ? <span className="font-medium text-text">{gender}</span>
+                      : <span className="text-muted">Cinsiyetinizi seçin</span>}
                     isEditing={editingField === 'gender'}
                     actionLabel={gender ? 'Düzenle' : 'Ekle'}
                     onEdit={() => { setEditingField('gender'); setProfileStatus(null); }}>
@@ -1023,7 +1023,7 @@ const Settings: React.FC = () => {
                         {['Erkek', 'Kadın', 'Diğer', 'Belirtmek istemiyorum'].map(g => (
                           <button key={g} type="button" onClick={() => setGender(g)}
                             className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition-all
-                              ${gender === g ? 'border-[#187fe7] bg-[#187fe7]/5 text-[#187fe7]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}>
+                              ${gender === g ? 'border-accent bg-accent-100 text-accent-700' : 'border-divider text-muted hover:border-accent/40'}`}>
                             {g}
                           </button>
                         ))}
@@ -1035,8 +1035,8 @@ const Settings: React.FC = () => {
                   {/* Adres */}
                   <ProfileRow label="Adres"
                     display={address
-                      ? <span className="font-medium text-slate-800 dark:text-white whitespace-pre-line">{address}</span>
-                      : <span className="text-slate-400">Adresinizi ekleyin</span>}
+                      ? <span className="font-medium text-text whitespace-pre-line">{address}</span>
+                      : <span className="text-muted">Adresinizi ekleyin</span>}
                     isEditing={editingField === 'address'}
                     actionLabel={address ? 'Düzenle' : 'Ekle'}
                     onEdit={() => { setEditingField('address'); setProfileStatus(null); }}>
@@ -1059,13 +1059,13 @@ const Settings: React.FC = () => {
               <StatusBanner status={emailStatus} />
 
               {/* Mevcut e-posta kartı */}
-              <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mb-5">
+              <div className="flex items-center gap-3 p-4 bg-surface-2 rounded-xl border border-divider mb-5">
                 <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                   <Mail size={15} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-0.5">Mevcut E-posta</p>
-                  <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{user?.email}</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-0.5">Mevcut E-posta</p>
+                  <p className="font-semibold text-sm text-text truncate">{user?.email}</p>
                 </div>
                 {user?.emailVerified ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full shrink-0">
@@ -1104,7 +1104,7 @@ const Settings: React.FC = () => {
               {/* Yeni e-posta formu */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Yeni E-posta Adresi</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Yeni E-posta Adresi</label>
                   <input
                     type="email"
                     value={newEmail}
@@ -1115,7 +1115,7 @@ const Settings: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Mevcut Şifreniz</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Mevcut Şifreniz</label>
                   <input
                     type="password"
                     value={emailCurrentPassword}
@@ -1134,7 +1134,7 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn
                   onClick={handleEmailSave}
                   loading={emailLoading}
@@ -1157,7 +1157,7 @@ const Settings: React.FC = () => {
                 <div className="space-y-4">
                   {/* Mevcut şifre */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Mevcut Şifre</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Mevcut Şifre</label>
                     <div className="relative">
                       <input
                         type={showCurrentPw ? 'text' : 'password'}
@@ -1170,7 +1170,7 @@ const Settings: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowCurrentPw(v => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                       >
                         {showCurrentPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
@@ -1179,7 +1179,7 @@ const Settings: React.FC = () => {
 
                   {/* Yeni şifre */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Yeni Şifre</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Yeni Şifre</label>
                     <div className="relative">
                       <input
                         type={showNewPw ? 'text' : 'password'}
@@ -1192,7 +1192,7 @@ const Settings: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowNewPw(v => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                       >
                         {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
@@ -1206,13 +1206,13 @@ const Settings: React.FC = () => {
                             <div
                               key={i}
                               className={`h-1 flex-1 rounded-full transition-all duration-300
-                                ${i <= strength.score ? strength.color : 'bg-slate-200 dark:bg-slate-700'}`}
+                                ${i <= strength.score ? strength.color : 'bg-divider'}`}
                             />
                           ))}
                         </div>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-muted">
                           Güç: <span className="font-semibold">{strength.label}</span>
-                          <span className="ml-2 text-slate-400">
+                          <span className="ml-2 text-muted">
                             {strength.score < 3 && '· Büyük harf, rakam ve sembol ekleyin'}
                           </span>
                         </p>
@@ -1222,7 +1222,7 @@ const Settings: React.FC = () => {
 
                   {/* Şifre tekrar */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Yeni Şifre (tekrar)</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Yeni Şifre (tekrar)</label>
                     <div className="relative">
                       <input
                         type={showConfirmPw ? 'text' : 'password'}
@@ -1235,7 +1235,7 @@ const Settings: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPw(v => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                       >
                         {showConfirmPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
@@ -1245,8 +1245,8 @@ const Settings: React.FC = () => {
                   </div>
 
                   {/* İpuçları */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                    <p className="text-[11px] font-semibold text-slate-500 mb-1.5">Güçlü şifre için:</p>
+                  <div className="p-3 bg-surface-2 rounded-xl border border-divider">
+                    <p className="text-[11px] font-semibold text-muted mb-1.5">Güçlü şifre için:</p>
                     {[
                       { rule: newPassword.length >= 8,         text: 'En az 8 karakter' },
                       { rule: /[A-Z]/.test(newPassword),        text: 'En az bir büyük harf (A-Z)' },
@@ -1255,16 +1255,16 @@ const Settings: React.FC = () => {
                     ].map(({ rule, text }) => (
                       <div key={text} className="flex items-center gap-1.5 mt-1">
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-colors
-                          ${rule ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                          ${rule ? 'bg-emerald-500' : 'bg-divider'}`}>
                           <Check size={8} className="text-white" strokeWidth={3} />
                         </div>
-                        <span className={`text-[11px] ${rule ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'}`}>{text}</span>
+                        <span className={`text-[11px] ${rule ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted'}`}>{text}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                   <SaveBtn
                     onClick={handlePasswordSave}
                     loading={passwordLoading}
@@ -1284,7 +1284,7 @@ const Settings: React.FC = () => {
               <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Varsayılan Bütçe</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Varsayılan Bütçe</label>
                     <input
                       type="number" min="100"
                       value={defaultBudget}
@@ -1297,7 +1297,7 @@ const Settings: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Para Birimi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Para Birimi</label>
                     <select value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value)} className={inputCls()}>
                       {CURRENCIES.map(c => <option key={c}>{c}</option>)}
                     </select>
@@ -1305,23 +1305,23 @@ const Settings: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Varsayılan Kişi Sayısı</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Varsayılan Kişi Sayısı</label>
                   <div className="flex items-center gap-4">
                     <button type="button"
                       onClick={() => setDefaultPeopleCount(v => String(Math.max(1, Number(v) - 1)))}
-                      className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:border-slate-300 transition-all"
+                      className="w-9 h-9 rounded-xl border border-divider flex items-center justify-center text-muted hover:border-accent/40 transition-all"
                     >−</button>
-                    <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums w-8 text-center">{defaultPeopleCount}</span>
+                    <span className="text-2xl font-black text-text tabular-nums w-8 text-center">{defaultPeopleCount}</span>
                     <button type="button"
                       onClick={() => setDefaultPeopleCount(v => String(Math.min(15, Number(v) + 1)))}
-                      className="w-9 h-9 rounded-xl border border-[#f8981d] flex items-center justify-center text-[#f8981d] hover:bg-[#f8981d]/5 transition-all"
+                      className="w-9 h-9 rounded-2xl border border-accent flex items-center justify-center text-accent hover:bg-accent-100 transition-all"
                     >+</button>
-                    <span className="text-xs text-slate-400">kişi</span>
+                    <span className="text-xs text-muted">kişi</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Varsayılan Tempo</label>
+                  <label className="block text-xs font-medium text-muted mb-2">Varsayılan Tempo</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { label: '🛋️', sub: 'Rahat', val: 'rahat' },
@@ -1332,11 +1332,11 @@ const Settings: React.FC = () => {
                       <button key={val} type="button" onClick={() => setDefaultPace(val)}
                         className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-center transition-all
                           ${defaultPace === val
-                            ? 'border-[#f8981d] bg-[#f8981d]/[0.04]'
-                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'}`}
+                            ? 'border-accent bg-accent-100'
+                            : 'border-divider bg-surface-2 hover:border-accent/40'}`}
                       >
                         <span className="text-xl">{label}</span>
-                        <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-[#f8981d]' : 'text-slate-600 dark:text-slate-400'}`}>{sub}</span>
+                        <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-accent' : 'text-muted'}`}>{sub}</span>
                       </button>
                     ))}
                   </div>
@@ -1349,7 +1349,7 @@ const Settings: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handleTravelDefaultsSave} loading={travelDefaultsLoading} label="Tercihleri Kaydet" />
               </div>
             </CardWrap>
@@ -1391,14 +1391,14 @@ const Settings: React.FC = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Vatandaşlık / Pasaport Ülkesi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Vatandaşlık / Pasaport Ülkesi</label>
                     <select value={passportCountry} onChange={e => setPassportCountry(e.target.value)} className={inputCls()}>
                       {PASSPORT_COUNTRIES.map(c => <option key={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">
-                      Pasaport Numarası <span className="text-slate-400 font-normal">(isteğe bağlı)</span>
+                    <label className="block text-xs font-medium text-muted mb-1.5">
+                      Pasaport Numarası <span className="text-muted font-normal">(isteğe bağlı)</span>
                     </label>
                     <input
                       type="text"
@@ -1408,10 +1408,10 @@ const Settings: React.FC = () => {
                       placeholder="Örn. U12345678"
                       maxLength={20}
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">Yalnızca cihazınızda saklanır, üçüncü taraflarla paylaşılmaz.</p>
+                    <p className="text-[11px] text-muted mt-1">Yalnızca cihazınızda saklanır, üçüncü taraflarla paylaşılmaz.</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Son Kullanma Tarihi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Son Kullanma Tarihi</label>
                     <input
                       type="date"
                       value={passportExpiry}
@@ -1421,7 +1421,7 @@ const Settings: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                   <SaveBtn onClick={handlePassportSave} loading={passportLoading} label="Bilgileri Kaydet" disabled={isExpired} />
                 </div>
               </CardWrap>
@@ -1435,10 +1435,10 @@ const Settings: React.FC = () => {
               <div className="space-y-4">
 
                 {/* Otomatik algıla */}
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-divider">
                   <div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Otomatik Algıla</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Tarayıcıdan saat dilimini tespit et</p>
+                    <p className="text-sm font-semibold text-text">Otomatik Algıla</p>
+                    <p className="text-xs text-muted mt-0.5">Tarayıcıdan saat dilimini tespit et</p>
                   </div>
                   <button
                     type="button"
@@ -1447,23 +1447,23 @@ const Settings: React.FC = () => {
                       setTimezone(detected);
                       setLocationStatus({ type: 'success', message: `Algılandı: ${detected}` });
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[#f8981d]/10 text-[#f8981d] text-xs font-bold hover:bg-[#f8981d]/20 transition-colors"
+                    className="px-3.5 py-2 rounded-full bg-accent-100 text-accent-700 text-xs font-bold hover:bg-accent-200 transition-colors"
                   >
                     Algıla
                   </button>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Saat Dilimi</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Saat Dilimi</label>
                   <select value={timezone} onChange={e => setTimezone(e.target.value)} className={inputCls()}>
                     {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Şu an seçili: <span className="font-semibold text-slate-600 dark:text-slate-300">{timezone.split(' ')[0]}</span>
+                  <p className="text-[11px] text-muted mt-1">
+                    Şu an seçili: <span className="font-semibold text-muted">{timezone.split(' ')[0]}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handleLocationSave} loading={locationLoading} label="Kaydet" />
               </div>
             </CardWrap>
@@ -1475,13 +1475,13 @@ const Settings: React.FC = () => {
               <StatusBanner status={appearanceStatus} />
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <label className="text-xs font-medium text-slate-500">Uygulama Dili</label>
+                  <label className="text-xs font-medium text-muted">Uygulama Dili</label>
                   <ComingSoonBadge />
                 </div>
                 <select value={language} onChange={e => setLanguage(e.target.value)} className={inputCls()} disabled>
                   {LANGUAGES.map(l => <option key={l}>{l}</option>)}
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1.5">Çok dilli destek yakında eklenecek. Şimdilik Türkçe aktif.</p>
+                <p className="text-[11px] text-muted mt-1.5">Çok dilli destek yakında eklenecek. Şimdilik Türkçe aktif.</p>
               </div>
             </CardWrap>
           )}
@@ -1494,40 +1494,40 @@ const Settings: React.FC = () => {
 
                 {/* Mesafe */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Mesafe</label>
+                  <label className="block text-xs font-medium text-muted mb-2">Mesafe</label>
                   <SegmentedControl
                     options={[{ label: 'Kilometre (km)', val: true }, { label: 'Mil (mi)', val: false }]}
                     value={distanceKm}
                     onChange={setDistanceKm}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    Mevcut: <span className="font-semibold text-slate-600 dark:text-slate-300">{distanceKm ? 'km — Kilometre' : 'mi — Mil'}</span>
+                  <p className="text-[11px] text-muted mt-1.5">
+                    Mevcut: <span className="font-semibold text-muted">{distanceKm ? 'km — Kilometre' : 'mi — Mil'}</span>
                   </p>
                 </div>
 
                 {/* Sıcaklık */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Sıcaklık</label>
+                  <label className="block text-xs font-medium text-muted mb-2">Sıcaklık</label>
                   <SegmentedControl
                     options={[{ label: 'Celsius (°C)', val: true }, { label: 'Fahrenheit (°F)', val: false }]}
                     value={tempCelsius}
                     onChange={setTempCelsius}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    Mevcut: <span className="font-semibold text-slate-600 dark:text-slate-300">{tempCelsius ? '°C — Celsius' : '°F — Fahrenheit'}</span>
+                  <p className="text-[11px] text-muted mt-1.5">
+                    Mevcut: <span className="font-semibold text-muted">{tempCelsius ? '°C — Celsius' : '°F — Fahrenheit'}</span>
                   </p>
                 </div>
 
                 {/* Önizleme */}
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                  <p className="text-[11px] font-semibold text-slate-500 mb-2">Plan önizleme</p>
+                <div className="p-3.5 bg-surface-2 rounded-xl border border-divider">
+                  <p className="text-[11px] font-semibold text-muted mb-2">Plan önizleme</p>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-slate-700 dark:text-slate-300 font-medium">📍 Mesafe: <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
-                    <span className="text-slate-700 dark:text-slate-300 font-medium">🌡️ Hava: <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
+                    <span className="text-text font-medium">📍 Mesafe: <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
+                    <span className="text-text font-medium">🌡️ Hava: <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} label="Uygula & Kaydet" />
               </div>
             </CardWrap>
@@ -1540,7 +1540,7 @@ const Settings: React.FC = () => {
               <SettingRow title="Plan güncellemeleri" desc="Planınızda değişiklik olduğunda"><Toggle value={appPlanNotif} onChange={setAppPlanNotif} /></SettingRow>
               <SettingRow title="Topluluk bildirimleri" desc="Beğeni, yorum ve takip istekleri"><Toggle value={appCommunityNotif} onChange={setAppCommunityNotif} /></SettingRow>
               <SettingRow title="Uygulama güncellemeleri" desc="Yeni özellik duyuruları"><Toggle value={appUpdateNotif} onChange={setAppUpdateNotif} /></SettingRow>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handleNotifSave} loading={notifLoading} />
               </div>
             </CardWrap>
@@ -1553,7 +1553,7 @@ const Settings: React.FC = () => {
               <SettingRow title="Plan bildirimleri" desc="Plan oluşturma ve güncelleme e-postaları"><Toggle value={emailPlanNotif} onChange={setEmailPlanNotif} /></SettingRow>
               <SettingRow title="Haftalık özet" desc="Her Pazartesi seyahat önerileri"><Toggle value={emailWeeklyDigest} onChange={setEmailWeeklyDigest} /></SettingRow>
               <SettingRow title="Kampanya ve fırsatlar" desc="İndirimler ve özel teklifler"><Toggle value={emailPromoNotif} onChange={setEmailPromoNotif} /></SettingRow>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handleNotifSave} loading={notifLoading} />
               </div>
             </CardWrap>
@@ -1590,7 +1590,7 @@ const Settings: React.FC = () => {
                 <div className={`flex items-start gap-3 p-4 rounded-xl border mb-5
                   ${isGranted ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
                   : isDenied  ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
-                  : !browserSupported ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                  : !browserSupported ? 'bg-surface-2 border-divider'
                   : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
                   <div className={`mt-0.5 text-lg shrink-0`}>
                     {isGranted ? '🔔' : isDenied ? '🔕' : !browserSupported ? '🚫' : '⏳'}
@@ -1599,7 +1599,7 @@ const Settings: React.FC = () => {
                     <p className={`text-sm font-semibold
                       ${isGranted ? 'text-emerald-800 dark:text-emerald-300'
                       : isDenied  ? 'text-rose-800 dark:text-rose-300'
-                      : !browserSupported ? 'text-slate-600 dark:text-slate-300'
+                      : !browserSupported ? 'text-muted'
                       : 'text-amber-800 dark:text-amber-300'}`}>
                       {isGranted ? 'Bildirim izni verildi'
                       : isDenied ? 'Bildirim izni reddedildi'
@@ -1620,7 +1620,7 @@ const Settings: React.FC = () => {
                     <button
                       type="button"
                       onClick={requestPermission}
-                      className="shrink-0 px-3.5 py-2 rounded-lg bg-[#f8981d] text-white text-xs font-bold hover:bg-[#e08518] transition-colors shadow-sm"
+                      className="shrink-0 px-3.5 py-2 rounded-full bg-accent text-white text-xs font-bold hover:brightness-105 transition-colors shadow-sm"
                     >
                       İzin Ver
                     </button>
@@ -1640,7 +1640,7 @@ const Settings: React.FC = () => {
                   <Toggle value={pushSoundEnabled} onChange={setPushSoundEnabled} />
                 </SettingRow>
 
-                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                   <SaveBtn onClick={handleNotifSave} loading={notifLoading} disabled={!browserSupported} />
                 </div>
               </CardWrap>
@@ -1661,9 +1661,9 @@ const Settings: React.FC = () => {
                 ].map(({ label, active, on, off }) => (
                   <div key={label} className={`p-3 rounded-xl border text-center transition-colors
                     ${active ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800'
-                             : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
-                    <p className={`text-xs font-bold ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                             : 'bg-surface-2 border-divider'}`}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-0.5">{label}</p>
+                    <p className={`text-xs font-bold ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'}`}>
                       {active ? on : off}
                     </p>
                   </div>
@@ -1671,11 +1671,11 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Profil */}
-              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-3">
+              <div className="border border-divider rounded-xl overflow-hidden mb-3">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Herkese açık profil</p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Herkese açık profil</p>
+                    <p className="text-xs text-muted mt-0.5">
                       {profilePublic
                         ? '✅ Toplulukta görünür — diğer kullanıcılar sizi bulabilir'
                         : '🔒 Gizli mod — kimse profilinizi göremez'}
@@ -1686,11 +1686,11 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Planlar */}
-              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-3">
+              <div className="border border-divider rounded-xl overflow-hidden mb-3">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Planlarım herkese açık</p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Planlarım herkese açık</p>
+                    <p className="text-xs text-muted mt-0.5">
                       {plansPublic
                         ? '✅ Toplulukta paylaşabilirsiniz'
                         : '🔒 Paylaşım kapalı — Topluluk sayfasında paylaşım butonu kilitlenir'}
@@ -1708,11 +1708,11 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Takip */}
-              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+              <div className="border border-divider rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Herkes takip edebilir</p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Herkes takip edebilir</p>
+                    <p className="text-xs text-muted mt-0.5">
                       {followPublic
                         ? '✅ Onaysız takip — herkes takip edebilir'
                         : '🔒 Onaylı takip — takip istekleri onayınızı bekler'}
@@ -1722,7 +1722,7 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
@@ -1739,13 +1739,13 @@ const Settings: React.FC = () => {
                 return (
                   <div className={`flex items-start gap-3 p-4 rounded-xl border mb-5
                     ${geoSupported ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900'
-                                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                                   : 'bg-surface-2 border-divider'}`}>
                     <span className="text-lg shrink-0 mt-0.5">{geoSupported ? '📍' : '🚫'}</span>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <p className="text-sm font-semibold text-text">
                         {geoSupported ? 'Tarayıcı Konum API' : 'Konum desteklenmiyor'}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         {geoSupported
                           ? 'Tarayıcınız konum desteğine sahip. Konum özellikleri bu uygulama için seçimlidir.'
                           : 'Tarayıcınız konumu desteklemiyor.'}
@@ -1756,11 +1756,11 @@ const Settings: React.FC = () => {
               })()}
 
               <div className="space-y-3">
-                <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                <div className="border border-divider rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3.5">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Konum tabanlı öneriler</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-sm font-semibold text-text">Konum tabanlı öneriler</p>
+                      <p className="text-xs text-muted mt-0.5">
                         {locationEnabled
                           ? '✅ Yakındaki mekanlar ve akıllı öneriler için konum kullanılır'
                           : '🔒 Konum özellikleri devre dışı — genel öneriler gösterilir'}
@@ -1770,11 +1770,11 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
+                <div className="border border-divider rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3.5">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Konum geçmişi</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-sm font-semibold text-text">Konum geçmişi</p>
+                      <p className="text-xs text-muted mt-0.5">
                         {locationHistory
                           ? '✅ Ziyaret geçmişi kaydediliyor — gelecek planlar için daha iyi öneriler'
                           : '🔒 Konum geçmişi saklanmıyor'}
@@ -1785,7 +1785,7 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
@@ -1796,11 +1796,11 @@ const Settings: React.FC = () => {
             <CardWrap title="Veri Kullanımı" subtitle="Verilerinizin nasıl işlendiğini kontrol edin.">
               <StatusBanner status={privacyStatus} />
 
-              <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden mb-4">
+              <div className="border border-divider rounded-xl overflow-hidden mb-4">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Analitik verisi paylaş</p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Analitik verisi paylaş</p>
+                    <p className="text-xs text-muted mt-0.5">
                       {analyticsEnabled
                         ? '✅ Anonim kullanım verisi — hizmet iyileştirmek için gönderilir'
                         : '🔒 Hiçbir kullanım verisi gönderilmez'}
@@ -1811,9 +1811,9 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Veri özeti */}
-              <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-4">
-                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Hesabınızda saklanan veriler</p>
+              <div className="rounded-xl border border-divider overflow-hidden mb-4">
+                <div className="px-4 py-3 bg-surface-2 border-b border-divider">
+                  <p className="text-xs font-bold text-muted uppercase tracking-widest">Hesabınızda saklanan veriler</p>
                 </div>
                 {[
                   { icon: '👤', label: 'Profil bilgileri', desc: 'Ad, e-posta, fotoğraf' },
@@ -1821,11 +1821,11 @@ const Settings: React.FC = () => {
                   { icon: '⚙️', label: 'Tercihler & ayarlar', desc: 'Bildirim, görünüm, gizlilik' },
                   { icon: '📍', label: 'Pasaport & konum', desc: 'Seyahat ile ilgili kişisel bilgiler' },
                 ].map(({ icon, label, desc }) => (
-                  <div key={label} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                  <div key={label} className="flex items-center gap-3 px-4 py-3 border-b border-divider last:border-0">
                     <span className="text-base w-7 shrink-0">{icon}</span>
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</p>
-                      <p className="text-[11px] text-slate-400">{desc}</p>
+                      <p className="text-sm font-medium text-text">{label}</p>
+                      <p className="text-[11px] text-muted">{desc}</p>
                     </div>
                     <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">Şifreli</span>
                   </div>
@@ -1838,7 +1838,7 @@ const Settings: React.FC = () => {
                   Verilerinizi indirmek veya hesabınızı silmek için <strong>Verilerim</strong> bölümünü kullanın.
                 </p>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
               </div>
             </CardWrap>
@@ -1854,20 +1854,20 @@ const Settings: React.FC = () => {
 
                 {/* Mevcut plan kartı */}
                 <div className={`rounded-xl border p-5 mb-5 ${isPro
-                  ? 'bg-gradient-to-br from-[#187fe7]/5 to-[#0a4d99]/5 border-[#187fe7]/20'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                  ? 'bg-gradient-to-br from-sage-200 to-sage-200 border-sage/30'
+                  : 'bg-surface-2 border-divider'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="font-bold text-slate-900 dark:text-white text-base">
+                      <p className="font-bold text-text text-base">
                         {isPro ? '✨ Pro Plan' : 'Ücretsiz Plan'}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         {isPro ? 'Sınırsız plan + Gelişmiş AI + Reklamsız' : 'Ayda 3 plan oluşturma hakkı'}
                       </p>
                     </div>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPro
-                      ? 'bg-[#187fe7] text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                      ? 'bg-sage text-white'
+                      : 'bg-divider text-muted'}`}>
                       {isPro ? 'Pro' : 'Ücretsiz'}
                     </span>
                   </div>
@@ -1876,12 +1876,12 @@ const Settings: React.FC = () => {
                   {!isPro && (
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Bu ay oluşturulan planlar</p>
-                        <p className={`text-xs font-black tabular-nums ${usagePct >= 100 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                        <p className="text-xs font-semibold text-muted">Bu ay oluşturulan planlar</p>
+                        <p className={`text-xs font-black tabular-nums ${usagePct >= 100 ? 'text-rose-500' : 'text-text'}`}>
                           {plansUsedThisMonth} / {FREE_LIMIT}
                         </p>
                       </div>
-                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="h-2 bg-divider rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                           style={{ width: `${usagePct}%` }}
@@ -1902,11 +1902,11 @@ const Settings: React.FC = () => {
                 </div>
 
                 {/* Özellik karşılaştırması */}
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden mb-5">
-                  <div className="grid grid-cols-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Özellik</div>
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400 text-center">Ücretsiz</div>
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-[#187fe7] text-center">Pro</div>
+                <div className="rounded-xl border border-divider overflow-hidden mb-5">
+                  <div className="grid grid-cols-3 bg-surface-2 border-b border-divider">
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted">Özellik</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted text-center">Ücretsiz</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-sage-700 text-center">Pro</div>
                   </div>
                   {[
                     { label: 'Plan oluşturma',        free: '3 / ay',      pro: 'Sınırsız' },
@@ -1916,27 +1916,27 @@ const Settings: React.FC = () => {
                     { label: 'Öncelikli destek',       free: '—',           pro: '✅' },
                     { label: 'Erken erişim',           free: '—',           pro: '✅' },
                   ].map(({ label, free, pro }) => (
-                    <div key={label} className="grid grid-cols-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
-                      <div className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300">{label}</div>
-                      <div className="px-4 py-3 text-xs text-slate-500 text-center">{free}</div>
-                      <div className="px-4 py-3 text-xs font-semibold text-[#187fe7] text-center">{pro}</div>
+                    <div key={label} className="grid grid-cols-3 border-b border-divider last:border-0">
+                      <div className="px-4 py-3 text-xs font-medium text-muted">{label}</div>
+                      <div className="px-4 py-3 text-xs text-muted text-center">{free}</div>
+                      <div className="px-4 py-3 text-xs font-semibold text-sage-700 text-center">{pro}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Upgrade CTA — sadece Free kullanıcılara */}
                 {!isPro && (
-                  <div className="relative bg-gradient-to-br from-[#187fe7] to-[#0a4d99] rounded-xl p-5 overflow-hidden">
-                    <div className="absolute -top-6 -right-6 w-32 h-32 bg-[#f8981d]/25 rounded-full blur-3xl pointer-events-none" />
+                  <div className="relative bg-gradient-to-br from-sage to-sage-700 rounded-2xl p-5 overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/25 rounded-full blur-3xl pointer-events-none" />
                     <div className="relative flex items-center justify-between gap-4">
                       <div>
-                        <span className="inline-block px-2 py-0.5 bg-[#f8981d] text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">Pro</span>
+                        <span className="inline-block px-2 py-0.5 bg-accent text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">Pro</span>
                         <p className="text-white font-bold text-sm mb-0.5">Sınırsız Plan + Gelişmiş AI</p>
                         <p className="text-blue-100 text-xs">Reklamsız deneyim, öncelikli destek ve tüm premium özellikler.</p>
                       </div>
                       <button
                         type="button"
-                        className="shrink-0 px-5 py-2.5 bg-white text-[#187fe7] font-bold text-sm rounded-xl hover:bg-slate-50 transition-colors shadow-lg"
+                        className="shrink-0 px-5 py-2.5 bg-white text-sage-700 font-bold text-sm rounded-full hover:bg-slate-50 transition-colors shadow-lg"
                       >
                         Yükselt →
                       </button>
@@ -1946,10 +1946,10 @@ const Settings: React.FC = () => {
 
                 {/* Pro iptal */}
                 {isPro && (
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-surface-2 border border-divider flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Aboneliği İptal Et</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Dönem sonunda ücretsiz plana geçilir.</p>
+                      <p className="text-sm font-semibold text-text">Aboneliği İptal Et</p>
+                      <p className="text-xs text-muted mt-0.5">Dönem sonunda ücretsiz plana geçilir.</p>
                     </div>
                     <button type="button" className="px-3.5 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">
                       İptal Et
@@ -1965,32 +1965,32 @@ const Settings: React.FC = () => {
             <CardWrap title="Fatura Geçmişi" subtitle="Geçmiş ödemelerinizi görüntüleyin.">
               {isPro ? (
                 /* Pro kullanıcı — tablo (başlangıçta boş, ilerleyen dönemde dolar) */
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                  <div className="grid grid-cols-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2.5">
+                <div className="rounded-xl border border-divider overflow-hidden">
+                  <div className="grid grid-cols-4 bg-surface-2 border-b border-divider px-4 py-2.5">
                     {['Tarih', 'Tutar', 'Durum', 'Belge'].map(h => (
-                      <p key={h} className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{h}</p>
+                      <p key={h} className="text-[10px] font-extrabold uppercase tracking-widest text-muted">{h}</p>
                     ))}
                   </div>
                   <div className="py-10 text-center">
-                    <Receipt size={32} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-sm text-slate-500 font-medium">İlk faturanız burada görünecek.</p>
-                    <p className="text-xs text-slate-400 mt-1">Bir sonraki dönem sonunda otomatik oluşturulur.</p>
+                    <Receipt size={32} className="mx-auto text-divider mb-2" />
+                    <p className="text-sm text-muted font-medium">İlk faturanız burada görünecek.</p>
+                    <p className="text-xs text-muted mt-1">Bir sonraki dönem sonunda otomatik oluşturulur.</p>
                   </div>
                 </div>
               ) : (
                 /* Free kullanıcı */
                 <div className="flex flex-col items-center py-12 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                    <Receipt size={28} className="text-slate-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
+                    <Receipt size={28} className="text-muted" />
                   </div>
-                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Henüz fatura bulunmuyor</p>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                  <p className="text-sm font-semibold text-muted mb-1">Henüz fatura bulunmuyor</p>
+                  <p className="text-xs text-muted max-w-xs leading-relaxed">
                     Pro aboneliğe geçtikten sonra tüm faturalarınız burada listelenir ve indirilebilir hale gelir.
                   </p>
                   <button
                     type="button"
                     onClick={() => setActiveSection('subscription')}
-                    className="mt-5 px-5 py-2.5 bg-[#187fe7] text-white text-sm font-bold rounded-xl hover:bg-[#1570cc] transition-colors"
+                    className="mt-5 px-5 py-2.5 bg-sage text-white text-sm font-bold rounded-full hover:brightness-105 transition-colors"
                   >
                     Pro'ya Geç →
                   </button>
@@ -2006,21 +2006,21 @@ const Settings: React.FC = () => {
 
               {/* Kayıtlı kart */}
               {savedCard && !showCardForm && (
-                <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 mb-5">
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-divider bg-surface-2 mb-5">
                   <div className="w-12 h-8 rounded-md bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0">
                     <CreditCard size={18} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 dark:text-white">
+                    <p className="text-sm font-bold text-text">
                       {savedCard.brand} •••• {savedCard.last4}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Son kullanma: {savedCard.expiry}</p>
+                    <p className="text-xs text-muted mt-0.5">Son kullanma: {savedCard.expiry}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => { setShowCardForm(true); setCardStatus(null); }}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                      className="px-3 py-1.5 text-xs font-semibold text-muted border border-divider rounded-lg hover:bg-surface-2 transition-colors"
                     >
                       Değiştir
                     </button>
@@ -2038,17 +2038,17 @@ const Settings: React.FC = () => {
               {/* Boş durum — kart yok ve form kapalı */}
               {!savedCard && !showCardForm && (
                 <div className="flex flex-col items-center py-10 text-center mb-4">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                    <Wallet size={28} className="text-slate-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
+                    <Wallet size={28} className="text-muted" />
                   </div>
-                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Kayıtlı ödeme yöntemi yok</p>
-                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                  <p className="text-sm font-semibold text-muted mb-1">Kayıtlı ödeme yöntemi yok</p>
+                  <p className="text-xs text-muted max-w-xs leading-relaxed">
                     Pro aboneliğe geçmek için bir kart ekleyin. Verileriniz şifreli olarak saklanır.
                   </p>
                   <button
                     type="button"
                     onClick={() => { setShowCardForm(true); setCardStatus(null); }}
-                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#f8981d] text-white text-sm font-bold rounded-xl hover:bg-[#e08518] transition-colors"
+                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-full hover:brightness-105 transition-colors"
                   >
                     <CreditCard size={14} /> Kart Ekle
                   </button>
@@ -2066,7 +2066,7 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Kart Numarası</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Kart Numarası</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -2078,7 +2078,7 @@ const Settings: React.FC = () => {
                         autoComplete="cc-number"
                       />
                       {cardNumber && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-muted">
                           {detectBrand(cardNumber)}
                         </span>
                       )}
@@ -2086,7 +2086,7 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5">Kart Üzerindeki Ad</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">Kart Üzerindeki Ad</label>
                     <input
                       type="text"
                       value={cardName}
@@ -2099,7 +2099,7 @@ const Settings: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1.5">Son Kullanma (MM/YY)</label>
+                      <label className="block text-xs font-medium text-muted mb-1.5">Son Kullanma (MM/YY)</label>
                       <input
                         type="text"
                         value={cardExpiry}
@@ -2111,7 +2111,7 @@ const Settings: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1.5">CVV</label>
+                      <label className="block text-xs font-medium text-muted mb-1.5">CVV</label>
                       <input
                         type="password"
                         value={cardCvv}
@@ -2124,11 +2124,11 @@ const Settings: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                  <div className="flex justify-end gap-3 pt-3 border-t border-divider">
                     <button
                       type="button"
                       onClick={() => { setShowCardForm(false); setCardStatus(null); setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv(''); }}
-                      className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="px-4 py-2 rounded-xl text-sm font-semibold text-muted border border-divider hover:bg-surface-2 transition-colors"
                     >
                       İptal
                     </button>
@@ -2139,7 +2139,7 @@ const Settings: React.FC = () => {
 
               {/* Güvenlik notu */}
               {!showCardForm && (
-                <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400">
+                <div className="flex items-center gap-2 mt-2 text-[11px] text-muted">
                   <span>🔐</span>
                   <span>Ödeme bilgileri 256-bit SSL şifreleme ile korunur.</span>
                 </div>
@@ -2157,10 +2157,10 @@ const Settings: React.FC = () => {
                   { label: 'Bildirim ayarları', desc: 'Tercih ve ayarlarınız' },
                   { label: 'Hesap aktivitesi', desc: 'Giriş ve işlem geçmişi' },
                 ].map(({ label, desc }) => (
-                  <div key={label} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div key={label} className="flex items-center justify-between p-3.5 rounded-xl border border-divider">
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                      <p className="text-sm font-medium text-text">{label}</p>
+                      <p className="text-xs text-muted mt-0.5">{desc}</p>
                     </div>
                     <ComingSoonBadge />
                   </div>
@@ -2172,7 +2172,7 @@ const Settings: React.FC = () => {
                 </p>
               </div>
               <div className="flex justify-end mt-4">
-                <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
+                <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity">
                   <Download size={14} /> Tümünü İndir
                 </button>
               </div>
@@ -2191,8 +2191,8 @@ const Settings: React.FC = () => {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">
-                    Onaylamak için <span className="font-bold text-slate-700 dark:text-slate-300">HESABIMI SİL</span> yazın
+                  <label className="block text-xs font-medium text-muted mb-1.5">
+                    Onaylamak için <span className="font-bold text-text">HESABIMI SİL</span> yazın
                   </label>
                   <input
                     type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
@@ -2200,11 +2200,11 @@ const Settings: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Şifreniz</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Şifreniz</label>
                   <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className={inputCls()} placeholder="••••••••" />
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <button
                   type="button"
                   onClick={handleDeleteAccount}
@@ -2228,12 +2228,12 @@ const Settings: React.FC = () => {
                   { q: 'Planlarımı başkalarıyla paylaşabilir miyim?', a: 'Evet, oluşturduğunuz planları toplulukla veya link ile paylaşabilirsiniz.' },
                   { q: 'Verilerimi nasıl silebilirim?', a: '"Verilerim → Hesabı Sil" bölümünden tüm verilerinizi kalıcı olarak kaldırabilirsiniz.' },
                 ].map(({ q, a }) => (
-                  <details key={q} className="group border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                    <summary className="flex items-center justify-between px-4 py-3.5 cursor-pointer list-none font-medium text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                  <details key={q} className="group border border-divider rounded-xl overflow-hidden">
+                    <summary className="flex items-center justify-between px-4 py-3.5 cursor-pointer list-none font-medium text-sm text-text hover:bg-surface-2 transition-colors">
                       {q}
-                      <ChevronRight size={14} className="text-slate-400 shrink-0 transition-transform group-open:rotate-90" />
+                      <ChevronRight size={14} className="text-muted shrink-0 transition-transform group-open:rotate-90" />
                     </summary>
-                    <div className="px-4 pb-4 text-xs text-slate-500 leading-relaxed border-t border-slate-100 dark:border-slate-700 pt-3">
+                    <div className="px-4 pb-4 text-xs text-muted leading-relaxed border-t border-divider pt-3">
                       {a}
                     </div>
                   </details>
@@ -2248,11 +2248,11 @@ const Settings: React.FC = () => {
               <StatusBanner status={contactStatus} />
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Konu</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Konu</label>
                   <input type="text" className={inputCls()} placeholder="Mesajınızın konusu" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Mesaj</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Mesaj</label>
                   <textarea
                     value={contactMsg} onChange={e => setContactMsg(e.target.value)}
                     rows={5} className={`${inputCls()} resize-none`}
@@ -2260,13 +2260,13 @@ const Settings: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
-                <p className="text-xs text-slate-400">destek@travyon.app · Yanıt süresi: 24 saat</p>
+              <div className="flex justify-between items-center mt-6 pt-5 border-t border-divider">
+                <p className="text-xs text-muted">destek@travyon.app · Yanıt süresi: 24 saat</p>
                 <button
                   type="button"
                   onClick={() => { setContactStatus({ type: 'success', message: 'Mesajınız gönderildi!' }); setContactMsg(''); }}
                   disabled={!contactMsg.trim()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#f8981d] hover:bg-[#e08518] text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-accent hover:brightness-105 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Gönder
                 </button>
@@ -2280,11 +2280,11 @@ const Settings: React.FC = () => {
               <StatusBanner status={bugStatus} />
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Hata Başlığı</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Hata Başlığı</label>
                   <input type="text" value={bugTitle} onChange={e => setBugTitle(e.target.value)} className={inputCls()} placeholder="Kısa ve açıklayıcı bir başlık" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5">Detaylı Açıklama</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Detaylı Açıklama</label>
                   <textarea
                     value={bugDesc} onChange={e => setBugDesc(e.target.value)}
                     rows={5} className={`${inputCls()} resize-none`}
@@ -2292,12 +2292,12 @@ const Settings: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="flex justify-end mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <button
                   type="button"
                   onClick={handleBugReport}
                   disabled={bugLoading || !bugTitle.trim() || !bugDesc.trim()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#f8981d] hover:bg-[#e08518] text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-accent hover:brightness-105 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {bugLoading ? <Loader2 size={14} className="animate-spin" /> : <Bug size={14} />}
                   Raporu Gönder
@@ -2311,7 +2311,7 @@ const Settings: React.FC = () => {
             <button
               type="button"
               onClick={handleMobileLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/40 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 bg-surface border border-red-100 dark:border-red-900/40 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
             >
               <LogOut size={16} />
               Çıkış Yap

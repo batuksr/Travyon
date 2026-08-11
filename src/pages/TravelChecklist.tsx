@@ -125,60 +125,67 @@ const TravelChecklist: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* Geri */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors mb-8"
+          className="flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-8"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={15} strokeWidth={2.5} />
           Geri
         </button>
 
-        {/* Başlık */}
-        <div className="mb-8">
-          <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest mb-1">Hazırlık</p>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white">
-            {dest ? `${dest} Hazırlık Listesi` : 'Seyahat Kontrol Listesi'}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Yola çıkmadan önce her şeyin tamam olduğunu doğrula.
-          </p>
+        {/* Başlık — sage gradient kart */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-sage to-sage-700 rounded-[26px] p-7 sm:p-8 mb-6 text-white flex items-center justify-between gap-5">
+          <div>
+            <p className="text-[11px] font-heading uppercase tracking-widest text-white/80">
+              {dest || 'Hazırlık'}
+            </p>
+            <h1 className="font-heading text-[28px] mt-2 leading-tight">
+              Seyahat Listesi
+            </h1>
+            <p className="text-white/85 text-sm mt-1">
+              {checkedCount} / {totalItems} madde tamamlandı
+            </p>
+          </div>
+          <div className="w-[78px] h-[78px] rounded-full bg-white/18 flex items-center justify-center flex-none font-heading text-2xl">
+            %{progress}
+          </div>
         </div>
 
-        {/* İlerleme */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 mb-6">
+        {/* İlerleme çubuğu + sıfırla */}
+        <div className="bg-surface rounded-3xl border border-divider p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white">{checkedCount}</span>
-              <span className="text-slate-400 text-sm font-medium"> / {totalItems} tamamlandı</span>
+              <span className="font-heading text-2xl text-text">{checkedCount}</span>
+              <span className="text-muted text-sm font-medium"> / {totalItems} tamamlandı</span>
             </div>
             <div className="flex items-center gap-2">
               {progress === 100 && (
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
                   🎉 Hazırsın!
                 </span>
               )}
               <button
                 onClick={reset}
-                className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                className="flex items-center gap-1 text-xs text-muted hover:text-text transition-colors"
                 title="Sıfırla"
               >
-                <RefreshCw size={12} />
+                <RefreshCw size={12} strokeWidth={2.5} />
                 Sıfırla
               </button>
             </div>
           </div>
-          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progress}%`,
                 background: progress === 100
                   ? 'linear-gradient(90deg,#10b981,#34d399)'
-                  : 'linear-gradient(90deg,#f8981d,#fbbf24)',
+                  : 'linear-gradient(90deg,#7a8a5e,#a8bb84)',
               }}
             />
           </div>
@@ -194,55 +201,55 @@ const TravelChecklist: React.FC = () => {
             return (
               <div
                 key={group.title}
-                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 overflow-hidden"
+                className="bg-surface rounded-3xl border border-divider overflow-hidden"
               >
                 {/* Grup başlığı */}
                 <button
                   onClick={() => toggleGroup(group.title)}
-                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-2 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{group.emoji}</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{group.title}</span>
+                    <span className="font-heading text-text text-sm">{group.title}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       allDone
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-surface-2 text-muted'
                     }`}>
                       {groupChecked}/{group.items.length}
                     </span>
                   </div>
                   <ChevronDown
                     size={16}
-                    className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
                 {/* Maddeler */}
                 {isOpen && (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-700/60 border-t border-slate-100 dark:border-slate-700/60">
+                  <div className="divide-y divide-divider border-t border-divider">
                     {group.items.map(item => {
                       const isDone = checked.has(item.id);
                       return (
                         <button
                           key={item.id}
                           onClick={() => toggle(item.id)}
-                          className="w-full flex items-start gap-3.5 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors text-left group"
+                          className="w-full flex items-start gap-3.5 px-5 py-3.5 hover:bg-surface-2 transition-colors text-left group"
                         >
                           {isDone
-                            ? <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                            : <Circle size={18} className="text-slate-300 dark:text-slate-600 flex-shrink-0 mt-0.5 group-hover:text-slate-400 transition-colors" />
+                            ? <CheckCircle2 size={18} className="text-sage flex-shrink-0 mt-0.5" />
+                            : <Circle size={18} className="text-divider flex-shrink-0 mt-0.5 group-hover:text-muted transition-colors" />
                           }
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-medium leading-tight transition-colors ${
                               isDone
-                                ? 'text-slate-400 line-through dark:text-slate-500'
-                                : 'text-slate-700 dark:text-slate-200'
+                                ? 'text-muted line-through'
+                                : 'text-text'
                             }`}>
                               {item.label}
                             </p>
                             {item.tip && !isDone && (
-                              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 leading-relaxed">
+                              <p className="text-xs text-muted mt-0.5 leading-relaxed">
                                 {item.tip}
                               </p>
                             )}
@@ -257,7 +264,7 @@ const TravelChecklist: React.FC = () => {
           })}
         </div>
 
-        <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-8">
+        <p className="text-center text-xs text-muted mt-8">
           İlerleme otomatik kaydedilir ✓
         </p>
 

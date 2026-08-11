@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+﻿import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -8,24 +8,35 @@ import { useThemeStore } from "./store/useThemeStore";
 import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
 import Sidebar from "./components/Sidebar";
 import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Onboarding from "./pages/Onboarding";
-import Dashboard from "./pages/Dashboard";
-import SavedPlans from "./pages/SavedPlans";
-import Settings from "./pages/Settings";
-import Hub from "./pages/Hub";
-import Community from "./pages/Community";
-import Notifications from "./pages/Notifications";
-import UserProfile from "./pages/UserProfile";
-import SSS from "./pages/SSS";
-import TravelChecklist from "./pages/TravelChecklist";
-import CommunityPlanView from "./pages/CommunityPlanView";
-import Gizlilik from "./pages/Gizlilik";
-import KullanimKosullari from "./pages/KullanimKosullari";
-import Iletisim from "./pages/Iletisim";
 import PwaInstallBanner from "./components/PwaInstallBanner";
+
+// Rota bazlı kod bölme — her sayfa sadece ziyaret edildiğinde indirilir.
+// Anonim bir ziyaretçi Home'a girdiğinde Dashboard/Settings/Firebase-ağır
+// sayfaların kodunu indirmek zorunda kalmaz.
+const Home               = lazy(() => import("./pages/Home"));
+const Login               = lazy(() => import("./pages/Login"));
+const Register             = lazy(() => import("./pages/Register"));
+const Onboarding           = lazy(() => import("./pages/Onboarding"));
+const Dashboard             = lazy(() => import("./pages/Dashboard"));
+const SavedPlans           = lazy(() => import("./pages/SavedPlans"));
+const Settings             = lazy(() => import("./pages/Settings"));
+const Hub                 = lazy(() => import("./pages/Hub"));
+const Community             = lazy(() => import("./pages/Community"));
+const Notifications         = lazy(() => import("./pages/Notifications"));
+const UserProfile           = lazy(() => import("./pages/UserProfile"));
+const SSS                 = lazy(() => import("./pages/SSS"));
+const TravelChecklist       = lazy(() => import("./pages/TravelChecklist"));
+const CommunityPlanView     = lazy(() => import("./pages/CommunityPlanView"));
+const Gizlilik             = lazy(() => import("./pages/Gizlilik"));
+const KullanimKosullari     = lazy(() => import("./pages/KullanimKosullari"));
+const Iletisim             = lazy(() => import("./pages/Iletisim"));
+
+/* Rota geçişlerinde kısa süreliğine gösterilen, tema tokenlarına uygun yükleme ekranı */
+const RouteFallback: React.FC = () => (
+  <div className="flex items-center justify-center min-h-screen bg-bg">
+    <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-divider border-t-accent" />
+  </div>
+);
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthStore();
@@ -46,13 +57,9 @@ const BOTTOM_NAV = [
 const BottomNav: React.FC = () => {
   const location = useLocation();
   const navigate  = useNavigate();
-  const { dark }  = useThemeStore();
   return (
-    <nav className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
-      border-t px-1 h-14 safe-b
-      ${dark
-        ? 'bg-slate-900 border-slate-700'
-        : 'bg-white border-slate-200'}`}
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
+      border-t border-divider bg-surface px-1 h-14 safe-b"
     >
       {BOTTOM_NAV.map(({ icon: Icon, label, path }) => {
         const active = location.pathname === path;
@@ -62,11 +69,9 @@ const BottomNav: React.FC = () => {
             type="button"
             onClick={() => navigate(path)}
             className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors
-              ${active
-                ? 'text-[#f8981d]'
-                : dark ? 'text-slate-400' : 'text-slate-500'}`}
+              ${active ? 'text-accent' : 'text-muted'}`}
           >
-            <Icon size={18} />
+            <Icon size={18} strokeWidth={2.5} />
             <span className="text-[9px] font-semibold">{label}</span>
           </button>
         );
@@ -88,28 +93,30 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
   const showBottomNav = isAuthenticated && !hideChrome;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="flex min-h-screen bg-bg">
       {showSidebar && <Sidebar />}
       <main className={`flex-1 min-w-0 ${showBottomNav ? 'pb-14 sm:pb-0' : ''}`}>
-        <Routes>
-          <Route path="/"            element={isAuthenticated ? <Navigate to="/hub" replace /> : <Home />} />
-          <Route path="/hub"         element={<ProtectedRoute><Hub /></ProtectedRoute>} />
-          <Route path="/community"      element={<ProtectedRoute><Community /></ProtectedRoute>} />
-          <Route path="/notifications"  element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-          <Route path="/login"       element={<Login />} />
-          <Route path="/register"    element={<Register />} />
-          <Route path="/onboarding"  element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-          <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/saved-plans" element={<ProtectedRoute><SavedPlans /></ProtectedRoute>} />
-          <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-          <Route path="/sss"                  element={<SSS />} />
-          <Route path="/travel-checklist"     element={<ProtectedRoute><TravelChecklist /></ProtectedRoute>} />
-          <Route path="/plan/:planId"         element={<ProtectedRoute><CommunityPlanView /></ProtectedRoute>} />
-          <Route path="/gizlilik"             element={<Gizlilik />} />
-          <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
-          <Route path="/iletisim"             element={<Iletisim />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/"            element={isAuthenticated ? <Navigate to="/hub" replace /> : <Home />} />
+            <Route path="/hub"         element={<ProtectedRoute><Hub /></ProtectedRoute>} />
+            <Route path="/community"      element={<ProtectedRoute><Community /></ProtectedRoute>} />
+            <Route path="/notifications"  element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+            <Route path="/login"       element={<Login />} />
+            <Route path="/register"    element={<Register />} />
+            <Route path="/onboarding"  element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/dashboard"   element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/saved-plans" element={<ProtectedRoute><SavedPlans /></ProtectedRoute>} />
+            <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+            <Route path="/sss"                  element={<SSS />} />
+            <Route path="/travel-checklist"     element={<ProtectedRoute><TravelChecklist /></ProtectedRoute>} />
+            <Route path="/plan/:planId"         element={<ProtectedRoute><CommunityPlanView /></ProtectedRoute>} />
+            <Route path="/gizlilik"             element={<Gizlilik />} />
+            <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
+            <Route path="/iletisim"             element={<Iletisim />} />
+          </Routes>
+        </Suspense>
       </main>
       {showBottomNav && <BottomNav />}
     </div>
@@ -187,11 +194,7 @@ function App() {
   }, [setUser, setLoading, setSettings]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-slate-200 border-t-slate-900 dark:border-slate-600 dark:border-t-slate-200" />
-      </div>
-    );
+    return <RouteFallback />;
   }
 
   return (

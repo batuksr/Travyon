@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -74,39 +74,40 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/60 transition-all"
+      className="group bg-surface rounded-3xl border border-divider overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
     >
       {/* Görsel */}
       <div
-        className="relative aspect-[16/10] bg-slate-100 cursor-pointer overflow-hidden"
+        className="relative aspect-[16/10] bg-surface-2 cursor-pointer overflow-hidden"
         onClick={() => onOpen(savedPlan)}
       >
         <img
           src={coverPhoto}
           alt={savedPlan.plan.destination}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          style={{ filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
           onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1c140c]/72 via-[#1c140c]/15 to-transparent" />
 
         {/* Favori butonu */}
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(savedPlan.id); }}
-          className="absolute top-3 right-3 w-9 h-9 bg-white/95 backdrop-blur rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg"
+          className="absolute top-3 right-3 w-9 h-9 bg-surface/95 backdrop-blur rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg"
         >
           {savedPlan.isFavorite
             ? <Star size={15} className="fill-amber-400 text-amber-400" />
-            : <StarOff size={15} className="text-slate-400" />}
+            : <StarOff size={15} className="text-muted" />}
         </button>
 
         {/* Şehir adı */}
         <div className="absolute bottom-3 left-3 right-3">
           <div className="flex items-center gap-1.5 mb-1">
-            <MapPin size={11} className="text-white/80" />
-            <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Destinasyon</span>
+            <MapPin size={11} strokeWidth={2.5} className="text-white/80" />
+            <span className="text-[10px] font-heading text-white/80 uppercase tracking-widest">Destinasyon</span>
           </div>
-          <h3 className="text-xl font-black text-white leading-tight truncate">
+          <h3 className="font-heading text-xl text-white leading-tight truncate">
             {savedPlan.customName || savedPlan.plan.destination}
           </h3>
         </div>
@@ -114,74 +115,74 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
 
       {/* Detaylar */}
       <div className="p-4">
-        <div className="flex items-center gap-3 mb-3 text-xs text-slate-500">
+        <div className="flex items-center gap-3 mb-3 text-xs text-muted">
           <div className="flex items-center gap-1">
-            <Calendar size={11} className="text-[#f8981d]" />
-            <span className="font-semibold text-slate-700">{savedPlan.plan.dailyPlans.length}</span>
+            <Calendar size={11} strokeWidth={2.5} className="text-accent" />
+            <span className="font-semibold text-text">{savedPlan.plan.dailyPlans.length}</span>
             <span>gün</span>
           </div>
-          <div className="w-px h-3 bg-slate-200" />
+          <div className="w-px h-3 bg-divider" />
           <div className="flex items-center gap-1">
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-text">
               {savedPlan.plan.dailyPlans.reduce((s, d) => s + d.activities.length, 0)}
             </span>
             <span>aktivite</span>
           </div>
-          <div className="w-px h-3 bg-slate-200" />
+          <div className="w-px h-3 bg-divider" />
           <div className="flex items-center gap-1">
-            <Users size={11} className="text-slate-400" />
-            <span className="font-semibold text-slate-700">{savedPlan.onboardingData.peopleCount}</span>
+            <Users size={11} strokeWidth={2.5} className="text-muted" />
+            <span className="font-semibold text-text">{savedPlan.onboardingData.peopleCount}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-divider">
           <div className="flex items-center gap-1.5">
-            <Wallet size={12} className="text-[#f8981d]" />
-            <span className="text-xs font-semibold text-slate-500">Toplam Bütçe</span>
+            <Wallet size={12} strokeWidth={2.5} className="text-accent" />
+            <span className="text-xs font-semibold text-muted">Toplam Bütçe</span>
           </div>
-          <span className="text-sm font-black text-slate-900">
+          <span className="font-heading text-sm text-text">
             {savedPlan.plan.currencySymbol}{savedPlan.plan.totalEstimatedCost.toLocaleString()}
           </span>
         </div>
 
-        <p className="text-[10px] text-slate-400 mb-3">{formatDate(savedPlan.createdAt)} tarihinde oluşturuldu</p>
+        <p className="text-[10px] text-muted mb-3">{formatDate(savedPlan.createdAt)} tarihinde oluşturuldu</p>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onOpen(savedPlan)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold text-xs rounded-lg transition-all"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-accent hover:brightness-105 text-white font-heading text-xs rounded-full transition-all"
           >
-            Aç <ArrowRight size={11} />
+            Aç <ArrowRight size={11} strokeWidth={2.75} />
           </button>
           {/* Link kopyala */}
           <button
             type="button"
             onClick={() => onShareLink(savedPlan)}
-            className={`w-9 h-8 border rounded-lg flex items-center justify-center transition-all ${
+            className={`w-9 h-9 border-[1.5px] rounded-full flex items-center justify-center transition-all ${
               linkCopied
                 ? 'border-emerald-300 bg-emerald-50 text-emerald-600'
-                : 'border-slate-200 hover:border-[#187fe7]/40 hover:bg-blue-50 text-slate-500 hover:text-[#187fe7]'
+                : 'border-divider hover:border-blue-300 hover:bg-blue-50 text-muted hover:text-blue-600'
             }`}
             title="Link kopyala"
           >
-            {linkCopied ? <Check size={12} /> : <Link2 size={12} />}
+            {linkCopied ? <Check size={12} strokeWidth={2.5} /> : <Link2 size={12} strokeWidth={2.5} />}
           </button>
           <button
             type="button"
             onClick={() => onRename(savedPlan)}
-            className="w-9 h-8 border border-slate-200 rounded-lg hover:border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all"
+            className="w-9 h-9 border-[1.5px] border-divider rounded-full hover:border-accent/40 flex items-center justify-center text-muted hover:text-accent transition-all"
             title="Yeniden adlandır"
           >
-            <Pencil size={12} />
+            <Pencil size={12} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={() => onDelete(savedPlan.id)}
-            className="w-9 h-8 border border-slate-200 rounded-lg hover:border-red-300 hover:bg-red-50 flex items-center justify-center text-slate-500 hover:text-red-600 transition-all"
+            className="w-9 h-9 border-[1.5px] border-divider rounded-full hover:border-red-300 hover:bg-red-50 flex items-center justify-center text-muted hover:text-red-600 transition-all"
             title="Sil"
           >
-            <Trash2 size={12} />
+            <Trash2 size={12} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -280,18 +281,18 @@ const SavedPlans: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
 
       {/* Üst Bar */}
-      <div className="bg-gray border-b border-slate-200">
+      <div className="border-b border-divider">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest mb-1">
+              <p className="text-xs font-heading text-accent uppercase tracking-widest mb-1">
                 Kayıtlı Planlar
               </p>
-              <h1 className="text-2xl font-black text-slate-900">Planlarım</h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <h1 className="font-heading text-2xl text-text">Planlarım</h1>
+              <p className="text-sm text-muted mt-1">
                 {plans.length === 0
                   ? 'Henüz kayıtlı planın yok'
                   : `${plans.length} plan kaydedildi`}
@@ -301,9 +302,9 @@ const SavedPlans: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/onboarding')}
-              className="inline-flex items-center gap-2 px-3 sm:px-5 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#f8981d]/20 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={2.75} />
               <span className="hidden sm:inline">Yeni Plan</span>
             </button>
           </div>
@@ -312,24 +313,24 @@ const SavedPlans: React.FC = () => {
           {plans.length > 0 && (
             <div className="flex items-center gap-3">
               <div className="flex-1 relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={15} strokeWidth={2.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Şehir veya plan adı ara..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none text-sm placeholder:text-slate-400 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border-[1.5px] border-divider bg-surface-2 focus:border-accent outline-none text-sm placeholder:text-muted transition-all"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
+              <div className="flex items-center gap-1 bg-surface-2 p-0.5 rounded-full">
                 <button
                   type="button"
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  className={`px-4 py-1.5 text-xs font-heading rounded-full transition-all ${
                     filter === 'all'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-surface shadow-sm text-text'
+                      : 'text-muted hover:text-text'
                   }`}
                 >
                   Tümü
@@ -337,13 +338,13 @@ const SavedPlans: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setFilter('favorites')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 ${
+                  className={`px-4 py-1.5 text-xs font-heading rounded-full transition-all flex items-center gap-1 ${
                     filter === 'favorites'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-surface shadow-sm text-text'
+                      : 'text-muted hover:text-text'
                   }`}
                 >
-                  <Star size={11} />
+                  <Star size={11} strokeWidth={2.5} />
                   Favoriler
                 </button>
               </div>
@@ -357,20 +358,20 @@ const SavedPlans: React.FC = () => {
 
         {/* Boş durum */}
         {plans.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto">
-            <div className="w-20 h-20 bg-[#f8981d]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <MapIcon size={32} className="text-[#f8981d]" />
+          <div className="bg-surface rounded-3xl border border-divider p-12 text-center max-w-md mx-auto">
+            <div className="w-20 h-20 bg-accent-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <MapIcon size={32} strokeWidth={2.5} className="text-accent" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 mb-2">
+            <h2 className="font-heading text-xl text-text mb-2">
               Henüz Kayıtlı Plan Yok
             </h2>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+            <p className="text-sm text-muted mb-6 leading-relaxed">
               İlk planını oluştur ve kaydet. Tüm planların burada listelenecek, istediğin zaman geri dönebilirsin.
             </p>
             <button
               type="button"
               onClick={() => navigate('/onboarding')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all"
             >
               <Sparkles size={15} />
               İlk Planı Oluştur
@@ -378,7 +379,7 @@ const SavedPlans: React.FC = () => {
           </div>
         ) : filteredPlans.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-slate-500">
+            <p className="text-muted">
               {search ? 'Aramayla eşleşen plan bulunamadı' : 'Favori plan yok'}
             </p>
           </div>
@@ -412,33 +413,33 @@ const SavedPlans: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeleteConfirm(null)}
-              className="fixed inset-0 bg-black/40 z-50"
+              className="fixed inset-0 bg-[#1c140c]/45 z-50"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 max-w-sm w-full z-50 shadow-2xl mx-4"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface rounded-3xl p-6 max-w-sm w-full z-50 shadow-2xl mx-4"
             >
               <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                <Trash2 size={20} className="text-red-500" />
+                <Trash2 size={20} strokeWidth={2.5} className="text-red-500" />
               </div>
-              <h3 className="text-lg font-black text-slate-900 mb-2">Planı Sil</h3>
-              <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+              <h3 className="font-heading text-lg text-text mb-2">Planı Sil</h3>
+              <p className="text-sm text-muted mb-6 leading-relaxed">
                 Bu planı kalıcı olarak silmek istediğinden emin misin? Bu işlem geri alınamaz.
               </p>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
+                  className="flex-1 py-3 border-[1.5px] border-divider rounded-full text-sm font-heading text-text hover:bg-surface-2 transition-all"
                 >
                   İptal
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-all"
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white text-sm font-heading rounded-full transition-all"
                 >
                   Sil
                 </button>
@@ -457,15 +458,15 @@ const SavedPlans: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setRenameId(null)}
-              className="fixed inset-0 bg-black/40 z-50"
+              className="fixed inset-0 bg-[#1c140c]/45 z-50"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 max-w-sm w-full z-50 shadow-2xl mx-4"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface rounded-3xl p-6 max-w-sm w-full z-50 shadow-2xl mx-4"
             >
-              <h3 className="text-lg font-black text-slate-900 mb-4">Planı Yeniden Adlandır</h3>
+              <h3 className="font-heading text-lg text-text mb-4">Planı Yeniden Adlandır</h3>
               <input
                 type="text"
                 value={renameValue}
@@ -473,20 +474,20 @@ const SavedPlans: React.FC = () => {
                 onKeyDown={(e) => e.key === 'Enter' && saveRename()}
                 placeholder="Plan adı"
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none text-sm font-medium mb-4"
+                className="w-full px-4 py-3.5 rounded-2xl border-[1.5px] border-divider bg-surface-2 focus:border-accent outline-none text-sm font-medium mb-4"
               />
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setRenameId(null)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
+                  className="flex-1 py-3 border-[1.5px] border-divider rounded-full text-sm font-heading text-text hover:bg-surface-2 transition-all"
                 >
                   İptal
                 </button>
                 <button
                   type="button"
                   onClick={saveRename}
-                  className="flex-1 py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white text-sm font-bold rounded-xl transition-all"
+                  className="flex-1 py-3 bg-accent hover:brightness-105 text-white text-sm font-heading rounded-full transition-all"
                 >
                   Kaydet
                 </button>

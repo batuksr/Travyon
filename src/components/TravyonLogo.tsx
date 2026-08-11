@@ -1,13 +1,12 @@
 import React from 'react';
-import { useThemeStore } from '../store/useThemeStore';
 
 /* ══════════════════════════════════════════════
-   Travyon Animated Logo
-   - Orange gradient globe with rotating grid lines
-   - Dashed orbit ring (tilted −20 °)
+   Travyon Animated Logo — Organic tema
+   - Terracotta gradient globe with rotating grid lines
+   - Dashed sage orbit ring
    - Airplane following the orbit with animateMotion
    - Subtle pulse glow behind the globe
-   - "trav·yon" wordmark
+   - "trav·yon" wordmark (font-heading, tema tokenlarına bağlı)
 ═══════════════════════════════════════════════ */
 
 interface TravyonLogoProps {
@@ -15,7 +14,7 @@ interface TravyonLogoProps {
   size?: number;
   /** Show "travyon" text next to the icon */
   showText?: boolean;
-  /** Dark background variant */
+  /** Fotoğraf üzerinde her zaman beyaz metin göster (tema tokenlarını yok sayar) */
   dark?: boolean;
   className?: string;
 }
@@ -23,18 +22,15 @@ interface TravyonLogoProps {
 const TravyonLogo: React.FC<TravyonLogoProps> = ({
   size = 40,
   showText = true,
-  dark: darkProp,
+  dark: forceLight,
   className = '',
 }) => {
   /* Unique IDs so multiple logo instances don't clash */
   const uid = React.useId().replace(/:/g, '');
-  const { dark: darkStore } = useThemeStore();
-  const isDark = darkProp ?? darkStore;
-
-  const textColor = isDark ? '#f8fafc' : '#0f172a';
+  const fontPx = Math.round(size * 0.5);
 
   return (
-    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-2.5 select-none leading-none ${className}`}>
 
       {/* ── SVG Icon ── */}
       <svg
@@ -46,21 +42,12 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
         style={{ overflow: 'visible', flexShrink: 0 }}
       >
         <defs>
-          {/* Globe fill — warm orange radial gradient */}
+          {/* Globe fill — terracotta radial gradient */}
           <radialGradient id={`gg-${uid}`} cx="36%" cy="30%" r="70%">
-            <stop offset="0%"   stopColor="#FDE68A" />
-            <stop offset="35%"  stopColor="#F8981D" />
-            <stop offset="100%" stopColor="#B45309" />
+            <stop offset="0%"   stopColor="#ffd9b8" />
+            <stop offset="38%"  stopColor="#c67139" />
+            <stop offset="100%" stopColor="#7a3d16" />
           </radialGradient>
-
-          {/* Glow filter */}
-          <filter id={`gf-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
 
           {/* Clip globe content */}
           <clipPath id={`gc-${uid}`}>
@@ -69,9 +56,9 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
         </defs>
 
         {/* — Outer pulse ring — */}
-        <circle cx="50" cy="50" r="27" fill="#F8981D" opacity="0.18">
+        <circle cx="50" cy="50" r="27" fill="#c67139" opacity="0.18">
           <animate attributeName="r"       values="27;33;27" dur="2.8s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.15;0.28;0.15" dur="2.8s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.14;0.26;0.14" dur="2.8s" repeatCount="indefinite" />
         </circle>
 
         {/* — Globe shadow — */}
@@ -109,15 +96,15 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
         {/* — Orbit group (tilted −20°) — */}
         <g transform="rotate(-20 50 50)">
 
-          {/* Dashed orbit ring */}
+          {/* Dashed sage orbit ring */}
           <ellipse cx="50" cy="50" rx="37" ry="13"
-            stroke="#F8981D" strokeWidth="1.3" strokeDasharray="4 3"
-            fill="none" opacity="0.55" />
+            stroke="#7a8a5e" strokeWidth="1.3" strokeDasharray="4 3"
+            fill="none" opacity="0.6" />
 
           {/* Orbiting airplane ✈ via animateMotion */}
           <g>
             <animateMotion
-              dur="1.6s"
+              dur="1.8s"
               repeatCount="indefinite"
               rotate="auto"
               path="M 87,50 A 37,13 0 1,1 86.99,50 Z"
@@ -126,30 +113,30 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
             <g transform="translate(-6,-5)">
               <path
                 d="M 10,4 C 10,4 5,1 0,2 L -3,4 L 1,4 L -1,6 L 1,6 L 3,5 L 7,6 Z"
-                fill="#0047ee"
-                opacity="0.92"
-                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
+                fill="#56633f"
+                opacity="0.95"
               />
             </g>
           </g>
 
           {/* Small dot at start of orbit (runway marker effect) */}
-          <circle cx="87" cy="50" r="1.5" fill="#F8981D" opacity="0.6" />
+          <circle cx="87" cy="50" r="1.5" fill="#7a8a5e" opacity="0.6" />
         </g>
       </svg>
 
       {/* ── Wordmark ── */}
       {showText && (
         <span
-          className="leading-none tracking-tight"
           style={{
-            fontSize: Math.round(size * 0.44) + 'px',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
+            fontFamily: 'var(--font-heading)',
+            fontSize: fontPx,
+            lineHeight: 1,
+            letterSpacing: '-0.01em',
+            color: forceLight ? '#fff' : 'var(--color-text)',
           }}
         >
-          <span style={{ color: textColor }}>trav</span>
-          <span style={{ color: '#F8981D' }}>yon</span>
+          trav
+          <span style={{ color: forceLight ? '#ffc6a5' : 'var(--color-accent)' }}>yon</span>
         </span>
       )}
     </div>

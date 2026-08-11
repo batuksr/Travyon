@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
@@ -206,44 +206,44 @@ const Community: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
       <div className="max-w-[1150px] mx-auto px-4 sm:px-10 py-6 sm:py-10">
 
         {/* Başlık */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <Users size={18} className="text-[#f8981d]" />
-            <p className="text-xs font-bold text-[#f8981d] uppercase tracking-widest">Topluluk</p>
+            <Users size={18} strokeWidth={2.5} className="text-accent" />
+            <p className="text-xs font-heading text-accent uppercase tracking-widest">Topluluk</p>
           </div>
-          <h1 className="text-2xl font-black text-slate-900">Gezgin Akışı</h1>
-          <p className="text-slate-400 text-sm mt-1">Diğer gezginlerin planlarını keşfet, takip et ve ilham al.</p>
+          <h1 className="font-heading text-2xl text-text">Gezgin Akışı</h1>
+          <p className="text-muted text-sm mt-1">Diğer gezginlerin planlarını keşfet, takip et ve ilham al.</p>
         </div>
 
         {/* Gizlilik uyarı banner'ları */}
         {(!profilePublic || !plansPublic || !followPublic) && (
           <div className="mb-5 space-y-2">
             {!profilePublic && (
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-surface-2 border border-divider rounded-2xl">
                 <span className="text-base">🔒</span>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  <strong>Gizli profil:</strong> Profiliniz başkaları tarafından görüntülenemiyor.
-                  <a href="/settings" className="ml-1.5 text-[#f8981d] font-semibold hover:underline">Ayarları değiştir →</a>
+                <p className="text-xs text-muted">
+                  <strong className="text-text">Gizli profil:</strong> Profiliniz başkaları tarafından görüntülenemiyor.
+                  <a href="/settings" className="ml-1.5 text-accent font-semibold hover:underline">Ayarları değiştir →</a>
                 </p>
               </div>
             )}
             {!plansPublic && (
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
                 <span className="text-base">🔕</span>
-                <p className="text-xs text-amber-800 dark:text-amber-300">
+                <p className="text-xs text-amber-800">
                   <strong>Plan paylaşımı kapalı:</strong> Planlarınızı toplulukta paylaşamazsınız.
                   <a href="/settings" className="ml-1.5 font-semibold hover:underline">Ayarlardan aç →</a>
                 </p>
               </div>
             )}
             {!followPublic && (
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-2xl">
                 <span className="text-base">👤</span>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="text-xs text-blue-700">
                   <strong>Onaylı takip modu:</strong> Yeni takip istekleri onayınızı bekler.
                 </p>
               </div>
@@ -254,33 +254,33 @@ const Community: React.FC = () => {
         {/* Header: tabs + arama */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
           {/* Tabs */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 gap-0.5 shrink-0">
+          <div className="flex bg-surface-2 rounded-full p-0.5 gap-0.5 shrink-0">
             <button
               onClick={() => { setFeedTab('all'); setFeedShowAll(false); }}
-              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+              className={`text-[11px] font-heading px-3.5 py-1.5 rounded-full transition-all ${
                 feedTab === 'all'
-                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-surface text-text shadow-sm'
+                  : 'text-muted hover:text-text'
               }`}
             >
               Herkes
             </button>
             <button
               onClick={() => { setFeedTab('following'); setFeedShowAll(false); }}
-              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+              className={`text-[11px] font-heading px-3.5 py-1.5 rounded-full transition-all ${
                 feedTab === 'following'
-                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-surface text-text shadow-sm'
+                  : 'text-muted hover:text-text'
               }`}
             >
               Takip Ettiklerim
             </button>
             <button
               onClick={() => { setFeedTab('top'); setFeedShowAll(false); }}
-              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+              className={`text-[11px] font-heading px-3.5 py-1.5 rounded-full transition-all ${
                 feedTab === 'top'
-                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-surface text-text shadow-sm'
+                  : 'text-muted hover:text-text'
               }`}
             >
               En Beğenilenler
@@ -289,18 +289,18 @@ const Community: React.FC = () => {
 
           {/* Arama */}
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <Search size={13} strokeWidth={2.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
             <input
               type="text"
               value={feedSearch}
               onChange={e => { setFeedSearch(e.target.value); setFeedShowAll(false); }}
               placeholder={feedTab === 'following' ? 'Kişi ara...' : 'Kişi, şehir veya ülke ara...'}
-              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 outline-none placeholder:text-slate-400 transition-all"
+              className="w-full pl-9 pr-8 py-2.5 text-xs rounded-2xl border-[1.5px] border-divider bg-surface-2 focus:border-accent outline-none placeholder:text-muted transition-all"
             />
             {feedSearch && (
               <button
                 onClick={() => setFeedSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
               >
                 <XIcon size={13} />
               </button>
@@ -310,7 +310,7 @@ const Community: React.FC = () => {
 
         {/* Share error toast */}
         {shareError && (
-          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-xl">
+          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-2xl">
             <span>⚠️</span><span>{shareError}</span>
           </div>
         )}
@@ -318,10 +318,10 @@ const Community: React.FC = () => {
         {/* ══ EN BEĞENİLENLER SEKMESİ ══ */}
         {feedTab === 'top' ? (
           topPlans.length === 0 ? (
-            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
+            <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
               <p className="text-3xl mb-3">🏆</p>
-              <p className="text-sm font-bold text-slate-700">Henüz puanlanan plan yok</p>
-              <p className="text-xs text-slate-400 mt-1">Planlara yıldız verdikçe burada sıralama oluşur</p>
+              <p className="text-sm font-heading text-text">Henüz puanlanan plan yok</p>
+              <p className="text-xs text-muted mt-1">Planlara yıldız verdikçe burada sıralama oluşur</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -334,9 +334,9 @@ const Community: React.FC = () => {
                     ? 'border-l-4 border-slate-300'
                     : idx === 2
                       ? 'border-l-4 border-orange-300'
-                      : 'border-l-4 border-slate-100';
+                      : 'border-l-4 border-divider';
                 return (
-                  <div key={plan.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden ${leftBorder} hover:shadow-md transition-all`}>
+                  <div key={plan.id} className={`bg-surface rounded-3xl border border-divider overflow-hidden ${leftBorder} hover:shadow-md transition-all`}>
                     <div className="flex items-center gap-4 px-4 py-4">
                       {/* Sıra rozeti */}
                       <span className="text-2xl flex-shrink-0 w-8 text-center">{medal}</span>
@@ -369,11 +369,11 @@ const Community: React.FC = () => {
           profilesLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-slate-100 shrink-0" />
+                <div key={i} className="bg-surface border border-divider rounded-3xl p-4 animate-pulse flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-surface-2 shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3 w-32 bg-slate-100 rounded" />
-                    <div className="h-3 w-20 bg-slate-100 rounded" />
+                    <div className="h-3 w-32 bg-surface-2 rounded" />
+                    <div className="h-3 w-20 bg-surface-2 rounded" />
                   </div>
                 </div>
               ))}
@@ -385,48 +385,48 @@ const Community: React.FC = () => {
                 )
               : followingProfiles;
             return (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <div className="bg-surface border border-divider rounded-3xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-divider">
+                <p className="text-xs font-heading text-muted uppercase tracking-wider">
                   {filteredProfiles.length} kişi {feedSearch ? 'bulundu' : 'takip ediliyor'}
                 </p>
               </div>
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-divider">
                 {filteredProfiles.length === 0 ? (
                   <div className="px-4 py-8 text-center">
-                    <p className="text-sm text-slate-400">"{feedSearch}" ile eşleşen kişi yok</p>
+                    <p className="text-sm text-muted">"{feedSearch}" ile eşleşen kişi yok</p>
                   </div>
                 ) : filteredProfiles.map(profile => {
                   const initials = profile.displayName
                     .split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase();
                   const isPending = unfollowConfirm === profile.uid;
                   return (
-                    <div key={profile.uid} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/profile/${profile.uid}`)}>
+                    <div key={profile.uid} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors cursor-pointer" onClick={() => navigate(`/profile/${profile.uid}`)}>
                       {/* Avatar */}
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#187fe7] to-[#f8981d] flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-sage flex items-center justify-center overflow-hidden shrink-0">
                         {profile.photoURL ? (
                           <img src={profile.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
-                          <span className="text-white text-xs font-black">{initials}</span>
+                          <span className="text-white text-xs font-heading">{initials}</span>
                         )}
                       </div>
                       {/* İsim */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{profile.displayName}</p>
+                        <p className="text-sm font-heading text-text truncate">{profile.displayName}</p>
                       </div>
                       {/* Takipten çık — onay popup */}
                       {isPending ? (
                         <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
-                          <span className="text-[11px] text-slate-500 font-medium">Takibi bırak?</span>
+                          <span className="text-[11px] text-muted font-medium">Takibi bırak?</span>
                           <button
                             onClick={() => { handleToggleFollow(profile.uid); setUnfollowConfirm(null); }}
-                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all"
+                            className="text-[11px] font-heading px-2.5 py-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all"
                           >
                             Evet
                           </button>
                           <button
                             onClick={() => setUnfollowConfirm(null)}
-                            className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all"
+                            className="text-[11px] font-heading px-2.5 py-1 rounded-full bg-surface-2 text-muted hover:bg-divider transition-all"
                           >
                             İptal
                           </button>
@@ -434,7 +434,7 @@ const Community: React.FC = () => {
                       ) : (
                         <button
                           onClick={e => { e.stopPropagation(); setUnfollowConfirm(profile.uid); }}
-                          className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-400 transition-all"
+                          className="shrink-0 text-[11px] font-heading px-3 py-1.5 rounded-full bg-surface-2 text-muted hover:bg-red-50 hover:text-red-400 transition-all"
                         >
                           ✓ Takip Ediliyor
                         </button>
@@ -446,13 +446,13 @@ const Community: React.FC = () => {
             </div>
             );
           })() : (
-            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
+            <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
               <p className="text-3xl mb-3">👥</p>
-              <p className="text-sm font-bold text-slate-700">Henüz kimseyi takip etmiyorsun</p>
-              <p className="text-xs text-slate-400 mt-1">"Herkes" sekmesinden gezginleri keşfet ve takip et</p>
+              <p className="text-sm font-heading text-text">Henüz kimseyi takip etmiyorsun</p>
+              <p className="text-xs text-muted mt-1">"Herkes" sekmesinden gezginleri keşfet ve takip et</p>
               <button
                 onClick={() => setFeedTab('all')}
-                className="mt-3 text-xs font-bold text-[#187fe7] hover:text-blue-700 transition-colors"
+                className="mt-3 text-xs font-heading text-blue-500 hover:text-blue-700 transition-colors"
               >
                 Herkese bak →
               </button>
@@ -463,12 +463,12 @@ const Community: React.FC = () => {
         ) : feedLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse">
+              <div key={i} className="bg-surface border border-divider rounded-3xl p-4 animate-pulse">
                 <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex-shrink-0" />
+                  <div className="w-9 h-9 rounded-full bg-surface-2 flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3 w-28 bg-slate-100 rounded" />
-                    <div className="h-3 w-44 bg-slate-100 rounded" />
+                    <div className="h-3 w-28 bg-surface-2 rounded" />
+                    <div className="h-3 w-44 bg-surface-2 rounded" />
                   </div>
                 </div>
               </div>
@@ -514,7 +514,7 @@ const Community: React.FC = () => {
             {displayedFeed.length > FEED_INITIAL && (
               <button
                 onClick={() => setFeedShowAll(v => !v)}
-                className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-all"
+                className="mt-3 w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl border border-divider bg-surface hover:bg-surface-2 text-xs font-heading text-muted hover:text-text transition-all"
               >
                 {feedShowAll ? (
                   <><ChevronUp size={13} /> Daha az göster</>
@@ -525,15 +525,15 @@ const Community: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
+          <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
             {feedSearch ? (
               <>
                 <p className="text-3xl mb-3">🔍</p>
-                <p className="text-sm font-bold text-slate-700">Sonuç bulunamadı</p>
-                <p className="text-xs text-slate-400 mt-1">"{feedSearch}" ile eşleşen plan yok</p>
+                <p className="text-sm font-heading text-text">Sonuç bulunamadı</p>
+                <p className="text-xs text-muted mt-1">"{feedSearch}" ile eşleşen plan yok</p>
                 <button
                   onClick={() => setFeedSearch('')}
-                  className="mt-3 text-xs font-bold text-[#f8981d] hover:text-[#e08518] transition-colors"
+                  className="mt-3 text-xs font-heading text-accent hover:text-accent-700 transition-colors"
                 >
                   Aramayı temizle →
                 </button>
@@ -541,8 +541,8 @@ const Community: React.FC = () => {
             ) : (
               <>
                 <p className="text-3xl mb-3">🌍</p>
-                <p className="text-sm font-bold text-slate-700">Henüz paylaşılan plan yok</p>
-                <p className="text-xs text-slate-400 mt-1">Planlarını paylaşarak topluluğa katkı sağla</p>
+                <p className="text-sm font-heading text-text">Henüz paylaşılan plan yok</p>
+                <p className="text-xs text-muted mt-1">Planlarını paylaşarak topluluğa katkı sağla</p>
               </>
             )}
           </div>
@@ -550,24 +550,24 @@ const Community: React.FC = () => {
 
         {/* Paylaşılmamış planlar için hızlı paylaşım — sadece Herkes sekmesinde */}
         {feedTab === 'all' && !feedLoading && !feedError && plans.length > 0 && (
-          <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Globe size={12} /> Planlarımı Paylaş
+          <div className="mt-8 bg-surface border border-divider rounded-3xl p-5">
+            <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Globe size={12} strokeWidth={2.5} /> Planlarımı Paylaş
             </p>
             <div className="space-y-2">
               {plans.slice(0, 5).map(p => (
                 <div key={p.id} className="flex items-center justify-between gap-3 py-1.5">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{p.plan.destination}</p>
-                    <p className="text-xs text-slate-400">{p.plan.dailyPlans.length} gün</p>
+                    <p className="text-sm font-semibold text-text truncate">{p.plan.destination}</p>
+                    <p className="text-xs text-muted">{p.plan.dailyPlans.length} gün</p>
                   </div>
                   <button
                     onClick={() => handleShare(p.id)}
                     disabled={savingShare === p.id}
-                    className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border shrink-0 transition-all ${
+                    className={`flex items-center gap-1.5 text-[11px] font-heading px-3 py-1.5 rounded-full border shrink-0 transition-all ${
                       sharedPlanIds.has(p.id)
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-red-50 hover:text-red-400 hover:border-red-200'
-                        : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
+                        : 'bg-surface-2 text-muted border-divider hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
                     }`}
                   >
                     {savingShare === p.id

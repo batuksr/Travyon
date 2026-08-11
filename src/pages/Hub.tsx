@@ -89,7 +89,7 @@ const LEVELS: GamificationLevel[] = [
   { label: 'Gezgin',      icon: '✈️', color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-200',   minCities: 3,  maxCities: 6  },
   { label: 'Seyyah',      icon: '⭐', color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',  minCities: 6,  maxCities: 11 },
   { label: 'Dünya Gezgini', icon: '🏆', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', minCities: 11, maxCities: 20 },
-  { label: 'Efsane',      icon: '👑', color: 'text-[#f8981d]',  bg: 'bg-[#f8981d]/10', border: 'border-[#f8981d]/30', minCities: 20, maxCities: 999 },
+  { label: 'Efsane',      icon: '👑', color: 'text-accent',  bg: 'bg-accent-100', border: 'border-accent/30', minCities: 20, maxCities: 999 },
 ];
 
 const getLevel = (cityCount: number): GamificationLevel =>
@@ -613,23 +613,26 @@ const Hub: React.FC = () => {
 
   const maxCount = stats.topCountries[0]?.[1] ?? 1;
 
+  /* Harita pin rengi — terracotta accent (dark/light için sabit ton) */
+  const pinColor      = dark ? '#e08a4f' : '#c67139';
+  const pinColorActive = dark ? '#f0b184' : '#8c491a';
 
   return (
     <>
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-8 sm:pl-12 py-6 sm:py-10">
 
         {/* ── Greeting ── */}
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-slate-400 text-sm font-medium mb-1">
+              <p className="text-muted text-sm mb-1">
                 {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
               <div className="flex items-center gap-2.5">
                 <span className="text-3xl leading-none">{greeting.emoji}</span>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight tracking-tight">
-                  {greeting.text}, <span className="text-[#f8981d]">{firstName}!</span>
+                <h1 className="font-heading text-2xl md:text-3xl text-text leading-tight">
+                  {greeting.text}, <span className="text-accent">{firstName}!</span>
                 </h1>
               </div>
             </div>
@@ -640,18 +643,18 @@ const Hub: React.FC = () => {
         {/* ── Next Trip + Weather ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
           {nextTrip ? (
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#f8981d] to-[#e08518] rounded-2xl p-6 text-white shadow-xl shadow-[#f8981d]/25">
+            <div className="relative overflow-hidden bg-gradient-to-br from-accent to-accent-700 rounded-3xl p-6 text-white shadow-[0_18px_40px_rgba(198,113,57,0.3)]">
               <div className="absolute -right-10 -top-10 w-36 h-36 bg-white/10 rounded-full pointer-events-none" />
               <div className="absolute right-4 -bottom-14 w-44 h-44 bg-white/8 rounded-full pointer-events-none" />
               <div className="relative z-10 flex flex-col h-full gap-4">
                 <div className="flex items-center gap-2">
                   <Plane size={14} className="text-white/75" />
-                  <span className="text-white/75 text-[11px] font-bold uppercase tracking-widest">
+                  <span className="text-white/75 text-[11px] font-heading uppercase tracking-widest">
                     {isFuture ? 'Bir Sonraki Seyahat' : 'Son Seyahat'}
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black leading-tight">{nextTrip.plan.destination}</h2>
+                  <h2 className="font-heading text-2xl leading-tight">{nextTrip.plan.destination}</h2>
                   <div className="flex items-center gap-1.5 mt-1">
                     <MapPin size={12} className="text-white/70" />
                     <p className="text-white/70 text-sm">{nextTrip.onboardingData.startDate} → {nextTrip.onboardingData.endDate}</p>
@@ -661,9 +664,9 @@ const Hub: React.FC = () => {
                   <div className="mt-auto space-y-3">
                     {/* Gün sayacı */}
                     <div className="flex items-end gap-3">
-                      <span className="text-5xl font-black leading-none">{daysUntil}</span>
+                      <span className="font-heading text-5xl leading-none">{daysUntil}</span>
                       <div className="pb-1 space-y-0.5">
-                        <span className="text-white/90 font-bold text-sm block">gün kaldı ✈️</span>
+                        <span className="text-white/90 font-semibold text-sm block">gün kaldı ✈️</span>
                         {tripDuration > 0 && (
                           <span className="text-white/60 text-xs">{tripDuration} günlük seyahat</span>
                         )}
@@ -681,63 +684,63 @@ const Hub: React.FC = () => {
                     {/* Checklist linki */}
                     <button
                       onClick={() => navigate('/travel-checklist')}
-                      className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl px-4 py-2.5 flex items-center justify-between text-sm font-semibold transition-all duration-200"
+                      className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl px-4 py-2.5 flex items-center justify-between text-sm font-semibold transition-all duration-200"
                     >
                       <span>📋 Seyahat Listesi</span>
                       <ChevronRight size={15} />
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-auto bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 inline-flex items-center gap-2 self-start">
+                  <div className="mt-auto bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2.5 inline-flex items-center gap-2 self-start">
                     <span className="text-sm font-semibold">Son kayıtlı plan</span>
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-4 min-h-[200px]">
-              <div className="w-14 h-14 bg-[#f8981d]/10 rounded-2xl flex items-center justify-center">
-                <Plane size={24} className="text-[#f8981d]" />
+            <div className="bg-surface border border-divider rounded-3xl p-6 flex flex-col items-center justify-center text-center gap-4 min-h-[200px]">
+              <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center">
+                <Plane size={24} className="text-accent" />
               </div>
               <div>
-                <p className="font-bold text-slate-800">Henüz plan yok</p>
-                <p className="text-slate-400 text-sm mt-0.5">Yeni plan oluşturmaya başla</p>
+                <p className="font-heading text-text">Henüz plan yok</p>
+                <p className="text-muted text-sm mt-0.5">Yeni plan oluşturmaya başla</p>
               </div>
             </div>
           )}
 
           {nextTrip && (
-            <div className="relative overflow-hidden bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <div className="absolute -right-8 -top-8 w-28 h-28 bg-slate-50 rounded-full pointer-events-none" />
+            <div className="relative overflow-hidden bg-surface border border-divider rounded-3xl p-6">
+              <div className="absolute -right-8 -top-8 w-28 h-28 bg-surface-2 rounded-full pointer-events-none" />
               <div className="relative z-10 flex flex-col h-full">
-                <span className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mb-1">Hava Durumu</span>
+                <span className="text-muted text-[11px] font-heading uppercase tracking-widest mb-1">Hava Durumu</span>
                 <div className="flex items-center gap-1.5 mb-4">
-                  <MapPin size={12} className="text-[#f8981d]" />
-                  <span className="text-slate-700 text-sm font-semibold">{cityName}</span>
+                  <MapPin size={12} className="text-accent" />
+                  <span className="text-text text-sm font-heading">{cityName}</span>
                 </div>
                 {weatherLoading ? (
                   <div className="flex items-center gap-4 mt-2">
-                    <div className="w-16 h-16 bg-slate-100 rounded-2xl animate-pulse" />
+                    <div className="w-16 h-16 bg-surface-2 rounded-2xl animate-pulse" />
                     <div className="space-y-2 flex-1">
-                      <div className="h-7 w-20 bg-slate-100 rounded-lg animate-pulse" />
-                      <div className="h-4 w-28 bg-slate-100 rounded animate-pulse" />
+                      <div className="h-7 w-20 bg-surface-2 rounded-lg animate-pulse" />
+                      <div className="h-4 w-28 bg-surface-2 rounded animate-pulse" />
                     </div>
                   </div>
                 ) : weather ? (
                   <div className="flex items-end gap-5 mt-auto">
                     <span className="text-7xl leading-none select-none">{weatherIcon(weather.code)}</span>
                     <div>
-                      <p className="text-5xl font-black text-slate-900 leading-none">{displayTemp(weather.temp)}</p>
-                      <p className="text-slate-500 text-sm font-medium mt-1">{weatherLabel(weather.code)}</p>
+                      <p className="font-heading text-5xl text-text leading-none">{displayTemp(weather.temp)}</p>
+                      <p className="text-muted text-sm font-medium mt-1">{weatherLabel(weather.code)}</p>
                       <div className="flex items-center gap-1 mt-1.5">
-                        <Wind size={11} className="text-slate-400" />
-                        <span className="text-slate-400 text-xs">{displayWind(weather.windspeed)} rüzgar</span>
+                        <Wind size={11} className="text-muted" />
+                        <span className="text-muted text-xs">{displayWind(weather.windspeed)} rüzgar</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="mt-auto flex flex-col gap-2">
-                    <p className="text-slate-400 text-sm">Hava durumu yüklenemedi</p>
+                    <p className="text-muted text-sm">Hava durumu yüklenemedi</p>
                     <button
                       onClick={() => {
                         if (!cityName) return;
@@ -771,7 +774,7 @@ const Hub: React.FC = () => {
                           finally { setWeatherLoading(false); }
                         })();
                       }}
-                      className="text-xs font-bold text-[#f8981d] hover:text-[#e08518] transition-colors self-start"
+                      className="text-xs font-heading text-accent hover:text-accent-700 transition-colors self-start"
                     >
                       Tekrar dene →
                     </button>
@@ -784,7 +787,7 @@ const Hub: React.FC = () => {
 
         {/* ── Hızlı Eylemler ── */}
         <div className="mb-8">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <Zap size={12} /> Hızlı Eylemler
           </p>
 
@@ -793,14 +796,14 @@ const Hub: React.FC = () => {
             {/* ① Bu hafta sonu */}
             <button
               onClick={handleWeekend}
-              className="group bg-white border border-slate-200 hover:border-[#f8981d]/40 hover:shadow-md rounded-xl p-4 text-left transition-all duration-200"
+              className="group bg-surface border border-divider hover:border-accent/40 hover:shadow-md rounded-2xl p-4 text-left transition-all duration-200"
             >
-              <div className="w-8 h-8 bg-[#f8981d]/10 rounded-lg flex items-center justify-center mb-3">
-                <CalendarDays size={15} className="text-[#f8981d]" />
+              <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center mb-3">
+                <CalendarDays size={15} className="text-accent" />
               </div>
-              <p className="text-sm font-semibold text-slate-800 mb-0.5">Bu hafta sonu</p>
-              <p className="text-xs text-slate-400 mb-3">{nextWeekend.label}</p>
-              <span className="text-xs font-semibold text-[#f8981d] flex items-center gap-0.5">
+              <p className="text-sm font-heading text-text mb-0.5">Bu hafta sonu</p>
+              <p className="text-xs text-muted mb-3">{nextWeekend.label}</p>
+              <span className="text-xs font-heading text-accent flex items-center gap-0.5">
                 Plan oluştur <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </span>
             </button>
@@ -808,35 +811,35 @@ const Hub: React.FC = () => {
             {/* ② Rastgele şehir */}
             <div
               onClick={randState === 'revealed' ? undefined : handleRandomCity}
-              className={`group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md rounded-xl p-4 transition-all duration-200 ${randState !== 'revealed' ? 'cursor-pointer' : ''}`}
+              className={`group bg-surface border border-divider hover:border-divider hover:shadow-md rounded-2xl p-4 transition-all duration-200 ${randState !== 'revealed' ? 'cursor-pointer' : ''}`}
             >
-              <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mb-3">
-                <Shuffle size={15} className="text-slate-600" />
+              <div className="w-8 h-8 bg-surface-2 rounded-lg flex items-center justify-center mb-3">
+                <Shuffle size={15} className="text-muted" />
               </div>
-              <p className="text-sm font-semibold text-slate-800 mb-0.5">Rastgele şehir</p>
+              <p className="text-sm font-heading text-text mb-0.5">Rastgele şehir</p>
 
               {randState === 'idle' && (
                 <>
-                  <p className="text-xs text-slate-400 mb-3">Sürpriz destinasyon</p>
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-0.5 group-hover:text-slate-700 transition-colors">
+                  <p className="text-xs text-muted mb-3">Sürpriz destinasyon</p>
+                  <span className="text-xs font-heading text-muted flex items-center gap-0.5 group-hover:text-text transition-colors">
                     Deneyelim <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </>
               )}
               {randState === 'spinning' && (
-                <p className="text-sm font-bold text-slate-900 animate-pulse mt-1 tabular-nums">{displayCity}</p>
+                <p className="text-sm font-heading text-text animate-pulse mt-1 tabular-nums">{displayCity}</p>
               )}
               {randState === 'revealed' && randCity && (
                 <div className="mt-1">
-                  <p className="text-sm font-bold text-slate-900 leading-tight">{randCity.city}</p>
-                  <p className="text-xs text-slate-400 mb-2">{randCity.country}</p>
+                  <p className="text-sm font-heading text-text leading-tight">{randCity.city}</p>
+                  <p className="text-xs text-muted mb-2">{randCity.country}</p>
                   <div className="flex gap-1.5">
-                    <button onClick={handleGoRandom} className="text-xs font-semibold bg-[#f8981d] text-white px-2.5 py-1 rounded-lg hover:bg-[#e08518] transition-colors">
+                    <button onClick={handleGoRandom} className="text-xs font-heading bg-accent text-white px-2.5 py-1 rounded-full hover:brightness-105 transition-all">
                       Planla →
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setRandState('idle'); setRandCity(null); setDisplayCity(''); }}
-                      className="text-xs font-semibold text-slate-500 px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                      className="text-xs font-heading text-muted px-2 py-1 rounded-full border border-divider hover:bg-surface-2 transition-colors"
                     >↺</button>
                   </div>
                 </div>
@@ -846,35 +849,35 @@ const Hub: React.FC = () => {
             {/* ③ Bütçeme göre */}
             <button
               onClick={handleBudget}
-              className="group bg-white border border-slate-200 hover:border-emerald-200 hover:shadow-md rounded-xl p-4 text-left transition-all duration-200"
+              className="group bg-surface border border-divider hover:border-emerald-200 hover:shadow-md rounded-2xl p-4 text-left transition-all duration-200"
             >
               <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center mb-3">
                 <Wallet size={15} className="text-emerald-600" />
               </div>
-              <p className="text-sm font-semibold text-slate-800 mb-0.5">Bütçeme göre</p>
-              <p className="text-xs text-slate-400 mb-3">
+              <p className="text-sm font-heading text-text mb-0.5">Bütçeme göre</p>
+              <p className="text-xs text-muted mb-3">
                 {plans.length > 0 ? avgBudget.symbol + avgBudget.amount.toLocaleString('tr-TR') : 'Varsayılan bütçe'}
               </p>
-              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-0.5">
+              <span className="text-xs font-heading text-emerald-600 flex items-center gap-0.5">
                 Plan oluştur <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </span>
             </button>
 
             {/* ④ Vibe değiştir */}
             <div
-              className={`bg-white border border-slate-200 hover:border-violet-200 hover:shadow-md rounded-xl p-4 transition-all duration-200 ${plans.length > 0 ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+              className={`bg-surface border border-divider hover:border-violet-200 hover:shadow-md rounded-2xl p-4 transition-all duration-200 ${plans.length > 0 ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
               onClick={() => plans.length > 0 && setShowVibe(v => !v)}
             >
               <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center mb-3">
                 <Sparkles size={15} className="text-violet-500" />
               </div>
-              <p className="text-sm font-semibold text-slate-800 mb-0.5">Vibe değiştir</p>
+              <p className="text-sm font-heading text-text mb-0.5">Vibe değiştir</p>
               {!showVibe ? (
                 <>
-                  <p className="text-xs text-slate-400 mb-3">
+                  <p className="text-xs text-muted mb-3">
                     {plans.length > 0 ? `"${plans[0].plan.destination.split(',')[0]}"` : 'Önce plan oluştur'}
                   </p>
-                  <span className="text-xs font-semibold text-violet-500 flex items-center gap-0.5">
+                  <span className="text-xs font-heading text-violet-500 flex items-center gap-0.5">
                     Tarz seç <ChevronRight size={11} />
                   </span>
                 </>
@@ -884,7 +887,7 @@ const Hub: React.FC = () => {
                     <button
                       key={v.val}
                       onClick={(e) => { e.stopPropagation(); handleVibe(v.val); }}
-                      className="flex items-center gap-1 bg-slate-50 hover:bg-violet-50 border border-slate-200 hover:border-violet-200 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-slate-700 transition-colors"
+                      className="flex items-center gap-1 bg-surface-2 hover:bg-violet-50 border border-divider hover:border-violet-200 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-text transition-colors"
                     >
                       <span>{v.emoji}</span><span>{v.label}</span>
                     </button>
@@ -900,16 +903,16 @@ const Hub: React.FC = () => {
         {/* ── İstatistikler ── */}
         {plans.length > 0 && (
           <>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+            <p className="text-xs font-heading text-muted uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <LayoutGrid size={12} /> İstatistikler
             </p>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
               {/* Toplam Plan */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-9 h-9 bg-[#f8981d]/10 rounded-xl flex items-center justify-center">
-                    <LayoutGrid size={16} className="text-[#f8981d]" />
+                  <div className="w-9 h-9 bg-accent-100 rounded-xl flex items-center justify-center">
+                    <LayoutGrid size={16} className="text-accent" />
                   </div>
                   {stats.thisMonthCount > 0 && (
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
@@ -917,20 +920,20 @@ const Hub: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-2xl font-bold text-slate-900 leading-none">{plans.length}</p>
-                <p className="text-slate-500 text-xs mt-1">Toplam Plan</p>
+                <p className="font-heading text-2xl text-text leading-none">{plans.length}</p>
+                <p className="text-muted text-xs mt-1">Toplam Plan</p>
               </div>
 
               {/* Şehir & Ülke */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
                 <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
                   <Globe size={16} className="text-blue-500" />
                 </div>
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <p className="text-2xl font-bold text-slate-900 leading-none">{stats.uniqueCities}</p>
-                  <span className="text-slate-400 text-xs">şehir</span>
+                  <p className="font-heading text-2xl text-text leading-none">{stats.uniqueCities}</p>
+                  <span className="text-muted text-xs">şehir</span>
                 </div>
-                <p className="text-slate-500 text-xs mb-3">{stats.uniqueCountries} farklı ülke</p>
+                <p className="text-muted text-xs mb-3">{stats.uniqueCountries} farklı ülke</p>
                 {stats.uniqueFlags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {stats.uniqueFlags.map(f => (
@@ -941,27 +944,27 @@ const Hub: React.FC = () => {
               </div>
 
               {/* Toplam Bütçe */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
                 <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center mb-3">
                   <Wallet size={16} className="text-violet-500" />
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Toplam Bütçe</p>
+                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-2">Toplam Bütçe</p>
                 <div className="space-y-1.5">
                   {stats.budgets.map(([code, { symbol, total }]) => (
                     <div key={code} className="flex items-baseline gap-1">
-                      <span className="text-base font-bold text-slate-900 leading-none">{symbol}{total.toLocaleString('tr-TR')}</span>
-                      <span className="text-slate-400 text-[10px]">{code}</span>
+                      <span className="font-heading text-base text-text leading-none">{symbol}{total.toLocaleString('tr-TR')}</span>
+                      <span className="text-muted text-[10px]">{code}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* En Çok Gezilen */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
                 <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center mb-3">
                   <Trophy size={16} className="text-amber-500" />
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">En Çok Gezilen</p>
+                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-3">En Çok Gezilen</p>
                 {stats.topCountries.length > 0 ? (
                   <div className="space-y-2">
                     {stats.topCountries.map(([country, count], i) => (
@@ -969,24 +972,24 @@ const Hub: React.FC = () => {
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm leading-none">{getCountryFlag(country)}</span>
-                            <span className={`text-xs font-semibold truncate max-w-[80px] ${i === 0 ? 'text-slate-900' : 'text-slate-600'}`}>{country}</span>
+                            <span className={`text-xs font-semibold truncate max-w-[80px] ${i === 0 ? 'text-text' : 'text-muted'}`}>{country}</span>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-bold">{count}</span>
+                          <span className="text-[10px] text-muted font-bold">{count}</span>
                         </div>
-                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${i === 0 ? 'bg-[#f8981d]' : i === 1 ? 'bg-[#f8981d]/50' : 'bg-[#f8981d]/25'}`}
+                        <div className="h-1 bg-surface-2 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${i === 0 ? 'bg-accent' : i === 1 ? 'bg-accent/50' : 'bg-accent/25'}`}
                             style={{ width: `${(count / maxCount) * 100}%` }} />
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-slate-400 text-sm">Henüz veri yok</p>}
+                ) : <p className="text-muted text-sm">Henüz veri yok</p>}
               </div>
             </div>
 
             {/* Share error toast */}
             {shareError && (
-              <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-xl">
+              <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-2xl">
                 <span>⚠️</span>
                 <span>{shareError}</span>
               </div>
@@ -994,22 +997,22 @@ const Hub: React.FC = () => {
 
             {/* ── Aktivite Akışı ── */}
             {activities.length > 0 && (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mb-5">
+              <div className="bg-surface border border-divider rounded-3xl overflow-hidden mb-5">
                 {/* Header */}
-                <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="px-6 pt-5 pb-4 border-b border-divider flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock size={13} className="text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Son Hareketler</span>
+                    <Clock size={13} className="text-muted" />
+                    <span className="text-xs font-heading text-muted uppercase tracking-wider">Son Hareketler</span>
                   </div>
-                  <span className="text-xs text-slate-400">{plans.length} plan</span>
+                  <span className="text-xs text-muted">{plans.length} plan</span>
                 </div>
 
                 {/* Timeline list */}
                 <div className="relative">
                   {/* Vertical connector line */}
-                  <div className="absolute left-[43px] top-5 bottom-5 w-px bg-slate-100 pointer-events-none" />
+                  <div className="absolute left-[43px] top-5 bottom-5 w-px bg-divider pointer-events-none" />
 
-                  <div className="divide-y divide-slate-50">
+                  <div className="divide-y divide-divider">
                     {(activitiesShowAll ? activities : activities.slice(0, 2)).map((item) => {
                       const isActive    = item.type === 'active';
                       const isUpcoming  = item.type === 'upcoming';
@@ -1019,15 +1022,15 @@ const Hub: React.FC = () => {
                       const dotBg =
                         isActive    ? 'bg-emerald-100 ring-2 ring-emerald-200' :
                         isUpcoming  ? 'bg-blue-100 ring-2 ring-blue-200'       :
-                        isCompleted ? 'bg-[#f8981d]/15 ring-2 ring-[#f8981d]/25' :
-                                      'bg-slate-100';
+                        isCompleted ? 'bg-accent-100 ring-2 ring-accent-200' :
+                                      'bg-surface-2';
 
                       /* Time badge colors */
                       const badgeCls =
                         isActive    ? 'bg-emerald-100 text-emerald-600' :
                         isUpcoming  ? 'bg-blue-100 text-blue-600'       :
-                        isCompleted ? 'bg-[#f8981d]/15 text-[#e08518]'  :
-                                      'bg-slate-100 text-slate-500';
+                        isCompleted ? 'bg-accent-100 text-accent-700'  :
+                                      'bg-surface-2 text-muted';
 
                       /* Icon */
                       const Icon =
@@ -1039,13 +1042,13 @@ const Hub: React.FC = () => {
                       const iconColor =
                         isActive    ? 'text-emerald-600' :
                         isUpcoming  ? 'text-blue-600'    :
-                        isCompleted ? 'text-[#f8981d]'   :
-                                      'text-slate-400';
+                        isCompleted ? 'text-accent'   :
+                                      'text-muted';
 
                       return (
                         <div
                           key={item.id}
-                          className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors group"
+                          className="flex items-start gap-4 px-6 py-4 hover:bg-surface-2/60 transition-colors group"
                         >
                           {/* Dot */}
                           <div className={`relative z-10 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 ${dotBg}`}>
@@ -1055,12 +1058,12 @@ const Hub: React.FC = () => {
                           {/* Content */}
                           <div className="flex-1 min-w-0 pt-0.5">
                             <div className="flex items-start justify-between gap-3">
-                              <p className="text-sm font-bold text-slate-800 leading-snug">{item.text}</p>
+                              <p className="text-sm font-bold text-text leading-snug">{item.text}</p>
                               <span className={`text-[10px] font-bold whitespace-nowrap flex-shrink-0 px-2 py-0.5 rounded-full ${badgeCls}`}>
                                 {item.timeLabel}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{item.sub}</p>
+                            <p className="text-xs text-muted mt-0.5 leading-relaxed">{item.sub}</p>
 
                             {/* CTA + Share row */}
                             <div className="flex items-center justify-between mt-2 gap-2">
@@ -1068,7 +1071,7 @@ const Hub: React.FC = () => {
                                 {isCompleted && (
                                   <button
                                     onClick={() => { resetForm(); updateData({ destination: item.destination }); navigate('/onboarding'); }}
-                                    className="text-xs font-bold text-[#f8981d] hover:text-[#e08518] transition-colors"
+                                    className="text-xs font-bold text-accent hover:text-accent-700 transition-colors"
                                   >
                                     Tekrar Planla →
                                   </button>
@@ -1090,10 +1093,10 @@ const Hub: React.FC = () => {
                                 title={!plansPublic && !sharedPlanIds.has(item.planId) ? 'Plan paylaşımı gizlilik ayarlarınızda kapalı' : undefined}
                                 className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all flex-shrink-0 ${
                                   !plansPublic && !sharedPlanIds.has(item.planId)
-                                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                                    ? 'bg-surface-2 text-muted border-divider cursor-not-allowed opacity-60'
                                     : sharedPlanIds.has(item.planId)
                                       ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-red-50 hover:text-red-400 hover:border-red-200'
-                                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
+                                      : 'bg-surface-2 text-muted border-divider hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
                                 }`}
                               >
                                 {savingShare === item.planId
@@ -1114,7 +1117,7 @@ const Hub: React.FC = () => {
                   {activities.length > 2 && (
                     <button
                       onClick={() => setActivitiesShowAll(v => !v)}
-                      className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                      className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted hover:text-text hover:bg-surface-2 transition-colors border-t border-divider"
                     >
                       {activitiesShowAll ? (
                         <>Daha Az Göster <ChevronRight size={13} className="rotate-[-90deg]" /></>
@@ -1131,31 +1134,31 @@ const Hub: React.FC = () => {
         )}
 
         {/* ── Dünya Haritası — her zaman görünür ── */}
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-surface border border-divider rounded-3xl overflow-hidden">
 
           {/* Harita başlık */}
           <div className="px-6 pt-5 pb-4">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-5 h-5 bg-[#f8981d]/15 rounded-md flex items-center justify-center">
-                <Globe size={11} className="text-[#f8981d]" />
+              <div className="w-5 h-5 bg-accent-100 rounded-md flex items-center justify-center">
+                <Globe size={11} className="text-accent" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dünya Haritam</span>
+              <span className="text-xs font-heading text-muted uppercase tracking-widest">Dünya Haritam</span>
             </div>
-            <p className="text-lg font-black text-slate-900">
+            <p className="font-heading text-lg text-text">
               Şu ana kadar{' '}
-              <span className="text-[#f8981d]">{stats.uniqueCities} şehir</span>{' '}
+              <span className="text-accent">{stats.uniqueCities} şehir</span>{' '}
               keşfettin!
             </p>
-            <p className="text-slate-400 text-xs mt-0.5">
+            <p className="text-muted text-xs mt-0.5">
               {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
             </p>
           </div>
 
           {/* Harita */}
-          <div className="h-72 w-full border-t border-slate-100">
+          <div className="h-72 w-full border-t border-divider">
             {!isLoaded ? (
-              <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-[#f8981d] border-t-transparent rounded-full animate-spin" />
+              <div className="w-full h-full bg-surface-2 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <GoogleMap
@@ -1178,7 +1181,7 @@ const Hub: React.FC = () => {
                     icon={isLoaded ? {
                       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
                         `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-                          <circle cx="14" cy="14" r="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? 11 : 8}" fill="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? '#e08518' : '#f8981d'}" stroke="white" stroke-width="2.5"/>
+                          <circle cx="14" cy="14" r="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? 11 : 8}" fill="${(hoveredPin === pin.name || selectedPin?.name === pin.name) ? pinColorActive : pinColor}" stroke="white" stroke-width="2.5"/>
                         </svg>`
                       )}`,
                       scaledSize: new window.google.maps.Size(28, 28),
@@ -1195,13 +1198,13 @@ const Hub: React.FC = () => {
                   >
                     <div style={{
                       display: 'inline-flex', alignItems: 'center', gap: '5px',
-                      background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(8px)',
-                      color: '#f1f5f9', fontSize: '12px', fontWeight: 700,
-                      fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
+                      background: 'rgba(28,20,12,0.88)', backdropFilter: 'blur(8px)',
+                      color: '#f5ead8', fontSize: '12px', fontWeight: 700,
+                      fontFamily: 'var(--font-body),system-ui,sans-serif', whiteSpace: 'nowrap',
                       padding: '5px 10px', borderRadius: '20px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
                     }}>
-                      <span style={{ color: '#f8981d', fontSize: '13px' }}>📍</span>
+                      <span style={{ color: pinColor, fontSize: '13px' }}>📍</span>
                       {selectedPin.name}
                     </div>
                   </InfoWindowF>
@@ -1212,8 +1215,8 @@ const Hub: React.FC = () => {
 
           {/* Harita alt bilgi */}
           {destPins.length === 0 && (
-            <div className="px-6 py-3 border-t border-slate-100">
-              <p className="text-slate-400 text-xs text-center">Seyahatlerini tamamladıkça şehirler haritada belirmeye başlayacak 🗺️</p>
+            <div className="px-6 py-3 border-t border-divider">
+              <p className="text-muted text-xs text-center">Seyahatlerini tamamladıkça şehirler haritada belirmeye başlayacak 🗺️</p>
             </div>
           )}
         </div>

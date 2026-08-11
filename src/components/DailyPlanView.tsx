@@ -78,17 +78,17 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
   };
   if (!seg || seg.loading) return (
     <div className="flex items-center gap-2 mt-1.5">
-      {distText && <span className="text-[10px] text-slate-400">↕ {distText}</span>}
-      <span className="text-[10px] text-slate-300 animate-pulse">⏱ hesaplanıyor…</span>
+      {distText && <span className="text-[10px] text-muted">↕ {distText}</span>}
+      <span className="text-[10px] text-muted animate-pulse">⏱ hesaplanıyor…</span>
     </div>
   );
   const available = TRAVEL_MODES.filter(m => seg[m] != null);
-  if (available.length === 0) return distText ? <p className="text-[10px] text-slate-400 mt-1">↕ {distText}</p> : null;
+  if (available.length === 0) return distText ? <p className="text-[10px] text-muted mt-1">↕ {distText}</p> : null;
   const fastest = available.reduce<TravelMode>((best, m) => (seg[m] as number) < (seg[best] as number) ? m : best, available[0]);
   return (
     <div className="mt-1.5 space-y-1.5">
       <div className="flex items-center gap-1.5 flex-wrap">
-        {distText && (<><span className="text-[10px] text-slate-400">↕ {distText}</span><span className="text-slate-200 text-[10px]">·</span></>)}
+        {distText && (<><span className="text-[10px] text-muted">↕ {distText}</span><span className="text-muted text-[10px]">·</span></>)}
         {TRAVEL_MODES.map(mode => {
           const mins = seg[mode];
           if (mins == null) return null;
@@ -97,9 +97,9 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
           return (
             <button key={mode} onClick={() => setPending(isSelected ? null : mode)}
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all hover:scale-105 active:scale-95 select-none ${
-                isSelected ? 'bg-[#f8981d] text-white border-[#f8981d]'
-                  : isFastest ? 'bg-[#f8981d]/10 text-[#f8981d] border-[#f8981d]/25 hover:bg-[#f8981d]/20'
-                  : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}>
+                isSelected ? 'bg-accent text-white border-accent'
+                  : isFastest ? 'bg-accent-100 text-accent-700 border-accent/25 hover:bg-accent-200'
+                  : 'bg-surface-2 text-muted border-divider hover:bg-surface-2/70'}`}>
               <span className="text-[11px] leading-none">{TRAVEL_ICONS[mode]}</span>
               {fmtMin(mins)}
             </button>
@@ -107,13 +107,13 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
         })}
       </div>
       {pending && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-divider rounded-2xl shadow-sm">
           <span className="text-base leading-none">{TRAVEL_ICONS[pending]}</span>
-          <p className="flex-1 text-[11px] text-slate-600 leading-tight">
-            <span className="font-semibold text-slate-800">{TRAVEL_LABELS[pending]}</span> ile Google Maps açılsın mı?
+          <p className="flex-1 text-[11px] text-muted leading-tight">
+            <span className="font-semibold text-text">{TRAVEL_LABELS[pending]}</span> ile Google Maps açılsın mı?
           </p>
-          <button onClick={() => setPending(null)} className="text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition-colors px-1">İptal</button>
-          <button onClick={confirmOpen} className="text-[10px] font-semibold text-white bg-[#f8981d] hover:bg-[#e08518] px-2.5 py-1 rounded-lg transition-colors">Aç</button>
+          <button onClick={() => setPending(null)} className="text-[10px] font-semibold text-muted hover:text-text transition-colors px-1">İptal</button>
+          <button onClick={confirmOpen} className="text-[10px] font-semibold text-white bg-accent hover:brightness-105 px-2.5 py-1 rounded-lg transition-colors">Aç</button>
         </div>
       )}
     </div>
@@ -123,11 +123,11 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
 /* ── Period color ── */
 const getPeriodColor = (period: string) => {
   if (period === 'Sabah')         return { border: 'border-amber-300',  bg: 'bg-amber-50',  text: 'text-amber-600' };
-  if (period === 'Öğle')          return { border: 'border-orange-300', bg: 'bg-orange-50', text: 'text-orange-600' };
+  if (period === 'Öğle')          return { border: 'border-accent-600', bg: 'bg-accent-100', text: 'text-accent-700' };
   if (period === 'Öğleden Sonra') return { border: 'border-blue-300',   bg: 'bg-blue-50',   text: 'text-blue-600' };
-  if (period === 'Akşam')         return { border: 'border-purple-300', bg: 'bg-purple-50', text: 'text-purple-600' };
-  if (period === 'Gece')          return { border: 'border-slate-400',  bg: 'bg-slate-100', text: 'text-slate-600' };
-  return { border: 'border-slate-300', bg: 'bg-slate-50', text: 'text-slate-500' };
+  if (period === 'Akşam')         return { border: 'border-sage',       bg: 'bg-sage-200',  text: 'text-sage-700' };
+  if (period === 'Gece')          return { border: 'border-divider',   bg: 'bg-surface-2', text: 'text-muted' };
+  return { border: 'border-divider', bg: 'bg-surface-2', text: 'text-muted' };
 };
 
 const vibeConfig: Record<string, { label: string; emoji: string }> = {
@@ -190,15 +190,15 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
   };
 
   return (
-    <div className="border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 sm:px-5 py-3 space-y-3">
+    <div className="border-t border-divider bg-surface px-3 sm:px-5 py-3 space-y-3">
 
       {/* Başlık */}
       <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-          <Plus size={13} className="text-[#f8981d]" /> Aktivite Ekle
+        <p className="text-xs font-heading text-text flex items-center gap-1.5">
+          <Plus size={13} strokeWidth={2.5} className="text-accent" /> Aktivite Ekle
         </p>
-        <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-          <X size={13} className="text-slate-400" />
+        <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-2 transition-colors">
+          <X size={13} strokeWidth={2.5} className="text-muted" />
         </button>
       </div>
 
@@ -208,10 +208,10 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all ${
+            className={`text-[10px] font-heading px-2.5 py-1 rounded-full border transition-all ${
               period === p
-                ? 'bg-[#f8981d] text-white border-[#f8981d]'
-                : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                ? 'bg-accent text-white border-accent'
+                : 'bg-surface text-muted border-divider hover:border-accent/40'
             }`}
           >
             {p}
@@ -228,12 +228,12 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
           onChange={e => { setQuery(e.target.value); setPreview(null); }}
           onKeyDown={e => e.key === 'Enter' && handleSuggest()}
           placeholder="Ne eklemek istiyorsun? (örn: müze, kahve, park...)"
-          className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 transition-all"
+          className="flex-1 px-3 py-2 text-xs rounded-xl border border-divider bg-surface-2 text-text placeholder:text-muted outline-none focus:border-accent transition-all"
         />
         <button
           onClick={handleSuggest}
           disabled={loading || !query.trim()}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#f8981d] hover:bg-[#e08518] disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-accent hover:brightness-105 disabled:opacity-50 text-white text-xs font-heading rounded-xl transition-all shrink-0"
         >
           {loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           <span className="hidden sm:inline">{loading ? 'Düşünüyor...' : 'AI Öner'}</span>
@@ -246,26 +246,26 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
 
       {/* Önizleme kartı */}
       {preview && (
-        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2">
+        <div className="bg-surface-2 border border-divider rounded-xl p-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">{preview.placeName}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{preview.description}</p>
+              <p className="text-xs font-bold text-text leading-tight">{preview.placeName}</p>
+              <p className="text-[11px] text-muted mt-0.5 leading-relaxed">{preview.description}</p>
             </div>
-            <span className="text-[11px] font-bold text-[#f8981d] bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full shrink-0">
+            <span className="text-[11px] font-bold text-accent bg-accent-100 px-2 py-0.5 rounded-full shrink-0">
               {currencySymbol}{preview.estimatedCost}
             </span>
           </div>
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleAdd}
-              className="flex-1 py-1.5 bg-[#f8981d] hover:bg-[#e08518] text-white text-xs font-bold rounded-lg transition-all"
+              className="flex-1 py-1.5 bg-accent hover:brightness-105 text-white text-xs font-heading rounded-lg transition-all"
             >
               ✓ Plana Ekle
             </button>
             <button
               onClick={() => setPreview(null)}
-              className="px-3 py-1.5 bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+              className="px-3 py-1.5 bg-surface text-muted text-xs font-semibold border border-divider rounded-lg hover:bg-surface-2 transition-all"
             >
               Farklı Öner
             </button>
@@ -412,9 +412,9 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
 
       {/* ── OVERLAY ── */}
       {isRegenerating && (
-        <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-slate-900 dark:bg-slate-700 text-white rounded-lg text-sm font-semibold shadow-lg">
-            <Loader2 size={14} className="animate-spin text-[#187fe7]" />
+        <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-accent-700 text-white rounded-full text-sm font-heading shadow-lg">
+            <Loader2 size={14} className="animate-spin" />
             Optimize ediliyor...
           </div>
         </div>
@@ -439,18 +439,18 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
           return (
             <div key={index}>
               {showPeriodLabel && (
-                <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ml-9 ${index > 0 ? 'mt-4' : ''} ${colors.text}`}>
+                <p className={`text-[10px] font-heading uppercase tracking-wider mb-1.5 ml-9 ${index > 0 ? 'mt-4' : ''} ${colors.text}`}>
                   {activity.period}
                 </p>
               )}
 
-              <div className={`flex gap-3 rounded-xl transition-colors ${isDeleting ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+              <div className={`flex gap-3 rounded-xl transition-colors ${isDeleting ? 'bg-red-50' : ''}`}>
                 {/* Circle + line */}
                 <div className="flex flex-col items-center shrink-0 w-6">
                   <div className={`w-6 h-6 rounded-full border-2 ${colors.border} ${colors.bg} flex items-center justify-center shrink-0`}>
                     <span className={`text-[10px] font-bold ${colors.text}`}>{index + 1}</span>
                   </div>
-                  {!isLast && <div className="w-px flex-1 min-h-[20px] bg-slate-200 dark:bg-slate-600 mt-0.5" />}
+                  {!isLast && <div className="w-px flex-1 min-h-[20px] bg-divider mt-0.5" />}
                 </div>
 
                 {/* Content */}
@@ -467,11 +467,11 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           onActivityClick?.({ placeName: activity.placeName, lat: activity.coordinates.lat, lng: activity.coordinates.lng });
                         }}
                       >
-                        <h3 className={`text-sm font-semibold leading-tight transition-colors ${isDeleting ? 'text-red-500' : 'text-slate-900 dark:text-white hover:text-[#f8981d]'}`}>
+                        <h3 className={`font-heading text-sm leading-tight transition-colors ${isDeleting ? 'text-red-500' : 'text-text hover:text-accent'}`}>
                           {activity.placeName}
                         </h3>
                         {!isDeleting && noteIndex !== index && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                          <p className="text-xs text-muted mt-0.5 leading-relaxed">
                             {activity.description}
                           </p>
                         )}
@@ -487,7 +487,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           onClick={() => openNote(index)}
                         >
                           <StickyNote size={11} className="text-amber-400 shrink-0 mt-0.5" />
-                          <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed line-clamp-2 group-hover/note:line-clamp-none transition-all">
+                          <p className="text-[11px] text-amber-700 leading-relaxed line-clamp-2 group-hover/note:line-clamp-none transition-all">
                             {activity.note}
                           </p>
                         </div>
@@ -503,7 +503,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             onChange={e => setNoteText(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Escape') setNoteIndex(null); }}
                             placeholder="Not ekle… (rezervasyon no, anı, ipucu...)"
-                            className="w-full text-xs px-2.5 py-2 rounded-lg border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none transition-all"
+                            className="w-full text-xs px-2.5 py-2 rounded-lg border border-amber-200 bg-amber-50 text-text placeholder:text-muted outline-none focus:border-amber-400 resize-none transition-all"
                           />
                           <div className="flex gap-1.5 mt-1.5">
                             <button
@@ -517,7 +517,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               <button
                                 type="button"
                                 onClick={() => { setNoteText(''); updateActivityNote(day.dayNumber, index, ''); setNoteIndex(null); }}
-                                className="text-[10px] font-semibold px-2.5 py-1 bg-white dark:bg-slate-700 text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 transition-colors"
+                                className="text-[10px] font-semibold px-2.5 py-1 bg-surface text-red-400 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                               >
                                 Notu Sil
                               </button>
@@ -525,7 +525,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             <button
                               type="button"
                               onClick={() => setNoteIndex(null)}
-                              className="text-[10px] font-semibold px-2.5 py-1 bg-white dark:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                              className="text-[10px] font-semibold px-2.5 py-1 bg-surface text-muted border border-divider rounded-lg hover:bg-surface-2 transition-colors"
                             >
                               İptal
                             </button>
@@ -547,7 +547,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           </button>
                           <button
                             onClick={() => setDeletingIndex(null)}
-                            className="text-[10px] font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-lg hover:bg-slate-200 transition-colors"
+                            className="text-[10px] font-bold px-2 py-1 bg-surface-2 text-muted rounded-lg hover:bg-divider transition-colors"
                           >
                             İptal
                           </button>
@@ -560,7 +560,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               onClick={() => handleMove(index, index - 1)}
                               disabled={index === 0}
                               title="Yukarı taşı"
-                              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-0 transition-all"
+                              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-muted hover:text-text hover:bg-surface-2 disabled:opacity-0 transition-all"
                             >
                               <ChevronUp size={13} />
                             </button>
@@ -568,7 +568,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               onClick={() => handleMove(index, index + 1)}
                               disabled={isLast}
                               title="Aşağı taşı"
-                              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-0 transition-all"
+                              className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-muted hover:text-text hover:bg-surface-2 disabled:opacity-0 transition-all"
                             >
                               <ChevronDown size={13} />
                             </button>
@@ -580,8 +580,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             title="Not ekle"
                             className={`w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded transition-all ${
                               activity.note
-                                ? 'text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                                : 'text-slate-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                ? 'text-amber-400 hover:bg-amber-50'
+                                : 'text-muted hover:text-amber-400 hover:bg-amber-50'
                             }`}
                           >
                             <StickyNote size={13} />
@@ -591,19 +591,19 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           <button
                             onClick={() => { setDeletingIndex(index); setEditingIndex(null); setNoteIndex(null); }}
                             title="Aktiviteyi sil"
-                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded text-muted hover:text-red-400 hover:bg-red-50 transition-all"
                           >
                             <Trash2 size={13} />
                           </button>
 
                           {/* Maliyet düzenle */}
                           {editingIndex === index ? (
-                            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700 px-2 py-1 rounded-md shadow-sm">
-                              <span className="text-xs text-slate-400">{currencySymbol}</span>
+                            <div className="flex items-center gap-1 bg-surface border border-blue-200 px-2 py-1 rounded-md shadow-sm">
+                              <span className="text-xs text-muted">{currencySymbol}</span>
                               <input
                                 type="number"
                                 autoFocus
-                                className="w-14 outline-none text-xs font-semibold text-slate-800 dark:text-white bg-transparent"
+                                className="w-14 outline-none text-xs font-semibold text-text bg-transparent"
                                 value={tempCost}
                                 onChange={e => setTempCost(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleSaveCost(index)}
@@ -618,8 +618,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               onClick={() => { setEditingIndex(index); setTempCost((activity.actualCost ?? activity.estimatedCost).toString()); setDeletingIndex(null); }}
                               className={`flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-semibold transition-colors ${
                                 activity.actualCost !== undefined
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700'
-                                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-surface text-text border-divider hover:border-accent/40 hover:bg-surface-2'
                               }`}
                             >
                               {currencySymbol}{activity.actualCost !== undefined ? activity.actualCost : activity.estimatedCost}
@@ -650,9 +650,9 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
         {!showAddPanel && (
           <button
             onClick={() => { setShowAddPanel(true); setDeletingIndex(null); }}
-            className="w-full mt-3 mb-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:border-[#f8981d]/50 hover:text-[#f8981d] hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all"
+            className="w-full mt-3 mb-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-dashed border-divider text-xs font-heading text-muted hover:border-accent/50 hover:text-accent hover:bg-accent-100/50 transition-all"
           >
-            <Plus size={13} />
+            <Plus size={13} strokeWidth={2.5} />
             Aktivite Ekle
           </button>
         )}
@@ -671,8 +671,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
       )}
 
       {/* ── VİBE BAR ── */}
-      <div className="sticky bottom-0 border-t border-slate-100 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-3 sm:px-5 py-2.5 flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Vibe:</span>
+      <div className="sticky bottom-0 border-t border-divider bg-surface/95 backdrop-blur-sm px-3 sm:px-5 py-2.5 flex items-center gap-2 shrink-0">
+        <span className="text-[10px] font-heading text-muted uppercase tracking-wider shrink-0">Vibe:</span>
         <div className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {(Object.keys(vibeConfig) as Array<keyof typeof vibeConfig>).map(key => {
             const cfg = vibeConfig[key];
@@ -683,8 +683,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                 type="button"
                 onClick={() => handleVibeSelect(key as VibeType)}
                 disabled={isRegenerating}
-                className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-md border text-xs font-semibold transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isActive ? 'bg-[#f8981d] text-white border-[#f8981d]' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-full border text-xs font-semibold transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isActive ? 'bg-accent text-white border-accent' : 'bg-surface text-text border-divider hover:border-accent/40'
                 }`}
               >
                 <span>{cfg.emoji}</span>

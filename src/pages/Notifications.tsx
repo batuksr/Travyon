@@ -26,11 +26,11 @@ const geocodeOnce = async (name: string): Promise<{ lat: number; lng: number } |
 
 const levelConfig = {
   urgent:  {
-    bar:   'bg-red-400',
-    dot:   'bg-red-400',
-    badge: 'bg-red-100 text-red-600',
+    bar:   'bg-accent',
+    dot:   'bg-accent',
+    badge: 'bg-accent-100 text-accent-700',
     icon:  AlertCircle,
-    iconColor: 'text-red-400',
+    iconColor: 'text-accent',
     label: 'Acil',
   },
   warning: {
@@ -42,11 +42,11 @@ const levelConfig = {
     label: 'Uyarı',
   },
   info:    {
-    bar:   'bg-blue-400',
-    dot:   'bg-blue-400',
-    badge: 'bg-blue-100 text-blue-600',
+    bar:   'bg-sage',
+    dot:   'bg-sage',
+    badge: 'bg-sage-200 text-sage-700',
     icon:  Info,
-    iconColor: 'text-blue-400',
+    iconColor: 'text-sage',
     label: 'Bilgi',
   },
 };
@@ -152,18 +152,18 @@ const Notifications: React.FC = () => {
   const warningCount = notifications.filter(n => n.level === 'warning').length;
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] dark:bg-slate-900">
+    <div className="min-h-screen bg-bg">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
 
         {/* ── Başlık ── */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#f8981d]/10 flex items-center justify-center">
-              <Bell size={18} className="text-[#f8981d]" />
+            <div className="w-10 h-10 rounded-2xl bg-accent-100 flex items-center justify-center">
+              <Bell size={18} strokeWidth={2.5} className="text-accent" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-none">Bildirimler</h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h1 className="font-heading text-xl text-text leading-none">Bildirimler</h1>
+              <p className="text-xs text-muted mt-1">
                 {notifications.length === 0
                   ? 'Her şey yolunda görünüyor'
                   : `${notifications.length} bildirim · ${urgentCount > 0 ? `${urgentCount} acil` : warningCount > 0 ? `${warningCount} uyarı` : 'hepsi bilgi'}`}
@@ -174,9 +174,9 @@ const Notifications: React.FC = () => {
           {notifications.length > 0 && (
             <button
               onClick={dismissAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-heading text-text hover:text-accent bg-surface border-[1.5px] border-divider rounded-full hover:shadow-sm transition-all"
             >
-              <CheckCheck size={12} />
+              <CheckCheck size={12} strokeWidth={2.5} />
               Tümünü temizle
             </button>
           )}
@@ -184,46 +184,36 @@ const Notifications: React.FC = () => {
 
         {/* ── Boş durum ── */}
         {notifications.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-16 text-center">
-            <div className="w-14 h-14 bg-[#f5f0e8] dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Plane size={22} className="text-[#f8981d]" />
+          <div className="bg-surface rounded-3xl border border-divider p-16 text-center">
+            <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Plane size={22} strokeWidth={2.5} className="text-accent" />
             </div>
-            <p className="font-semibold text-slate-700 dark:text-slate-200">Yeni bildirim yok</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
+            <p className="font-heading text-text">Yeni bildirim yok</p>
+            <p className="text-xs text-muted mt-1.5 leading-relaxed max-w-xs mx-auto">
               Yaklaşan seyahat, bütçe veya hava durumu uyarıların burada görünecek.
             </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
-            {notifications.map((n, idx) => {
+          <div className="flex flex-col gap-3">
+            {notifications.map((n) => {
               const cfg = levelConfig[n.level];
-              const Icon = cfg.icon;
               return (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-4 px-5 py-4 hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors group ${idx === 0 ? '' : ''}`}
+                  className="bg-surface border border-divider rounded-2xl px-5 py-4 flex gap-3.5 group"
                 >
-                  {/* Sol renk şeridi */}
-                  <div className={`w-0.5 self-stretch rounded-full flex-shrink-0 ${cfg.bar}`} />
-
-                  {/* İkon */}
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    n.level === 'urgent'  ? 'bg-red-50 dark:bg-red-900/20' :
-                    n.level === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
-                                           'bg-blue-50 dark:bg-blue-900/20'
-                  }`}>
-                    <Icon size={14} className={cfg.iconColor} />
-                  </div>
+                  {/* Renk noktası */}
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${cfg.dot}`} />
 
                   {/* İçerik */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">{n.title}</p>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
+                    <div className="flex items-center gap-2.5">
+                      <h4 className="font-heading text-[15.5px] text-text leading-tight">{n.title}</h4>
+                      <span className={`text-[10px] font-heading uppercase tracking-wide px-2.5 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
+                    <p className="text-[13.5px] text-muted leading-relaxed mt-1.5">{n.body}</p>
 
                     {/* Aksiyon butonu */}
                     {n.actionUrl && (
@@ -231,16 +221,16 @@ const Notifications: React.FC = () => {
                         href={n.actionUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#f8981d] hover:text-[#e08518] transition-colors"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-heading text-accent hover:text-accent-700 transition-colors"
                       >
                         {n.actionLabel}
-                        <ExternalLink size={11} />
+                        <ExternalLink size={11} strokeWidth={2.5} />
                       </a>
                     )}
                     {n.actionRoute && (
                       <Link
                         to={n.actionRoute}
-                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#187fe7] hover:text-[#1060b0] transition-colors"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-heading text-sage-700 hover:brightness-90 transition-colors"
                       >
                         {n.actionLabel}
                       </Link>
@@ -250,10 +240,10 @@ const Notifications: React.FC = () => {
                   {/* Kapat */}
                   <button
                     onClick={() => dismiss(n.id)}
-                    className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 mt-1 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                    className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-text transition-all text-base"
                     aria-label="Kapat"
                   >
-                    <X size={12} />
+                    <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
               );

@@ -29,6 +29,9 @@ public/videos/*.mp4
 public/videos/*.webm
 public/videos/*.mov
 
+# Sıkıştırılmadan önceki orijinal video yedekleri (asla commit edilmesin)
+public/videos_originals/
+
 # Firebase CLI local cache
 .firebase
 

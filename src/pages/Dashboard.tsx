@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
@@ -217,28 +217,28 @@ const Dashboard: React.FC = () => {
 
   return (
   <>
-    <div className="h-screen flex flex-col bg-[#f5f0e8] dark:bg-slate-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-bg overflow-hidden">
 
 
       {/* ── ÇIKIŞ ONAY MODALİ ── */}
       {showExitModal && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#1c140c]/55 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setShowExitModal(false)}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-700"
+            className="bg-surface rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-divider"
             onClick={e => e.stopPropagation()}
           >
             {/* İkon + başlık */}
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-14 h-14 bg-[#f8981d]/10 rounded-2xl flex items-center justify-center mb-4">
-                <Bookmark size={26} className="text-[#f8981d]" />
+              <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center mb-4">
+                <Bookmark size={26} strokeWidth={2.5} className="text-accent" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="font-heading text-base text-text">
                 Planı kaydetmek ister misiniz?
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+              <p className="text-sm text-muted mt-1.5 leading-relaxed">
                 {plan?.destination} planınız kaydedilmedi. Çıkmadan önce kaydetmek ister misiniz?
               </p>
             </div>
@@ -248,22 +248,22 @@ const Dashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSaveAndExit}
-                className="w-full py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#f8981d]/20"
+                className="w-full py-3 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all flex items-center justify-center gap-2 shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
               >
-                <BookmarkCheck size={15} />
+                <BookmarkCheck size={15} strokeWidth={2.5} />
                 Kaydet ve Çık
               </button>
               <button
                 type="button"
                 onClick={handleExitWithoutSave}
-                className="w-full py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-sm transition-all"
+                className="w-full py-2.5 bg-surface-2 hover:brightness-95 text-text font-semibold rounded-full text-sm transition-all"
               >
                 Kaydetmeden Çık
               </button>
               <button
                 type="button"
                 onClick={() => setShowExitModal(false)}
-                className="w-full py-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-xs transition-colors"
+                className="w-full py-2 text-muted hover:text-text font-medium text-xs transition-colors"
               >
                 Plana Geri Dön
               </button>
@@ -279,48 +279,48 @@ const Dashboard: React.FC = () => {
             className="hidden sm:flex flex-1 bg-black/30"
             onClick={() => setGuideOpen(false)}
           />
-          <div className="w-full sm:w-80 bg-white border-l border-slate-200 flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0">
-              <h2 className="text-sm font-bold text-slate-900">Şehir Rehberi</h2>
+          <div className="w-full sm:w-80 bg-surface border-l border-divider flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-divider shrink-0">
+              <h2 className="font-heading text-sm text-text">Şehir Rehberi</h2>
               <button
                 type="button"
                 onClick={() => setGuideOpen(false)}
-                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                className="w-9 h-9 rounded-xl hover:bg-surface-2 flex items-center justify-center text-muted transition-colors"
               >
-                <X size={16} />
+                <X size={16} strokeWidth={2.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Bus size={13} className="text-blue-500" />
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                  <Bus size={13} strokeWidth={2.5} className="text-blue-500" />
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
                     Ulaşım
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   {plan.cityGuide.transportationTips}
                 </p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Users size={13} className="text-orange-500" />
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                  <Users size={13} strokeWidth={2.5} className="text-accent" />
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
                     Yerel Kültür
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   {plan.cityGuide.localCustoms}
                 </p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb size={13} className="text-emerald-500" />
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                  <Lightbulb size={13} strokeWidth={2.5} className="text-sage" />
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
                     Faydalı Bilgiler
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   {plan.cityGuide.generalAdvice}
                 </p>
               </div>
@@ -340,15 +340,15 @@ const Dashboard: React.FC = () => {
 
       {/* ── MOBİL HARİTA MODALİ ── */}
       {showMobileMap && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col">
-          <div className="h-12 flex items-center justify-between px-4 border-b border-slate-200 shrink-0">
-            <span className="font-semibold text-sm text-slate-900">Rota Haritası</span>
+        <div className="lg:hidden fixed inset-0 z-50 bg-surface flex flex-col">
+          <div className="h-12 flex items-center justify-between px-4 border-b border-divider shrink-0">
+            <span className="font-heading text-sm text-text">Rota Haritası</span>
             <button
               type="button"
               onClick={() => setShowMobileMap(false)}
-              className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors"
+              className="w-8 h-8 rounded-xl hover:bg-surface-2 flex items-center justify-center text-text transition-colors"
             >
-              <X size={16} />
+              <X size={16} strokeWidth={2.5} />
             </button>
           </div>
           <div className="flex-1 min-h-0">
@@ -358,48 +358,48 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* ── ÜST BAR ── */}
-      <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 bg-white dark:bg-slate-800 relative">
+      <div className="shrink-0 border-b border-divider px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 bg-surface relative">
 
         {/* Geri butonu */}
         <button
           type="button"
           onClick={handleBackClick}
-          className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+          className="w-8 h-8 rounded-xl hover:bg-surface-2 flex items-center justify-center text-text transition-colors shrink-0"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={15} strokeWidth={2.5} />
         </button>
 
         {/* Şehir adı */}
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+          <h1 className="font-heading text-sm text-text truncate">
             {plan.destination}
           </h1>
-          <span className="text-xs text-slate-400 font-medium shrink-0 hidden sm:inline">
+          <span className="text-xs text-muted font-medium shrink-0 hidden sm:inline">
             • {plan.dailyPlans.length} gün
           </span>
         </div>
 
         {/* Orta: Plan / Rehber / Hava sekmeleri — tam ortada */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg absolute left-1/2 -translate-x-1/2">
+        <div className="hidden md:flex items-center gap-1 bg-surface-2 p-0.5 rounded-full absolute left-1/2 -translate-x-1/2">
           <button
             type="button"
-            className="px-3 py-1 text-xs font-semibold bg-white dark:bg-slate-600 rounded-md shadow-sm text-slate-900 dark:text-white"
+            className="px-3.5 py-1.5 text-xs font-heading bg-surface rounded-full shadow-sm text-text"
           >
             Plan
           </button>
           <button
             type="button"
             onClick={() => { setWeatherOpen(false); setGuideOpen(true); }}
-            className="px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-md"
+            className="px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
           >
             Rehber
           </button>
           <button
             type="button"
             onClick={() => { setGuideOpen(false); setWeatherOpen(true); }}
-            className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-md"
+            className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
           >
-            <Cloud size={11} />
+            <Cloud size={11} strokeWidth={2.5} />
             Hava
           </button>
         </div>
@@ -409,8 +409,8 @@ const Dashboard: React.FC = () => {
 
           {/* Toplam maliyet — sadece md+ */}
           <div className="hidden md:flex items-center gap-1.5 text-xs">
-            <span className="text-slate-400">Toplam:</span>
-            <span className="font-bold text-slate-900 dark:text-white">
+            <span className="text-muted">Toplam:</span>
+            <span className="font-heading text-text">
               {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString()}
             </span>
           </div>
@@ -419,18 +419,18 @@ const Dashboard: React.FC = () => {
           <button
             type="button"
             onClick={() => { setWeatherOpen(false); setGuideOpen(g => !g); }}
-            className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
             title="Şehir Rehberi"
           >
-            <Map size={14} />
+            <Map size={14} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={() => { setGuideOpen(false); setWeatherOpen(w => !w); }}
-            className="md:hidden w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
             title="Hava Durumu"
           >
-            <Cloud size={14} />
+            <Cloud size={14} strokeWidth={2.5} />
           </button>
 
           {/* Kaydet */}
@@ -438,13 +438,13 @@ const Dashboard: React.FC = () => {
             type="button"
             onClick={handleSavePlan}
             disabled={justSaved}
-            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs transition-all ${
               justSaved
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                : 'bg-white dark:bg-slate-700 border border-[#f8981d]/40 text-[#f8981d] hover:bg-[#f8981d]/5 hover:border-[#f8981d]'
+                : 'bg-surface border-[1.5px] border-accent/40 text-accent hover:bg-accent-100 hover:border-accent'
             }`}
           >
-            {justSaved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+            {justSaved ? <BookmarkCheck size={12} strokeWidth={2.5} /> : <Bookmark size={12} strokeWidth={2.5} />}
             <span className="hidden sm:inline">{justSaved ? 'Kaydedildi' : 'Planı Kaydet'}</span>
           </button>
 
@@ -454,14 +454,14 @@ const Dashboard: React.FC = () => {
               type="button"
               onClick={handleShareLink}
               disabled={linkCopied}
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs transition-all ${
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs transition-all ${
                 linkCopied
                   ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                  : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:border-[#187fe7]/40 hover:text-[#187fe7]'
+                  : 'bg-surface border-[1.5px] border-divider text-text hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
               }`}
               title="Plan linkini kopyala"
             >
-              {linkCopied ? <Check size={12} /> : <Link2 size={12} />}
+              {linkCopied ? <Check size={12} strokeWidth={2.5} /> : <Link2 size={12} strokeWidth={2.5} />}
               <span className="hidden sm:inline">{linkCopied ? 'Kopyalandı!' : 'Link'}</span>
             </button>
           )}
@@ -470,10 +470,10 @@ const Dashboard: React.FC = () => {
           <button
             type="button"
             onClick={() => exportPlanAsPDF(plan, onboardingData)}
-            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 font-semibold rounded-lg text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-300 transition-all"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs bg-surface border-[1.5px] border-divider text-text hover:bg-surface-2 transition-all"
             title="Planı PDF olarak indir"
           >
-            <Download size={12} />
+            <Download size={12} strokeWidth={2.5} />
             <span className="hidden sm:inline">PDF</span>
           </button>
 
@@ -481,7 +481,7 @@ const Dashboard: React.FC = () => {
           <button
             type="button"
             onClick={(e) => toggleWithCircle(toggleTheme, e)}
-            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-yellow-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shrink-0"
+            className="w-8 h-8 rounded-full border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors shrink-0"
             title={dark ? 'Gece Modu' : 'Aydınlık Mod'}
           >
             <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
@@ -496,12 +496,12 @@ const Dashboard: React.FC = () => {
 
         {/* SOL PANEL — Plan listesi */}
         <div
-          className="flex flex-col w-full lg:w-auto border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 transition-[width] duration-200"
+          className="flex flex-col w-full lg:w-auto border-r border-divider bg-bg transition-[width] duration-200"
           style={window.innerWidth >= 1024 ? { width: `${leftWidthPct}%` } : undefined}
         >
 
           {/* Gün sekmeleri */}
-          <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-5 py-2.5 bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="shrink-0 border-b border-divider px-5 py-2.5 bg-bg">
             <div
               role="tablist"
               aria-label="Günlük plan sekmeleri"
@@ -514,22 +514,22 @@ const Dashboard: React.FC = () => {
                   role="tab"
                   aria-selected={activeDayIndex === index}
                   onClick={() => setActiveDayIndex(index)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all shrink-0 whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading transition-all shrink-0 whitespace-nowrap border-[1.5px] ${
                     activeDayIndex === index
-                      ? 'bg-[#f8981d] text-white'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                  } dark:border-slate-600`}
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-surface border-divider text-text hover:border-accent/40'
+                  }`}
                 >
                   <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
                     activeDayIndex === index
                       ? 'bg-white/20 text-white'
-                      : 'bg-slate-100 text-slate-500'
+                      : 'bg-surface-2 text-muted'
                   }`}>
                     {day.dayNumber}
                   </span>
                   {day.date?.slice(5) ?? `Gün ${day.dayNumber}`}
                   <span className={`text-[10px] font-normal ${
-                    activeDayIndex === index ? 'text-orange-100' : 'text-slate-400'
+                    activeDayIndex === index ? 'text-white/80' : 'text-muted'
                   }`}>
                     ({day.activities.length})
                   </span>
@@ -540,19 +540,19 @@ const Dashboard: React.FC = () => {
 
           {/* ── Bütçe takip şeridi — en az 1 gerçek harcama girilince görünür ── */}
           {budgetStats && budgetStats.enteredCount > 0 && (
-            <div className="shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <div className="shrink-0 px-4 py-2.5 border-b border-divider bg-surface">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Wallet size={11} className="text-slate-400" />
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <Wallet size={11} strokeWidth={2.5} className="text-muted" />
+                  <span className="text-[10px] font-heading text-muted uppercase tracking-wider">
                     Bütçe Takibi
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-semibold">
-                  <span className="text-slate-600 dark:text-slate-300">
+                  <span className="text-text">
                     {plan.currencySymbol}{budgetStats.actualSpent.toLocaleString('tr-TR')} harcandı
                   </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="text-muted">·</span>
                   <span className={budgetStats.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}>
                     {budgetStats.remaining < 0
                       ? `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString('tr-TR')} aşıldı ⚠️`
@@ -562,7 +562,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Progress bar */}
-              <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     budgetStats.pct < 70  ? 'bg-emerald-400' :
@@ -574,10 +574,10 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-slate-400">
+                <span className="text-[9px] text-muted">
                   {budgetStats.enteredCount} aktivite girildi · %{budgetStats.pct.toFixed(0)}
                 </span>
-                <span className="text-[9px] text-slate-400">
+                <span className="text-[9px] text-muted">
                   Toplam bütçe: {plan.currencySymbol}{budgetStats.totalBudget.toLocaleString('tr-TR')}
                 </span>
               </div>
@@ -586,11 +586,11 @@ const Dashboard: React.FC = () => {
 
           {/* Gün özeti şeridi */}
           {activeDay && (
-            <div className="shrink-0 px-5 py-3 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <div className="shrink-0 px-5 py-3 border-b border-divider bg-surface">
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
-                  <p className="text-[10px] text-slate-400 mb-0.5">{activeDay.date}</p>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                  <p className="text-[10px] text-muted mb-0.5">{activeDay.date}</p>
+                  <p className="text-sm font-semibold text-text truncate">
                     {activeDay.daySummary}
                   </p>
                 </div>
@@ -598,13 +598,13 @@ const Dashboard: React.FC = () => {
                   {dayBudgetStats.enteredCount > 0 ? (
                     <>
                       <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] text-slate-400">Tahmini</span>
-                        <span className="text-xs font-semibold text-slate-400 line-through">
+                        <span className="text-[9px] text-muted">Tahmini</span>
+                        <span className="text-xs font-semibold text-muted line-through">
                           {plan.currencySymbol}{dayBudgetStats.estimated.toLocaleString('tr-TR')}
                         </span>
                       </div>
                       <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] text-slate-400">Harcanan</span>
+                        <span className="text-[9px] text-muted">Harcanan</span>
                         <span className={`text-sm font-bold ${
                           dayBudgetStats.actualSpent > dayBudgetStats.estimated
                             ? 'text-red-500'
@@ -616,8 +616,8 @@ const Dashboard: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <p className="text-[10px] text-slate-400">Tahmini</p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      <p className="text-[10px] text-muted">Tahmini</p>
+                      <p className="font-heading text-sm text-text">
                         {plan.currencySymbol}{activeDay.totalEstimatedCost.toLocaleString()}
                       </p>
                     </>
@@ -639,7 +639,7 @@ const Dashboard: React.FC = () => {
 
         {/* ── RESIZE HANDLE ── */}
         <div
-          className="hidden lg:flex w-[5px] relative cursor-col-resize flex-shrink-0 bg-slate-200 dark:bg-slate-700 hover:bg-[#f8981d]/40 transition-colors"
+          className="hidden lg:flex w-[5px] relative cursor-col-resize flex-shrink-0 bg-divider hover:bg-accent/40 transition-colors"
           onMouseDown={handleResizeMouseDown}
         />
 
@@ -652,9 +652,9 @@ const Dashboard: React.FC = () => {
           <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} hotel={hotelMarker} />
 
           {/* Mini optimize badge */}
-          <div className="absolute top-3 right-3 bg-white border border-slate-200 rounded-lg shadow-sm px-3 py-2 flex items-center gap-2 z-[5]">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            <span className="text-xs font-semibold text-slate-700">
+          <div className="absolute top-3 right-3 bg-surface border border-divider rounded-xl shadow-sm px-3.5 py-2 flex items-center gap-2 z-[5]">
+            <div className="w-1.5 h-1.5 bg-sage rounded-full" />
+            <span className="text-xs font-heading text-text">
               {activeDayActivities.length} mekan optimize
             </span>
           </div>
@@ -666,9 +666,9 @@ const Dashboard: React.FC = () => {
         type="button"
         onClick={() => setShowMobileMap(true)}
         aria-label="Haritayı aç"
-        className="lg:hidden fixed bottom-4 right-4 z-30 w-12 h-12 bg-[#187fe7] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#156bc2] transition-colors"
+        className="lg:hidden fixed bottom-4 right-4 z-30 w-12 h-12 bg-accent text-white rounded-full shadow-[0_10px_22px_rgba(198,113,57,0.3)] flex items-center justify-center hover:brightness-105 transition-colors"
       >
-        <Map size={18} />
+        <Map size={18} strokeWidth={2.5} />
       </button>
 
     </div>

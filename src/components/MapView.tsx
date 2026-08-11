@@ -174,8 +174,8 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
 
   if (!isLoaded) {
     return (
-      <div className="w-full h-full min-h-[400px] bg-slate-100 flex items-center justify-center rounded-2xl border border-slate-200">
-        <div className="text-slate-500 font-medium animate-pulse">Harita Yükleniyor...</div>
+      <div className="w-full h-full min-h-[400px] bg-surface-2 flex items-center justify-center rounded-2xl border border-divider">
+        <div className="text-muted font-medium animate-pulse">Harita Yükleniyor...</div>
       </div>
     );
   }
@@ -218,13 +218,13 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
         </defs>
         <!-- Damla (pin) gövdesi -->
         <path d="M16 2 C9 2 3 8 3 15 C3 24.5 16 42 16 42 C16 42 29 24.5 29 15 C29 8 23 2 16 2 Z"
-              fill="#ff1e00" stroke="white" stroke-width="2" filter="url(#sh${num})"/>
+              fill="${dark ? '#e08a4f' : '#c67139'}" stroke="white" stroke-width="2" filter="url(#sh${num})"/>
         <!-- İç beyaz daire -->
         <circle cx="16" cy="15" r="8" fill="white" opacity="0.95"/>
         <!-- Numara -->
         <text x="16" y="19.5" text-anchor="middle"
               font-family="system-ui,sans-serif"
-              font-size="${num > 9 ? '9' : '11'}" font-weight="800" fill="#f8981d">${num}</text>
+              font-size="${num > 9 ? '9' : '11'}" font-weight="800" fill="${dark ? '#e08a4f' : '#8c491a'}">${num}</text>
       </svg>`;
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
@@ -234,7 +234,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
   };
 
   return (
-    <div className="w-full h-full min-h-[400px] md:min-h-[600px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 relative">
+    <div className="w-full h-full min-h-[400px] md:min-h-[600px] rounded-2xl overflow-hidden shadow-sm border border-divider relative">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={MAP_INIT_CENTER}
@@ -257,12 +257,12 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
           />
         )}
 
-        {/* ── Katman 2: Mavi ana kemer çizgisi ── */}
+        {/* ── Katman 2: Sage ana kemer çizgisi ── */}
         {arcPath.length > 1 && (
           <PolylineF
             path={arcPath}
             options={{
-              strokeColor:   '#187fe7',
+              strokeColor:   dark ? '#9fb37e' : '#7a8a5e',
               strokeOpacity: 1,
               strokeWeight:  4,
               geodesic:      false,
