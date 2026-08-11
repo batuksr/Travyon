@@ -5,9 +5,11 @@ import * as THREE from 'three';
 
 /* ── Texture'lı dünya küresi — bump map ile kabartmalı ── */
 const EarthSphere: React.FC<{ radius: number }> = ({ radius }) => {
+  // Yerel, 500x500 gösterim boyutuna göre küçültülmüş/sıkıştırılmış dokular
+  // (orijinali unpkg CDN'den 4096x2048 + 2048x1024, ~1.8MB idi — burada ~138KB).
   const [earthTexture, bumpTexture] = useTexture([
-    'https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg',
-    'https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png',
+    '/textures/earth-blue-marble.webp',
+    '/textures/earth-topology.webp',
   ]);
 
   return (
@@ -26,14 +28,6 @@ const EarthSphere: React.FC<{ radius: number }> = ({ radius }) => {
   );
 };
 
-/* ── Texture yüklenene kadar fallback ── */
-const FallbackSphere: React.FC<{ radius: number }> = ({ radius }) => (
-  <mesh>
-    <sphereGeometry args={[radius, 32, 32]} />
-    <meshBasicMaterial color="#187fe7" transparent opacity={0.3} />
-  </mesh>
-);
-
 /* ── Dönen dünya grubu ── */
 const RotatingGlobe: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -47,7 +41,9 @@ const RotatingGlobe: React.FC = () => {
 
   return (
     <group ref={groupRef}>
-      <Suspense fallback={<FallbackSphere radius={radius} />}>
+      {/* Doku yüklenene kadar hiçbir şey gösterme (yanlış görünen bir
+          yer tutucu yerine boşluk — hazır olunca dünya direkt belirir) */}
+      <Suspense fallback={null}>
         <EarthSphere radius={radius} />
       </Suspense>
     </group>

@@ -156,6 +156,22 @@ const Home: React.FC = () => {
   const globeSectionRef = useRef<HTMLElement>(null);
   const [loadGlobe, setLoadGlobe] = useState(false);
 
+  /* GlobeAnimation'ın kendi JS parçasını (three.js, ~880KB) tarayıcı boşta
+     kalır kalmaz arka planda önceden indir — kullanıcı bölüme scroll
+     edince sadece küçük doku dosyalarını (138KB) beklesin, koca JS
+     parçasının inmesini değil. Hero animasyonuyla yarışmaması için
+     idle callback ile geciktiriliyor. */
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) return;
+    const prefetch = () => { import('../components/GlobeAnimation'); };
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(prefetch, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(prefetch, 1500);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) return;
     const el = globeSectionRef.current;
@@ -167,7 +183,7 @@ const Home: React.FC = () => {
           observer.disconnect();
         }
       },
-      { rootMargin: '300px' }
+      { rootMargin: '800px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
