@@ -197,8 +197,8 @@ const Home: React.FC = () => {
   return (
     <div className="bg-bg text-text overflow-x-hidden">
 
-      {/* ══ MOBİL NAVBAR — sabit, scroll'dan etkilenmez ══ */}
-      <div className="sm:hidden fixed inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
+      {/* ══ MOBİL NAVBAR — sadece sayfa başında, scroll ile birlikte kaybolur ══ */}
+      <div className="sm:hidden absolute inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
         <nav className="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/15 h-14 px-4 rounded-2xl">
           <TravyonLogo size={36} dark />
           <div className="flex items-center gap-2">
@@ -231,8 +231,8 @@ const Home: React.FC = () => {
         </nav>
       </div>
 
-      {/* ══ DESKTOP NAVBAR — sabit, scroll'dan etkilenmez ══ */}
-      <div className="hidden sm:flex fixed inset-x-0 top-3 z-50 justify-center">
+      {/* ══ DESKTOP NAVBAR — sadece sayfa başında, scroll ile birlikte kaybolur ══ */}
+      <div className="hidden sm:flex absolute inset-x-0 top-3 z-50 justify-center">
         <nav className="flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 w-[97%] max-w-[1300px] px-6 h-[72px] rounded-3xl">
           <TravyonLogo dark size={56} />
           <div className="flex items-center gap-2">
