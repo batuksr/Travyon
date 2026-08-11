@@ -133,6 +133,15 @@ function App() {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
 
+  /* Home/Login/Register chunk'larını Firebase auth kontrolüyle PARALEL
+     önceden indir — loading bitince Suspense'in tekrar beklememesi için
+     (auth kontrolü + chunk indirme art arda değil, aynı anda olsun) */
+  useEffect(() => {
+    import('./pages/Home');
+    import('./pages/Login');
+    import('./pages/Register');
+  }, []);
+
   useEffect(() => {
     if (!auth || Object.keys(auth).length === 0) {
       console.warn("Auth servisi başlatılamadı, Firebase ayarlarını kontrol edin.");
