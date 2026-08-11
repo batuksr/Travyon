@@ -9,13 +9,15 @@ import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
 import Sidebar from "./components/Sidebar";
 import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
 import PwaInstallBanner from "./components/PwaInstallBanner";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
-// Rota bazlı kod bölme — her sayfa sadece ziyaret edildiğinde indirilir.
-// Anonim bir ziyaretçi Home'a girdiğinde Dashboard/Settings/Firebase-ağır
-// sayfaların kodunu indirmek zorunda kalmaz.
-const Home               = lazy(() => import("./pages/Home"));
-const Login               = lazy(() => import("./pages/Login"));
-const Register             = lazy(() => import("./pages/Register"));
+// Rota bazlı kod bölme — sadece ziyaret edildiğinde indirilen ağır sayfalar.
+// Home/Login/Register (anonim ziyaretçinin göreceği ilk sayfalar) yukarıda
+// normal import ile geliyor — hiçbir Suspense/loading beklemesi olmadan
+// anında render edilsinler diye. Dashboard/Settings/Firebase-ağır sayfalar
+// ise sadece o rotaya girildiğinde indirilir.
 const Onboarding           = lazy(() => import("./pages/Onboarding"));
 const Dashboard             = lazy(() => import("./pages/Dashboard"));
 const SavedPlans           = lazy(() => import("./pages/SavedPlans"));
@@ -39,7 +41,10 @@ const RouteFallback: React.FC = () => (
 );
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
+  // Sadece korumalı (giriş gerektiren) sayfalar auth kontrolünü bekler —
+  // herkese açık sayfalar (Home, Login, Register, yasal sayfalar) beklemez.
+  if (loading) return <RouteFallback />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
@@ -124,7 +129,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
 };
 
 function App() {
-  const { user, setUser, setLoading, loading } = useAuthStore();
+  const { user, setUser, setLoading } = useAuthStore();
   const { dark } = useThemeStore();
   const { setSettings } = useAppSettingsStore();
 
@@ -132,15 +137,6 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
-
-  /* Home/Login/Register chunk'larını Firebase auth kontrolüyle PARALEL
-     önceden indir — loading bitince Suspense'in tekrar beklememesi için
-     (auth kontrolü + chunk indirme art arda değil, aynı anda olsun) */
-  useEffect(() => {
-    import('./pages/Home');
-    import('./pages/Login');
-    import('./pages/Register');
-  }, []);
 
   useEffect(() => {
     if (!auth || Object.keys(auth).length === 0) {
@@ -202,10 +198,9 @@ function App() {
     return () => unsubscribe();
   }, [setUser, setLoading, setSettings]);
 
-  if (loading) {
-    return <RouteFallback />;
-  }
-
+  // Not: burada global bir "loading" bekletmesi yok — herkese açık sayfalar
+  // (Home, Login, Register...) auth kontrolü bitmeden hemen render edilir.
+  // Sadece ProtectedRoute içindeki sayfalar auth durumunu bekler.
   return (
     <BrowserRouter>
       <AppLayout isAuthenticated={!!user} />

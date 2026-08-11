@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect, Suspense, lazy } from 'react';
+import React, { useRef, useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
@@ -102,15 +102,14 @@ const DestinationCard: React.FC<{
   );
 };
 
-const HERO_VIDEOS = [
-  '/videos/start.mp4',
-  'https://videos.pexels.com/video-files/1437396/1437396-uhd_2560_1440_24fps.mp4',
-  'https://videos.pexels.com/video-files/1093662/1093662-hd_1920_1080_30fps.mp4',
-  'https://videos.pexels.com/video-files/3044534/3044534-hd_1920_1080_25fps.mp4',
+const HERO_PHOTOS = [
+  { city: 'Roma',      src: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=70&w=2400&auto=format&fit=crop' },
+  { city: 'İstanbul',  src: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=70&w=2400&auto=format&fit=crop' },
+  { city: 'Paris',     src: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=70&w=2400&auto=format&fit=crop' },
+  { city: 'Barcelona', src: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=70&w=2400&auto=format&fit=crop' },
 ];
 
-const HERO_FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=2035&auto=format&fit=crop';
+const HERO_ROTATE_MS = 6000;
 
 
 const STEPS = [
@@ -140,10 +139,16 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [showFallback, setShowFallback] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  /* Hero fotoğrafları belirli aralıklarla otomatik döner */
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCurrentPhotoIndex(i => (i + 1) % HERO_PHOTOS.length);
+    }, HERO_ROTATE_MS);
+    return () => clearInterval(t);
+  }, []);
 
   /* 3D glob — yalnızca "Nasıl Çalışır" bölümü görünüme yaklaşınca ve
      yalnızca masaüstünde (lg+) yüklensin; hero ilk açılışta onunla
@@ -171,28 +176,6 @@ const Home: React.FC = () => {
   const handleCTA = () => {
     navigate(user ? '/onboarding' : '/register');
   };
-
-  const goToVideo = useCallback((index: number) => {
-    const current = videoRefs.current[currentVideoIndex];
-    if (current) {
-      current.pause();
-      current.currentTime = 0;
-    }
-    setCurrentVideoIndex(index);
-    setTimeout(() => {
-      const next = videoRefs.current[index];
-      if (next) next.play().catch(() => setShowFallback(true));
-    }, 50);
-  }, [currentVideoIndex]);
-
-  const handleVideoEnded = useCallback(() => {
-    const nextIndex = (currentVideoIndex + 1) % HERO_VIDEOS.length;
-    goToVideo(nextIndex);
-  }, [currentVideoIndex, goToVideo]);
-
-  const handleVideoError = useCallback(() => {
-    setShowFallback(true);
-  }, []);
 
   return (
     <div className="bg-bg text-text overflow-x-hidden">
@@ -267,45 +250,25 @@ const Home: React.FC = () => {
       </div>
 
       {/* ══════════════════════════════════════════
-          BÖLÜM 1 — HERO (Video)
+          BÖLÜM 1 — HERO (Fotoğraf döngüsü)
          ══════════════════════════════════════════ */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-[#1c140c]">
 
-        {/* Video arka planlar */}
-        {!showFallback && HERO_VIDEOS.map((src, i) => (
-          <video
-            key={src}
-            ref={el => { videoRefs.current[i] = el; }}
-            src={src}
-            autoPlay={i === 0}
-            muted
-            playsInline
-            preload={
-              i === currentVideoIndex || i === (currentVideoIndex + 1) % HERO_VIDEOS.length
-                ? 'auto'
-                : 'none'
-            }
-            onEnded={i === currentVideoIndex ? handleVideoEnded : undefined}
-            onError={i === currentVideoIndex ? handleVideoError : undefined}
+        {/* Fotoğraf arka planları — birkaç saniyede bir döner */}
+        {HERO_PHOTOS.map((photo, i) => (
+          <img
+            key={photo.src}
+            src={photo.src}
+            alt={photo.city}
+            fetchPriority={i === 0 ? 'high' : undefined}
+            loading={i === 0 ? 'eager' : 'lazy'}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
             style={{
-              opacity: i === currentVideoIndex ? 1 : 0,
-              zIndex: i === currentVideoIndex ? 1 : 0,
-              pointerEvents: 'none',
+              opacity: i === currentPhotoIndex ? 1 : 0,
+              zIndex: i === currentPhotoIndex ? 1 : 0,
             }}
           />
         ))}
-
-        {/* Fallback fotoğraf */}
-        {showFallback && (
-          <motion.div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url('${HERO_FALLBACK_IMAGE}')` }}
-            initial={{ scale: 1.05 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 1.4, ease: 'easeOut' }}
-          />
-        )}
 
         {/* Overlay — mobilde düz, desktop'ta soldan sağa */}
         <div
@@ -370,23 +333,21 @@ const Home: React.FC = () => {
         </div>
 
         {/* Dot indikatörleri */}
-        {!showFallback && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" style={{ zIndex: 4 }}>
-            {HERO_VIDEOS.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`${i + 1}. videoya geç`}
-                onClick={() => goToVideo(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === currentVideoIndex
-                    ? 'bg-white w-6 h-1.5'
-                    : 'bg-white/40 w-1.5 h-1.5 hover:bg-white/70'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" style={{ zIndex: 4 }}>
+          {HERO_PHOTOS.map((photo, i) => (
+            <button
+              key={photo.src}
+              type="button"
+              aria-label={`${photo.city} fotoğrafına geç`}
+              onClick={() => setCurrentPhotoIndex(i)}
+              className={`rounded-full transition-all duration-300 ${
+                i === currentPhotoIndex
+                  ? 'bg-white w-6 h-1.5'
+                  : 'bg-white/40 w-1.5 h-1.5 hover:bg-white/70'
+              }`}
+            />
+          ))}
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════
