@@ -144,20 +144,6 @@ const Home: React.FC = () => {
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
-const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
-
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 40)       setScrollStage(0);
-      else if (y < 90)  setScrollStage(1);
-      else if (y < 160) setScrollStage(2);
-      else if (y < 260) setScrollStage(3);
-      else              setScrollStage(4);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   /* 3D glob — yalnızca "Nasıl Çalışır" bölümü görünüme yaklaşınca ve
      yalnızca masaüstünde (lg+) yüklensin; hero ilk açılışta onunla
@@ -245,53 +231,36 @@ const [scrollStage, setScrollStage] = useState(0); // 0→1→2→3→4
         </nav>
       </div>
 
-      {/* ══ DESKTOP NAVBAR — scroll'da küçülen floating island ══ */}
-      <div className={`hidden sm:flex fixed inset-x-0 z-50 justify-center transition-all duration-500 ease-out
-        ${scrollStage === 0 ? 'top-3' : scrollStage <= 2 ? 'top-2' : 'top-1'}`}>
-        <nav className={`flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 transition-all duration-500 ease-out
-          ${scrollStage === 0
-            ? 'w-[97%] max-w-[1300px] px-6 h-[72px] rounded-3xl'
-            : scrollStage === 1
-            ? 'w-[94%] max-w-[1230px] px-6 h-[64px] rounded-3xl'
-            : scrollStage === 2
-            ? 'w-[88%] max-w-[1100px] px-5 h-[56px] rounded-2xl'
-            : scrollStage === 3
-            ? 'w-[80%] max-w-[980px] px-5 h-[48px] rounded-2xl'
-            : 'w-[72%] max-w-[850px] px-4 h-[42px] rounded-2xl'
-          }`}>
-          <TravyonLogo
-            dark
-            size={scrollStage === 0 ? 56 : scrollStage === 1 ? 50 : scrollStage === 2 ? 44 : scrollStage === 3 ? 37 : 30}
-          />
+      {/* ══ DESKTOP NAVBAR — sabit, scroll'dan etkilenmez ══ */}
+      <div className="hidden sm:flex fixed inset-x-0 top-3 z-50 justify-center">
+        <nav className="flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 w-[97%] max-w-[1300px] px-6 h-[72px] rounded-3xl">
+          <TravyonLogo dark size={56} />
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={(e) => toggleWithCircle(toggleTheme, e)}
-              className={`relative flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95
-                ${scrollStage === 0 ? 'w-9 h-9' : scrollStage <= 2 ? 'w-8 h-8' : 'w-7 h-7'}
+              className={`relative flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 w-9 h-9
                 ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
               aria-label="Tema değiştir"
             >
               <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
-                {dark ? <Moon size={scrollStage === 0 ? 16 : 14} /> : <Sun size={scrollStage === 0 ? 16 : 14} />}
+                {dark ? <Moon size={16} /> : <Sun size={16} />}
               </span>
             </button>
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className={`text-white/90 hover:text-white font-heading transition-all duration-500
-                ${scrollStage === 0 ? 'text-sm px-4 py-2' : scrollStage <= 1 ? 'text-sm px-4 py-1.5' : scrollStage <= 3 ? 'text-xs px-3 py-1.5' : 'text-[11px] px-2.5 py-1'}`}
+              className="text-white/90 hover:text-white font-heading text-sm px-4 py-2 transition-colors"
             >
               Giriş Yap
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
-              className={`inline-flex items-center gap-1.5 font-heading text-white bg-accent hover:brightness-105 rounded-full transition-all duration-500 shadow-[0_10px_22px_rgba(198,113,57,0.28)] hover:-translate-y-px
-                ${scrollStage === 0 ? 'text-sm px-5 py-2' : scrollStage <= 1 ? 'text-sm px-5 py-1.5' : scrollStage <= 3 ? 'text-xs px-4 py-1.5' : 'text-[11px] px-3 py-1'}`}
+              className="inline-flex items-center gap-1.5 font-heading text-white bg-accent hover:brightness-105 rounded-full text-sm px-5 py-2 shadow-[0_10px_22px_rgba(198,113,57,0.28)] hover:-translate-y-px transition-all"
             >
               Ücretsiz Başla
-              <ArrowRight size={scrollStage <= 1 ? 13 : 11} />
+              <ArrowRight size={13} />
             </button>
           </div>
         </nav>
