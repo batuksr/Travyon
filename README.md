@@ -14,7 +14,7 @@ Google Maps, TripAdvisor veya Wanderlog gibi araçlar yalnızca destinasyon ve t
 - **Dinamik Vibe Sistemi** — 😴 Dinlenme, 🌧️ Hava (anlık hava durumuna göre), 💰 Tasarruf ve 🎉 Keşif modlarıyla plan tek tıkla yeniden şekillenir.
 - **Bütçe Takip Sistemi** — Toplam bütçe kategorilere (yemek, konaklama, aktivite, ulaşım) bölünür ve gerçek harcamalarla karşılaştırılır.
 - **Topluluk & Paylaşım** — Kullanıcılar planlarını topluluğa açabilir, başka planları inceleyebilir.
-- **Seyahat Kontrol Listesi, PDF/Offline Export, PWA desteği** — Uygulama internet bağlantısı olmadan da kullanılabilir.
+- **Seyahat Kontrol Listesi, PWA desteği** — Uygulama internet bağlantısı olmadan da kullanılabilir.
 - **AI Asistan Widget'ı** — Plan üzerinde AI ile aktivite ekleme/düzenleme.
 
 ## 🛠️ Teknoloji Yığını
@@ -39,7 +39,7 @@ src/
 ├── services/     # Dış servis entegrasyonları (aiService, firebase, placesService, weatherService, ...)
 ├── store/        # Zustand store'ları (auth, onboarding, plan, tema, ayarlar, ...)
 ├── hooks/        # Özel React hook'ları
-├── utils/        # Yardımcı fonksiyonlar (ör. exportPDF)
+├── utils/        # Yardımcı fonksiyonlar
 ├── data/         # Statik veri (şehir listesi vb.)
 └── assets/       # Görseller ve statik varlıklar
 ```

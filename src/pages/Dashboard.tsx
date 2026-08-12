@@ -17,7 +17,6 @@ import {
   Sun,
   Moon,
   Cloud,
-  Download,
   Wallet,
   Link2,
   Check,
@@ -28,7 +27,6 @@ import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 import WeatherView from '../components/WeatherView';
-import { exportPlanAsPDF } from '../utils/exportPDF';
 import { sharePlanAsLink } from '../services/socialService';
 import { useAuthStore } from '../store/useAuthStore';
 import { isEmailVerified, resendVerification } from '../utils/authUtils';
@@ -468,17 +466,6 @@ const Dashboard: React.FC = () => {
               <span className="hidden sm:inline">{linkCopied ? t('dashboard.topBar.linkCopied') : t('dashboard.topBar.link')}</span>
             </button>
           )}
-
-          {/* PDF */}
-          <button
-            type="button"
-            onClick={() => exportPlanAsPDF(plan, onboardingData)}
-            className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs bg-surface border-[1.5px] border-divider text-text hover:bg-surface-2 transition-all"
-            title={t('dashboard.topBar.downloadPdfTitle')}
-          >
-            <Download size={12} strokeWidth={2.5} />
-            <span className="hidden sm:inline">PDF</span>
-          </button>
 
           {/* Tema toggle */}
           <button

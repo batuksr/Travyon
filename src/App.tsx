@@ -94,6 +94,11 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/plan/');
 
+  /* Rota değişince sayfayı en üste sar — önceki sayfada kaydırılmış konum yeni sayfaya taşınmasın */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   /* Sidebar/alt nav gösterilmeyecek sayfalar — Dashboard, auth ve genel sayfalar */
   const noChromePaths = ['/login', '/register', '/', '/sss', '/gizlilik', '/kullanim-kosullari', '/iletisim'];
   const hideChrome = isDashboard || noChromePaths.includes(location.pathname);
