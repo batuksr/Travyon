@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   updateProfile,
   updatePassword,
@@ -35,7 +36,7 @@ type Section =
 
 type Status = { type: 'success' | 'error'; message: string } | null;
 
-const LANGUAGES = ['Türkçe', 'English', 'Français', 'Español', 'Deutsch'];
+const LANGUAGES = ['Türkçe', 'English'];
 const CURRENCIES = ['TRY — ₺', 'USD — $', 'EUR — €', 'GBP — £', 'JPY — ¥'];
 
 const TIMEZONES = [
@@ -104,8 +105,10 @@ const passportDaysLeft = (expiry: string): number | null => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
+type TFunc = (key: string, options?: Record<string, unknown>) => string;
+
 /* Şifre gücü: 0-4 */
-const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
+const getPasswordStrength = (pw: string, t: TFunc): { score: number; label: string; color: string } => {
   if (!pw) return { score: 0, label: '', color: '' };
   let score = 0;
   if (pw.length >= 8)  score++;
@@ -113,24 +116,24 @@ const getPasswordStrength = (pw: string): { score: number; label: string; color:
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { score: 1, label: 'Çok zayıf', color: 'bg-rose-500' };
-  if (score === 2) return { score: 2, label: 'Zayıf', color: 'bg-orange-400' };
-  if (score === 3) return { score: 3, label: 'Orta', color: 'bg-amber-400' };
-  if (score === 4) return { score: 4, label: 'Güçlü', color: 'bg-emerald-500' };
-  return { score: 5, label: 'Çok güçlü', color: 'bg-emerald-600' };
+  if (score <= 1) return { score: 1, label: t('settings.password.strength.veryWeak'), color: 'bg-rose-500' };
+  if (score === 2) return { score: 2, label: t('settings.password.strength.weak'), color: 'bg-orange-400' };
+  if (score === 3) return { score: 3, label: t('settings.password.strength.medium'), color: 'bg-amber-400' };
+  if (score === 4) return { score: 4, label: t('settings.password.strength.strong'), color: 'bg-emerald-500' };
+  return { score: 5, label: t('settings.password.strength.veryStrong'), color: 'bg-emerald-600' };
 };
 
-const firebaseErrorMsg = (code: string): string => {
+const firebaseErrorMsg = (code: string, t: TFunc): string => {
   const map: Record<string, string> = {
-    'auth/wrong-password': 'Mevcut şifre hatalı.',
-    'auth/invalid-credential': 'Mevcut şifre hatalı.',
-    'auth/weak-password': 'Yeni şifre en az 6 karakter olmalı.',
-    'auth/email-already-in-use': 'Bu e-posta zaten kullanılıyor.',
-    'auth/invalid-email': 'Geçersiz e-posta adresi.',
-    'auth/requires-recent-login': 'Güvenlik için lütfen tekrar giriş yapın.',
-    'auth/too-many-requests': 'Çok fazla deneme, lütfen birkaç dakika bekleyin.',
+    'auth/wrong-password': t('settings.errors.wrongPassword'),
+    'auth/invalid-credential': t('settings.errors.wrongPassword'),
+    'auth/weak-password': t('settings.errors.weakPassword'),
+    'auth/email-already-in-use': t('settings.errors.emailInUse'),
+    'auth/invalid-email': t('settings.errors.invalidEmail'),
+    'auth/requires-recent-login': t('settings.errors.requiresRecentLogin'),
+    'auth/too-many-requests': t('settings.errors.tooManyRequests'),
   };
-  return map[code] ?? 'Bir hata oluştu, lütfen tekrar deneyin.';
+  return map[code] ?? t('settings.errors.generic');
 };
 
 /* ── Shared UI ── */
@@ -186,8 +189,8 @@ const SettingRow: React.FC<{ title: string; desc: string; children: React.ReactN
   </div>
 );
 
-const ComingSoonBadge = () => (
-  <span className="text-[10px] font-bold bg-surface-2 text-muted px-2 py-0.5 rounded-full uppercase tracking-widest">Yakında</span>
+const ComingSoonBadge: React.FC<{ label: string }> = ({ label }) => (
+  <span className="text-[10px] font-bold bg-surface-2 text-muted px-2 py-0.5 rounded-full uppercase tracking-widest">{label}</span>
 );
 
 /* Profil sayfası satır bileşeni — Airbnb tarzı inline edit */
@@ -196,9 +199,9 @@ const ProfileRow: React.FC<{
   display: React.ReactNode;
   isEditing: boolean;
   onEdit: () => void;
-  actionLabel?: string;
+  actionLabel: string;
   children?: React.ReactNode;
-}> = ({ label, display, isEditing, onEdit, actionLabel = 'Düzenle', children }) => (
+}> = ({ label, display, isEditing, onEdit, actionLabel, children }) => (
   <div className="border-b border-divider last:border-0">
     <div className="flex items-start py-4 gap-4">
       <p className="w-24 sm:w-40 shrink-0 text-[11px] sm:text-[13px] font-semibold text-muted pt-0.5 uppercase tracking-wide">{label}</p>
@@ -220,74 +223,74 @@ const ProfileRow: React.FC<{
 );
 
 /* ── Nav structure ── */
-const NAV_GROUPS: { label: string; items: { id: Section; icon: LucideIcon; label: string }[] }[] = [
+const NAV_GROUPS: { labelKey: string; items: { id: Section; icon: LucideIcon; labelKey: string }[] }[] = [
   {
-    label: 'HESAP',
+    labelKey: 'settings.nav.groups.account',
     items: [
-      { id: 'profile',  icon: User, label: 'Profil' },
-      { id: 'email',    icon: Mail, label: 'E-posta' },
-      { id: 'password', icon: Lock, label: 'Şifre' },
+      { id: 'profile',  icon: User, labelKey: 'settings.nav.items.profile' },
+      { id: 'email',    icon: Mail, labelKey: 'settings.nav.items.email' },
+      { id: 'password', icon: Lock, labelKey: 'settings.nav.items.password' },
     ],
   },
   {
-    label: 'SEYAHAT',
+    labelKey: 'settings.nav.groups.travel',
     items: [
-      { id: 'travel_defaults', icon: Settings2, label: 'Varsayılan Tercihler' },
-      { id: 'passport',        icon: BookOpen,  label: 'Pasaport & Vatandaşlık' },
-      { id: 'location_tz',     icon: MapPin,    label: 'Konum & Saat Dilimi' },
+      { id: 'travel_defaults', icon: Settings2, labelKey: 'settings.nav.items.travelDefaults' },
+      { id: 'passport',        icon: BookOpen,  labelKey: 'settings.nav.items.passport' },
+      { id: 'location_tz',     icon: MapPin,    labelKey: 'settings.nav.items.locationTz' },
     ],
   },
   {
-    label: 'GÖRÜNÜM',
+    labelKey: 'settings.nav.groups.appearance',
     items: [
-      { id: 'language_currency', icon: Globe,   label: 'Dil' },
-      { id: 'units',             icon: Ruler,   label: 'Ölçü Birimleri' },
+      { id: 'language_currency', icon: Globe,   labelKey: 'settings.nav.items.language' },
+      { id: 'units',             icon: Ruler,   labelKey: 'settings.nav.items.units' },
     ],
   },
   {
-    label: 'BİLDİRİMLER',
+    labelKey: 'settings.nav.groups.notifications',
     items: [
-      { id: 'app_notif',   icon: BellRing,     label: 'Uygulama Bildirimleri' },
-      { id: 'email_notif', icon: Mail,         label: 'E-posta Bildirimleri' },
-      { id: 'push_notif',  icon: Smartphone,   label: 'Push Bildirimleri' },
+      { id: 'app_notif',   icon: BellRing,     labelKey: 'settings.nav.items.appNotif' },
+      { id: 'email_notif', icon: Mail,         labelKey: 'settings.nav.items.emailNotif' },
+      { id: 'push_notif',  icon: Smartphone,   labelKey: 'settings.nav.items.pushNotif' },
     ],
   },
   {
-    label: 'GİZLİLİK',
+    labelKey: 'settings.nav.groups.privacy',
     items: [
-      { id: 'privacy_profile',  icon: Eye,      label: 'Profil & Plan Gizliliği' },
-      { id: 'privacy_location', icon: MapPin,   label: 'Lokasyon' },
-      { id: 'privacy_data',     icon: Database, label: 'Veri Kullanımı' },
+      { id: 'privacy_profile',  icon: Eye,      labelKey: 'settings.nav.items.privacyProfile' },
+      { id: 'privacy_location', icon: MapPin,   labelKey: 'settings.nav.items.privacyLocation' },
+      { id: 'privacy_data',     icon: Database, labelKey: 'settings.nav.items.privacyData' },
     ],
   },
   {
-    label: 'FATURALAMA',
+    labelKey: 'settings.nav.groups.billing',
     items: [
-      { id: 'subscription',    icon: CreditCard, label: 'Abonelik' },
-      { id: 'billing_history', icon: Receipt,    label: 'Fatura Geçmişi' },
-      { id: 'payment',         icon: Wallet,     label: 'Ödeme Yöntemi' },
+      { id: 'subscription',    icon: CreditCard, labelKey: 'settings.nav.items.subscription' },
+      { id: 'billing_history', icon: Receipt,    labelKey: 'settings.nav.items.billingHistory' },
+      { id: 'payment',         icon: Wallet,     labelKey: 'settings.nav.items.payment' },
     ],
   },
   {
-    label: 'VERİLERİM',
+    labelKey: 'settings.nav.groups.data',
     items: [
-      { id: 'data_export',   icon: Download, label: 'Veri İndir' },
-      { id: 'delete_account', icon: Trash2,   label: 'Hesabı Sil' },
+      { id: 'data_export',   icon: Download, labelKey: 'settings.nav.items.dataExport' },
+      { id: 'delete_account', icon: Trash2,   labelKey: 'settings.nav.items.deleteAccount' },
     ],
   },
   {
-    label: 'DESTEK',
+    labelKey: 'settings.nav.groups.support',
     items: [
-      { id: 'faq',        icon: HelpCircle,    label: 'SSS' },
-      { id: 'contact',    icon: MessageCircle, label: 'İletişim' },
-      { id: 'report_bug', icon: Bug,           label: 'Hata Bildir' },
+      { id: 'faq',        icon: HelpCircle,    labelKey: 'settings.nav.items.faq' },
+      { id: 'contact',    icon: MessageCircle, labelKey: 'settings.nav.items.contact' },
+      { id: 'report_bug', icon: Bug,           labelKey: 'settings.nav.items.reportBug' },
     ],
   },
 ];
 
 /* Sunum bileşenleri — modül seviyesinde (render içinde tanımlanırsa input focus kaybeder) */
-const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label?: string; disabled?: boolean }> = ({
-  onClick, loading, label = 'Kaydet', disabled = false,
+const SaveBtn: React.FC<{ onClick: () => void; loading: boolean; label: string; disabled?: boolean }> = ({
+  onClick, loading, label, disabled = false,
 }) => (
   <button
     type="button" onClick={onClick} disabled={loading || disabled}
@@ -315,6 +318,20 @@ const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { setSettings } = useAppSettingsStore();
+  const { t, i18n } = useTranslation();
+
+  const countryLabels = t('settings.countries', { returnObjects: true }) as string[];
+  const countryLabel = (c: string) => {
+    const idx = PASSPORT_COUNTRIES.indexOf(c);
+    return idx >= 0 ? (countryLabels[idx] ?? c) : c;
+  };
+  const GENDERS: { value: string; key: string }[] = [
+    { value: 'Erkek', key: 'male' },
+    { value: 'Kadın', key: 'female' },
+    { value: 'Diğer', key: 'other' },
+    { value: 'Belirtmek istemiyorum', key: 'preferNotToSay' },
+  ];
+  const deleteConfirmPhrase = t('settings.deleteAccount.confirmPhrase');
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
 
@@ -498,10 +515,10 @@ const Settings: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file || !auth.currentUser || !user) return;
     if (file.size > 5 * 1024 * 1024) {
-      setProfileStatus({ type: 'error', message: 'Dosya 5 MB\'dan büyük olamaz.' }); return;
+      setProfileStatus({ type: 'error', message: t('settings.profile.errors.fileTooLarge') }); return;
     }
     if (!file.type.startsWith('image/')) {
-      setProfileStatus({ type: 'error', message: 'Yalnızca PNG, JPG veya WebP yüklenebilir.' }); return;
+      setProfileStatus({ type: 'error', message: t('settings.profile.errors.invalidFileType') }); return;
     }
     setPhotoLoading(true); setProfileStatus(null);
     try {
@@ -511,11 +528,11 @@ const Settings: React.FC = () => {
       // Local state + global store güncelle — Sidebar dahil her yer anında görsün
       setLocalPhotoURL(dataUrl);
       setSettings({ photoURL: dataUrl });
-      setProfileStatus({ type: 'success', message: 'Profil fotoğrafı güncellendi.' });
+      setProfileStatus({ type: 'success', message: t('settings.profile.success.photoUpdated') });
       setTimeout(() => setProfileStatus(null), 3000);
     } catch (err) {
       console.error('Photo upload error:', err);
-      setProfileStatus({ type: 'error', message: 'Yükleme başarısız, tekrar deneyin.' });
+      setProfileStatus({ type: 'error', message: t('settings.profile.errors.uploadFailed') });
     } finally {
       setPhotoLoading(false);
       e.target.value = '';
@@ -537,20 +554,20 @@ const Settings: React.FC = () => {
         );
       }
       await setDoc(doc(db, 'users', user.uid), data, { merge: true });
-      setProfileStatus({ type: 'success', message: 'Kaydedildi.' });
+      setProfileStatus({ type: 'success', message: t('settings.profile.success.saved') });
       setEditingField(null);
       setTimeout(() => setProfileStatus(null), 3000);
     } catch {
-      setProfileStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setProfileStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setProfileLoading(false); }
   };
 
   const handleEmailSave = async () => {
     if (!auth.currentUser || !user?.email) return;
     const trimmed = newEmail.trim();
-    if (!trimmed) { setEmailStatus({ type: 'error', message: 'Yeni e-posta boş olamaz.' }); return; }
-    if (trimmed === user.email) { setEmailStatus({ type: 'error', message: 'Yeni e-posta mevcut e-posta ile aynı.' }); return; }
-    if (!emailCurrentPassword) { setEmailStatus({ type: 'error', message: 'Mevcut şifrenizi girin.' }); return; }
+    if (!trimmed) { setEmailStatus({ type: 'error', message: t('settings.email.errors.emptyEmail') }); return; }
+    if (trimmed === user.email) { setEmailStatus({ type: 'error', message: t('settings.email.errors.sameEmail') }); return; }
+    if (!emailCurrentPassword) { setEmailStatus({ type: 'error', message: t('settings.common.currentPasswordRequired') }); return; }
     setEmailLoading(true); setEmailStatus(null);
     try {
       const cred = EmailAuthProvider.credential(user.email, emailCurrentPassword);
@@ -562,10 +579,10 @@ const Settings: React.FC = () => {
       };
       await verifyBeforeUpdateEmail(auth.currentUser, trimmed, actionCodeSettings);
       setPendingEmail(trimmed);
-      setEmailStatus({ type: 'success', message: `${trimmed} adresine doğrulama bağlantısı gönderildi. Bağlantıya tıkladıktan sonra "E-posta güncellendi mi?" butonuna basın.` });
+      setEmailStatus({ type: 'success', message: t('settings.email.verificationSent', { email: trimmed }) });
       setNewEmail(''); setEmailCurrentPassword('');
     } catch (err: any) {
-      setEmailStatus({ type: 'error', message: firebaseErrorMsg(err.code) });
+      setEmailStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
     } finally { setEmailLoading(false); }
   };
 
@@ -581,31 +598,31 @@ const Settings: React.FC = () => {
       setUser(freshUser);
       if (freshUser.email !== user?.email) {
         setPendingEmail(null);
-        setEmailStatus({ type: 'success', message: `E-posta başarıyla ${freshUser.email} olarak güncellendi.` });
+        setEmailStatus({ type: 'success', message: t('settings.email.updateSuccess', { email: freshUser.email }) });
       } else {
-        setEmailStatus({ type: 'error', message: 'E-posta henüz değişmedi. Önce doğrulama bağlantısına tıklayın.' });
+        setEmailStatus({ type: 'error', message: t('settings.email.notChangedYet') });
       }
     } catch {
-      setEmailStatus({ type: 'error', message: 'Durum kontrol edilemedi.' });
+      setEmailStatus({ type: 'error', message: t('settings.email.statusCheckFailed') });
     } finally { setReloadLoading(false); }
   };
 
   const handlePasswordSave = async () => {
     if (!auth.currentUser || !user?.email) return;
-    if (!currentPassword) { setPasswordStatus({ type: 'error', message: 'Mevcut şifrenizi girin.' }); return; }
-    if (newPassword.length < 6) { setPasswordStatus({ type: 'error', message: 'Yeni şifre en az 6 karakter olmalı.' }); return; }
-    if (newPassword === currentPassword) { setPasswordStatus({ type: 'error', message: 'Yeni şifre mevcut şifreyle aynı olamaz.' }); return; }
-    if (newPassword !== confirmPassword) { setPasswordStatus({ type: 'error', message: 'Yeni şifreler eşleşmiyor.' }); return; }
+    if (!currentPassword) { setPasswordStatus({ type: 'error', message: t('settings.common.currentPasswordRequired') }); return; }
+    if (newPassword.length < 6) { setPasswordStatus({ type: 'error', message: t('settings.errors.weakPassword') }); return; }
+    if (newPassword === currentPassword) { setPasswordStatus({ type: 'error', message: t('settings.password.errors.sameAsCurrent') }); return; }
+    if (newPassword !== confirmPassword) { setPasswordStatus({ type: 'error', message: t('settings.password.errors.mismatch') }); return; }
     setPasswordLoading(true); setPasswordStatus(null);
     try {
       const cred = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(auth.currentUser, cred);
       await updatePassword(auth.currentUser, newPassword);
-      setPasswordStatus({ type: 'success', message: 'Şifreniz başarıyla güncellendi.' });
+      setPasswordStatus({ type: 'success', message: t('settings.password.success') });
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
       setShowCurrentPw(false); setShowNewPw(false); setShowConfirmPw(false);
     } catch (err: any) {
-      setPasswordStatus({ type: 'error', message: firebaseErrorMsg(err.code) });
+      setPasswordStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
     } finally { setPasswordLoading(false); }
   };
 
@@ -617,9 +634,9 @@ const Settings: React.FC = () => {
       // Para birimi store'unu güncelle — tüm uygulamada yansır
       const curr = CURRENCY_MAP[defaultCurrency] ?? { code: 'TRY', symbol: '₺' };
       setSettings({ currencyLabel: defaultCurrency, currencyCode: curr.code, currencySymbol: curr.symbol });
-      setTravelDefaultsStatus({ type: 'success', message: 'Varsayılan tercihler kaydedildi. Yeni plan oluştururken otomatik uygulanacak.' });
+      setTravelDefaultsStatus({ type: 'success', message: t('settings.travelDefaults.success') });
     } catch {
-      setTravelDefaultsStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setTravelDefaultsStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setTravelDefaultsLoading(false); }
   };
 
@@ -628,16 +645,16 @@ const Settings: React.FC = () => {
     if (passportExpiry) {
       const days = passportDaysLeft(passportExpiry);
       if (days !== null && days < 0) {
-        setPassportStatus({ type: 'error', message: 'Pasaport süresi dolmuş. Lütfen geçerli bir tarih girin.' });
+        setPassportStatus({ type: 'error', message: t('settings.passport.errors.expired') });
         return;
       }
     }
     setPassportLoading(true); setPassportStatus(null);
     try {
       await setDoc(doc(db, 'users', user.uid), { passportCountry, passportNumber, passportExpiry }, { merge: true });
-      setPassportStatus({ type: 'success', message: 'Pasaport bilgileri kaydedildi.' });
+      setPassportStatus({ type: 'success', message: t('settings.passport.success') });
     } catch {
-      setPassportStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setPassportStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setPassportLoading(false); }
   };
 
@@ -646,9 +663,9 @@ const Settings: React.FC = () => {
     setLocationLoading(true); setLocationStatus(null);
     try {
       await setDoc(doc(db, 'users', user.uid), { timezone }, { merge: true });
-      setLocationStatus({ type: 'success', message: 'Saat dilimi kaydedildi.' });
+      setLocationStatus({ type: 'success', message: t('settings.locationTz.success') });
     } catch {
-      setLocationStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setLocationStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setLocationLoading(false); }
   };
 
@@ -659,9 +676,9 @@ const Settings: React.FC = () => {
       await setDoc(doc(db, 'users', user.uid), { language, distanceKm, tempCelsius }, { merge: true });
       // Zustand store'u anında güncelle — tüm uygulama etkilenir
       setSettings({ language, distanceKm, tempCelsius });
-      setAppearanceStatus({ type: 'success', message: 'Ölçü birimi ayarları kaydedildi ve uygulandı.' });
+      setAppearanceStatus({ type: 'success', message: t('settings.units.success') });
     } catch {
-      setAppearanceStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setAppearanceStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setAppearanceLoading(false); }
   };
 
@@ -680,9 +697,9 @@ const Settings: React.FC = () => {
         emailPlanNotif, emailWeeklyDigest, emailPromoNotif,
         pushEnabled, pushSoundEnabled,
       });
-      setNotifStatus({ type: 'success', message: 'Bildirim ayarları kaydedildi.' });
+      setNotifStatus({ type: 'success', message: t('settings.notif.success') });
     } catch {
-      setNotifStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setNotifStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setNotifLoading(false); }
   };
 
@@ -693,9 +710,9 @@ const Settings: React.FC = () => {
       await setDoc(doc(db, 'users', user.uid), { profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled }, { merge: true });
       // Store'u güncelle — Community, Hub anında tepki verir
       setSettings({ profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled });
-      setPrivacyStatus({ type: 'success', message: 'Gizlilik ayarları kaydedildi ve uygulandı.' });
+      setPrivacyStatus({ type: 'success', message: t('settings.privacy.success') });
     } catch {
-      setPrivacyStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setPrivacyStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setPrivacyLoading(false); }
   };
 
@@ -716,13 +733,13 @@ const Settings: React.FC = () => {
   const handleCardSave = async () => {
     if (!user) return;
     const digits = cardNumber.replace(/\s/g, '');
-    if (digits.length < 13) { setCardStatus({ type: 'error', message: 'Geçersiz kart numarası.' }); return; }
-    if (!cardName.trim()) { setCardStatus({ type: 'error', message: 'Kart üzerindeki adı girin.' }); return; }
-    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) { setCardStatus({ type: 'error', message: 'Son kullanma tarihi MM/YY formatında olmalı.' }); return; }
+    if (digits.length < 13) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidNumber') }); return; }
+    if (!cardName.trim()) { setCardStatus({ type: 'error', message: t('settings.payment.errors.nameRequired') }); return; }
+    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidExpiryFormat') }); return; }
     const [mm, yy] = cardExpiry.split('/').map(Number);
     const expDate = new Date(2000 + yy, mm - 1, 1);
-    if (expDate < new Date()) { setCardStatus({ type: 'error', message: 'Kartın son kullanma tarihi geçmiş.' }); return; }
-    if (cardCvv.length < 3) { setCardStatus({ type: 'error', message: 'Geçersiz CVV kodu.' }); return; }
+    if (expDate < new Date()) { setCardStatus({ type: 'error', message: t('settings.payment.errors.expired') }); return; }
+    if (cardCvv.length < 3) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidCvv') }); return; }
     setCardLoading(true); setCardStatus(null);
     try {
       const card = { last4: digits.slice(-4), brand: detectBrand(digits), expiry: cardExpiry };
@@ -730,9 +747,9 @@ const Settings: React.FC = () => {
       setSavedCard(card);
       setShowCardForm(false);
       setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv('');
-      setCardStatus({ type: 'success', message: 'Kart başarıyla kaydedildi.' });
+      setCardStatus({ type: 'success', message: t('settings.payment.success') });
     } catch {
-      setCardStatus({ type: 'error', message: 'Kaydedilemedi, tekrar deneyin.' });
+      setCardStatus({ type: 'error', message: t('settings.common.saveFailed') });
     } finally { setCardLoading(false); }
   };
 
@@ -741,15 +758,15 @@ const Settings: React.FC = () => {
     try {
       await setDoc(doc(db, 'users', user.uid), { savedCard: null }, { merge: true });
       setSavedCard(null);
-      setCardStatus({ type: 'success', message: 'Kart kaldırıldı.' });
+      setCardStatus({ type: 'success', message: t('settings.payment.removed') });
     } catch {
-      setCardStatus({ type: 'error', message: 'İşlem başarısız, tekrar deneyin.' });
+      setCardStatus({ type: 'error', message: t('settings.payment.errors.actionFailed') });
     }
   };
 
   const handleDeleteAccount = async () => {
     if (!auth.currentUser || !user?.email) return;
-    if (deleteConfirm !== 'HESABIMI SİL') { setDeleteStatus({ type: 'error', message: 'Onay metnini doğru yazın.' }); return; }
+    if (deleteConfirm !== deleteConfirmPhrase) { setDeleteStatus({ type: 'error', message: t('settings.deleteAccount.errors.wrongConfirm') }); return; }
     setDeleteLoading(true); setDeleteStatus(null);
     try {
       const cred = EmailAuthProvider.credential(user.email, deletePassword);
@@ -758,12 +775,12 @@ const Settings: React.FC = () => {
       await deleteUser(auth.currentUser);
       navigate('/login');
     } catch (err: any) {
-      setDeleteStatus({ type: 'error', message: firebaseErrorMsg(err.code) });
+      setDeleteStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
     } finally { setDeleteLoading(false); }
   };
 
   const handleBugReport = async () => {
-    if (!bugTitle.trim() || !bugDesc.trim()) { setBugStatus({ type: 'error', message: 'Başlık ve açıklama zorunlu.' }); return; }
+    if (!bugTitle.trim() || !bugDesc.trim()) { setBugStatus({ type: 'error', message: t('settings.reportBug.errors.required') }); return; }
     setBugLoading(true); setBugStatus(null);
     try {
       if (user) {
@@ -771,10 +788,10 @@ const Settings: React.FC = () => {
           uid: user.uid, email: user.email, title: bugTitle, desc: bugDesc, createdAt: new Date().toISOString(),
         });
       }
-      setBugStatus({ type: 'success', message: 'Hata raporu gönderildi, teşekkürler!' });
+      setBugStatus({ type: 'success', message: t('settings.reportBug.success') });
       setBugTitle(''); setBugDesc('');
     } catch {
-      setBugStatus({ type: 'error', message: 'Gönderilemedi, tekrar deneyin.' });
+      setBugStatus({ type: 'error', message: t('settings.reportBug.errors.sendFailed') });
     } finally { setBugLoading(false); }
   };
 
@@ -801,9 +818,9 @@ const Settings: React.FC = () => {
           className="text-sm text-muted hover:text-text transition-colors flex items-center gap-1.5"
         >
           <ChevronRight size={14} className="rotate-180" />
-          Geri
+          {t('settings.topbar.back')}
         </button>
-        <span className="ml-4 font-heading text-text text-sm">Ayarlar</span>
+        <span className="ml-4 font-heading text-text text-sm">{t('settings.topbar.title')}</span>
       </div>
 
       <div className="flex flex-1 flex-col sm:flex-row max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-8 gap-6 sm:gap-8">
@@ -811,12 +828,12 @@ const Settings: React.FC = () => {
         {/* ── Left nav ── */}
         <aside className="hidden sm:block w-56 shrink-0 space-y-5">
           {NAV_GROUPS.map((group) => (
-            <div key={group.label}>
+            <div key={group.labelKey}>
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-1.5 px-3">
-                {group.label}
+                {t(group.labelKey)}
               </p>
               <div className="space-y-0.5">
-                {group.items.map(({ id, icon: Icon, label }) => (
+                {group.items.map(({ id, icon: Icon, labelKey }) => (
                   <button
                     key={id}
                     type="button"
@@ -827,7 +844,7 @@ const Settings: React.FC = () => {
                         : 'text-muted hover:bg-surface-2 font-medium'}`}
                   >
                     <Icon size={15} className="shrink-0" />
-                    <span className="truncate">{label}</span>
+                    <span className="truncate">{t(labelKey)}</span>
                   </button>
                 ))}
               </div>
@@ -846,9 +863,9 @@ const Settings: React.FC = () => {
               className="w-full px-3.5 py-2.5 rounded-2xl border-[1.5px] border-divider bg-surface-2 text-sm font-medium text-text outline-none focus:border-accent"
             >
               {NAV_GROUPS.map(group => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.items.map(({ id, label }) => (
-                    <option key={id} value={id}>{label}</option>
+                <optgroup key={group.labelKey} label={t(group.labelKey)}>
+                  {group.items.map(({ id, labelKey }) => (
+                    <option key={id} value={id}>{t(labelKey)}</option>
                   ))}
                 </optgroup>
               ))}
@@ -859,20 +876,24 @@ const Settings: React.FC = () => {
           {activeSection === 'profile' && (() => {
             const fmtBirthDate = (d: string) => {
               if (!d) return null;
-              return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+              return new Date(d).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
             };
             const EditBtns = ({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) => (
               <div className="flex gap-2 mt-3">
                 <button type="button" onClick={onSave} disabled={profileLoading}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity disabled:opacity-40">
-                  {profileLoading && <Loader2 size={13} className="animate-spin" />} Kaydet
+                  {profileLoading && <Loader2 size={13} className="animate-spin" />} {t('settings.common.save')}
                 </button>
                 <button type="button" onClick={onCancel}
                   className="px-4 py-2 rounded-lg text-sm font-semibold text-muted border border-divider hover:bg-surface-2 transition-colors">
-                  İptal
+                  {t('settings.common.cancel')}
                 </button>
               </div>
             );
+            const genderLabel = (g: string) => {
+              const found = GENDERS.find(x => x.value === g);
+              return found ? t(`settings.profile.genders.${found.key}`) : g;
+            };
             return (
               <div className="bg-surface rounded-2xl border border-divider overflow-hidden">
 
@@ -900,7 +921,7 @@ const Settings: React.FC = () => {
                       onClick={() => photoInputRef.current?.click()}
                       disabled={photoLoading}
                       className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:cursor-wait"
-                      aria-label="Fotoğraf değiştir"
+                      aria-label={t('settings.profile.changePhotoAria')}
                     >
                       {photoLoading
                         ? <Loader2 size={18} className="text-white animate-spin" />
@@ -914,9 +935,9 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-bold text-text text-lg leading-tight truncate">{displayName || 'Profil Bilgileri'}</h2>
+                    <h2 className="font-bold text-text text-lg leading-tight truncate">{displayName || t('settings.profile.titleFallback')}</h2>
                     {username && <p className="text-sm text-muted mt-0.5">@{username}</p>}
-                    <p className="text-[11px] text-muted mt-1.5">PNG, JPG veya WebP — maks. 2 MB</p>
+                    <p className="text-[11px] text-muted mt-1.5">{t('settings.profile.photoHint')}</p>
                   </div>
                 </div>
 
@@ -932,41 +953,43 @@ const Settings: React.FC = () => {
                 <div className="px-3 sm:px-6">
 
                   {/* Ad */}
-                  <ProfileRow label="Ad"
+                  <ProfileRow label={t('settings.profile.fields.name')}
                     display={displayName
                       ? <span className="font-semibold text-text">{displayName}</span>
-                      : <span className="text-muted">Adınızı girin</span>}
+                      : <span className="text-muted">{t('settings.profile.placeholders.name')}</span>}
                     isEditing={editingField === 'displayName'}
+                    actionLabel={t('settings.common.edit')}
                     onEdit={() => { setEditingField('displayName'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
-                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className={inputCls()} placeholder="Ad Soyad" />
+                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className={inputCls()} placeholder={t('settings.profile.inputPlaceholders.name')} />
                       <EditBtns onSave={() => handleFieldSave({ displayName })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Profil adı */}
-                  <ProfileRow label="Profil adı"
+                  <ProfileRow label={t('settings.profile.fields.username')}
                     display={username
                       ? <span className="font-medium text-text">@{username}</span>
-                      : <span className="text-muted">Bir profil adı seçin</span>}
+                      : <span className="text-muted">{t('settings.profile.placeholders.username')}</span>}
                     isEditing={editingField === 'username'}
+                    actionLabel={t('settings.common.edit')}
                     onEdit={() => { setEditingField('username'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted text-sm">@</span>
-                        <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} className={`${inputCls()} pl-8`} placeholder="kullaniciadi" />
+                        <input type="text" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))} className={`${inputCls()} pl-8`} placeholder={t('settings.profile.inputPlaceholders.username')} />
                       </div>
                       <EditBtns onSave={() => handleFieldSave({ username })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Telefon */}
-                  <ProfileRow label="Telefon numarası"
+                  <ProfileRow label={t('settings.profile.fields.phone')}
                     display={phone
                       ? <span className="font-medium text-text">🇹🇷 +90 {phone}</span>
-                      : <span className="text-muted">Telefon numarası ekleyin</span>}
+                      : <span className="text-muted">{t('settings.profile.placeholders.phone')}</span>}
                     isEditing={editingField === 'phone'}
-                    actionLabel={phone ? 'Düzenle' : 'Ekle'}
+                    actionLabel={phone ? t('settings.common.edit') : t('settings.common.add')}
                     onEdit={() => { setEditingField('phone'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <div className="flex gap-2">
@@ -974,57 +997,58 @@ const Settings: React.FC = () => {
                           🇹🇷 +90
                         </span>
                         <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                          className={inputCls()} placeholder="530 823 45 96" />
+                          className={inputCls()} placeholder={t('settings.profile.inputPlaceholders.phone')} />
                       </div>
-                      <p className="text-[11px] text-muted">Rezervasyon ve seyahat uyarıları için kullanılır.</p>
+                      <p className="text-[11px] text-muted">{t('settings.profile.helpers.phone')}</p>
                       <EditBtns onSave={() => handleFieldSave({ phone })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Doğum tarihi */}
-                  <ProfileRow label="Doğum tarihi"
+                  <ProfileRow label={t('settings.profile.fields.birthDate')}
                     display={birthDate
                       ? <span className="font-medium text-text">{fmtBirthDate(birthDate)}</span>
-                      : <span className="text-muted">Doğum tarihinizi girin</span>}
+                      : <span className="text-muted">{t('settings.profile.placeholders.birthDate')}</span>}
                     isEditing={editingField === 'birthDate'}
-                    actionLabel={birthDate ? 'Düzenle' : 'Ekle'}
+                    actionLabel={birthDate ? t('settings.common.edit') : t('settings.common.add')}
                     onEdit={() => { setEditingField('birthDate'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls()}
                         max={new Date().toISOString().split('T')[0]} />
-                      <p className="text-[11px] text-muted">18 yaşından büyük olmak gerekmektedir.</p>
+                      <p className="text-[11px] text-muted">{t('settings.profile.helpers.birthDate')}</p>
                       <EditBtns onSave={() => handleFieldSave({ birthDate })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Uyruk */}
-                  <ProfileRow label="Uyruk"
-                    display={<span className="font-medium text-text">{nationality}</span>}
+                  <ProfileRow label={t('settings.profile.fields.nationality')}
+                    display={<span className="font-medium text-text">{countryLabel(nationality)}</span>}
                     isEditing={editingField === 'nationality'}
+                    actionLabel={t('settings.common.edit')}
                     onEdit={() => { setEditingField('nationality'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <select value={nationality} onChange={e => setNationality(e.target.value)} className={inputCls()}>
-                        {PASSPORT_COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                        {PASSPORT_COUNTRIES.map(c => <option key={c} value={c}>{countryLabel(c)}</option>)}
                       </select>
                       <EditBtns onSave={() => handleFieldSave({ nationality })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
 
                   {/* Cinsiyet */}
-                  <ProfileRow label="Cinsiyet"
+                  <ProfileRow label={t('settings.profile.fields.gender')}
                     display={gender
-                      ? <span className="font-medium text-text">{gender}</span>
-                      : <span className="text-muted">Cinsiyetinizi seçin</span>}
+                      ? <span className="font-medium text-text">{genderLabel(gender)}</span>
+                      : <span className="text-muted">{t('settings.profile.placeholders.gender')}</span>}
                     isEditing={editingField === 'gender'}
-                    actionLabel={gender ? 'Düzenle' : 'Ekle'}
+                    actionLabel={gender ? t('settings.common.edit') : t('settings.common.add')}
                     onEdit={() => { setEditingField('gender'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <div className="grid grid-cols-2 gap-2">
-                        {['Erkek', 'Kadın', 'Diğer', 'Belirtmek istemiyorum'].map(g => (
-                          <button key={g} type="button" onClick={() => setGender(g)}
+                        {GENDERS.map(({ value, key }) => (
+                          <button key={value} type="button" onClick={() => setGender(value)}
                             className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition-all
-                              ${gender === g ? 'border-accent bg-accent-100 text-accent-700' : 'border-divider text-muted hover:border-accent/40'}`}>
-                            {g}
+                              ${gender === value ? 'border-accent bg-accent-100 text-accent-700' : 'border-divider text-muted hover:border-accent/40'}`}>
+                            {t(`settings.profile.genders.${key}`)}
                           </button>
                         ))}
                       </div>
@@ -1033,16 +1057,16 @@ const Settings: React.FC = () => {
                   </ProfileRow>
 
                   {/* Adres */}
-                  <ProfileRow label="Adres"
+                  <ProfileRow label={t('settings.profile.fields.address')}
                     display={address
                       ? <span className="font-medium text-text whitespace-pre-line">{address}</span>
-                      : <span className="text-muted">Adresinizi ekleyin</span>}
+                      : <span className="text-muted">{t('settings.profile.placeholders.address')}</span>}
                     isEditing={editingField === 'address'}
-                    actionLabel={address ? 'Düzenle' : 'Ekle'}
+                    actionLabel={address ? t('settings.common.edit') : t('settings.common.add')}
                     onEdit={() => { setEditingField('address'); setProfileStatus(null); }}>
                     <div className="max-w-sm space-y-1">
                       <textarea value={address} onChange={e => setAddress(e.target.value)} rows={3}
-                        className={`${inputCls()} resize-none`} placeholder="Sokak, mahalle, şehir, ülke" />
+                        className={`${inputCls()} resize-none`} placeholder={t('settings.profile.inputPlaceholders.address')} />
                       <EditBtns onSave={() => handleFieldSave({ address })} onCancel={() => setEditingField(null)} />
                     </div>
                   </ProfileRow>
@@ -1054,7 +1078,7 @@ const Settings: React.FC = () => {
 
           {/* ══ HESAP — E-posta ══ */}
           {activeSection === 'email' && (
-            <CardWrap title="E-posta Adresi">
+            <CardWrap title={t('settings.email.title')}>
 
               <StatusBanner status={emailStatus} />
 
@@ -1064,16 +1088,16 @@ const Settings: React.FC = () => {
                   <Mail size={15} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-0.5">Mevcut E-posta</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-0.5">{t('settings.email.current')}</p>
                   <p className="font-semibold text-sm text-text truncate">{user?.email}</p>
                 </div>
                 {user?.emailVerified ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full shrink-0">
-                    <Check size={10} strokeWidth={3} /> Doğrulandı
+                    <Check size={10} strokeWidth={3} /> {t('settings.email.verified')}
                   </span>
                 ) : (
                   <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full shrink-0">
-                    Doğrulanmadı
+                    {t('settings.email.notVerified')}
                   </span>
                 )}
               </div>
@@ -1083,10 +1107,9 @@ const Settings: React.FC = () => {
                 <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl mb-5">
                   <AlertCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Bekleyen e-posta değişikliği</p>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t('settings.email.pendingTitle')}</p>
                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                      <span className="font-bold">{pendingEmail}</span> adresine doğrulama bağlantısı gönderildi.
-                      Bağlantıya tıkladıktan sonra aşağıdaki butona basın.
+                      <span className="font-bold">{pendingEmail}</span> {t('settings.email.pendingDescSuffix')}
                     </p>
                   </div>
                   <button
@@ -1096,7 +1119,7 @@ const Settings: React.FC = () => {
                     className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
                   >
                     {reloadLoading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                    E-posta güncellendi mi?
+                    {t('settings.email.confirmUpdateBtn')}
                   </button>
                 </div>
               )}
@@ -1104,32 +1127,31 @@ const Settings: React.FC = () => {
               {/* Yeni e-posta formu */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Yeni E-posta Adresi</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.email.newEmailLabel')}</label>
                   <input
                     type="email"
                     value={newEmail}
                     onChange={e => { setNewEmail(e.target.value); setEmailStatus(null); }}
                     className={inputCls()}
-                    placeholder="yeni@eposta.com"
+                    placeholder={t('settings.email.newEmailPlaceholder')}
                     autoComplete="email"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Mevcut Şifreniz</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.email.currentPasswordLabel')}</label>
                   <input
                     type="password"
                     value={emailCurrentPassword}
                     onChange={e => { setEmailCurrentPassword(e.target.value); setEmailStatus(null); }}
                     className={inputCls()}
-                    placeholder="••••••••"
+                    placeholder={t('settings.common.passwordPlaceholder')}
                     autoComplete="current-password"
                   />
                 </div>
                 <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
                   <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    Yeni adrese bir doğrulama bağlantısı gönderilir. Bağlantıya tıklayana kadar e-postanız değişmez.
-                    Doğrulandıktan sonra bir sonraki girişinizde yeni e-posta aktif olur.
+                    {t('settings.email.infoNote')}
                   </p>
                 </div>
               </div>
@@ -1138,7 +1160,7 @@ const Settings: React.FC = () => {
                 <SaveBtn
                   onClick={handleEmailSave}
                   loading={emailLoading}
-                  label="Doğrulama Bağlantısı Gönder"
+                  label={t('settings.email.sendVerificationBtn')}
                   disabled={!newEmail.trim() || !emailCurrentPassword || newEmail.trim() === user?.email}
                 />
               </div>
@@ -1147,24 +1169,25 @@ const Settings: React.FC = () => {
 
           {/* ══ HESAP — Şifre ══ */}
           {activeSection === 'password' && (() => {
-            const strength = getPasswordStrength(newPassword);
+            const strength = getPasswordStrength(newPassword, t);
             const pwMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
             const pwMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+            const passwordTips = t('settings.password.tips', { returnObjects: true }) as string[];
             return (
-              <CardWrap title="Şifre Değiştir">
+              <CardWrap title={t('settings.password.title')}>
                 <StatusBanner status={passwordStatus} />
 
                 <div className="space-y-4">
                   {/* Mevcut şifre */}
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Mevcut Şifre</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.password.labels.current')}</label>
                     <div className="relative">
                       <input
                         type={showCurrentPw ? 'text' : 'password'}
                         value={currentPassword}
                         onChange={e => { setCurrentPassword(e.target.value); setPasswordStatus(null); }}
                         className={inputCls() + ' pr-10'}
-                        placeholder="••••••••"
+                        placeholder={t('settings.common.passwordPlaceholder')}
                         autoComplete="current-password"
                       />
                       <button
@@ -1179,14 +1202,14 @@ const Settings: React.FC = () => {
 
                   {/* Yeni şifre */}
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Yeni Şifre</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.password.labels.new')}</label>
                     <div className="relative">
                       <input
                         type={showNewPw ? 'text' : 'password'}
                         value={newPassword}
                         onChange={e => { setNewPassword(e.target.value); setPasswordStatus(null); }}
                         className={inputCls() + ' pr-10'}
-                        placeholder="En az 6 karakter"
+                        placeholder={t('settings.password.newPlaceholder')}
                         autoComplete="new-password"
                       />
                       <button
@@ -1211,9 +1234,9 @@ const Settings: React.FC = () => {
                           ))}
                         </div>
                         <p className="text-[11px] text-muted">
-                          Güç: <span className="font-semibold">{strength.label}</span>
+                          {t('settings.password.strengthPrefix')} <span className="font-semibold">{strength.label}</span>
                           <span className="ml-2 text-muted">
-                            {strength.score < 3 && '· Büyük harf, rakam ve sembol ekleyin'}
+                            {strength.score < 3 && t('settings.password.strength.hint')}
                           </span>
                         </p>
                       </div>
@@ -1222,14 +1245,14 @@ const Settings: React.FC = () => {
 
                   {/* Şifre tekrar */}
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Yeni Şifre (tekrar)</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.password.labels.confirm')}</label>
                     <div className="relative">
                       <input
                         type={showConfirmPw ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={e => { setConfirmPassword(e.target.value); setPasswordStatus(null); }}
                         className={`${inputCls(pwMismatch)} pr-10`}
-                        placeholder="••••••••"
+                        placeholder={t('settings.common.passwordPlaceholder')}
                         autoComplete="new-password"
                       />
                       <button
@@ -1240,18 +1263,18 @@ const Settings: React.FC = () => {
                         {showConfirmPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
-                    {pwMismatch && <p className="text-[11px] text-rose-500 mt-1">Şifreler eşleşmiyor</p>}
-                    {pwMatch   && <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1"><Check size={10} strokeWidth={3} /> Şifreler eşleşiyor</p>}
+                    {pwMismatch && <p className="text-[11px] text-rose-500 mt-1">{t('settings.password.mismatch')}</p>}
+                    {pwMatch   && <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1"><Check size={10} strokeWidth={3} /> {t('settings.password.match')}</p>}
                   </div>
 
                   {/* İpuçları */}
                   <div className="p-3 bg-surface-2 rounded-xl border border-divider">
-                    <p className="text-[11px] font-semibold text-muted mb-1.5">Güçlü şifre için:</p>
+                    <p className="text-[11px] font-semibold text-muted mb-1.5">{t('settings.password.tipsTitle')}</p>
                     {[
-                      { rule: newPassword.length >= 8,         text: 'En az 8 karakter' },
-                      { rule: /[A-Z]/.test(newPassword),        text: 'En az bir büyük harf (A-Z)' },
-                      { rule: /[0-9]/.test(newPassword),        text: 'En az bir rakam (0-9)' },
-                      { rule: /[^A-Za-z0-9]/.test(newPassword), text: 'En az bir özel karakter (!@#...)' },
+                      { rule: newPassword.length >= 8,         text: passwordTips[0] },
+                      { rule: /[A-Z]/.test(newPassword),        text: passwordTips[1] },
+                      { rule: /[0-9]/.test(newPassword),        text: passwordTips[2] },
+                      { rule: /[^A-Za-z0-9]/.test(newPassword), text: passwordTips[3] },
                     ].map(({ rule, text }) => (
                       <div key={text} className="flex items-center gap-1.5 mt-1">
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-colors
@@ -1268,7 +1291,7 @@ const Settings: React.FC = () => {
                   <SaveBtn
                     onClick={handlePasswordSave}
                     loading={passwordLoading}
-                    label="Şifreyi Güncelle"
+                    label={t('settings.password.updateBtn')}
                     disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 6}
                   />
                 </div>
@@ -1279,12 +1302,12 @@ const Settings: React.FC = () => {
           {/* ══ SEYAHAT — Varsayılan Tercihler ══ */}
           {/* ══ SEYAHAT — Varsayılan Tercihler ══ */}
           {activeSection === 'travel_defaults' && (
-            <CardWrap title="Varsayılan Seyahat Tercihleri" subtitle="Yeni plan oluştururken bu değerler otomatik doldurulur.">
+            <CardWrap title={t('settings.travelDefaults.title')} subtitle={t('settings.travelDefaults.subtitle')}>
               <StatusBanner status={travelDefaultsStatus} />
               <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Varsayılan Bütçe</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.travelDefaults.labels.budget')}</label>
                     <input
                       type="number" min="100"
                       value={defaultBudget}
@@ -1293,11 +1316,11 @@ const Settings: React.FC = () => {
                       placeholder="15000"
                     />
                     {Number(defaultBudget) < 100 && Number(defaultBudget) > 0 && (
-                      <p className="text-[11px] text-rose-500 mt-1">En az 100 olmalı</p>
+                      <p className="text-[11px] text-rose-500 mt-1">{t('settings.travelDefaults.errors.minBudget')}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Para Birimi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.travelDefaults.labels.currency')}</label>
                     <select value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value)} className={inputCls()}>
                       {CURRENCIES.map(c => <option key={c}>{c}</option>)}
                     </select>
@@ -1305,7 +1328,7 @@ const Settings: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Varsayılan Kişi Sayısı</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.travelDefaults.labels.peopleCount')}</label>
                   <div className="flex items-center gap-4">
                     <button type="button"
                       onClick={() => setDefaultPeopleCount(v => String(Math.max(1, Number(v) - 1)))}
@@ -1316,19 +1339,19 @@ const Settings: React.FC = () => {
                       onClick={() => setDefaultPeopleCount(v => String(Math.min(15, Number(v) + 1)))}
                       className="w-9 h-9 rounded-2xl border border-accent flex items-center justify-center text-accent hover:bg-accent-100 transition-all"
                     >+</button>
-                    <span className="text-xs text-muted">kişi</span>
+                    <span className="text-xs text-muted">{t('settings.travelDefaults.peopleUnit')}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-2">Varsayılan Tempo</label>
+                  <label className="block text-xs font-medium text-muted mb-2">{t('settings.travelDefaults.labels.pace')}</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
-                      { label: '🛋️', sub: 'Rahat', val: 'rahat' },
-                      { label: '🚶', sub: 'Normal', val: 'normal' },
-                      { label: '🏃', sub: 'Aktif', val: 'aktif' },
-                      { label: '🧭', sub: 'Esnek', val: 'esnek' },
-                    ].map(({ label, sub, val }) => (
+                      { label: '🛋️', subKey: 'rahat', val: 'rahat' },
+                      { label: '🚶', subKey: 'normal', val: 'normal' },
+                      { label: '🏃', subKey: 'aktif', val: 'aktif' },
+                      { label: '🧭', subKey: 'esnek', val: 'esnek' },
+                    ].map(({ label, subKey, val }) => (
                       <button key={val} type="button" onClick={() => setDefaultPace(val)}
                         className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-center transition-all
                           ${defaultPace === val
@@ -1336,7 +1359,7 @@ const Settings: React.FC = () => {
                             : 'border-divider bg-surface-2 hover:border-accent/40'}`}
                       >
                         <span className="text-xl">{label}</span>
-                        <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-accent' : 'text-muted'}`}>{sub}</span>
+                        <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-accent' : 'text-muted'}`}>{t(`settings.travelDefaults.pace.${subKey}`)}</span>
                       </button>
                     ))}
                   </div>
@@ -1345,12 +1368,12 @@ const Settings: React.FC = () => {
                 <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
                   <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    Bu değerler "Plan Oluştur" sayfasındaki başlangıç değerlerini belirler. Plan oluştururken istediğin zaman değiştirebilirsin.
+                    {t('settings.travelDefaults.infoNote')}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handleTravelDefaultsSave} loading={travelDefaultsLoading} label="Tercihleri Kaydet" />
+                <SaveBtn onClick={handleTravelDefaultsSave} loading={travelDefaultsLoading} label={t('settings.travelDefaults.saveBtn')} />
               </div>
             </CardWrap>
           )}
@@ -1362,21 +1385,21 @@ const Settings: React.FC = () => {
             const isWarning   = daysLeft !== null && daysLeft >= 0 && daysLeft <= 180;
             const isOk        = daysLeft !== null && daysLeft > 180;
             return (
-              <CardWrap title="Pasaport & Vatandaşlık" subtitle="Vize bilgileri ve seyahat uyarıları için kullanılır.">
+              <CardWrap title={t('settings.passport.title')} subtitle={t('settings.passport.subtitle')}>
                 <StatusBanner status={passportStatus} />
 
                 {/* Süre uyarı bandı */}
                 {isExpired && (
                   <div className="flex items-center gap-2.5 p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl mb-4">
                     <AlertCircle size={15} className="text-rose-500 shrink-0" />
-                    <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">Pasaportunuzun süresi dolmuş!</p>
+                    <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t('settings.passport.expired')}</p>
                   </div>
                 )}
                 {isWarning && (
                   <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl mb-4">
                     <AlertCircle size={15} className="text-amber-500 shrink-0" />
                     <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                      Pasaportunuz <span className="font-black">{daysLeft} gün</span> içinde sona eriyor. Seyahat planı yapmadan önce yenileyin.
+                      {t('settings.passport.expiringPrefix')} <span className="font-black">{t('settings.passport.daysCount', { count: daysLeft })}</span> {t('settings.passport.expiringSuffix')}
                     </p>
                   </div>
                 )}
@@ -1384,34 +1407,34 @@ const Settings: React.FC = () => {
                   <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4">
                     <Check size={15} className="text-emerald-500 shrink-0" strokeWidth={3} />
                     <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                      Pasaport geçerli — <span className="font-semibold">{daysLeft} gün</span> kaldı.
+                      {t('settings.passport.validPrefix')} <span className="font-semibold">{t('settings.passport.daysCount', { count: daysLeft })}</span> {t('settings.passport.validSuffix')}
                     </p>
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Vatandaşlık / Pasaport Ülkesi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.passport.labels.country')}</label>
                     <select value={passportCountry} onChange={e => setPassportCountry(e.target.value)} className={inputCls()}>
-                      {PASSPORT_COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                      {PASSPORT_COUNTRIES.map(c => <option key={c} value={c}>{countryLabel(c)}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-muted mb-1.5">
-                      Pasaport Numarası <span className="text-muted font-normal">(isteğe bağlı)</span>
+                      {t('settings.passport.labels.number')} <span className="text-muted font-normal">{t('settings.passport.labels.optional')}</span>
                     </label>
                     <input
                       type="text"
                       value={passportNumber}
                       onChange={e => setPassportNumber(e.target.value.toUpperCase())}
                       className={inputCls()}
-                      placeholder="Örn. U12345678"
+                      placeholder={t('settings.passport.numberPlaceholder')}
                       maxLength={20}
                     />
-                    <p className="text-[11px] text-muted mt-1">Yalnızca cihazınızda saklanır, üçüncü taraflarla paylaşılmaz.</p>
+                    <p className="text-[11px] text-muted mt-1">{t('settings.passport.numberHelper')}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Son Kullanma Tarihi</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.passport.labels.expiry')}</label>
                     <input
                       type="date"
                       value={passportExpiry}
@@ -1422,7 +1445,7 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                  <SaveBtn onClick={handlePassportSave} loading={passportLoading} label="Bilgileri Kaydet" disabled={isExpired} />
+                  <SaveBtn onClick={handlePassportSave} loading={passportLoading} label={t('settings.passport.saveBtn')} disabled={isExpired} />
                 </div>
               </CardWrap>
             );
@@ -1430,131 +1453,140 @@ const Settings: React.FC = () => {
 
           {/* ══ SEYAHAT — Konum & Saat Dilimi ══ */}
           {activeSection === 'location_tz' && (
-            <CardWrap title="Konum & Saat Dilimi">
+            <CardWrap title={t('settings.locationTz.title')}>
               <StatusBanner status={locationStatus} />
               <div className="space-y-4">
 
                 {/* Otomatik algıla */}
                 <div className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-divider">
                   <div>
-                    <p className="text-sm font-semibold text-text">Otomatik Algıla</p>
-                    <p className="text-xs text-muted mt-0.5">Tarayıcıdan saat dilimini tespit et</p>
+                    <p className="text-sm font-semibold text-text">{t('settings.locationTz.autoDetect.title')}</p>
+                    <p className="text-xs text-muted mt-0.5">{t('settings.locationTz.autoDetect.desc')}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       const detected = detectTimezone();
                       setTimezone(detected);
-                      setLocationStatus({ type: 'success', message: `Algılandı: ${detected}` });
+                      setLocationStatus({ type: 'success', message: t('settings.locationTz.detectedMsg', { tz: detected }) });
                     }}
                     className="px-3.5 py-2 rounded-full bg-accent-100 text-accent-700 text-xs font-bold hover:bg-accent-200 transition-colors"
                   >
-                    Algıla
+                    {t('settings.locationTz.autoDetect.btn')}
                   </button>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Saat Dilimi</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.locationTz.label')}</label>
                   <select value={timezone} onChange={e => setTimezone(e.target.value)} className={inputCls()}>
-                    {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
+                    {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                   </select>
                   <p className="text-[11px] text-muted mt-1">
-                    Şu an seçili: <span className="font-semibold text-muted">{timezone.split(' ')[0]}</span>
+                    {t('settings.locationTz.currentPrefix')} <span className="font-semibold text-muted">{timezone.split(' ')[0]}</span>
                   </p>
                 </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handleLocationSave} loading={locationLoading} label="Kaydet" />
+                <SaveBtn onClick={handleLocationSave} loading={locationLoading} label={t('settings.common.save')} />
               </div>
             </CardWrap>
           )}
 
           {/* ══ GÖRÜNÜM — Dil ══ */}
           {activeSection === 'language_currency' && (
-            <CardWrap title="Dil" subtitle="Uygulama arayüz dili.">
+            <CardWrap title={t('settings.language.title')} subtitle={t('settings.language.subtitle')}>
               <StatusBanner status={appearanceStatus} />
               <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <label className="text-xs font-medium text-muted">Uygulama Dili</label>
-                  <ComingSoonBadge />
-                </div>
-                <select value={language} onChange={e => setLanguage(e.target.value)} className={inputCls()} disabled>
-                  {LANGUAGES.map(l => <option key={l}>{l}</option>)}
+                <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.language.label')}</label>
+                <select
+                  value={language}
+                  onChange={e => {
+                    const newLang = e.target.value;
+                    setLanguage(newLang);
+                    setSettings({ language: newLang });
+                    if (user) {
+                      setDoc(doc(db, 'users', user.uid), { language: newLang }, { merge: true }).catch(() => {});
+                    }
+                    setAppearanceStatus({ type: 'success', message: t('settings.language.saved') });
+                    setTimeout(() => setAppearanceStatus(null), 3000);
+                  }}
+                  className={inputCls()}
+                >
+                  {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
-                <p className="text-[11px] text-muted mt-1.5">Çok dilli destek yakında eklenecek. Şimdilik Türkçe aktif.</p>
               </div>
             </CardWrap>
           )}
 
           {/* ══ GÖRÜNÜM — Ölçü Birimleri ══ */}
           {activeSection === 'units' && (
-            <CardWrap title="Ölçü Birimleri" subtitle="Mesafe ve sıcaklık birimleri plan detaylarında kullanılır.">
+            <CardWrap title={t('settings.units.title')} subtitle={t('settings.units.subtitle')}>
               <StatusBanner status={appearanceStatus} />
               <div className="space-y-6">
 
                 {/* Mesafe */}
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-2">Mesafe</label>
+                  <label className="block text-xs font-medium text-muted mb-2">{t('settings.units.distance.label')}</label>
                   <SegmentedControl
-                    options={[{ label: 'Kilometre (km)', val: true }, { label: 'Mil (mi)', val: false }]}
+                    options={[{ label: t('settings.units.distance.km'), val: true }, { label: t('settings.units.distance.mi'), val: false }]}
                     value={distanceKm}
                     onChange={setDistanceKm}
                   />
                   <p className="text-[11px] text-muted mt-1.5">
-                    Mevcut: <span className="font-semibold text-muted">{distanceKm ? 'km — Kilometre' : 'mi — Mil'}</span>
+                    {t('settings.units.currentPrefix')} <span className="font-semibold text-muted">{distanceKm ? t('settings.units.distance.currentKm') : t('settings.units.distance.currentMi')}</span>
                   </p>
                 </div>
 
                 {/* Sıcaklık */}
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-2">Sıcaklık</label>
+                  <label className="block text-xs font-medium text-muted mb-2">{t('settings.units.temp.label')}</label>
                   <SegmentedControl
-                    options={[{ label: 'Celsius (°C)', val: true }, { label: 'Fahrenheit (°F)', val: false }]}
+                    options={[{ label: t('settings.units.temp.celsius'), val: true }, { label: t('settings.units.temp.fahrenheit'), val: false }]}
                     value={tempCelsius}
                     onChange={setTempCelsius}
                   />
                   <p className="text-[11px] text-muted mt-1.5">
-                    Mevcut: <span className="font-semibold text-muted">{tempCelsius ? '°C — Celsius' : '°F — Fahrenheit'}</span>
+                    {t('settings.units.currentPrefix')} <span className="font-semibold text-muted">{tempCelsius ? t('settings.units.temp.currentCelsius') : t('settings.units.temp.currentFahrenheit')}</span>
                   </p>
                 </div>
 
                 {/* Önizleme */}
                 <div className="p-3.5 bg-surface-2 rounded-xl border border-divider">
-                  <p className="text-[11px] font-semibold text-muted mb-2">Plan önizleme</p>
+                  <p className="text-[11px] font-semibold text-muted mb-2">{t('settings.units.previewTitle')}</p>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-text font-medium">📍 Mesafe: <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
-                    <span className="text-text font-medium">🌡️ Hava: <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
+                    <span className="text-text font-medium">📍 {t('settings.units.previewDistance')} <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
+                    <span className="text-text font-medium">🌡️ {t('settings.units.previewWeather')} <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
                   </div>
                 </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} label="Uygula & Kaydet" />
+                <SaveBtn onClick={handleAppearanceSave} loading={appearanceLoading} label={t('settings.units.saveBtn')} />
               </div>
             </CardWrap>
           )}
 
           {/* ══ BİLDİRİMLER — Uygulama ══ */}
           {activeSection === 'app_notif' && (
-            <CardWrap title="Uygulama Bildirimleri" subtitle="Uygulama içi bildirim tercihlerini ayarla.">
+            <CardWrap title={t('settings.appNotif.title')} subtitle={t('settings.appNotif.subtitle')}>
               <StatusBanner status={notifStatus} />
-              <SettingRow title="Plan güncellemeleri" desc="Planınızda değişiklik olduğunda"><Toggle value={appPlanNotif} onChange={setAppPlanNotif} /></SettingRow>
-              <SettingRow title="Topluluk bildirimleri" desc="Beğeni, yorum ve takip istekleri"><Toggle value={appCommunityNotif} onChange={setAppCommunityNotif} /></SettingRow>
-              <SettingRow title="Uygulama güncellemeleri" desc="Yeni özellik duyuruları"><Toggle value={appUpdateNotif} onChange={setAppUpdateNotif} /></SettingRow>
+              <SettingRow title={t('settings.appNotif.rows.planUpdates.title')} desc={t('settings.appNotif.rows.planUpdates.desc')}><Toggle value={appPlanNotif} onChange={setAppPlanNotif} /></SettingRow>
+              <SettingRow title={t('settings.appNotif.rows.community.title')} desc={t('settings.appNotif.rows.community.desc')}><Toggle value={appCommunityNotif} onChange={setAppCommunityNotif} /></SettingRow>
+              <SettingRow title={t('settings.appNotif.rows.appUpdates.title')} desc={t('settings.appNotif.rows.appUpdates.desc')}><Toggle value={appUpdateNotif} onChange={setAppUpdateNotif} /></SettingRow>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handleNotifSave} loading={notifLoading} />
+                <SaveBtn onClick={handleNotifSave} loading={notifLoading} label={t('settings.common.save')} />
               </div>
             </CardWrap>
           )}
 
           {/* ══ BİLDİRİMLER — E-posta ══ */}
           {activeSection === 'email_notif' && (
-            <CardWrap title="E-posta Bildirimleri">
+            <CardWrap title={t('settings.emailNotif.title')}>
               <StatusBanner status={notifStatus} />
-              <SettingRow title="Plan bildirimleri" desc="Plan oluşturma ve güncelleme e-postaları"><Toggle value={emailPlanNotif} onChange={setEmailPlanNotif} /></SettingRow>
-              <SettingRow title="Haftalık özet" desc="Her Pazartesi seyahat önerileri"><Toggle value={emailWeeklyDigest} onChange={setEmailWeeklyDigest} /></SettingRow>
-              <SettingRow title="Kampanya ve fırsatlar" desc="İndirimler ve özel teklifler"><Toggle value={emailPromoNotif} onChange={setEmailPromoNotif} /></SettingRow>
+              <SettingRow title={t('settings.emailNotif.rows.plan.title')} desc={t('settings.emailNotif.rows.plan.desc')}><Toggle value={emailPlanNotif} onChange={setEmailPlanNotif} /></SettingRow>
+              <SettingRow title={t('settings.emailNotif.rows.weeklyDigest.title')} desc={t('settings.emailNotif.rows.weeklyDigest.desc')}><Toggle value={emailWeeklyDigest} onChange={setEmailWeeklyDigest} /></SettingRow>
+              <SettingRow title={t('settings.emailNotif.rows.promo.title')} desc={t('settings.emailNotif.rows.promo.desc')}><Toggle value={emailPromoNotif} onChange={setEmailPromoNotif} /></SettingRow>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handleNotifSave} loading={notifLoading} />
+                <SaveBtn onClick={handleNotifSave} loading={notifLoading} label={t('settings.common.save')} />
               </div>
             </CardWrap>
           )}
@@ -1573,8 +1605,8 @@ const Settings: React.FC = () => {
                 setPushEnabled(true);
                 setSettings({ pushPermission: 'granted', pushEnabled: true });
                 // Test bildirimi gönder
-                new Notification('Travyon Bildirimleri Aktif 🎉', {
-                  body: 'Seyahat uyarılarını artık anlık alacaksınız.',
+                new Notification(t('settings.pushNotif.testNotifTitle'), {
+                  body: t('settings.pushNotif.testNotifBody'),
                   icon: '/favicon.ico',
                 });
               } else {
@@ -1583,7 +1615,7 @@ const Settings: React.FC = () => {
             };
 
             return (
-              <CardWrap title="Push Bildirimleri" subtitle="Tarayıcı anlık bildirimlerini yönet.">
+              <CardWrap title={t('settings.pushNotif.title')} subtitle={t('settings.pushNotif.subtitle')}>
                 <StatusBanner status={notifStatus} />
 
                 {/* İzin durumu kartı */}
@@ -1601,19 +1633,19 @@ const Settings: React.FC = () => {
                       : isDenied  ? 'text-rose-800 dark:text-rose-300'
                       : !browserSupported ? 'text-muted'
                       : 'text-amber-800 dark:text-amber-300'}`}>
-                      {isGranted ? 'Bildirim izni verildi'
-                      : isDenied ? 'Bildirim izni reddedildi'
-                      : !browserSupported ? 'Tarayıcınız push bildirimleri desteklemiyor'
-                      : 'Bildirim izni bekleniyor'}
+                      {isGranted ? t('settings.pushNotif.status.granted.title')
+                      : isDenied ? t('settings.pushNotif.status.denied.title')
+                      : !browserSupported ? t('settings.pushNotif.status.unsupported.title')
+                      : t('settings.pushNotif.status.pending.title')}
                     </p>
                     <p className={`text-xs mt-0.5
                       ${isGranted ? 'text-emerald-700 dark:text-emerald-400'
                       : isDenied  ? 'text-rose-600 dark:text-rose-400'
                       : 'text-amber-700 dark:text-amber-400'}`}>
-                      {isGranted ? 'Tarayıcı anlık bildirimleri aktif.'
-                      : isDenied ? 'Tarayıcı adres çubuğundaki kilit ikonundan izin verebilirsiniz.'
-                      : !browserSupported ? 'Farklı bir tarayıcı deneyin (Chrome, Edge, Firefox).'
-                      : 'Bildirimleri etkinleştirmek için aşağıdaki butona basın.'}
+                      {isGranted ? t('settings.pushNotif.status.granted.desc')
+                      : isDenied ? t('settings.pushNotif.status.denied.desc')
+                      : !browserSupported ? t('settings.pushNotif.status.unsupported.desc')
+                      : t('settings.pushNotif.status.pending.desc')}
                     </p>
                   </div>
                   {!isGranted && !isDenied && browserSupported && (
@@ -1622,12 +1654,12 @@ const Settings: React.FC = () => {
                       onClick={requestPermission}
                       className="shrink-0 px-3.5 py-2 rounded-full bg-accent text-white text-xs font-bold hover:brightness-105 transition-colors shadow-sm"
                     >
-                      İzin Ver
+                      {t('settings.pushNotif.grantBtn')}
                     </button>
                   )}
                 </div>
 
-                <SettingRow title="Push bildirimleri" desc="Seyahat yaklaştığında anlık uyarı al">
+                <SettingRow title={t('settings.pushNotif.rows.push.title')} desc={t('settings.pushNotif.rows.push.desc')}>
                   <Toggle
                     value={pushEnabled}
                     onChange={(v) => {
@@ -1636,12 +1668,12 @@ const Settings: React.FC = () => {
                     }}
                   />
                 </SettingRow>
-                <SettingRow title="Bildirim sesi" desc="Bildirim geldiğinde ses çal">
+                <SettingRow title={t('settings.pushNotif.rows.sound.title')} desc={t('settings.pushNotif.rows.sound.desc')}>
                   <Toggle value={pushSoundEnabled} onChange={setPushSoundEnabled} />
                 </SettingRow>
 
                 <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                  <SaveBtn onClick={handleNotifSave} loading={notifLoading} disabled={!browserSupported} />
+                  <SaveBtn onClick={handleNotifSave} loading={notifLoading} label={t('settings.common.save')} disabled={!browserSupported} />
                 </div>
               </CardWrap>
             );
@@ -1649,15 +1681,15 @@ const Settings: React.FC = () => {
 
           {/* ══ GİZLİLİK — Profil & Plan ══ */}
           {activeSection === 'privacy_profile' && (
-            <CardWrap title="Profil & Plan Gizliliği" subtitle="Diğer kullanıcıların sizi nasıl göreceğini kontrol edin.">
+            <CardWrap title={t('settings.privacyProfile.title')} subtitle={t('settings.privacyProfile.subtitle')}>
               <StatusBanner status={privacyStatus} />
 
               {/* Genel durum özeti */}
               <div className="grid grid-cols-3 gap-2 mb-5">
                 {[
-                  { label: 'Profil',  active: profilePublic, on: 'Herkese açık', off: 'Gizli' },
-                  { label: 'Planlar', active: plansPublic,   on: 'Paylaşılabilir', off: 'Kilitli' },
-                  { label: 'Takip',   active: followPublic,  on: 'Serbest', off: 'Onaylı' },
+                  { label: t('settings.privacyProfile.summary.profile.label'), active: profilePublic, on: t('settings.privacyProfile.summary.profile.on'), off: t('settings.privacyProfile.summary.profile.off') },
+                  { label: t('settings.privacyProfile.summary.plans.label'), active: plansPublic,   on: t('settings.privacyProfile.summary.plans.on'), off: t('settings.privacyProfile.summary.plans.off') },
+                  { label: t('settings.privacyProfile.summary.follow.label'), active: followPublic,  on: t('settings.privacyProfile.summary.follow.on'), off: t('settings.privacyProfile.summary.follow.off') },
                 ].map(({ label, active, on, off }) => (
                   <div key={label} className={`p-3 rounded-xl border text-center transition-colors
                     ${active ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800'
@@ -1674,11 +1706,11 @@ const Settings: React.FC = () => {
               <div className="border border-divider rounded-xl overflow-hidden mb-3">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-text">Herkese açık profil</p>
+                    <p className="text-sm font-semibold text-text">{t('settings.privacyProfile.publicProfile.title')}</p>
                     <p className="text-xs text-muted mt-0.5">
                       {profilePublic
-                        ? '✅ Toplulukta görünür — diğer kullanıcılar sizi bulabilir'
-                        : '🔒 Gizli mod — kimse profilinizi göremez'}
+                        ? t('settings.privacyProfile.publicProfile.on')
+                        : t('settings.privacyProfile.publicProfile.off')}
                     </p>
                   </div>
                   <Toggle value={profilePublic} onChange={setProfilePublic} />
@@ -1689,11 +1721,11 @@ const Settings: React.FC = () => {
               <div className="border border-divider rounded-xl overflow-hidden mb-3">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-text">Planlarım herkese açık</p>
+                    <p className="text-sm font-semibold text-text">{t('settings.privacyProfile.publicPlans.title')}</p>
                     <p className="text-xs text-muted mt-0.5">
                       {plansPublic
-                        ? '✅ Toplulukta paylaşabilirsiniz'
-                        : '🔒 Paylaşım kapalı — Topluluk sayfasında paylaşım butonu kilitlenir'}
+                        ? t('settings.privacyProfile.publicPlans.on')
+                        : t('settings.privacyProfile.publicPlans.off')}
                     </p>
                   </div>
                   <Toggle value={plansPublic} onChange={setPlansPublic} />
@@ -1701,7 +1733,7 @@ const Settings: React.FC = () => {
                 {!plansPublic && (
                   <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900">
                     <p className="text-[11px] text-amber-700 dark:text-amber-400">
-                      ⚠️ Bu ayar kapalıyken planlarınızı Topluluk sayfasından paylaşamazsınız.
+                      {t('settings.privacyProfile.publicPlans.warning')}
                     </p>
                   </div>
                 )}
@@ -1711,11 +1743,11 @@ const Settings: React.FC = () => {
               <div className="border border-divider rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-text">Herkes takip edebilir</p>
+                    <p className="text-sm font-semibold text-text">{t('settings.privacyProfile.publicFollow.title')}</p>
                     <p className="text-xs text-muted mt-0.5">
                       {followPublic
-                        ? '✅ Onaysız takip — herkes takip edebilir'
-                        : '🔒 Onaylı takip — takip istekleri onayınızı bekler'}
+                        ? t('settings.privacyProfile.publicFollow.on')
+                        : t('settings.privacyProfile.publicFollow.off')}
                     </p>
                   </div>
                   <Toggle value={followPublic} onChange={setFollowPublic} />
@@ -1723,14 +1755,14 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label={t('settings.common.saveAndApply')} />
               </div>
             </CardWrap>
           )}
 
           {/* ══ GİZLİLİK — Lokasyon ══ */}
           {activeSection === 'privacy_location' && (
-            <CardWrap title="Lokasyon Gizliliği" subtitle="Konumunuzun nasıl kullanılacağını kontrol edin.">
+            <CardWrap title={t('settings.privacyLocation.title')} subtitle={t('settings.privacyLocation.subtitle')}>
               <StatusBanner status={privacyStatus} />
 
               {/* Mevcut konum izni */}
@@ -1743,12 +1775,12 @@ const Settings: React.FC = () => {
                     <span className="text-lg shrink-0 mt-0.5">{geoSupported ? '📍' : '🚫'}</span>
                     <div>
                       <p className="text-sm font-semibold text-text">
-                        {geoSupported ? 'Tarayıcı Konum API' : 'Konum desteklenmiyor'}
+                        {geoSupported ? t('settings.privacyLocation.geoStatus.supported.title') : t('settings.privacyLocation.geoStatus.unsupported.title')}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
                         {geoSupported
-                          ? 'Tarayıcınız konum desteğine sahip. Konum özellikleri bu uygulama için seçimlidir.'
-                          : 'Tarayıcınız konumu desteklemiyor.'}
+                          ? t('settings.privacyLocation.geoStatus.supported.desc')
+                          : t('settings.privacyLocation.geoStatus.unsupported.desc')}
                       </p>
                     </div>
                   </div>
@@ -1759,11 +1791,11 @@ const Settings: React.FC = () => {
                 <div className="border border-divider rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3.5">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-text">Konum tabanlı öneriler</p>
+                      <p className="text-sm font-semibold text-text">{t('settings.privacyLocation.suggestions.title')}</p>
                       <p className="text-xs text-muted mt-0.5">
                         {locationEnabled
-                          ? '✅ Yakındaki mekanlar ve akıllı öneriler için konum kullanılır'
-                          : '🔒 Konum özellikleri devre dışı — genel öneriler gösterilir'}
+                          ? t('settings.privacyLocation.suggestions.on')
+                          : t('settings.privacyLocation.suggestions.off')}
                       </p>
                     </div>
                     <Toggle value={locationEnabled} onChange={setLocationEnabled} />
@@ -1773,11 +1805,11 @@ const Settings: React.FC = () => {
                 <div className="border border-divider rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3.5">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-text">Konum geçmişi</p>
+                      <p className="text-sm font-semibold text-text">{t('settings.privacyLocation.history.title')}</p>
                       <p className="text-xs text-muted mt-0.5">
                         {locationHistory
-                          ? '✅ Ziyaret geçmişi kaydediliyor — gelecek planlar için daha iyi öneriler'
-                          : '🔒 Konum geçmişi saklanmıyor'}
+                          ? t('settings.privacyLocation.history.on')
+                          : t('settings.privacyLocation.history.off')}
                       </p>
                     </div>
                     <Toggle value={locationHistory} onChange={setLocationHistory} />
@@ -1786,24 +1818,24 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label={t('settings.common.saveAndApply')} />
               </div>
             </CardWrap>
           )}
 
           {/* ══ GİZLİLİK — Veri Kullanımı ══ */}
           {activeSection === 'privacy_data' && (
-            <CardWrap title="Veri Kullanımı" subtitle="Verilerinizin nasıl işlendiğini kontrol edin.">
+            <CardWrap title={t('settings.privacyData.title')} subtitle={t('settings.privacyData.subtitle')}>
               <StatusBanner status={privacyStatus} />
 
               <div className="border border-divider rounded-xl overflow-hidden mb-4">
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-text">Analitik verisi paylaş</p>
+                    <p className="text-sm font-semibold text-text">{t('settings.privacyData.analytics.title')}</p>
                     <p className="text-xs text-muted mt-0.5">
                       {analyticsEnabled
-                        ? '✅ Anonim kullanım verisi — hizmet iyileştirmek için gönderilir'
-                        : '🔒 Hiçbir kullanım verisi gönderilmez'}
+                        ? t('settings.privacyData.analytics.on')
+                        : t('settings.privacyData.analytics.off')}
                     </p>
                   </div>
                   <Toggle value={analyticsEnabled} onChange={setAnalyticsEnabled} />
@@ -1813,33 +1845,30 @@ const Settings: React.FC = () => {
               {/* Veri özeti */}
               <div className="rounded-xl border border-divider overflow-hidden mb-4">
                 <div className="px-4 py-3 bg-surface-2 border-b border-divider">
-                  <p className="text-xs font-bold text-muted uppercase tracking-widest">Hesabınızda saklanan veriler</p>
+                  <p className="text-xs font-bold text-muted uppercase tracking-widest">{t('settings.privacyData.storedDataHeader')}</p>
                 </div>
-                {[
-                  { icon: '👤', label: 'Profil bilgileri', desc: 'Ad, e-posta, fotoğraf' },
-                  { icon: '✈️', label: 'Seyahat planları', desc: 'Oluşturduğunuz tüm planlar' },
-                  { icon: '⚙️', label: 'Tercihler & ayarlar', desc: 'Bildirim, görünüm, gizlilik' },
-                  { icon: '📍', label: 'Pasaport & konum', desc: 'Seyahat ile ilgili kişisel bilgiler' },
-                ].map(({ icon, label, desc }) => (
-                  <div key={label} className="flex items-center gap-3 px-4 py-3 border-b border-divider last:border-0">
-                    <span className="text-base w-7 shrink-0">{icon}</span>
-                    <div>
-                      <p className="text-sm font-medium text-text">{label}</p>
-                      <p className="text-[11px] text-muted">{desc}</p>
+                {(t('settings.privacyData.items', { returnObjects: true }) as { label: string; desc: string }[]).map((item, i) => {
+                  const icon = ['👤', '✈️', '⚙️', '📍'][i];
+                  return (
+                    <div key={item.label} className="flex items-center gap-3 px-4 py-3 border-b border-divider last:border-0">
+                      <span className="text-base w-7 shrink-0">{icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-text">{item.label}</p>
+                        <p className="text-[11px] text-muted">{item.desc}</p>
+                      </div>
+                      <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">{t('settings.privacyData.encryptedBadge')}</span>
                     </div>
-                    <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">Şifreli</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
                 <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  🔐 Kişisel verileriniz 6698 sayılı KVKK kapsamında işlenmektedir.
-                  Verilerinizi indirmek veya hesabınızı silmek için <strong>Verilerim</strong> bölümünü kullanın.
+                  🔐 {t('settings.privacyData.kvkkPrefix')} <strong>{t('settings.privacyData.kvkkDataSection')}</strong> {t('settings.privacyData.kvkkSuffix')}
                 </p>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
-                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label="Kaydet & Uygula" />
+                <SaveBtn onClick={handlePrivacySave} loading={privacyLoading} label={t('settings.common.saveAndApply')} />
               </div>
             </CardWrap>
           )}
@@ -1850,7 +1879,7 @@ const Settings: React.FC = () => {
             const usagePct = Math.min(100, (plansUsedThisMonth / FREE_LIMIT) * 100);
             const barColor = usagePct >= 100 ? 'bg-rose-500' : usagePct >= 67 ? 'bg-amber-400' : 'bg-emerald-500';
             return (
-              <CardWrap title="Abonelik" subtitle="Mevcut planınız ve kullanım durumunuz.">
+              <CardWrap title={t('settings.subscription.title')} subtitle={t('settings.subscription.subtitle')}>
 
                 {/* Mevcut plan kartı */}
                 <div className={`rounded-xl border p-5 mb-5 ${isPro
@@ -1859,16 +1888,16 @@ const Settings: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="font-bold text-text text-base">
-                        {isPro ? '✨ Pro Plan' : 'Ücretsiz Plan'}
+                        {isPro ? `✨ ${t('settings.subscription.proPlanName')}` : t('settings.subscription.freePlanName')}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
-                        {isPro ? 'Sınırsız plan + Gelişmiş AI + Reklamsız' : 'Ayda 3 plan oluşturma hakkı'}
+                        {isPro ? t('settings.subscription.proDesc') : t('settings.subscription.freeDesc')}
                       </p>
                     </div>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPro
                       ? 'bg-sage text-white'
                       : 'bg-divider text-muted'}`}>
-                      {isPro ? 'Pro' : 'Ücretsiz'}
+                      {isPro ? t('settings.subscription.proBadge') : t('settings.subscription.freeBadge')}
                     </span>
                   </div>
 
@@ -1876,7 +1905,7 @@ const Settings: React.FC = () => {
                   {!isPro && (
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-semibold text-muted">Bu ay oluşturulan planlar</p>
+                        <p className="text-xs font-semibold text-muted">{t('settings.subscription.usageLabel')}</p>
                         <p className={`text-xs font-black tabular-nums ${usagePct >= 100 ? 'text-rose-500' : 'text-text'}`}>
                           {plansUsedThisMonth} / {FREE_LIMIT}
                         </p>
@@ -1889,12 +1918,12 @@ const Settings: React.FC = () => {
                       </div>
                       {usagePct >= 100 && (
                         <p className="text-[11px] text-rose-500 font-semibold mt-1.5">
-                          ⚠️ Aylık limitinize ulaştınız. Pro'ya geçerek sınırsız plan oluşturun.
+                          {t('settings.subscription.limitReached')}
                         </p>
                       )}
                       {usagePct >= 67 && usagePct < 100 && (
                         <p className="text-[11px] text-amber-500 font-semibold mt-1.5">
-                          Bu ay {FREE_LIMIT - plansUsedThisMonth} plan hakkınız kaldı.
+                          {t('settings.subscription.remainingPlans', { count: FREE_LIMIT - plansUsedThisMonth })}
                         </p>
                       )}
                     </div>
@@ -1904,18 +1933,11 @@ const Settings: React.FC = () => {
                 {/* Özellik karşılaştırması */}
                 <div className="rounded-xl border border-divider overflow-hidden mb-5">
                   <div className="grid grid-cols-3 bg-surface-2 border-b border-divider">
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted">Özellik</div>
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted text-center">Ücretsiz</div>
-                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-sage-700 text-center">Pro</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted">{t('settings.subscription.compare.headers.feature')}</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-muted text-center">{t('settings.subscription.compare.headers.free')}</div>
+                    <div className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-sage-700 text-center">{t('settings.subscription.compare.headers.pro')}</div>
                   </div>
-                  {[
-                    { label: 'Plan oluşturma',        free: '3 / ay',      pro: 'Sınırsız' },
-                    { label: 'AI plan kalitesi',       free: 'Standart',    pro: 'Gelişmiş' },
-                    { label: 'Reklam',                 free: '✅',         pro: '-' },
-                    { label: 'Topluluk paylaşımı',     free: '✅',          pro: '✅' },
-                    { label: 'Öncelikli destek',       free: '—',           pro: '✅' },
-                    { label: 'Erken erişim',           free: '—',           pro: '✅' },
-                  ].map(({ label, free, pro }) => (
+                  {(t('settings.subscription.compare.rows', { returnObjects: true }) as { label: string; free: string; pro: string }[]).map(({ label, free, pro }) => (
                     <div key={label} className="grid grid-cols-3 border-b border-divider last:border-0">
                       <div className="px-4 py-3 text-xs font-medium text-muted">{label}</div>
                       <div className="px-4 py-3 text-xs text-muted text-center">{free}</div>
@@ -1930,15 +1952,15 @@ const Settings: React.FC = () => {
                     <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/25 rounded-full blur-3xl pointer-events-none" />
                     <div className="relative flex items-center justify-between gap-4">
                       <div>
-                        <span className="inline-block px-2 py-0.5 bg-accent text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">Pro</span>
-                        <p className="text-white font-bold text-sm mb-0.5">Sınırsız Plan + Gelişmiş AI</p>
-                        <p className="text-blue-100 text-xs">Reklamsız deneyim, öncelikli destek ve tüm premium özellikler.</p>
+                        <span className="inline-block px-2 py-0.5 bg-accent text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">{t('settings.subscription.cta.badge')}</span>
+                        <p className="text-white font-bold text-sm mb-0.5">{t('settings.subscription.cta.title')}</p>
+                        <p className="text-blue-100 text-xs">{t('settings.subscription.cta.desc')}</p>
                       </div>
                       <button
                         type="button"
                         className="shrink-0 px-5 py-2.5 bg-white text-sage-700 font-bold text-sm rounded-full hover:bg-slate-50 transition-colors shadow-lg"
                       >
-                        Yükselt →
+                        {t('settings.subscription.cta.btn')}
                       </button>
                     </div>
                   </div>
@@ -1948,11 +1970,11 @@ const Settings: React.FC = () => {
                 {isPro && (
                   <div className="p-4 rounded-xl bg-surface-2 border border-divider flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-text">Aboneliği İptal Et</p>
-                      <p className="text-xs text-muted mt-0.5">Dönem sonunda ücretsiz plana geçilir.</p>
+                      <p className="text-sm font-semibold text-text">{t('settings.subscription.cancel.title')}</p>
+                      <p className="text-xs text-muted mt-0.5">{t('settings.subscription.cancel.desc')}</p>
                     </div>
                     <button type="button" className="px-3.5 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">
-                      İptal Et
+                      {t('settings.subscription.cancel.btn')}
                     </button>
                   </div>
                 )}
@@ -1962,19 +1984,19 @@ const Settings: React.FC = () => {
 
           {/* ══ FATURALAMA — Fatura Geçmişi ══ */}
           {activeSection === 'billing_history' && (
-            <CardWrap title="Fatura Geçmişi" subtitle="Geçmiş ödemelerinizi görüntüleyin.">
+            <CardWrap title={t('settings.billingHistory.title')} subtitle={t('settings.billingHistory.subtitle')}>
               {isPro ? (
                 /* Pro kullanıcı — tablo (başlangıçta boş, ilerleyen dönemde dolar) */
                 <div className="rounded-xl border border-divider overflow-hidden">
                   <div className="grid grid-cols-4 bg-surface-2 border-b border-divider px-4 py-2.5">
-                    {['Tarih', 'Tutar', 'Durum', 'Belge'].map(h => (
+                    {(t('settings.billingHistory.headers', { returnObjects: true }) as string[]).map(h => (
                       <p key={h} className="text-[10px] font-extrabold uppercase tracking-widest text-muted">{h}</p>
                     ))}
                   </div>
                   <div className="py-10 text-center">
                     <Receipt size={32} className="mx-auto text-divider mb-2" />
-                    <p className="text-sm text-muted font-medium">İlk faturanız burada görünecek.</p>
-                    <p className="text-xs text-muted mt-1">Bir sonraki dönem sonunda otomatik oluşturulur.</p>
+                    <p className="text-sm text-muted font-medium">{t('settings.billingHistory.emptyPro.title')}</p>
+                    <p className="text-xs text-muted mt-1">{t('settings.billingHistory.emptyPro.desc')}</p>
                   </div>
                 </div>
               ) : (
@@ -1983,16 +2005,16 @@ const Settings: React.FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
                     <Receipt size={28} className="text-muted" />
                   </div>
-                  <p className="text-sm font-semibold text-muted mb-1">Henüz fatura bulunmuyor</p>
+                  <p className="text-sm font-semibold text-muted mb-1">{t('settings.billingHistory.emptyFree.title')}</p>
                   <p className="text-xs text-muted max-w-xs leading-relaxed">
-                    Pro aboneliğe geçtikten sonra tüm faturalarınız burada listelenir ve indirilebilir hale gelir.
+                    {t('settings.billingHistory.emptyFree.desc')}
                   </p>
                   <button
                     type="button"
                     onClick={() => setActiveSection('subscription')}
                     className="mt-5 px-5 py-2.5 bg-sage text-white text-sm font-bold rounded-full hover:brightness-105 transition-colors"
                   >
-                    Pro'ya Geç →
+                    {t('settings.billingHistory.emptyFree.btn')}
                   </button>
                 </div>
               )}
@@ -2001,7 +2023,7 @@ const Settings: React.FC = () => {
 
           {/* ══ FATURALAMA — Ödeme Yöntemi ══ */}
           {activeSection === 'payment' && (
-            <CardWrap title="Ödeme Yöntemi" subtitle="Abonelik ödemelerinde kullanılacak kartı yönetin.">
+            <CardWrap title={t('settings.payment.title')} subtitle={t('settings.payment.subtitle')}>
               <StatusBanner status={cardStatus} />
 
               {/* Kayıtlı kart */}
@@ -2014,7 +2036,7 @@ const Settings: React.FC = () => {
                     <p className="text-sm font-bold text-text">
                       {savedCard.brand} •••• {savedCard.last4}
                     </p>
-                    <p className="text-xs text-muted mt-0.5">Son kullanma: {savedCard.expiry}</p>
+                    <p className="text-xs text-muted mt-0.5">{t('settings.payment.expiryPrefix')} {savedCard.expiry}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
@@ -2022,14 +2044,14 @@ const Settings: React.FC = () => {
                       onClick={() => { setShowCardForm(true); setCardStatus(null); }}
                       className="px-3 py-1.5 text-xs font-semibold text-muted border border-divider rounded-lg hover:bg-surface-2 transition-colors"
                     >
-                      Değiştir
+                      {t('settings.payment.changeBtn')}
                     </button>
                     <button
                       type="button"
                       onClick={handleCardDelete}
                       className="px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
                     >
-                      Kaldır
+                      {t('settings.payment.removeBtn')}
                     </button>
                   </div>
                 </div>
@@ -2041,16 +2063,16 @@ const Settings: React.FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
                     <Wallet size={28} className="text-muted" />
                   </div>
-                  <p className="text-sm font-semibold text-muted mb-1">Kayıtlı ödeme yöntemi yok</p>
+                  <p className="text-sm font-semibold text-muted mb-1">{t('settings.payment.empty.title')}</p>
                   <p className="text-xs text-muted max-w-xs leading-relaxed">
-                    Pro aboneliğe geçmek için bir kart ekleyin. Verileriniz şifreli olarak saklanır.
+                    {t('settings.payment.empty.desc')}
                   </p>
                   <button
                     type="button"
                     onClick={() => { setShowCardForm(true); setCardStatus(null); }}
                     className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-full hover:brightness-105 transition-colors"
                   >
-                    <CreditCard size={14} /> Kart Ekle
+                    <CreditCard size={14} /> {t('settings.payment.empty.addBtn')}
                   </button>
                 </div>
               )}
@@ -2061,19 +2083,19 @@ const Settings: React.FC = () => {
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-2">
                     <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
                     <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                      Kart bilgileriniz şifreli olarak saklanır. CVV numarası hiçbir zaman kaydedilmez.
+                      {t('settings.payment.formInfo')}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Kart Numarası</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.number')}</label>
                     <div className="relative">
                       <input
                         type="text"
                         value={cardNumber}
                         onChange={e => setCardNumber(fmtCardNumber(e.target.value))}
                         className={inputCls()}
-                        placeholder="1234 5678 9012 3456"
+                        placeholder={t('settings.payment.placeholders.number')}
                         maxLength={19}
                         autoComplete="cc-number"
                       />
@@ -2086,38 +2108,38 @@ const Settings: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">Kart Üzerindeki Ad</label>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.name')}</label>
                     <input
                       type="text"
                       value={cardName}
                       onChange={e => setCardName(e.target.value.toUpperCase())}
                       className={inputCls()}
-                      placeholder="AD SOYAD"
+                      placeholder={t('settings.payment.placeholders.name')}
                       autoComplete="cc-name"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-muted mb-1.5">Son Kullanma (MM/YY)</label>
+                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.expiry')}</label>
                       <input
                         type="text"
                         value={cardExpiry}
                         onChange={e => setCardExpiry(fmtCardExpiry(e.target.value))}
                         className={inputCls()}
-                        placeholder="12/27"
+                        placeholder={t('settings.payment.placeholders.expiry')}
                         maxLength={5}
                         autoComplete="cc-exp"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-muted mb-1.5">CVV</label>
+                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.cvv')}</label>
                       <input
                         type="password"
                         value={cardCvv}
                         onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
                         className={inputCls()}
-                        placeholder="•••"
+                        placeholder={t('settings.payment.placeholders.cvv')}
                         maxLength={4}
                         autoComplete="cc-csc"
                       />
@@ -2130,9 +2152,9 @@ const Settings: React.FC = () => {
                       onClick={() => { setShowCardForm(false); setCardStatus(null); setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv(''); }}
                       className="px-4 py-2 rounded-xl text-sm font-semibold text-muted border border-divider hover:bg-surface-2 transition-colors"
                     >
-                      İptal
+                      {t('settings.common.cancel')}
                     </button>
-                    <SaveBtn onClick={handleCardSave} loading={cardLoading} label="Kartı Kaydet" />
+                    <SaveBtn onClick={handleCardSave} loading={cardLoading} label={t('settings.payment.saveBtn')} />
                   </div>
                 </div>
               )}
@@ -2141,7 +2163,7 @@ const Settings: React.FC = () => {
               {!showCardForm && (
                 <div className="flex items-center gap-2 mt-2 text-[11px] text-muted">
                   <span>🔐</span>
-                  <span>Ödeme bilgileri 256-bit SSL şifreleme ile korunur.</span>
+                  <span>{t('settings.payment.securityNote')}</span>
                 </div>
               )}
             </CardWrap>
@@ -2149,31 +2171,26 @@ const Settings: React.FC = () => {
 
           {/* ══ VERİLERİM — Veri İndir ══ */}
           {activeSection === 'data_export' && (
-            <CardWrap title="Verilerimi İndir" subtitle="KVKK kapsamında tüm verilerinizi dışa aktarın.">
+            <CardWrap title={t('settings.dataExport.title')} subtitle={t('settings.dataExport.subtitle')}>
               <div className="space-y-3">
-                {[
-                  { label: 'Profil bilgileri', desc: 'Ad, kullanıcı adı, biyografi' },
-                  { label: 'Seyahat planları', desc: 'Tüm oluşturduğunuz planlar' },
-                  { label: 'Bildirim ayarları', desc: 'Tercih ve ayarlarınız' },
-                  { label: 'Hesap aktivitesi', desc: 'Giriş ve işlem geçmişi' },
-                ].map(({ label, desc }) => (
+                {(t('settings.dataExport.items', { returnObjects: true }) as { label: string; desc: string }[]).map(({ label, desc }) => (
                   <div key={label} className="flex items-center justify-between p-3.5 rounded-xl border border-divider">
                     <div>
                       <p className="text-sm font-medium text-text">{label}</p>
                       <p className="text-xs text-muted mt-0.5">{desc}</p>
                     </div>
-                    <ComingSoonBadge />
+                    <ComingSoonBadge label={t('settings.common.comingSoon')} />
                   </div>
                 ))}
               </div>
               <div className="mt-5 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900">
                 <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                  Veri indirme talebi oluşturulduğunda e-posta adresinize bağlantı gönderilecektir.
+                  {t('settings.dataExport.note')}
                 </p>
               </div>
               <div className="flex justify-end mt-4">
                 <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity">
-                  <Download size={14} /> Tümünü İndir
+                  <Download size={14} /> {t('settings.dataExport.downloadAllBtn')}
                 </button>
               </div>
             </CardWrap>
@@ -2181,38 +2198,38 @@ const Settings: React.FC = () => {
 
           {/* ══ VERİLERİM — Hesabı Sil ══ */}
           {activeSection === 'delete_account' && (
-            <CardWrap title="Hesabı Sil">
+            <CardWrap title={t('settings.deleteAccount.title')}>
               <StatusBanner status={deleteStatus} />
               <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 mb-5">
-                <p className="text-sm font-semibold text-rose-700 dark:text-rose-300 mb-1">⚠️ Bu işlem geri alınamaz</p>
+                <p className="text-sm font-semibold text-rose-700 dark:text-rose-300 mb-1">{t('settings.deleteAccount.warning.title')}</p>
                 <p className="text-xs text-rose-600 dark:text-rose-400 leading-relaxed">
-                  Hesabınız, tüm seyahat planlarınız ve kişisel verileriniz kalıcı olarak silinecektir.
+                  {t('settings.deleteAccount.warning.desc')}
                 </p>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">
-                    Onaylamak için <span className="font-bold text-text">HESABIMI SİL</span> yazın
+                    {t('settings.deleteAccount.confirmLabelPrefix')} <span className="font-bold text-text">{deleteConfirmPhrase}</span> {t('settings.deleteAccount.confirmLabelSuffix')}
                   </label>
                   <input
                     type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
-                    className={inputCls()} placeholder="HESABIMI SİL"
+                    className={inputCls()} placeholder={deleteConfirmPhrase}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Şifreniz</label>
-                  <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className={inputCls()} placeholder="••••••••" />
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.deleteAccount.passwordLabel')}</label>
+                  <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className={inputCls()} placeholder={t('settings.common.passwordPlaceholder')} />
                 </div>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <button
                   type="button"
                   onClick={handleDeleteAccount}
-                  disabled={deleteLoading || deleteConfirm !== 'HESABIMI SİL' || !deletePassword}
+                  disabled={deleteLoading || deleteConfirm !== deleteConfirmPhrase || !deletePassword}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {deleteLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                  Hesabı Kalıcı Olarak Sil
+                  {t('settings.deleteAccount.deleteBtn')}
                 </button>
               </div>
             </CardWrap>
@@ -2220,14 +2237,9 @@ const Settings: React.FC = () => {
 
           {/* ══ DESTEK — SSS ══ */}
           {activeSection === 'faq' && (
-            <CardWrap title="Sık Sorulan Sorular">
+            <CardWrap title={t('settings.faq.title')}>
               <div className="space-y-3">
-                {[
-                  { q: 'Plan oluşturma limiti nedir?', a: 'Ücretsiz planda ayda 3 plan oluşturabilirsiniz. Pro planda sınırsızdır.' },
-                  { q: 'AI planımı nasıl hazırlıyor?', a: 'Girdiğiniz destinasyon, tarih, bütçe ve tercihler Gemini AI ile analiz edilip kişiselleştirilmiş plan oluşturulur.' },
-                  { q: 'Planlarımı başkalarıyla paylaşabilir miyim?', a: 'Evet, oluşturduğunuz planları toplulukla veya link ile paylaşabilirsiniz.' },
-                  { q: 'Verilerimi nasıl silebilirim?', a: '"Verilerim → Hesabı Sil" bölümünden tüm verilerinizi kalıcı olarak kaldırabilirsiniz.' },
-                ].map(({ q, a }) => (
+                {(t('settings.faq.items', { returnObjects: true }) as { q: string; a: string }[]).map(({ q, a }) => (
                   <details key={q} className="group border border-divider rounded-xl overflow-hidden">
                     <summary className="flex items-center justify-between px-4 py-3.5 cursor-pointer list-none font-medium text-sm text-text hover:bg-surface-2 transition-colors">
                       {q}
@@ -2244,31 +2256,31 @@ const Settings: React.FC = () => {
 
           {/* ══ DESTEK — İletişim ══ */}
           {activeSection === 'contact' && (
-            <CardWrap title="İletişim" subtitle="Destek ekibimize mesaj gönderin.">
+            <CardWrap title={t('settings.contact.title')} subtitle={t('settings.contact.subtitle')}>
               <StatusBanner status={contactStatus} />
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Konu</label>
-                  <input type="text" className={inputCls()} placeholder="Mesajınızın konusu" />
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.contact.labels.subject')}</label>
+                  <input type="text" className={inputCls()} placeholder={t('settings.contact.placeholders.subject')} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Mesaj</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.contact.labels.message')}</label>
                   <textarea
                     value={contactMsg} onChange={e => setContactMsg(e.target.value)}
                     rows={5} className={`${inputCls()} resize-none`}
-                    placeholder="Sorun veya önerinizi yazın..."
+                    placeholder={t('settings.contact.placeholders.message')}
                   />
                 </div>
               </div>
               <div className="flex justify-between items-center mt-6 pt-5 border-t border-divider">
-                <p className="text-xs text-muted">destek@travyon.app · Yanıt süresi: 24 saat</p>
+                <p className="text-xs text-muted">{t('settings.contact.footerNote')}</p>
                 <button
                   type="button"
-                  onClick={() => { setContactStatus({ type: 'success', message: 'Mesajınız gönderildi!' }); setContactMsg(''); }}
+                  onClick={() => { setContactStatus({ type: 'success', message: t('settings.contact.success') }); setContactMsg(''); }}
                   disabled={!contactMsg.trim()}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-accent hover:brightness-105 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Gönder
+                  {t('settings.contact.sendBtn')}
                 </button>
               </div>
             </CardWrap>
@@ -2276,19 +2288,19 @@ const Settings: React.FC = () => {
 
           {/* ══ DESTEK — Hata Bildir ══ */}
           {activeSection === 'report_bug' && (
-            <CardWrap title="Hata Bildir" subtitle="Bulduğunuz hatayı raporlayın, geliştirmemize yardımcı olun.">
+            <CardWrap title={t('settings.reportBug.title')} subtitle={t('settings.reportBug.subtitle')}>
               <StatusBanner status={bugStatus} />
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Hata Başlığı</label>
-                  <input type="text" value={bugTitle} onChange={e => setBugTitle(e.target.value)} className={inputCls()} placeholder="Kısa ve açıklayıcı bir başlık" />
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.reportBug.labels.title')}</label>
+                  <input type="text" value={bugTitle} onChange={e => setBugTitle(e.target.value)} className={inputCls()} placeholder={t('settings.reportBug.placeholders.title')} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Detaylı Açıklama</label>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.reportBug.labels.description')}</label>
                   <textarea
                     value={bugDesc} onChange={e => setBugDesc(e.target.value)}
                     rows={5} className={`${inputCls()} resize-none`}
-                    placeholder="Hatayı nasıl tetiklediniz? Beklenen ve gerçekleşen durum neydi?"
+                    placeholder={t('settings.reportBug.placeholders.description')}
                   />
                 </div>
               </div>
@@ -2300,7 +2312,7 @@ const Settings: React.FC = () => {
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-accent hover:brightness-105 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {bugLoading ? <Loader2 size={14} className="animate-spin" /> : <Bug size={14} />}
-                  Raporu Gönder
+                  {t('settings.reportBug.sendBtn')}
                 </button>
               </div>
             </CardWrap>
@@ -2314,7 +2326,7 @@ const Settings: React.FC = () => {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 bg-surface border border-red-100 dark:border-red-900/40 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
             >
               <LogOut size={16} />
-              Çıkış Yap
+              {t('settings.common.logout')}
             </button>
           </div>
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Calendar, Heart, Utensils, Bed,
@@ -25,31 +27,15 @@ const getToday = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const today = getToday();
-const ALL_EATER_OPTION = 'Her Şeyi Yerim';
+const ALL_EATER_OPTION = 'noRestriction';
+const DIET_KEYS = ['vegan', 'vegetarian', 'halal', 'glutenFree', 'pescatarian', ALL_EATER_OPTION] as const;
 
 const STEPS = [
-  { id: 1, label: 'Destinasyon', icon: MapPin },
-  { id: 2, label: 'Tercihler',   icon: Heart },
-  { id: 3, label: 'Yemek',       icon: Utensils },
-  { id: 4, label: 'Konaklama',   icon: Bed },
+  { id: 1, labelKey: 'destination', icon: MapPin },
+  { id: 2, labelKey: 'preferences', icon: Heart },
+  { id: 3, labelKey: 'food',        icon: Utensils },
+  { id: 4, labelKey: 'stay',        icon: Bed },
 ] as const;
-
-const loadingMessages = [
-  'Destinasyon analiz ediliyor...',
-  'Rotalar optimize ediliyor...',
-  'Gizli mekanlar keşfediliyor...',
-  'Bütçe hesaplanıyor...',
-  'Son dokunuşlar yapılıyor...',
-];
-
-const DIET_EMOJIS: Record<string, string> = {
-  Vegan: '🌱',
-  Vejetaryen: '🥗',
-  Helal: '☪️',
-  Glutensiz: '🌾',
-  Pesketaryen: '🐟',
-  [ALL_EATER_OPTION]: '🍽️',
-};
 
 const toggleDietaryRestriction = (diet: string, current: string[]): string[] => {
   if (diet === ALL_EATER_OPTION) {
@@ -62,40 +48,40 @@ const toggleDietaryRestriction = (diet: string, current: string[]): string[] => 
 };
 
 /* ── Validation ── */
-const validateStep = (step: number, data: OnboardingData): string | null => {
+const validateStep = (step: number, data: OnboardingData, t: TFunction): string | null => {
   if (step === 1) {
-    if (!data.destination.trim()) return 'Lütfen bir destinasyon girin.';
-    if (!data.startDate) return 'Gidiş tarihi seçin.';
-    if (!data.endDate) return 'Dönüş tarihi seçin.';
-    if (data.startDate < today) return 'Gidiş tarihi bugünden önce olamaz.';
-    if (data.endDate < today) return 'Dönüş tarihi bugünden önce olamaz.';
-    if (data.startDate >= data.endDate) return 'Dönüş tarihi gidiş tarihinden sonra olmalı.';
-    if (data.budget < 100) return 'Bütçe en az 100 olmalı.';
+    if (!data.destination.trim()) return t('onboarding.errors.destinationBanner');
+    if (!data.startDate) return t('onboarding.errors.startDateRequired');
+    if (!data.endDate) return t('onboarding.errors.endDateRequired');
+    if (data.startDate < today) return t('onboarding.errors.startDateInPast');
+    if (data.endDate < today) return t('onboarding.errors.endDateInPast');
+    if (data.startDate >= data.endDate) return t('onboarding.errors.endBeforeStart');
+    if (data.budget < 100) return t('onboarding.errors.budgetTooLowBanner');
   }
   if (step === 2) {
-    if (!data.travelType) return 'Seyahat türünü seçmelisin.';
+    if (!data.travelType) return t('onboarding.errors.travelTypeRequired');
     const effectivePurposes = data.purposes && data.purposes.length > 0
       ? data.purposes : (data.tripPurpose ? [data.tripPurpose] : []);
-    if (effectivePurposes.length === 0) return 'En az 1 ilgi alanı seç.';
-    if (!data.pace) return 'Günlük tempo seçin.';
+    if (effectivePurposes.length === 0) return t('onboarding.errors.interestRequired');
+    if (!data.pace) return t('onboarding.errors.paceRequired');
   }
   if (step === 3) {
-    if (data.dietaryRestrictions.length === 0) return 'En az bir beslenme tercihi seçin.';
-    if (!data.foodPhilosophy) return 'Yemek felsefeni seç.';
-    if (!data.mealBudget) return 'Öğün başı bütçe seçin.';
+    if (data.dietaryRestrictions.length === 0) return t('onboarding.errors.dietaryRequired');
+    if (!data.foodPhilosophy) return t('onboarding.errors.foodPhilosophyRequired');
+    if (!data.mealBudget) return t('onboarding.errors.mealBudgetRequired');
   }
   if (step === 4) {
-    if (data.hasReservation === null) return 'Rezervasyon durumunuzu belirtin.';
-    if (data.hasReservation === true && !data.accommodationAddress.trim()) return 'Konaklama adresini girin.';
-    if (data.hasReservation === false && !data.accommodation) return 'Konaklama tercihi seçin.';
-    if (!data.transport) return 'Ulaşım tercihi seçin.';
+    if (data.hasReservation === null) return t('onboarding.errors.reservationRequired');
+    if (data.hasReservation === true && !data.accommodationAddress.trim()) return t('onboarding.errors.accommodationAddressRequired');
+    if (data.hasReservation === false && !data.accommodation) return t('onboarding.errors.accommodationRequired');
+    if (!data.transport) return t('onboarding.errors.transportRequiredBanner');
   }
   return null;
 };
 
-const validateAll = (data: OnboardingData): string | null => {
+const validateAll = (data: OnboardingData, t: TFunction): string | null => {
   for (let s = 1; s <= 4; s++) {
-    const err = validateStep(s, data);
+    const err = validateStep(s, data, t);
     if (err) return err;
   }
   return null;
@@ -153,6 +139,7 @@ const MAX_PEOPLE = 15;
    MAIN COMPONENT
 ════════════════════════════════════════════════════════ */
 const Onboarding: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentStep, data, nextStep, prevStep, updateData, setStep, resetForm } = useOnboardingStore();
   const { setPlan } = usePlanStore();
@@ -182,6 +169,8 @@ const Onboarding: React.FC = () => {
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const loadingMessages = t('onboarding.loadingMessages', { returnObjects: true }) as string[];
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingIdx, setLoadingIdx] = useState(0);
@@ -223,12 +212,13 @@ const Onboarding: React.FC = () => {
 
   useEffect(() => {
     if (!isGenerating) { setLoadingIdx(0); return; }
-    const t = setInterval(() => setLoadingIdx((p) => (p + 1) % loadingMessages.length), 3000);
-    return () => clearInterval(t);
+    const interval = setInterval(() => setLoadingIdx((p) => (p + 1) % loadingMessages.length), 3000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGenerating]);
 
   const handleNext = () => {
-    const err = validateStep(currentStep, data);
+    const err = validateStep(currentStep, data, t);
     if (err) { setError(err); setHints(hintsForStep(currentStep, data)); return; }
     setError(null); setHints(EMPTY_HINTS);
     nextStep();
@@ -237,17 +227,18 @@ const Onboarding: React.FC = () => {
   const handleBack = () => { setError(null); setHints(EMPTY_HINTS); prevStep(); };
 
   const handleFinish = async () => {
-    const err = validateAll(data);
+    const err = validateAll(data, t);
     if (err) { setError(err); setHints(hintsForStep(currentStep, data)); return; }
     try {
       setError(null); setHints(EMPTY_HINTS); setAllCompleted(true); setIsGenerating(true);
       let applied = false;
-      const plan = await generateTravelPlan(data, (partial) => { if (applied) setPlan(partial); });
+      const planLang = i18n.language === 'en' ? 'en' : 'tr';
+      const plan = await generateTravelPlan(data, (partial) => { if (applied) setPlan(partial); }, planLang);
       setPlan(plan); applied = true;
       setStep(1);           // Sadece adımı sıfırla — konaklama verisi Dashboard'da gerekli
       navigate('/dashboard');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Plan oluşturulurken bir hata oluştu.');
+      setError(e instanceof Error ? e.message : t('onboarding.errors.genericGenerationError'));
     } finally {
       setIsGenerating(false);
     }
@@ -277,7 +268,7 @@ const Onboarding: React.FC = () => {
           <motion.div key={currentStep} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <div className="inline-flex items-center gap-2 px-3.5 py-[7px] bg-white/16 backdrop-blur-md border border-white/25 rounded-full mb-5">
               <Sparkles size={11} className="text-white" />
-              <span className="text-white text-[11px] font-heading uppercase tracking-widest">AI Destekli Plan</span>
+              <span className="text-white text-[11px] font-heading uppercase tracking-widest">{t('onboarding.badge')}</span>
             </div>
 
             <div className="text-4xl mb-4">
@@ -288,16 +279,10 @@ const Onboarding: React.FC = () => {
             </div>
 
             <h1 className="font-heading text-3xl text-white mb-3 leading-tight whitespace-pre-line">
-              {currentStep === 1 && 'Hayalindeki\nDestinasyon'}
-              {currentStep === 2 && 'Seyahat\nTarzın'}
-              {currentStep === 3 && 'Damak\nZevkin'}
-              {currentStep === 4 && 'Konfor\nTercihin'}
+              {t(`onboarding.sidebar.step${currentStep}.title`)}
             </h1>
             <p className="text-white/75 text-sm leading-relaxed max-w-xs">
-              {currentStep === 1 && 'Nereye gideceğini ve ne kadar kalacağını söyle, gerisini biz planlayalım.'}
-              {currentStep === 2 && 'Hızlı mı yavaş mı? Kültür mü macera mı? Sana özel tempo belirleyelim.'}
-              {currentStep === 3 && 'Beslenme tercihlerini bilmeden mükemmel restoran öneremeyiz.'}
-              {currentStep === 4 && 'Nerede kalacağın ve nasıl gezeceğin planı şekillendirir.'}
+              {t(`onboarding.sidebar.step${currentStep}.desc`)}
             </p>
           </motion.div>
 
@@ -318,9 +303,9 @@ const Onboarding: React.FC = () => {
               <div className="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin" />
               <div className="absolute inset-0 flex items-center justify-center text-2xl">✈️</div>
             </div>
-            <h3 className="font-heading text-2xl text-text mb-2">Planınız Hazırlanıyor</h3>
+            <h3 className="font-heading text-2xl text-text mb-2">{t('onboarding.loadingTitle')}</h3>
             <p className="text-sm text-muted mb-6 max-w-xs leading-relaxed">
-              Yapay zekamız rotaları, gizli mekanları ve aktiviteleri seçiyor.
+              {t('onboarding.loadingSubtitle')}
             </p>
             <div className="bg-accent-100 border border-accent-200 rounded-full px-5 py-2.5 min-w-[220px]">
               <AnimatePresence mode="wait">
@@ -361,7 +346,7 @@ const Onboarding: React.FC = () => {
                     </div>
                     <span className={`text-[11px] font-heading transition-colors
                       ${active ? 'text-accent' : completed ? 'text-sage-700' : 'text-muted'}`}>
-                      {step.label}
+                      {t(`onboarding.steps.${step.labelKey}`)}
                     </span>
                   </div>
                   {idx < STEPS.length - 1 && (
@@ -414,19 +399,13 @@ const Onboarding: React.FC = () => {
                 {/* ── Adım Başlığı ── */}
                 <div className="mb-8">
                   <p className="text-[11px] font-heading text-accent uppercase tracking-widest mb-2.5">
-                    Adım {currentStep} / 4
+                    {t('onboarding.stepCounter', { step: currentStep })}
                   </p>
                   <h2 className="font-heading text-2xl text-text mb-1.5 leading-tight">
-                    {currentStep === 1 && 'Nereye gidiyorsun?'}
-                    {currentStep === 2 && 'Tercihlerini söyle'}
-                    {currentStep === 3 && 'Yemek tarzın nasıl?'}
-                    {currentStep === 4 && 'Nerede kalmak istersin?'}
+                    {t(`onboarding.stepHeader.step${currentStep}.title`)}
                   </h2>
                   <p className="text-sm text-muted leading-relaxed">
-                    {currentStep === 1 && 'Destinasyon ve tarihleri belirle.'}
-                    {currentStep === 2 && 'Seyahat tarzını ve ilgi alanlarını seç.'}
-                    {currentStep === 3 && 'Damak zevkine göre öneriler oluşturalım.'}
-                    {currentStep === 4 && 'Konaklama ve ulaşım tercihlerini belirt.'}
+                    {t(`onboarding.stepHeader.step${currentStep}.desc`)}
                   </p>
                 </div>
 
@@ -436,7 +415,7 @@ const Onboarding: React.FC = () => {
 
                     {/* Destinasyon */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2.5">Destinasyon</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2.5">{t('onboarding.step1.destinationLabel')}</p>
                       <div className="relative" ref={destinationRef}>
                         <Search size={15} strokeWidth={2.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" />
                         <input
@@ -444,7 +423,7 @@ const Onboarding: React.FC = () => {
                           value={data.destination}
                           onChange={(e) => handleDestinationChange(e.target.value)}
                           onFocus={() => { if (data.destination.trim().length > 0) setShowSuggestions(true); }}
-                          placeholder="Örn. Roma, İtalya"
+                          placeholder={t('onboarding.step1.destinationPlaceholder')}
                           className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border-[1.5px] text-sm outline-none transition-all text-text placeholder:text-muted
                             ${hints.destination
                               ? 'border-rose-300 bg-rose-50/20'
@@ -468,7 +447,7 @@ const Onboarding: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <FieldError msg={hints.destination ? 'Destinasyon girmelisin.' : undefined} />
+                      <FieldError msg={hints.destination ? t('onboarding.errors.destinationField') : undefined} />
                     </div>
 
                     {/* Tarihler + Saatler — satır bazlı iOS tarzı layout */}
@@ -476,7 +455,7 @@ const Onboarding: React.FC = () => {
                       {/* Başlık şeridi */}
                       <div className="bg-surface-2 px-4 py-2.5 border-b border-divider">
                         <p className="text-[11px] font-heading uppercase tracking-widest text-muted flex items-center gap-1.5">
-                          <Calendar size={11} strokeWidth={2.5} className="text-accent" /> Seyahat Tarihleri
+                          <Calendar size={11} strokeWidth={2.5} className="text-accent" /> {t('onboarding.step1.travelDates')}
                         </p>
                       </div>
 
@@ -485,7 +464,7 @@ const Onboarding: React.FC = () => {
 
                         {/* Gidiş */}
                         <div className={`flex items-center px-4 py-3.5 ${hints.startDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-[14.5px] text-text w-24 shrink-0">✈️ Gidiş</span>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.departure')}</span>
                           <input
                             type="date" min={today}
                             value={data.startDate}
@@ -501,7 +480,7 @@ const Onboarding: React.FC = () => {
 
                         {/* Dönüş */}
                         <div className={`flex items-center px-4 py-3.5 ${hints.endDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-[14.5px] text-text w-24 shrink-0">🏠 Dönüş</span>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.return')}</span>
                           <input
                             type="date" min={data.startDate || today}
                             value={data.endDate}
@@ -518,7 +497,7 @@ const Onboarding: React.FC = () => {
 
                         {/* Varış Saati */}
                         <div className="flex items-center px-4 py-3.5">
-                          <span className="text-[14.5px] text-text w-24 shrink-0">🛬 Varış</span>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.arrival')}</span>
                           <input
                             type="time"
                             value={data.arrivalTime}
@@ -529,7 +508,7 @@ const Onboarding: React.FC = () => {
 
                         {/* Ayrılış Saati */}
                         <div className="flex items-center px-4 py-3.5">
-                          <span className="text-[14.5px] text-text w-24 shrink-0">🛫 Ayrılış</span>
+                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.departureTime')}</span>
                           <input
                             type="time"
                             value={data.departureTime}
@@ -542,8 +521,8 @@ const Onboarding: React.FC = () => {
                       {/* Hata mesajları */}
                       {(hints.startDate || hints.endDate) && (
                         <div className="bg-rose-50 px-4 py-2 border-t border-rose-100">
-                          {hints.startDate && <p className="text-xs text-rose-500">Gidiş tarihi seçin.</p>}
-                          {hints.endDate   && <p className="text-xs text-rose-500">Dönüş tarihi seçin.</p>}
+                          {hints.startDate && <p className="text-xs text-rose-500">{t('onboarding.errors.startDateRequired')}</p>}
+                          {hints.endDate   && <p className="text-xs text-rose-500">{t('onboarding.errors.endDateRequired')}</p>}
                         </div>
                       )}
                     </div>
@@ -551,7 +530,7 @@ const Onboarding: React.FC = () => {
                     {/* Kişi + Bütçe */}
                     <div className="grid grid-cols-2 gap-4 items-start">
                       <div>
-                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Kişi Sayısı</p>
+                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step1.peopleCount')}</p>
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
@@ -562,7 +541,7 @@ const Onboarding: React.FC = () => {
                           </button>
                           <div className="flex-1 text-center">
                             <span className="font-heading text-2xl text-text tabular-nums">{data.peopleCount}</span>
-                            <span className="text-xs text-muted ml-1">kişi</span>
+                            <span className="text-xs text-muted ml-1">{t('onboarding.step1.person')}</span>
                           </div>
                           <button
                             type="button"
@@ -575,7 +554,7 @@ const Onboarding: React.FC = () => {
                       </div>
 
                       <div>
-                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Toplam Bütçe</p>
+                        <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step1.totalBudget')}</p>
                         <div className={`flex rounded-2xl overflow-hidden border-[1.5px] transition-all
                           ${hints.budget ? 'border-rose-300' : 'border-divider focus-within:border-accent'}`}>
                           <input
@@ -605,7 +584,7 @@ const Onboarding: React.FC = () => {
                             <option value="GBP">GBP</option>
                           </select>
                         </div>
-                        <FieldError msg={hints.budget ? 'Bütçe en az 100 olmalıdır.' : undefined} />
+                        <FieldError msg={hints.budget ? t('onboarding.errors.budgetTooLowField') : undefined} />
                       </div>
                     </div>
                   </div>
@@ -617,18 +596,18 @@ const Onboarding: React.FC = () => {
 
                     {/* Seyahat Türü */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Seyahat Türü</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step2.travelType')}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
-                          { val: 'solo_macera',    Icon: Backpack,    title: 'Solo' },
-                          { val: 'romantik',       Icon: Heart,       title: 'Romantik' },
-                          { val: 'balayi',         Icon: Sparkles,    title: 'Balayı' },
-                          { val: 'aile',           Icon: Users,       title: 'Aile' },
-                          { val: 'arkadas_grubu',  Icon: PartyPopper, title: 'Arkadaşlar' },
-                          { val: 'is_seyahati',    Icon: Briefcase,   title: 'İş' },
-                          { val: 'sehir_kacamagi', Icon: Coffee,      title: 'Kaçamak' },
-                          { val: 'klasik_tatil',   Icon: Map,         title: 'Klasik' },
-                        ] as const).map(({ val, Icon, title }) => {
+                          { val: 'solo_macera',    Icon: Backpack,    labelKey: 'solo' },
+                          { val: 'romantik',       Icon: Heart,       labelKey: 'romantic' },
+                          { val: 'balayi',         Icon: Sparkles,    labelKey: 'honeymoon' },
+                          { val: 'aile',           Icon: Users,       labelKey: 'family' },
+                          { val: 'arkadas_grubu',  Icon: PartyPopper, labelKey: 'friends' },
+                          { val: 'is_seyahati',    Icon: Briefcase,   labelKey: 'business' },
+                          { val: 'sehir_kacamagi', Icon: Coffee,      labelKey: 'cityEscape' },
+                          { val: 'klasik_tatil',   Icon: Map,         labelKey: 'classic' },
+                        ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.travelType === val;
                           return (
                             <button
@@ -644,26 +623,26 @@ const Onboarding: React.FC = () => {
                                 <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
                               </div>
                               <span className={`text-[10px] font-heading leading-tight text-center ${selected ? 'text-accent-700' : 'text-text'}`}>
-                                {title}
+                                {t(`onboarding.step2.travelTypes.${labelKey}`)}
                               </span>
                             </button>
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.travelType ? 'Seyahat türünü seçmelisin.' : undefined} />
+                      <FieldError msg={hints.travelType ? t('onboarding.errors.travelTypeRequired') : undefined} />
                     </div>
 
                     {/* İlgi Alanları */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">İlgi Alanları</p>
-                      <p className="text-[11px] text-muted mb-3">En fazla 3 tane. Seçim sırası önceliği belirler.</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">{t('onboarding.step2.interests')}</p>
+                      <p className="text-[11px] text-muted mb-3">{t('onboarding.step2.interestsHint')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { val: 'culture',   emoji: '🏛️', title: 'Kültür & Tarih', sub: 'Müzeler, tarihi mekanlar' },
-                          { val: 'relax',     emoji: '😴', title: 'Dinlenme',         sub: 'Spa, sahil, yavaş tempo' },
-                          { val: 'nightlife', emoji: '🌙', title: 'Gece Hayatı',      sub: 'Bar, kulüp, canlı müzik' },
-                          { val: 'nature',    emoji: '🏔️', title: 'Doğa & Macera',   sub: 'Trekking, doğa yürüyüşü' },
-                        ].map(({ val, emoji, title, sub }) => {
+                          { val: 'culture',   emoji: '🏛️' },
+                          { val: 'relax',     emoji: '😴' },
+                          { val: 'nightlife', emoji: '🌙' },
+                          { val: 'nature',    emoji: '🏔️' },
+                        ].map(({ val, emoji }) => {
                           const currentPurposes: string[] = data.purposes && data.purposes.length > 0
                             ? data.purposes
                             : (data.tripPurpose ? [data.tripPurpose] : []);
@@ -699,8 +678,8 @@ const Onboarding: React.FC = () => {
                             >
                               <span className="text-xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{sub}</p>
+                                <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step2.interestOptions.${val}.title`)}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step2.interestOptions.${val}.sub`)}</p>
                               </div>
                               {isSelected && (
                                 <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center shrink-0 text-white text-xs font-black">
@@ -720,24 +699,24 @@ const Onboarding: React.FC = () => {
                             transition={{ duration: 0.18 }}
                             className="text-xs text-amber-600 mt-1.5 ml-0.5 font-medium"
                           >
-                            En fazla 3 ilgi alanı seçebilirsin.
+                            {t('onboarding.step2.maxInterestsWarning')}
                           </motion.p>
                         )}
                       </AnimatePresence>
-                      <FieldError msg={hints.tripPurpose ? 'En az 1 ilgi alanı seç.' : undefined} />
+                      <FieldError msg={hints.tripPurpose ? t('onboarding.errors.interestRequired') : undefined} />
                     </div>
 
                     {/* Tempo */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">Günlük Tempo</p>
-                      <p className="text-[11px] text-muted mb-3">Aktivite yoğunluğunu seç.</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">{t('onboarding.step2.pace')}</p>
+                      <p className="text-[11px] text-muted mb-3">{t('onboarding.step2.paceHint')}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
-                          { val: 'rahat',  Icon: Sofa,       title: 'Rahat',  desc: 'Az yürüyüş',     detail: '3–4 km/gün' },
-                          { val: 'normal', Icon: Footprints, title: 'Normal', desc: 'Standart tempo', detail: '6–8 km/gün' },
-                          { val: 'aktif',  Icon: Mountain,   title: 'Aktif',  desc: 'Her şeyi gör',   detail: '10–15 km/gün' },
-                          { val: 'esnek',  Icon: Compass,    title: 'Esnek',  desc: 'AI karar versin', detail: 'Değişken' },
-                        ] as const).map(({ val, Icon, title, desc, detail }) => {
+                          { val: 'rahat',  Icon: Sofa,       labelKey: 'relaxed'  },
+                          { val: 'normal', Icon: Footprints, labelKey: 'normal'   },
+                          { val: 'aktif',  Icon: Mountain,   labelKey: 'active'   },
+                          { val: 'esnek',  Icon: Compass,    labelKey: 'flexible' },
+                        ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.pace === val;
                           return (
                             <button
@@ -753,15 +732,15 @@ const Onboarding: React.FC = () => {
                                 <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
                               </div>
                               <div>
-                                <p className={`font-heading text-xs ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{desc}</p>
-                                <p className="text-[10px] text-muted mt-0.5">{detail}</p>
+                                <p className={`font-heading text-xs ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.title`)}</p>
+                                <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.desc`)}</p>
+                                <p className="text-[10px] text-muted mt-0.5">{t(`onboarding.step2.paceOptions.${labelKey}.detail`)}</p>
                               </div>
                             </button>
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.pace ? 'Günlük tempo seçin.' : undefined} />
+                      <FieldError msg={hints.pace ? t('onboarding.errors.paceRequired') : undefined} />
                     </div>
 
                     {/* Erken Kalkmayı Severim — Toggle */}
@@ -776,8 +755,8 @@ const Onboarding: React.FC = () => {
                           <Sunrise size={17} strokeWidth={2.5} className={data.earlyBird ? 'text-accent-700' : 'text-muted'} />
                         </div>
                         <div className="text-left">
-                          <p className={`text-sm font-semibold ${data.earlyBird ? 'text-accent-700' : 'text-text'}`}>Erken kalkmayı severim</p>
-                          <p className="text-[11px] text-muted mt-0.5">Sabah erken aktivite planlanabilir</p>
+                          <p className={`text-sm font-semibold ${data.earlyBird ? 'text-accent-700' : 'text-text'}`}>{t('onboarding.step2.earlyBirdTitle')}</p>
+                          <p className="text-[11px] text-muted mt-0.5">{t('onboarding.step2.earlyBirdSub')}</p>
                         </div>
                       </div>
                       <div className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
@@ -797,9 +776,9 @@ const Onboarding: React.FC = () => {
 
                     {/* Beslenme Tercihleri */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Beslenme Tercihleri</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step3.dietaryTitle')}</p>
                       <div className="grid grid-cols-3 gap-2">
-                        {['Vegan', 'Vejetaryen', 'Helal', 'Glutensiz', 'Pesketaryen', ALL_EATER_OPTION].map((diet) => {
+                        {DIET_KEYS.map((diet) => {
                           const selected = data.dietaryRestrictions.includes(diet);
                           return (
                             <button
@@ -814,27 +793,27 @@ const Onboarding: React.FC = () => {
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-base leading-none shrink-0">{DIET_EMOJIS[diet]}</span>
-                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-accent-700' : 'text-text'}`}>{diet}</span>
+                              <span className="text-base leading-none shrink-0">{t(`onboarding.step3.diets.${diet}.emoji`)}</span>
+                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.diets.${diet}.label`)}</span>
                             </button>
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.dietary ? 'En az bir beslenme tercihi seçin.' : undefined} />
+                      <FieldError msg={hints.dietary ? t('onboarding.errors.dietaryRequired') : undefined} />
                     </div>
 
                     {/* Yemek Felsefesi */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">Yemek Felsefesi</p>
-                      <p className="text-[11px] text-muted mb-3">AI sana hangi mekanları önersin?</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-1">{t('onboarding.step3.foodPhilosophy')}</p>
+                      <p className="text-[11px] text-muted mb-3">{t('onboarding.step3.foodPhilosophyHint')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {([
-                          { val: 'iconic',      emoji: '⭐', title: 'İkonik Lezzetler', subtitle: 'Şehrin ünlü mekanları' },
-                          { val: 'hidden_gems', emoji: '🗺️', title: 'Gizli Keşifler',    subtitle: 'Yerel favoriler, saklı köşeler' },
-                          { val: 'fine_dining', emoji: '🍷', title: 'Fine Dining',        subtitle: 'Kaliteli restoran deneyimi' },
-                          { val: 'street_food', emoji: '🌮', title: 'Sokak Yemeği',      subtitle: 'Tezgah lezzetleri, pazar' },
-                          { val: 'mixed',       emoji: '🎲', title: 'Karışık / Sürpriz', subtitle: 'Her gün farklı deneyim' },
-                        ] as const).map(({ val, emoji, title, subtitle }) => {
+                          { val: 'iconic',      emoji: '⭐', labelKey: 'iconic' },
+                          { val: 'hidden_gems', emoji: '🗺️', labelKey: 'hiddenGems' },
+                          { val: 'fine_dining', emoji: '🍷', labelKey: 'fineDining' },
+                          { val: 'street_food', emoji: '🌮', labelKey: 'streetFood' },
+                          { val: 'mixed',       emoji: '🎲', labelKey: 'mixed' },
+                        ] as const).map(({ val, emoji, labelKey }) => {
                           const selected = data.foodPhilosophy === val;
                           return (
                             <button
@@ -852,8 +831,8 @@ const Onboarding: React.FC = () => {
                             >
                               <span className="text-xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm leading-tight ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{subtitle}</p>
+                                <p className={`font-semibold text-sm leading-tight ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.foodPhilosophyOptions.${labelKey}.title`)}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step3.foodPhilosophyOptions.${labelKey}.sub`)}</p>
                               </div>
                               {selected && (
                                 <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
@@ -864,18 +843,18 @@ const Onboarding: React.FC = () => {
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.foodPhilosophy ? 'Yemek felsefeni seç.' : undefined} />
+                      <FieldError msg={hints.foodPhilosophy ? t('onboarding.errors.foodPhilosophyRequired') : undefined} />
                     </div>
 
                     {/* Öğün Başı Bütçe */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Öğün Başı Bütçe</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step3.mealBudget')}</p>
                       <div className="grid grid-cols-3 gap-2.5">
-                        {[
-                          { val: 'low',    emoji: '💵',     title: 'Düşük',  sub: 'Uygun fiyatlı' },
-                          { val: 'medium', emoji: '💵💵',   title: 'Orta',   sub: 'Dengeli' },
-                          { val: 'high',   emoji: '💵💵💵', title: 'Yüksek', sub: 'Kalite öncelikli' },
-                        ].map(({ val, emoji, title, sub }) => {
+                        {([
+                          { val: 'low',    emoji: '💵',     labelKey: 'low'    },
+                          { val: 'medium', emoji: '💵💵',   labelKey: 'medium' },
+                          { val: 'high',   emoji: '💵💵💵', labelKey: 'high'   },
+                        ] as const).map(({ val, emoji, labelKey }) => {
                           const selected = data.mealBudget === val;
                           return (
                             <button
@@ -888,13 +867,13 @@ const Onboarding: React.FC = () => {
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
                               <span className="text-lg leading-none">{emoji}</span>
-                              <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                              <p className={`text-[10px] ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{sub}</p>
+                              <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.mealBudgetOptions.${labelKey}.title`)}</p>
+                              <p className={`text-[10px] ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{t(`onboarding.step3.mealBudgetOptions.${labelKey}.sub`)}</p>
                             </button>
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.mealBudget ? 'Öğün başı bütçe seçin.' : undefined} />
+                      <FieldError msg={hints.mealBudget ? t('onboarding.errors.mealBudgetRequired') : undefined} />
                     </div>
                   </div>
                 )}
@@ -905,12 +884,12 @@ const Onboarding: React.FC = () => {
 
                     {/* Rezervasyon sorusu */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Rezervasyon Durumu</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.reservationStatus')}</p>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          { val: true,  emoji: '✅', title: 'Rezervasyonum var', sub: 'Konaklama yerim belli' },
-                          { val: false, emoji: '🔍', title: 'Henüz seçmedim',    sub: 'Konaklama tarzımı söyleyeceğim' },
-                        ].map(({ val, emoji, title, sub }) => {
+                          { val: true,  emoji: '✅', labelKey: 'yes' },
+                          { val: false, emoji: '🔍', labelKey: 'no'  },
+                        ].map(({ val, emoji, labelKey }) => {
                           const selected = data.hasReservation === val;
                           return (
                             <button
@@ -927,14 +906,14 @@ const Onboarding: React.FC = () => {
                             >
                               <span className="text-3xl leading-none">{emoji}</span>
                               <div>
-                                <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{sub}</p>
+                                <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.reservationOptions.${labelKey}.title`)}</p>
+                                <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step4.reservationOptions.${labelKey}.sub`)}</p>
                               </div>
                             </button>
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.accommodation && data.hasReservation === null ? 'Rezervasyon durumunuzu belirtin.' : undefined} />
+                      <FieldError msg={hints.accommodation && data.hasReservation === null ? t('onboarding.errors.reservationRequired') : undefined} />
                     </div>
 
                     {/* Evet → konaklama adı / adresi */}
@@ -947,7 +926,7 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2">Konaklama Yeri</p>
+                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-2">{t('onboarding.step4.accommodationPlace')}</p>
                           <PlacesAutocomplete
                             value={data.accommodationAddress || ''}
                             onChange={(place) => {
@@ -958,13 +937,13 @@ const Onboarding: React.FC = () => {
                               });
                               setHints((h) => ({ ...h, accommodation: false }));
                             }}
-                            placeholder="Örn. Hotel Roma Centro, Via del Corso 123"
+                            placeholder={t('onboarding.step4.accommodationPlaceholder')}
                             destination={data.destination}
                             hasError={hints.accommodation && !data.accommodationAddress.trim()}
                           />
-                          <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? 'Konaklama adresini girin.' : undefined} />
+                          <FieldError msg={hints.accommodation && !data.accommodationAddress.trim() ? t('onboarding.errors.accommodationAddressRequired') : undefined} />
                           <p className="text-[11px] text-muted mt-1.5">
-                            AI günlük rotaları bu konuma göre optimize edecek.
+                            {t('onboarding.step4.accommodationHint')}
                           </p>
                         </motion.div>
                       </AnimatePresence>
@@ -980,14 +959,14 @@ const Onboarding: React.FC = () => {
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.18 }}
                         >
-                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Konaklama Tercihi</p>
+                          <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.accommodationType')}</p>
                           <div className="grid grid-cols-2 gap-2.5">
-                            {[
-                              { val: 'hotel',  emoji: '🏨', title: 'Otel',               sub: 'Konforlu, tam servis' },
-                              { val: 'airbnb', emoji: '🏠', title: 'Airbnb / Ev',         sub: 'Yerel deneyim' },
-                              { val: 'hostel', emoji: '🛏️', title: 'Hostel',              sub: 'Sosyal, ekonomik' },
-                              { val: 'resort', emoji: '🌴', title: 'Tatil Köyü',          sub: 'Her şey dahil' },
-                            ].map(({ val, emoji, title, sub }) => {
+                            {([
+                              { val: 'hotel',  emoji: '🏨', labelKey: 'hotel'  },
+                              { val: 'airbnb', emoji: '🏠', labelKey: 'airbnb' },
+                              { val: 'hostel', emoji: '🛏️', labelKey: 'hostel' },
+                              { val: 'resort', emoji: '🌴', labelKey: 'resort' },
+                            ] as const).map(({ val, emoji, labelKey }) => {
                               const selected = data.accommodation === val;
                               return (
                                 <button
@@ -1004,8 +983,8 @@ const Onboarding: React.FC = () => {
                                 >
                                   <span className="text-2xl shrink-0 leading-none">{emoji}</span>
                                   <div className="flex-1 min-w-0">
-                                    <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                    <p className="text-[11px] text-muted mt-0.5">{sub}</p>
+                                    <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.accommodationOptions.${labelKey}.title`)}</p>
+                                    <p className="text-[11px] text-muted mt-0.5">{t(`onboarding.step4.accommodationOptions.${labelKey}.sub`)}</p>
                                   </div>
                                   {selected && (
                                     <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
@@ -1016,21 +995,21 @@ const Onboarding: React.FC = () => {
                               );
                             })}
                           </div>
-                          <FieldError msg={hints.accommodation && !data.accommodation ? 'Konaklama tercihi seçin.' : undefined} />
+                          <FieldError msg={hints.accommodation && !data.accommodation ? t('onboarding.errors.accommodationRequired') : undefined} />
                         </motion.div>
                       </AnimatePresence>
                     )}
 
                     {/* Şehir İçi Ulaşım */}
                     <div>
-                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">Şehir İçi Ulaşım</p>
+                      <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.transport')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
-                        {[
-                          { val: 'public', emoji: '🚇', title: 'Toplu Taşıma',  sub: 'Metro, otobüs' },
-                          { val: 'walk',   emoji: '🚶', title: 'Yürüyüş',       sub: 'Yürüme mesafesi' },
-                          { val: 'taxi',   emoji: '🚕', title: 'Taksi / Uber',   sub: 'Kapıdan kapıya' },
-                          { val: 'car',    emoji: '🚗', title: 'Araç',           sub: 'Kiralık veya kendi' },
-                        ].map(({ val, emoji, title, sub }) => {
+                        {([
+                          { val: 'public', emoji: '🚇', labelKey: 'public' },
+                          { val: 'walk',   emoji: '🚶', labelKey: 'walk'   },
+                          { val: 'taxi',   emoji: '🚕', labelKey: 'taxi'   },
+                          { val: 'car',    emoji: '🚗', labelKey: 'car'    },
+                        ] as const).map(({ val, emoji, labelKey }) => {
                           const selected = data.transport === val;
                           return (
                             <button
@@ -1047,8 +1026,8 @@ const Onboarding: React.FC = () => {
                             >
                               <span className="text-2xl shrink-0 leading-none">{emoji}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{title}</p>
-                                <p className="text-[11px] text-muted mt-0.5">{sub}</p>
+                                <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.transportOptions.${labelKey}.title`)}</p>
+                                <p className="text-[11px] text-muted mt-0.5">{t(`onboarding.step4.transportOptions.${labelKey}.sub`)}</p>
                               </div>
                               {selected && (
                                 <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
@@ -1059,7 +1038,7 @@ const Onboarding: React.FC = () => {
                           );
                         })}
                       </div>
-                      <FieldError msg={hints.transport ? 'Bir ulaşım tercihi seçin.' : undefined} />
+                      <FieldError msg={hints.transport ? t('onboarding.errors.transportRequiredField') : undefined} />
                     </div>
                   </div>
                 )}
@@ -1079,7 +1058,7 @@ const Onboarding: React.FC = () => {
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-text hover:text-accent font-heading text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
           >
             <ArrowLeft size={14} strokeWidth={2.75} />
-            Geri
+            {t('onboarding.nav.back')}
           </button>
 
           <div className="flex gap-1.5">
@@ -1097,7 +1076,7 @@ const Onboarding: React.FC = () => {
               onClick={handleNext}
               className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px"
             >
-              İleri
+              {t('onboarding.nav.next')}
               <ArrowRight size={14} strokeWidth={2.75} />
             </button>
           ) : (
@@ -1111,8 +1090,8 @@ const Onboarding: React.FC = () => {
                   : 'bg-accent hover:brightness-105 text-white shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px'}`}
             >
               {isGenerating
-                ? <><Loader2 size={14} className="animate-spin" /> Planlanıyor</>
-                : <><Plane size={14} strokeWidth={2.75} /> Planı Oluştur</>}
+                ? <><Loader2 size={14} className="animate-spin" /> {t('onboarding.nav.planning')}</>
+                : <><Plane size={14} strokeWidth={2.75} /> {t('onboarding.nav.createPlan')}</>}
             </button>
           )}
         </div>

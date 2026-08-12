@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sun, Moon, Plane } from 'lucide-react';
@@ -13,12 +14,14 @@ const GlobeAnimation = lazy(() => import('../components/GlobeAnimation'));
 
 /* ── Destinasyon kartı — hover'da video oynar ── */
 interface DestData {
-  city: string; planCount: number; img: string; video: string;
+  cityKey: string; planCount: number; img: string; video: string;
 }
 
 const DestinationCard: React.FC<{
   dest: DestData; index: number; onNavigate: () => void;
 }> = ({ dest, index, onNavigate }) => {
+  const { t } = useTranslation();
+  const cityName = t(`home.destinations.cities.${dest.cityKey}`);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -60,7 +63,7 @@ const DestinationCard: React.FC<{
       {/* Statik fotoğraf */}
       <img
         src={dest.img}
-        alt={dest.city}
+        alt={cityName}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
           hovered ? 'opacity-0' : 'opacity-100'
         }`}
@@ -87,67 +90,84 @@ const DestinationCard: React.FC<{
       {/* İçerik */}
       <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-5 flex items-end justify-between gap-1.5 sm:gap-2">
         <h3 className="font-heading text-sm sm:text-2xl text-white leading-tight">
-          {dest.city}
+          {cityName}
         </h3>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onNavigate(); }}
           className="shrink-0 bg-accent hover:brightness-105 text-white font-heading text-[9px] sm:text-xs px-2 py-1 sm:px-4 sm:py-2.5 rounded-full transition-all duration-200 whitespace-nowrap group-hover:scale-105 active:scale-95"
         >
-          <span className="sm:hidden">Planla</span>
-          <span className="hidden sm:inline">Hemen Planla</span>
+          <span className="sm:hidden">{t('home.destinations.planShort')}</span>
+          <span className="hidden sm:inline">{t('home.destinations.planFull')}</span>
         </button>
       </div>
     </motion.div>
   );
 };
 
-const HERO_PHOTOS = [
-  { city: 'Roma',      src: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=70&w=2400&auto=format&fit=crop' },
-  { city: 'İstanbul',  src: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=70&w=2400&auto=format&fit=crop' },
-  { city: 'Paris',     src: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=70&w=2400&auto=format&fit=crop' },
-  { city: 'Barcelona', src: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=70&w=2400&auto=format&fit=crop' },
+const HERO_PHOTOS_META = [
+  { cityKey: 'roma',      src: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=70&w=2400&auto=format&fit=crop' },
+  { cityKey: 'istanbul',  src: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=70&w=2400&auto=format&fit=crop' },
+  { cityKey: 'paris',     src: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=70&w=2400&auto=format&fit=crop' },
+  { cityKey: 'barcelona', src: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=70&w=2400&auto=format&fit=crop' },
 ];
 
 const HERO_ROTATE_MS = 6000;
 
+const STEP_NUMS = ['01', '02', '03', '04'];
 
-const STEPS = [
+const DESTINATIONS: DestData[] = [
   {
-    num: '01',
-    title: 'Hesabınızı oluşturun',
-    desc: 'Dakikalar içinde ücretsiz hesap açın. Kredi kartı gerekmez, kurulum için teknik bilgi şart değil.',
+    cityKey: 'roma',      planCount: 2400,
+    img:   'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/roma.mp4',
   },
   {
-    num: '02',
-    title: 'Tercihlerini gir',
-    desc: 'Destinasyon, tarih, bütçe ve seyahat tarzını belirle. Birkaç tıklama yeter.',
+    cityKey: 'paris',     planCount: 3100,
+    img:   'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/paris.mp4',
   },
   {
-    num: '03',
-    title: 'AI planı oluşturur',
-    desc: 'Gemini AI, tercihlerine özel coğrafi olarak optimize edilmiş gün gün plan hazırlar.',
+    cityKey: 'tokyo',     planCount: 1800,
+    img:   'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/tokyo.mp4',
   },
   {
-    num: '04',
-    title: 'Rotanı keşfet',
-    desc: 'İnteraktif haritada rotanı gör, harcamalarını takip et ve dilediğin zaman vibe değiştir.',
+    cityKey: 'istanbul',  planCount: 4200,
+    img:   'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/istanbul.mp4',
+  },
+  {
+    cityKey: 'barcelona', planCount: 1500,
+    img:   'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/barselona.mp4',
+  },
+  {
+    cityKey: 'newyork',   planCount: 2000,
+    img:   'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800&auto=format&fit=crop',
+    video: '/videos/newyork.mp4',
   },
 ];
 
 const Home: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
+
+  const HERO_PHOTOS = HERO_PHOTOS_META.map(p => ({ ...p, city: t(`home.destinations.cities.${p.cityKey}`) }));
+
+  const stepsData = t('home.howItWorks.steps', { returnObjects: true }) as { title: string; desc: string }[];
+  const STEPS = stepsData.map((s, i) => ({ num: STEP_NUMS[i], ...s }));
 
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   /* Hero fotoğrafları belirli aralıklarla otomatik döner */
   useEffect(() => {
-    const t = setInterval(() => {
-      setCurrentPhotoIndex(i => (i + 1) % HERO_PHOTOS.length);
+    const timer = setInterval(() => {
+      setCurrentPhotoIndex(i => (i + 1) % HERO_PHOTOS_META.length);
     }, HERO_ROTATE_MS);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, []);
 
   /* 3D glob — yalnızca "Nasıl Çalışır" bölümü görünüme yaklaşınca ve
@@ -206,7 +226,7 @@ const Home: React.FC = () => {
               onClick={(e) => toggleWithCircle(toggleTheme, e)}
               className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors
                 ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
-              aria-label="Tema değiştir"
+              aria-label={t('home.themeToggleLabel')}
             >
               <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
                 {dark ? <Moon size={14} /> : <Sun size={14} />}
@@ -217,14 +237,14 @@ const Home: React.FC = () => {
               onClick={() => navigate('/login')}
               className="text-white/90 hover:text-white font-heading text-sm px-3 py-1.5 transition-colors"
             >
-              Giriş
+              {t('home.navbar.login')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
               className="inline-flex items-center gap-1 font-heading text-white bg-accent hover:brightness-105 rounded-full text-sm px-4 py-2 shadow-[0_8px_20px_rgba(198,113,57,0.3)] transition-colors"
             >
-              Başla <ArrowRight size={13} />
+              {t('home.navbar.start')} <ArrowRight size={13} />
             </button>
           </div>
         </nav>
@@ -240,7 +260,7 @@ const Home: React.FC = () => {
               onClick={(e) => toggleWithCircle(toggleTheme, e)}
               className={`relative flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 w-9 h-9
                 ${dark ? 'bg-slate-700/80 text-yellow-300' : 'bg-slate-100/80 text-slate-600'}`}
-              aria-label="Tema değiştir"
+              aria-label={t('home.themeToggleLabel')}
             >
               <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
                 {dark ? <Moon size={16} /> : <Sun size={16} />}
@@ -251,14 +271,14 @@ const Home: React.FC = () => {
               onClick={() => navigate('/login')}
               className="text-white/90 hover:text-white font-heading text-sm px-4 py-2 transition-colors"
             >
-              Giriş Yap
+              {t('home.navbar.loginFull')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
               className="inline-flex items-center gap-1.5 font-heading text-white bg-accent hover:brightness-105 rounded-full text-sm px-5 py-2 shadow-[0_10px_22px_rgba(198,113,57,0.28)] hover:-translate-y-px transition-all"
             >
-              Ücretsiz Başla
+              {t('home.navbar.startFree')}
               <ArrowRight size={13} />
             </button>
           </div>
@@ -303,8 +323,8 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white leading-[1.06] tracking-tight"
               >
-                Hayalindeki<br />Seyahati<br />
-                <span className="text-accent-200">Planla.</span>
+                {t('home.hero.titleLine1')}<br />{t('home.hero.titleLine2')}<br />
+                <span className="text-accent-200">{t('home.hero.titleLine3')}</span>
               </motion.h1>
 
               {/* Alt metin */}
@@ -313,7 +333,7 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="mt-4 text-lg text-white/70 leading-relaxed max-w-md"
               >
-                Bütçen, tempon ve zevklerine göre yapay zeka saniyeler içinde coğrafi olarak optimize edilmiş, kişisel seyahat planını oluşturur.
+                {t('home.hero.subtitle')}
               </motion.p>
 
               {/* Butonlar */}
@@ -326,7 +346,7 @@ const Home: React.FC = () => {
                   type="button" onClick={handleCTA}
                   className="group inline-flex items-center gap-2 px-7 py-3.5 bg-accent hover:brightness-105 text-white font-heading text-base rounded-full transition-all shadow-[0_12px_28px_rgba(198,113,57,0.3)] hover:-translate-y-0.5 active:translate-y-px"
                 >
-                  Ücretsiz Plan Oluştur
+                  {t('home.hero.ctaButton')}
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -337,7 +357,11 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-white/15"
               >
-                {[['50+', 'Desteklenen Şehir'], ['15sn', 'Ortalama Plan Süresi'], ['%100', 'Kişiselleştirilmiş']].map(([val, label]) => (
+                {[
+                  [t('home.hero.stats.cityValue'), t('home.hero.stats.cityLabel')],
+                  [t('home.hero.stats.timeValue'), t('home.hero.stats.timeLabel')],
+                  [t('home.hero.stats.personalizedValue'), t('home.hero.stats.personalizedLabel')],
+                ].map(([val, label]) => (
                   <div key={label}>
                     <p className="font-heading text-2xl text-accent-200">{val}</p>
                     <p className="text-sm text-white/60 mt-0.5">{label}</p>
@@ -354,7 +378,7 @@ const Home: React.FC = () => {
             <button
               key={photo.src}
               type="button"
-              aria-label={`${photo.city} fotoğrafına geç`}
+              aria-label={t('home.hero.goToPhoto', { city: photo.city })}
               onClick={() => setCurrentPhotoIndex(i)}
               className={`rounded-full transition-all duration-300 ${
                 i === currentPhotoIndex
@@ -371,7 +395,7 @@ const Home: React.FC = () => {
          ══════════════════════════════════════════ */}
       <div className="bg-bg flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
         <span className="text-[11px] font-heading tracking-[0.25em] text-text uppercase select-none">
-          Scroll
+          {t('home.scroll')}
         </span>
         <motion.div
           animate={{ y: [0, 6, 0] }}
@@ -396,12 +420,12 @@ const Home: React.FC = () => {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">ÜRÜN</span>
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.product.eyebrow')}</span>
             <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
-              Travyon'u Keşfedin
+              {t('home.product.title')}
             </h2>
             <p className="text-sm text-muted mt-2 max-w-md mx-auto leading-relaxed">
-              Dakikalar içinde kişiselleştirilmiş seyahat planın hazır.
+              {t('home.product.subtitle')}
             </p>
           </motion.div>
 
@@ -476,12 +500,12 @@ const Home: React.FC = () => {
 
           {/* Başlık */}
           <div className="pt-14 sm:pt-20 lg:pt-22 pb-2">
-            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">SÜREÇ</span>
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.howItWorks.eyebrow')}</span>
             <h2 className="font-heading text-2xl md:text-3xl text-text mt-1">
-              Nasıl Çalışır?
+              {t('home.howItWorks.title')}
             </h2>
             <p className="text-sm text-muted mt-1.5 max-w-xs leading-relaxed">
-              Hesap oluşturmaktan mükemmel seyahat planına dört adımda ulaşın.
+              {t('home.howItWorks.subtitle')}
             </p>
           </div>
 
@@ -551,50 +575,19 @@ const Home: React.FC = () => {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">Destinasyonlar</span>
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.destinations.eyebrow')}</span>
             <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
-              En Popüler Destinasyonlar
+              {t('home.destinations.title')}
             </h2>
             <p className="text-sm text-muted mt-2">
-              AI bu şehirlerde uzman — saniyeler içinde optimize planlar üretir.
+              {t('home.destinations.subtitle')}
             </p>
           </motion.div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {([
-              {
-                city: 'Roma',      planCount: 2400,
-                img:   'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/roma.mp4',
-              },
-              {
-                city: 'Paris',     planCount: 3100,
-                img:   'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/paris.mp4',
-              },
-              {
-                city: 'Tokyo',     planCount: 1800,
-                img:   'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/tokyo.mp4',
-              },
-              {
-                city: 'İstanbul',  planCount: 4200,
-                img:   'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/istanbul.mp4',
-              },
-              {
-                city: 'Barcelona', planCount: 1500,
-                img:   'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/barselona.mp4',
-              },
-              {
-                city: 'New York',  planCount: 2000,
-                img:   'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800&auto=format&fit=crop',
-                video: '/videos/newyork.mp4',
-              },
-            ] as DestData[]).map((dest, i) => (
+            {DESTINATIONS.map((dest, i) => (
               <DestinationCard
-                key={dest.city}
+                key={dest.cityKey}
                 dest={dest}
                 index={i}
                 onNavigate={() => navigate('/register')}
@@ -625,12 +618,12 @@ const Home: React.FC = () => {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">Fiyatlandırma</span>
+            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.pricing.eyebrow')}</span>
             <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
-              Seyahatine uygun plan seç
+              {t('home.pricing.title')}
             </h2>
             <p className="text-sm text-muted mt-2 max-w-md mx-auto">
-              Ücretsiz başla, ihtiyacın büyüdükçe yükselt.
+              {t('home.pricing.subtitle')}
             </p>
           </motion.div>
 
@@ -643,15 +636,15 @@ const Home: React.FC = () => {
               className="bg-surface border border-divider rounded-3xl p-6 flex flex-col"
             >
               <div className="mb-5">
-                <span className="text-xs font-heading uppercase tracking-widest text-muted">Free</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-muted">{t('home.pricing.free.name')}</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="font-heading text-4xl text-text">₺0</span>
-                  <span className="text-muted text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-text">{t('home.pricing.free.price')}</span>
+                  <span className="text-muted text-sm">{t('home.pricing.perMonth')}</span>
                 </div>
-                <p className="text-xs text-muted mt-1">Sonsuza kadar ücretsiz</p>
+                <p className="text-xs text-muted mt-1">{t('home.pricing.free.tagline')}</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
-                {['3 plan hakkı', 'Temel AI planlama', 'İnteraktif harita', 'Plan kaydetme'].map(f => (
+                {(t('home.pricing.free.features', { returnObjects: true }) as string[]).map(f => (
                   <div key={f} className="flex items-center gap-2.5">
                     <div className="w-4 h-4 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
                       <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -665,7 +658,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/register')}
                 className="w-full py-3 rounded-full border-[1.5px] border-divider bg-transparent text-text font-heading text-sm hover:bg-surface-2 transition-all"
               >
-                Ücretsiz Başla
+                {t('home.pricing.free.button')}
               </button>
             </motion.div>
 
@@ -677,19 +670,19 @@ const Home: React.FC = () => {
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="bg-accent-700 text-white text-[10px] font-heading uppercase tracking-widest px-3.5 py-1.5 rounded-full">
-                  En Popüler
+                  {t('home.pricing.pro.badge')}
                 </span>
               </div>
               <div className="mb-5">
-                <span className="text-xs font-heading uppercase tracking-widest text-white/75">Pro</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-white/75">{t('home.pricing.pro.name')}</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="font-heading text-4xl text-white">₺99</span>
-                  <span className="text-white/75 text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-white">{t('home.pricing.pro.price')}</span>
+                  <span className="text-white/75 text-sm">{t('home.pricing.perMonth')}</span>
                 </div>
-                <p className="text-xs text-white/70 mt-1">Yıllık ödemede %20 indirim</p>
+                <p className="text-xs text-white/70 mt-1">{t('home.pricing.pro.tagline')}</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
-                {['Sınırsız plan', 'Reklamsız deneyim', 'Gelişmiş AI modeli', 'Seyahat süreleri', 'Öncelikli destek'].map(f => (
+                {(t('home.pricing.pro.features', { returnObjects: true }) as string[]).map(f => (
                   <div key={f} className="flex items-center gap-2.5">
                     <div className="w-4 h-4 rounded-full bg-white/22 flex items-center justify-center shrink-0">
                       <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -703,7 +696,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/register')}
                 className="w-full py-3 rounded-full bg-white text-accent-700 font-heading text-sm hover:brightness-105 transition-all"
               >
-                Pro'ya Geç →
+                {t('home.pricing.pro.button')}
               </button>
             </motion.div>
 
@@ -714,15 +707,15 @@ const Home: React.FC = () => {
               className="bg-surface border border-divider rounded-3xl p-6 flex flex-col"
             >
               <div className="mb-5">
-                <span className="text-xs font-heading uppercase tracking-widest text-muted">Team</span>
+                <span className="text-xs font-heading uppercase tracking-widest text-muted">{t('home.pricing.team.name')}</span>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="font-heading text-4xl text-text">₺299</span>
-                  <span className="text-muted text-sm">/ay</span>
+                  <span className="font-heading text-4xl text-text">{t('home.pricing.team.price')}</span>
+                  <span className="text-muted text-sm">{t('home.pricing.perMonth')}</span>
                 </div>
-                <p className="text-xs text-muted mt-1">5 kullanıcıya kadar</p>
+                <p className="text-xs text-muted mt-1">{t('home.pricing.team.tagline')}</p>
               </div>
               <div className="flex-1 space-y-3 mb-6">
-                {['5 kişiye kadar', 'Sınırsız plan', 'Ortak düzenleme', 'Paylaşılabilir planlar', 'Özel destek hattı'].map(f => (
+                {(t('home.pricing.team.features', { returnObjects: true }) as string[]).map(f => (
                   <div key={f} className="flex items-center gap-2.5">
                     <div className="w-4 h-4 rounded-full bg-sage-200 flex items-center justify-center shrink-0">
                       <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1" stroke="var(--color-sage-700)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -736,7 +729,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/register')}
                 className="w-full py-3 rounded-full border-[1.5px] border-divider bg-transparent text-text font-heading text-sm hover:bg-surface-2 transition-all"
               >
-                Team'e Başla
+                {t('home.pricing.team.button')}
               </button>
             </motion.div>
 
@@ -766,16 +759,16 @@ const Home: React.FC = () => {
         >
           <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-white/12 pointer-events-none" />
           <div className="absolute -bottom-20 -left-8 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
-          <p className="relative text-xs font-heading text-white/80 uppercase tracking-widest mb-3.5">Başlamaya hazır mısın?</p>
+          <p className="relative text-xs font-heading text-white/80 uppercase tracking-widest mb-3.5">{t('home.ctaRepeat.eyebrow')}</p>
           <h2 className="relative font-heading text-3xl md:text-4xl lg:text-5xl text-white leading-tight">
-            Sıradaki durağın<br />sadece bir tık ötede.
+            {t('home.ctaRepeat.titleLine1')}<br />{t('home.ctaRepeat.titleLine2')}
           </h2>
           <button
             type="button"
             onClick={handleCTA}
             className="relative mt-8 inline-flex items-center gap-2.5 px-8 py-4 bg-white hover:brightness-105 text-accent-700 font-heading text-base rounded-full transition-all shadow-[0_16px_34px_rgba(46,43,37,0.24)] active:scale-95"
           >
-            Ücretsiz Plan Oluştur
+            {t('home.hero.ctaButton')}
             <ArrowRight size={18} />
           </button>
         </motion.div>
@@ -792,15 +785,15 @@ const Home: React.FC = () => {
 
           {/* Linkler */}
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <Link to="/sss" className="text-sm text-muted hover:text-text transition-colors">SSS</Link>
-            <Link to="/gizlilik" className="text-sm text-muted hover:text-text transition-colors">Gizlilik</Link>
-            <Link to="/kullanim-kosullari" className="text-sm text-muted hover:text-text transition-colors">Kullanım Koşulları</Link>
-            <Link to="/iletisim" className="text-sm text-muted hover:text-text transition-colors">İletişim</Link>
+            <Link to="/sss" className="text-sm text-muted hover:text-text transition-colors">{t('footer.faq')}</Link>
+            <Link to="/gizlilik" className="text-sm text-muted hover:text-text transition-colors">{t('footer.privacy')}</Link>
+            <Link to="/kullanim-kosullari" className="text-sm text-muted hover:text-text transition-colors">{t('footer.terms')}</Link>
+            <Link to="/iletisim" className="text-sm text-muted hover:text-text transition-colors">{t('footer.contact')}</Link>
           </div>
 
           {/* Copyright */}
           <p className="text-xs sm:text-sm text-muted whitespace-nowrap text-center">
-            © 2026 Travyon. Tüm hakları saklıdır.
+            {t('footer.copyright')}
           </p>
 
         </div>

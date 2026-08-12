@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Map as MapIcon, Calendar, Wallet, Users, Trash2, Star,
@@ -67,7 +68,9 @@ interface PlanCardProps {
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite, onRename, onDelete, onShareLink, linkCopied }) => {
+  const { t, i18n } = useTranslation();
   const coverPhoto = useCityPhoto(savedPlan.plan.destination);
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   return (
     <motion.div
       layout
@@ -105,7 +108,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
         <div className="absolute bottom-3 left-3 right-3">
           <div className="flex items-center gap-1.5 mb-1">
             <MapPin size={11} strokeWidth={2.5} className="text-white/80" />
-            <span className="text-[10px] font-heading text-white/80 uppercase tracking-widest">Destinasyon</span>
+            <span className="text-[10px] font-heading text-white/80 uppercase tracking-widest">{t('savedPlans.card.destination')}</span>
           </div>
           <h3 className="font-heading text-xl text-white leading-tight truncate">
             {savedPlan.customName || savedPlan.plan.destination}
@@ -119,14 +122,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
           <div className="flex items-center gap-1">
             <Calendar size={11} strokeWidth={2.5} className="text-accent" />
             <span className="font-semibold text-text">{savedPlan.plan.dailyPlans.length}</span>
-            <span>gün</span>
+            <span>{t('savedPlans.card.days')}</span>
           </div>
           <div className="w-px h-3 bg-divider" />
           <div className="flex items-center gap-1">
             <span className="font-semibold text-text">
               {savedPlan.plan.dailyPlans.reduce((s, d) => s + d.activities.length, 0)}
             </span>
-            <span>aktivite</span>
+            <span>{t('savedPlans.card.activities')}</span>
           </div>
           <div className="w-px h-3 bg-divider" />
           <div className="flex items-center gap-1">
@@ -138,14 +141,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-divider">
           <div className="flex items-center gap-1.5">
             <Wallet size={12} strokeWidth={2.5} className="text-accent" />
-            <span className="text-xs font-semibold text-muted">Toplam Bütçe</span>
+            <span className="text-xs font-semibold text-muted">{t('savedPlans.card.totalBudget')}</span>
           </div>
           <span className="font-heading text-sm text-text">
             {savedPlan.plan.currencySymbol}{savedPlan.plan.totalEstimatedCost.toLocaleString()}
           </span>
         </div>
 
-        <p className="text-[10px] text-muted mb-3">{formatDate(savedPlan.createdAt)} tarihinde oluşturuldu</p>
+        <p className="text-[10px] text-muted mb-3">{t('savedPlans.card.createdOn', { date: formatDate(savedPlan.createdAt, locale) })}</p>
 
         <div className="flex items-center gap-2">
           <button
@@ -153,7 +156,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
             onClick={() => onOpen(savedPlan)}
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-accent hover:brightness-105 text-white font-heading text-xs rounded-full transition-all"
           >
-            Aç <ArrowRight size={11} strokeWidth={2.75} />
+            {t('savedPlans.card.open')} <ArrowRight size={11} strokeWidth={2.75} />
           </button>
           {/* Link kopyala */}
           <button
@@ -164,7 +167,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
                 ? 'border-emerald-300 bg-emerald-50 text-emerald-600'
                 : 'border-divider hover:border-blue-300 hover:bg-blue-50 text-muted hover:text-blue-600'
             }`}
-            title="Link kopyala"
+            title={t('savedPlans.card.copyLink')}
           >
             {linkCopied ? <Check size={12} strokeWidth={2.5} /> : <Link2 size={12} strokeWidth={2.5} />}
           </button>
@@ -172,7 +175,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
             type="button"
             onClick={() => onRename(savedPlan)}
             className="w-9 h-9 border-[1.5px] border-divider rounded-full hover:border-accent/40 flex items-center justify-center text-muted hover:text-accent transition-all"
-            title="Yeniden adlandır"
+            title={t('savedPlans.card.rename')}
           >
             <Pencil size={12} strokeWidth={2.5} />
           </button>
@@ -180,7 +183,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
             type="button"
             onClick={() => onDelete(savedPlan.id)}
             className="w-9 h-9 border-[1.5px] border-divider rounded-full hover:border-red-300 hover:bg-red-50 flex items-center justify-center text-muted hover:text-red-600 transition-all"
-            title="Sil"
+            title={t('savedPlans.card.delete')}
           >
             <Trash2 size={12} strokeWidth={2.5} />
           </button>
@@ -190,9 +193,9 @@ const PlanCard: React.FC<PlanCardProps> = ({ savedPlan, onOpen, onToggleFavorite
   );
 };
 
-const formatDate = (timestamp: number): string => {
+const formatDate = (timestamp: number, locale: string): string => {
   const date = new Date(timestamp);
-  return date.toLocaleDateString('tr-TR', {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -200,6 +203,7 @@ const formatDate = (timestamp: number): string => {
 };
 
 const SavedPlans: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const plans = useUserPlans();
   const { removePlan, toggleFavorite, renamePlan } = useSavedPlansStore();
@@ -246,7 +250,7 @@ const SavedPlans: React.FC = () => {
     // E-posta doğrulama — link paylaşmak için zorunlu
     if (!(await isEmailVerified())) {
       resendVerification().catch(() => {});
-      alert('Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.');
+      alert(t('savedPlans.alerts.verifyEmailForLink'));
       return;
     }
     setLinkLoading(savedPlan.id);
@@ -261,7 +265,7 @@ const SavedPlans: React.FC = () => {
       setLinkCopiedId(savedPlan.id);
       setTimeout(() => setLinkCopiedId(null), 2500);
     } catch {
-      alert('Link kopyalanamadı. Lütfen tekrar deneyin.');
+      alert(t('savedPlans.alerts.copyFailed'));
     } finally {
       setLinkLoading(null);
     }
@@ -289,13 +293,13 @@ const SavedPlans: React.FC = () => {
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <p className="text-xs font-heading text-accent uppercase tracking-widest mb-1">
-                Kayıtlı Planlar
+                {t('savedPlans.eyebrow')}
               </p>
-              <h1 className="font-heading text-2xl text-text">Planlarım</h1>
+              <h1 className="font-heading text-2xl text-text">{t('savedPlans.title')}</h1>
               <p className="text-sm text-muted mt-1">
                 {plans.length === 0
-                  ? 'Henüz kayıtlı planın yok'
-                  : `${plans.length} plan kaydedildi`}
+                  ? t('savedPlans.subtitle.empty')
+                  : t('savedPlans.subtitle.count', { count: plans.length })}
               </p>
             </div>
 
@@ -305,7 +309,7 @@ const SavedPlans: React.FC = () => {
               className="inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
             >
               <Plus size={16} strokeWidth={2.75} />
-              <span className="hidden sm:inline">Yeni Plan</span>
+              <span className="hidden sm:inline">{t('savedPlans.newPlan')}</span>
             </button>
           </div>
 
@@ -318,7 +322,7 @@ const SavedPlans: React.FC = () => {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Şehir veya plan adı ara..."
+                  placeholder={t('savedPlans.searchPlaceholder')}
                   className="w-full pl-10 pr-4 py-3 rounded-2xl border-[1.5px] border-divider bg-surface-2 focus:border-accent outline-none text-sm placeholder:text-muted transition-all"
                 />
               </div>
@@ -333,7 +337,7 @@ const SavedPlans: React.FC = () => {
                       : 'text-muted hover:text-text'
                   }`}
                 >
-                  Tümü
+                  {t('savedPlans.filters.all')}
                 </button>
                 <button
                   type="button"
@@ -345,7 +349,7 @@ const SavedPlans: React.FC = () => {
                   }`}
                 >
                   <Star size={11} strokeWidth={2.5} />
-                  Favoriler
+                  {t('savedPlans.filters.favorites')}
                 </button>
               </div>
             </div>
@@ -363,10 +367,10 @@ const SavedPlans: React.FC = () => {
               <MapIcon size={32} strokeWidth={2.5} className="text-accent" />
             </div>
             <h2 className="font-heading text-xl text-text mb-2">
-              Henüz Kayıtlı Plan Yok
+              {t('savedPlans.empty.title')}
             </h2>
             <p className="text-sm text-muted mb-6 leading-relaxed">
-              İlk planını oluştur ve kaydet. Tüm planların burada listelenecek, istediğin zaman geri dönebilirsin.
+              {t('savedPlans.empty.description')}
             </p>
             <button
               type="button"
@@ -374,13 +378,13 @@ const SavedPlans: React.FC = () => {
               className="inline-flex items-center gap-2 px-6 py-3.5 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all"
             >
               <Sparkles size={15} />
-              İlk Planı Oluştur
+              {t('savedPlans.empty.cta')}
             </button>
           </div>
         ) : filteredPlans.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted">
-              {search ? 'Aramayla eşleşen plan bulunamadı' : 'Favori plan yok'}
+              {search ? t('savedPlans.noResults.search') : t('savedPlans.noResults.favorites')}
             </p>
           </div>
         ) : (
@@ -424,9 +428,9 @@ const SavedPlans: React.FC = () => {
               <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
                 <Trash2 size={20} strokeWidth={2.5} className="text-red-500" />
               </div>
-              <h3 className="font-heading text-lg text-text mb-2">Planı Sil</h3>
+              <h3 className="font-heading text-lg text-text mb-2">{t('savedPlans.deleteModal.title')}</h3>
               <p className="text-sm text-muted mb-6 leading-relaxed">
-                Bu planı kalıcı olarak silmek istediğinden emin misin? Bu işlem geri alınamaz.
+                {t('savedPlans.deleteModal.message')}
               </p>
               <div className="flex gap-3">
                 <button
@@ -434,14 +438,14 @@ const SavedPlans: React.FC = () => {
                   onClick={() => setDeleteConfirm(null)}
                   className="flex-1 py-3 border-[1.5px] border-divider rounded-full text-sm font-heading text-text hover:bg-surface-2 transition-all"
                 >
-                  İptal
+                  {t('savedPlans.deleteModal.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(deleteConfirm)}
                   className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white text-sm font-heading rounded-full transition-all"
                 >
-                  Sil
+                  {t('savedPlans.deleteModal.confirm')}
                 </button>
               </div>
             </motion.div>
@@ -466,13 +470,13 @@ const SavedPlans: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface rounded-3xl p-6 max-w-sm w-full z-50 shadow-2xl mx-4"
             >
-              <h3 className="font-heading text-lg text-text mb-4">Planı Yeniden Adlandır</h3>
+              <h3 className="font-heading text-lg text-text mb-4">{t('savedPlans.renameModal.title')}</h3>
               <input
                 type="text"
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && saveRename()}
-                placeholder="Plan adı"
+                placeholder={t('savedPlans.renameModal.placeholder')}
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-2xl border-[1.5px] border-divider bg-surface-2 focus:border-accent outline-none text-sm font-medium mb-4"
               />
@@ -482,14 +486,14 @@ const SavedPlans: React.FC = () => {
                   onClick={() => setRenameId(null)}
                   className="flex-1 py-3 border-[1.5px] border-divider rounded-full text-sm font-heading text-text hover:bg-surface-2 transition-all"
                 >
-                  İptal
+                  {t('savedPlans.renameModal.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={saveRename}
                   className="flex-1 py-3 bg-accent hover:brightness-105 text-white text-sm font-heading rounded-full transition-all"
                 >
-                  Kaydet
+                  {t('savedPlans.renameModal.save')}
                 </button>
               </div>
             </motion.div>

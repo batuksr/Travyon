@@ -1,0 +1,1846 @@
+{
+  "nav": {
+    "home": "Home",
+    "createPlan": "Create Plan",
+    "myPlans": "My Plans",
+    "community": "Community",
+    "notifications": "Notifications",
+    "notificationsShort": "Alerts",
+    "settings": "Settings",
+    "theme": "Theme",
+    "themeToggleLabel": "Toggle theme",
+    "logout": "Log Out",
+    "user": "User"
+  },
+  "home": {
+    "navbar": {
+      "login": "Log In",
+      "loginFull": "Log In",
+      "start": "Start",
+      "startFree": "Start Free"
+    },
+    "themeToggleLabel": "Toggle theme",
+    "hero": {
+      "titleLine1": "Plan Your",
+      "titleLine2": "Dream",
+      "titleLine3": "Trip.",
+      "subtitle": "Based on your budget, pace and taste, AI builds your personal, geographically optimized travel plan in seconds.",
+      "ctaButton": "Create a Free Plan",
+      "goToPhoto": "Go to {{city}} photo",
+      "stats": {
+        "cityValue": "50+",
+        "cityLabel": "Cities Supported",
+        "timeValue": "15s",
+        "timeLabel": "Avg. Plan Time",
+        "personalizedValue": "100%",
+        "personalizedLabel": "Personalized"
+      }
+    },
+    "scroll": "Scroll",
+    "product": {
+      "eyebrow": "PRODUCT",
+      "title": "Discover Travyon",
+      "subtitle": "Your personalized travel plan, ready in minutes."
+    },
+    "howItWorks": {
+      "eyebrow": "PROCESS",
+      "title": "How It Works?",
+      "subtitle": "Go from creating an account to the perfect travel plan in four steps.",
+      "steps": [
+        { "title": "Create your account", "desc": "Open a free account in minutes. No credit card needed, no technical knowledge required." },
+        { "title": "Enter your preferences", "desc": "Set your destination, dates, budget and travel style. Just a few clicks." },
+        { "title": "AI builds the plan", "desc": "Gemini AI prepares a day-by-day, geographically optimized plan tailored to your preferences." },
+        { "title": "Explore your route", "desc": "See your route on an interactive map, track your spending, and change the vibe anytime." }
+      ]
+    },
+    "destinations": {
+      "eyebrow": "Destinations",
+      "title": "Most Popular Destinations",
+      "subtitle": "AI is an expert in these cities — it generates optimized plans in seconds.",
+      "planShort": "Plan",
+      "planFull": "Plan Now",
+      "cities": {
+        "roma": "Rome",
+        "istanbul": "Istanbul",
+        "paris": "Paris",
+        "barcelona": "Barcelona",
+        "tokyo": "Tokyo",
+        "newyork": "New York"
+      }
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Choose a plan that fits your trip",
+      "subtitle": "Start free, upgrade as your needs grow.",
+      "perMonth": "/mo",
+      "free": {
+        "name": "Free",
+        "price": "₺0",
+        "tagline": "Free forever",
+        "features": ["3 plans included", "Basic AI planning", "Interactive map", "Save plans"],
+        "button": "Start Free"
+      },
+      "pro": {
+        "badge": "Most Popular",
+        "name": "Pro",
+        "price": "₺99",
+        "tagline": "20% off with annual billing",
+        "features": ["Unlimited plans", "Ad-free experience", "Advanced AI model", "Trip durations", "Priority support"],
+        "button": "Upgrade to Pro →"
+      },
+      "team": {
+        "name": "Team",
+        "price": "₺299",
+        "tagline": "Up to 5 users",
+        "features": ["Up to 5 people", "Unlimited plans", "Collaborative editing", "Shareable plans", "Dedicated support line"],
+        "button": "Start with Team"
+      }
+    },
+    "ctaRepeat": {
+      "eyebrow": "Ready to get started?",
+      "titleLine1": "Your next stop is",
+      "titleLine2": "just one click away."
+    }
+  },
+  "footer": {
+    "faq": "FAQ",
+    "privacy": "Privacy",
+    "terms": "Terms of Use",
+    "contact": "Contact",
+    "copyright": "© 2026 Travyon. All rights reserved."
+  },
+  "auth": {
+    "common": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "or": "or",
+      "googleContinue": "Continue with Google",
+      "tagline": "Plan your trip with Travyon, create memories.",
+      "httpsRequired": "Open the app over HTTPS to sign in with Google.",
+      "unauthorizedDomain": "This domain isn't authorized in Firebase. Add it under Firebase Console → Authentication → Authorized Domains.",
+      "unknownError": "unknown error"
+    },
+    "login": {
+      "photoAlt": "Istanbul Galata Tower",
+      "quoteLine1": "The world's most beautiful corners",
+      "quoteLine2": "are still waiting for you.",
+      "title": "Welcome back 👋",
+      "subtitle": "Sign in to your account and keep planning.",
+      "forgotPassword": "Forgot password?",
+      "submitLoading": "Signing In...",
+      "submit": "Log In",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign Up",
+      "errors": {
+        "redirectFailed": "Couldn't sign in with Google. Please try again.",
+        "userNotFound": "No account found with this email.",
+        "wrongPassword": "Incorrect password.",
+        "invalidCredential": "Incorrect email or password.",
+        "generic": "Couldn't sign in. Please try again.",
+        "googleFailedWithCode": "Couldn't sign in with Google. ({{code}})"
+      }
+    },
+    "register": {
+      "photoAlt": "Anıtkabir, Ankara",
+      "quoteLine1": "Planning your dream trip",
+      "quoteLine2": "now takes just minutes.",
+      "title": "Create an account 🚀",
+      "subtitle": "Join the AI-powered planner.",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Your Full Name",
+      "passwordPlaceholder": "Min. 6 characters",
+      "passwordHint": "At least 6 characters",
+      "submitLoading": "Creating...",
+      "submit": "Create Account",
+      "alreadyHaveAccount": "Already have an account?",
+      "loginLink": "Log In",
+      "errors": {
+        "redirectFailed": "Couldn't sign up with Google. Please try again.",
+        "passwordTooShort": "Password must be at least 6 characters.",
+        "emailInUse": "This email is already registered.",
+        "weakPassword": "Password is too weak.",
+        "generic": "Couldn't create account. Please try again.",
+        "googleFailedWithCode": "Couldn't sign up with Google. ({{code}})"
+      },
+      "verify": {
+        "title": "Verify Your Email",
+        "sentTo": "We sent a verification link to <b>{{email}}</b>.",
+        "instructions": "Click the link in your email, then tap \"I Verified\" below.",
+        "spamHint": "📥 Didn't get the email? Check your Spam / Junk folder.",
+        "checkButton": "I Verified, Continue",
+        "resendButton": "Resend Email",
+        "resendSent": "Sent",
+        "laterButton": "I'll verify later →",
+        "notVerifiedYet": "Not verified yet. Did you click the link in the email? (Check spam too)",
+        "checkFailed": "Couldn't check, please try again.",
+        "tooManyRequests": "Too many requests — try again in a few minutes.",
+        "resendFailed": "Couldn't send the email, please try again."
+      }
+    }
+  },
+  "legal": {
+    "backHome": "Home",
+    "eyebrow": "Help & Legal",
+    "lastUpdated": "Last updated: May 26, 2026",
+    "tabs": {
+      "faq": "FAQ",
+      "privacy": "Privacy",
+      "terms": "Terms of Use",
+      "contact": "Contact"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Answers to what's on your mind. Can't find it? Just write to us.",
+      "sections": [
+        {
+          "category": "General",
+          "items": [
+            { "q": "What is Travyon?", "a": "Travyon is an AI-powered, personalized travel planning platform. Based on your budget, date range and travel style, it creates a day-by-day optimized plan in minutes." },
+            { "q": "Can I use it for free?", "a": "Yes! You can use the Free plan for as long as you like. It includes 3 plans, basic AI planning, and interactive map access." },
+            { "q": "Do I have to create an account?", "a": "An account is required to create and save plans. Signing up takes only a few seconds and is completely free." }
+          ]
+        },
+        {
+          "category": "Creating a Plan",
+          "items": [
+            { "q": "How long does it take to create a plan?", "a": "15–30 seconds on average. The AI analyzes your preferences and instantly prepares a geographically optimized, day-by-day plan." },
+            { "q": "Which cities are supported?", "a": "50+ popular cities worldwide are supported, and the list keeps growing. We cover popular destinations like Istanbul, Paris, Tokyo, Rome, Barcelona and New York." },
+            { "q": "Can I change the suggestions?", "a": "Of course! Once your plan is created you can edit every activity, time and route however you like. The plan is entirely under your control." },
+            { "q": "Can I save more than one plan?", "a": "You can save 3 plans on the Free plan and unlimited plans on Pro. Your saved plans are always available under \"My Plans\"." }
+          ]
+        },
+        {
+          "category": "Security & Privacy",
+          "items": [
+            { "q": "Is my data safe?", "a": "All data is stored on Google Firebase infrastructure with AES-256 encryption. Your personal information is never shared with third parties under any circumstances." },
+            { "q": "Can I delete my account?", "a": "Yes, you can permanently delete your account and all your data from Settings > Account." }
+          ]
+        },
+        {
+          "category": "Technical",
+          "items": [
+            { "q": "Is there a mobile app?", "a": "We currently run as a web app. A mobile app (iOS & Android) is coming soon — you can sign up to be notified." },
+            { "q": "Which browsers are supported?", "a": "It runs smoothly on up-to-date versions of Chrome, Firefox, Safari and Edge. Chrome is recommended for the best experience." },
+            { "q": "Do I need an internet connection?", "a": "An internet connection is required to create plans and view maps. Offline support for viewing saved plans is coming soon." }
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "subtitle": "We transparently explain how we protect and use your data.",
+      "intro": "At Travyon (\"we\", \"our\"), we respect your privacy and take the protection of your personal data seriously. This Privacy Policy explains what data we collect, how we use it, and how we protect it when you use our services.",
+      "sections": [
+        {
+          "title": "1. Data We Collect",
+          "content": "To provide our services, we may process the following personal data:\n\n• Account information: Name, email address and password (stored encrypted).\n• Usage data: The plans you create, preferences, travel dates and budget information.\n• Device information: Browser type, operating system and IP address.\n• Communication data: Information you share when submitting a support request or feedback.\n\nIf you sign in with Google, Google shares basic profile information such as your name and email address with us."
+        },
+        {
+          "title": "2. Purpose of Data Use",
+          "content": "We use the data we collect only for the following purposes:\n\n• Creating and managing your account.\n• Creating, saving and personalizing travel plans.\n• Ensuring service security and preventing fraud.\n• Improving app performance and user experience.\n• Providing support when you request it.\n• Fulfilling legal obligations."
+        },
+        {
+          "title": "3. Data Security",
+          "content": "We apply industry-standard security measures to protect your personal data:\n\n• All data is stored on Google Firebase infrastructure with AES-256 encryption.\n• Connections are encrypted using the HTTPS/TLS protocol.\n• Passwords are never stored in plain text.\n• Our systems undergo regular security audits.\n\nHowever, we note that no data transmission over the internet is ever 100% secure."
+        },
+        {
+          "title": "4. Data Sharing",
+          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps) and Google Gemini AI (plan generation).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
+        },
+        {
+          "title": "5. Cookies",
+          "content": "Our site uses cookies to store session and preference information. The types of cookies we use:\n\n• Essential cookies: Required for session management and security.\n• Preference cookies: Remember settings like your language and theme preferences.\n• Analytics cookies: Collect anonymous usage statistics (optional).\n\nYou can disable cookies from your browser settings; however, this may affect some functionality."
+        },
+        {
+          "title": "6. Your Rights",
+          "content": "Under applicable data protection law, you have the following rights:\n\n• The right to learn whether your personal data is being processed.\n• The right to request information about processed data.\n• The right to request correction or deletion of your data.\n• The right to object to the processing of your data.\n• The right to data portability.\n\nYou can exercise these rights by emailing us at iletisim@travyon.app."
+        },
+        {
+          "title": "7. Data Retention",
+          "content": "We retain your data for as long as your account is active. If you delete your account, we permanently delete your personal data from our systems within 30 days. Some data may be retained longer where required by legal obligations."
+        },
+        {
+          "title": "8. Changes",
+          "content": "We may update this Privacy Policy from time to time. We will notify you at your registered email address if there are significant changes. You can always find the current version of the policy on this page."
+        },
+        {
+          "title": "9. Contact",
+          "content": "For questions about privacy:\n\nEmail: iletisim@travyon.app\nAddress: Istanbul, Türkiye"
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Use",
+      "subtitle": "The rules and responsibilities that apply while using Travyon.",
+      "intro": "These Terms of Use govern your use of the Travyon platform (the \"Service\"). Please read these terms carefully before using the platform.",
+      "sections": [
+        {
+          "title": "1. Acceptance",
+          "content": "By using Travyon (the \"Platform\"), you confirm that you have read, understood and agree to these Terms of Use. If you do not agree to these terms, please do not use the platform.\n\nUsers under the age of 18 should only use the platform under the supervision of a parent or legal guardian."
+        },
+        {
+          "title": "2. Description of Service",
+          "content": "Travyon is a web platform that creates personalized travel plans using artificial intelligence technology. Our services include:\n\n• AI-powered travel plan generation\n• Interactive map and route viewing\n• Saving and managing plans\n• Community features and plan sharing\n• Weather and travel duration information\n\nThe scope of our services may be changed with prior notice."
+        },
+        {
+          "title": "3. Account Creation and Security",
+          "content": "• You must register with a valid email address to use the platform.\n• You are responsible for keeping your account information accurate and up to date.\n• You are responsible for the security of your account. Do not share your password with anyone.\n• You must notify us immediately if you notice unauthorized use of your account.\n• Each user may only open one account."
+        },
+        {
+          "title": "4. Acceptable Use",
+          "content": "By using the platform, you agree to the following rules:\n\n✓ You will only use the platform for lawful purposes.\n✓ You will respect the rights of others.\n✓ You will share accurate and truthful information.\n\n✗ You will not use the platform to distribute malicious software.\n✗ You will not share content that harms other users.\n✗ You will not take actions that overload the platform's infrastructure.\n✗ You will not scrape data using automated tools (bots, scrapers, etc.).\n✗ You will not attempt to gain unauthorized access to other users' accounts."
+        },
+        {
+          "title": "5. Intellectual Property",
+          "content": "All content, design, code, logos and brand elements on the platform belong to Travyon and are protected by intellectual property law.\n\nThe content of travel plans you create on the platform belongs to you. However, by creating them you grant us a license to store and process these plans on the platform.\n\nYou must obtain prior written permission to copy, distribute or use any part of the platform for commercial purposes."
+        },
+        {
+          "title": "6. Paid Plans",
+          "content": "Payment terms applicable to Pro and Team plans:\n\n• Subscriptions are billed monthly or annually.\n• Cancelling a paid plan takes effect at the start of the next billing period.\n• Our refund policy: A full refund is issued if you cancel within the first 14 days.\n• Prices may change with prior notice. Existing subscribers are notified at least 30 days in advance.\n• Payment information is stored via our secure payment infrastructure."
+        },
+        {
+          "title": "7. Limitation of Liability",
+          "content": "Travyon makes no guarantee regarding the accuracy or completeness of travel plans generated by artificial intelligence. Plans are advisory in nature; final decisions belong to the user.\n\nTravyon cannot be held responsible for:\n• Trip cancellations, delays or unforeseen circumstances\n• Actions of third-party service providers (hotels, airlines, etc.)\n• Incorrect information generated by artificial intelligence\n• Damages arising from the platform's temporary unavailability"
+        },
+        {
+          "title": "8. Account Termination",
+          "content": "You can delete your account at any time from Settings > Account.\n\nWe reserve the right to suspend or close your account without prior notice if you are found to have violated these Terms of Use. Refunds are not issued for serious violations."
+        },
+        {
+          "title": "9. Governing Law",
+          "content": "These Terms of Use are governed by the laws of the Republic of Türkiye. Istanbul Courts and Enforcement Offices have jurisdiction over any disputes."
+        },
+        {
+          "title": "10. Changes",
+          "content": "We may update these terms from time to time. We will notify you at your registered email address of significant changes. Continuing to use the platform after a change means you accept the new terms."
+        },
+        {
+          "title": "11. Contact",
+          "content": "For questions about these terms:\n\nEmail: iletisim@travyon.app\nAddress: Istanbul, Türkiye"
+        }
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "subtitle": "Send us your questions, suggestions or partnership inquiries.",
+      "infoCards": {
+        "email": { "title": "Email", "value": "iletisim@travyon.app" },
+        "address": { "title": "Address", "value": "Istanbul, Türkiye" },
+        "hours": { "title": "Working Hours", "value": "Monday – Friday, 9:00 AM – 6:00 PM" }
+      },
+      "quickReplyTitle": "Fast reply guarantee 🚀",
+      "quickReplyDesc": "We usually reply within 2 hours to messages sent during working hours.",
+      "form": {
+        "nameLabel": "Full Name",
+        "namePlaceholder": "Your Name",
+        "emailLabel": "Email",
+        "emailPlaceholder": "example@company.com",
+        "subjectLabel": "Subject",
+        "subjectPlaceholder": "How can we help?",
+        "messageLabel": "Message",
+        "messagePlaceholder": "Write your message here...",
+        "sendButton": "Send",
+        "sendingButton": "Sending...",
+        "errorGeneric": "Couldn't send the message. Please try again.",
+        "successTitle": "Your message has been sent!",
+        "successDesc": "We'll get back to you as soon as possible. Thank you.",
+        "newMessageButton": "Send a new message →"
+      }
+    }
+  },
+  "hub": {
+    "greeting": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening",
+      "night": "Good Night",
+      "defaultName": "Traveler"
+    },
+    "units": {
+      "kmh": "km/h"
+    },
+    "weather": {
+      "conditions": {
+        "clear": "Clear Sky",
+        "mostlyClear": "Mostly Clear",
+        "partlyCloudy": "Partly Cloudy",
+        "overcast": "Overcast",
+        "fog": "Foggy",
+        "drizzle": "Drizzle",
+        "rain": "Rainy",
+        "showers": "Showers",
+        "snow": "Snowy",
+        "storm": "Stormy",
+        "variable": "Variable"
+      },
+      "title": "Weather",
+      "wind": "wind",
+      "loadFailed": "Couldn't load the weather",
+      "retry": "Retry →"
+    },
+    "nextTrip": {
+      "next": "Next Trip",
+      "last": "Last Trip",
+      "daysLeft": "days left ✈️",
+      "durationDays": "{{count}}-day trip",
+      "checklist": "📋 Travel Checklist",
+      "lastSaved": "Last saved plan",
+      "noPlanTitle": "No plans yet",
+      "noPlanSubtitle": "Start creating a new plan"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "weekend": { "title": "This weekend", "cta": "Create a plan" },
+      "random": { "title": "Random city", "subtitle": "Surprise destination", "cta": "Let's try", "planCta": "Plan →" },
+      "budget": { "title": "By my budget", "defaultLabel": "Default budget", "cta": "Create a plan" },
+      "vibe": { "title": "Change the vibe", "noPlan": "Create a plan first", "cta": "Pick a style" }
+    },
+    "vibeOptions": {
+      "culture": "Culture",
+      "relax": "Relax",
+      "nightlife": "Nightlife",
+      "nature": "Adventure"
+    },
+    "stats": {
+      "title": "Statistics",
+      "thisMonth": "+{{count}} this month",
+      "totalPlans": "Total Plans",
+      "city": "cities",
+      "differentCountries": "{{count}} different countries",
+      "totalBudget": "Total Budget",
+      "mostVisited": "Most Visited",
+      "noData": "No data yet"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "planCount": "{{count}} plans",
+      "replan": "Plan Again →",
+      "viewPlan": "View Plan →",
+      "shared": "Shared",
+      "share": "Share",
+      "shareDisabledTitle": "Plan sharing is disabled in your privacy settings",
+      "showLess": "Show Less",
+      "showMore": "Show More ({{count}} more plans)",
+      "active": {
+        "text": "You're in {{dest}} right now!",
+        "sub": "Until {{endDate}} — have a great trip ✈️",
+        "timeLabel": "in progress"
+      },
+      "upcoming": {
+        "text": "Your trip to {{dest}} is coming up",
+        "sub": "{{nights}} nights · {{budget}} · {{startDate}}",
+        "today": "Today!",
+        "tomorrow": "Tomorrow!",
+        "daysLeft": "{{count}} days left"
+      },
+      "completed": {
+        "text": "You completed your trip to {{dest}}",
+        "sub": "{{nights}} days · {{budget}} spending plan"
+      },
+      "created": {
+        "text": "You created a plan for {{dest}}",
+        "sub": "{{nights}} days · {{budget}}"
+      }
+    },
+    "shareErrors": {
+      "privacyDisabled": "Plan sharing is disabled in your privacy settings.",
+      "failed": "Sharing failed"
+    },
+    "map": {
+      "title": "My World Map",
+      "exploredPrefix": "You've explored",
+      "exploredSuffix": "so far!",
+      "citiesCount": "{{count}} cities",
+      "spread": "{{destinations}} destinations across {{countries}} countries",
+      "empty": "Cities will start appearing on the map as you complete trips 🗺️"
+    }
+  },
+  "onboarding": {
+    "badge": "AI-Powered Plan",
+    "sidebar": {
+      "step1": { "title": "Your Dream\nDestination", "desc": "Tell us where you're going and for how long, and we'll handle the rest." },
+      "step2": { "title": "Your Travel\nStyle", "desc": "Fast or slow? Culture or adventure? Let's set your personal pace." },
+      "step3": { "title": "Your Taste\nBuds", "desc": "We can't recommend the perfect restaurants without knowing your dietary preferences." },
+      "step4": { "title": "Your Comfort\nPreference", "desc": "Where you'll stay and how you'll get around shape the whole plan." }
+    },
+    "steps": { "destination": "Destination", "preferences": "Preferences", "food": "Food", "stay": "Stay" },
+    "loadingMessages": [
+      "Analyzing destination...",
+      "Optimizing routes...",
+      "Discovering hidden gems...",
+      "Calculating budget...",
+      "Adding final touches..."
+    ],
+    "loadingTitle": "Preparing Your Plan",
+    "loadingSubtitle": "Our AI is picking out routes, hidden gems and activities.",
+    "stepCounter": "Step {{step}} / 4",
+    "stepHeader": {
+      "step1": { "title": "Where are you going?", "desc": "Set your destination and dates." },
+      "step2": { "title": "Tell us your preferences", "desc": "Choose your travel style and interests." },
+      "step3": { "title": "What's your food style?", "desc": "Let's build recommendations around your taste." },
+      "step4": { "title": "Where do you want to stay?", "desc": "Set your accommodation and transport preferences." }
+    },
+    "step1": {
+      "destinationLabel": "Destination",
+      "destinationPlaceholder": "E.g. Rome, Italy",
+      "travelDates": "Travel Dates",
+      "departure": "✈️ Departure",
+      "return": "🏠 Return",
+      "arrival": "🛬 Arrival",
+      "departureTime": "🛫 Departure Time",
+      "peopleCount": "Number of People",
+      "person": "people",
+      "totalBudget": "Total Budget"
+    },
+    "step2": {
+      "travelType": "Trip Type",
+      "travelTypes": {
+        "solo": "Solo", "romantic": "Romantic", "honeymoon": "Honeymoon", "family": "Family",
+        "friends": "Friends", "business": "Business", "cityEscape": "City Escape", "classic": "Classic"
+      },
+      "interests": "Interests",
+      "interestsHint": "Up to 3. The order you pick them sets the priority.",
+      "interestOptions": {
+        "culture":   { "title": "Culture & History", "sub": "Museums, historic sites" },
+        "relax":     { "title": "Relaxation",         "sub": "Spa, beach, slow pace" },
+        "nightlife": { "title": "Nightlife",          "sub": "Bars, clubs, live music" },
+        "nature":    { "title": "Nature & Adventure", "sub": "Trekking, hiking" }
+      },
+      "maxInterestsWarning": "You can select up to 3 interests.",
+      "pace": "Daily Pace",
+      "paceHint": "Choose your activity intensity.",
+      "paceOptions": {
+        "relaxed":  { "title": "Relaxed",  "desc": "Light walking",     "detail": "3–4 km/day" },
+        "normal":   { "title": "Normal",   "desc": "Standard pace",     "detail": "6–8 km/day" },
+        "active":   { "title": "Active",   "desc": "See everything",   "detail": "10–15 km/day" },
+        "flexible": { "title": "Flexible", "desc": "Let AI decide",    "detail": "Variable" }
+      },
+      "earlyBirdTitle": "I like to get up early",
+      "earlyBirdSub": "Early morning activities can be planned"
+    },
+    "step3": {
+      "dietaryTitle": "Dietary Preferences",
+      "diets": {
+        "vegan":         { "label": "Vegan",         "emoji": "🌱" },
+        "vegetarian":    { "label": "Vegetarian",    "emoji": "🥗" },
+        "halal":         { "label": "Halal",         "emoji": "☪️" },
+        "glutenFree":    { "label": "Gluten-Free",   "emoji": "🌾" },
+        "pescatarian":   { "label": "Pescatarian",   "emoji": "🐟" },
+        "noRestriction": { "label": "No Restrictions", "emoji": "🍽️" }
+      },
+      "foodPhilosophy": "Food Philosophy",
+      "foodPhilosophyHint": "What kind of places should the AI recommend?",
+      "foodPhilosophyOptions": {
+        "iconic":     { "title": "Iconic Eats",      "sub": "The city's famous spots" },
+        "hiddenGems": { "title": "Hidden Gems",       "sub": "Local favorites, hidden corners" },
+        "fineDining": { "title": "Fine Dining",       "sub": "Quality restaurant experiences" },
+        "streetFood": { "title": "Street Food",       "sub": "Stall favorites, markets" },
+        "mixed":      { "title": "Mixed / Surprise",  "sub": "A different experience each day" }
+      },
+      "mealBudget": "Budget per Meal",
+      "mealBudgetOptions": {
+        "low":    { "title": "Low",    "sub": "Budget-friendly" },
+        "medium": { "title": "Medium", "sub": "Balanced" },
+        "high":   { "title": "High",   "sub": "Quality first" }
+      }
+    },
+    "step4": {
+      "reservationStatus": "Reservation Status",
+      "reservationOptions": {
+        "yes": { "title": "I have a reservation", "sub": "My accommodation is set" },
+        "no":  { "title": "Not decided yet",       "sub": "I'll tell you my accommodation style" }
+      },
+      "accommodationPlace": "Accommodation",
+      "accommodationPlaceholder": "E.g. Hotel Roma Centro, Via del Corso 123",
+      "accommodationHint": "The AI will optimize daily routes around this location.",
+      "accommodationType": "Accommodation Preference",
+      "accommodationOptions": {
+        "hotel":  { "title": "Hotel",       "sub": "Comfortable, full service" },
+        "airbnb": { "title": "Airbnb / Home", "sub": "Local experience" },
+        "hostel": { "title": "Hostel",      "sub": "Social, budget-friendly" },
+        "resort": { "title": "Resort",      "sub": "All-inclusive" }
+      },
+      "transport": "Getting Around",
+      "transportOptions": {
+        "public": { "title": "Public Transit", "sub": "Metro, bus" },
+        "walk":   { "title": "Walking",         "sub": "Walking distance" },
+        "taxi":   { "title": "Taxi / Uber",     "sub": "Door to door" },
+        "car":    { "title": "Car",             "sub": "Rental or own" }
+      }
+    },
+    "errors": {
+      "destinationBanner": "Please enter a destination.",
+      "destinationField": "You need to enter a destination.",
+      "startDateRequired": "Select a departure date.",
+      "endDateRequired": "Select a return date.",
+      "startDateInPast": "Departure date can't be before today.",
+      "endDateInPast": "Return date can't be before today.",
+      "endBeforeStart": "Return date must be after the departure date.",
+      "budgetTooLowBanner": "Budget must be at least 100.",
+      "budgetTooLowField": "Budget must be at least 100.",
+      "travelTypeRequired": "You need to select a trip type.",
+      "interestRequired": "Select at least 1 interest.",
+      "paceRequired": "Select a daily pace.",
+      "dietaryRequired": "Select at least one dietary preference.",
+      "foodPhilosophyRequired": "Choose your food philosophy.",
+      "mealBudgetRequired": "Select a budget per meal.",
+      "reservationRequired": "Specify your reservation status.",
+      "accommodationAddressRequired": "Enter your accommodation address.",
+      "accommodationRequired": "Select an accommodation preference.",
+      "transportRequiredBanner": "Select a transport preference.",
+      "transportRequiredField": "Select a transport preference.",
+      "genericGenerationError": "Something went wrong while generating the plan."
+    },
+    "nav": { "back": "Back", "next": "Next", "planning": "Planning", "createPlan": "Create Plan" }
+  },
+  "savedPlans": {
+    "eyebrow": "Saved Plans",
+    "title": "My Plans",
+    "subtitle": {
+      "empty": "You don't have any saved plans yet",
+      "count": "{{count}} plans saved"
+    },
+    "newPlan": "New Plan",
+    "searchPlaceholder": "Search by city or plan name...",
+    "filters": {
+      "all": "All",
+      "favorites": "Favorites"
+    },
+    "card": {
+      "destination": "Destination",
+      "days": "days",
+      "activities": "activities",
+      "totalBudget": "Total Budget",
+      "createdOn": "Created on {{date}}",
+      "open": "Open",
+      "copyLink": "Copy link",
+      "rename": "Rename",
+      "delete": "Delete"
+    },
+    "empty": {
+      "title": "No Saved Plans Yet",
+      "description": "Create and save your first plan. All your plans will be listed here, and you can come back to them anytime.",
+      "cta": "Create Your First Plan"
+    },
+    "noResults": {
+      "search": "No plans match your search",
+      "favorites": "No favorite plans"
+    },
+    "deleteModal": {
+      "title": "Delete Plan",
+      "message": "Are you sure you want to permanently delete this plan? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "renameModal": {
+      "title": "Rename Plan",
+      "placeholder": "Plan name",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "alerts": {
+      "verifyEmailForLink": "You need to verify your email before sharing a link. A verification email has been (re)sent — check your inbox and Spam folder.",
+      "copyFailed": "Couldn't copy the link. Please try again."
+    }
+  },
+  "community": {
+    "eyebrow": "Community",
+    "title": "Traveler Feed",
+    "subtitle": "Discover other travelers' plans, follow them, and get inspired.",
+    "defaultDisplayName": "Traveler",
+    "privacyBanners": {
+      "privateProfile": {
+        "label": "Private profile:",
+        "message": "Your profile can't be viewed by others.",
+        "cta": "Change settings →"
+      },
+      "sharingOff": {
+        "label": "Plan sharing is off:",
+        "message": "You can't share your plans in the community.",
+        "cta": "Turn on in Settings →"
+      },
+      "approvedFollow": {
+        "label": "Approval-based following:",
+        "message": "New follow requests wait for your approval."
+      }
+    },
+    "tabs": {
+      "all": "Everyone",
+      "following": "Following",
+      "top": "Top Rated"
+    },
+    "searchPlaceholder": {
+      "following": "Search for a person...",
+      "all": "Search by person, city, or country..."
+    },
+    "errors": {
+      "verifyEmailForShare": "You need to verify your email before sharing a plan. A verification email has been (re)sent — check your inbox and Spam folder.",
+      "sharingDisabled": "Plan sharing is off in your privacy settings. Enable Settings → Privacy → Make my plans public.",
+      "timeout": "Connection timed out",
+      "shareFailed": "Sharing failed"
+    },
+    "top": {
+      "emptyTitle": "No rated plans yet",
+      "emptyDescription": "A ranking will appear here as plans get starred"
+    },
+    "following": {
+      "countFound": "{{count}} people found",
+      "countFollowing": "Following {{count}} people",
+      "noMatch": "No one matches \"{{term}}\"",
+      "unfollowConfirm": "Unfollow?",
+      "unfollowYes": "Yes",
+      "cancel": "Cancel",
+      "followingBadge": "✓ Following",
+      "emptyTitle": "You're not following anyone yet",
+      "emptyDescription": "Discover and follow travelers from the \"Everyone\" tab",
+      "browseAll": "Browse everyone →"
+    },
+    "feedError": {
+      "title": "Couldn't load community data",
+      "description": "The Firebase connection or rules should be checked.",
+      "retry": "Try again →"
+    },
+    "feedEmpty": {
+      "searchTitle": "No results found",
+      "searchDescription": "No plans match \"{{term}}\"",
+      "clearSearch": "Clear search →",
+      "title": "No shared plans yet",
+      "description": "Share your plans to contribute to the community"
+    },
+    "showLess": "Show less",
+    "showMore": "Show {{count}} more plans",
+    "shareSection": {
+      "title": "Share My Plans",
+      "days": "{{count}} days",
+      "shared": "Shared",
+      "share": "Share"
+    },
+    "card": {
+      "purposes": {
+        "culture": "Culture",
+        "relax": "Relax",
+        "nightlife": "Nightlife",
+        "nature": "Adventure"
+      },
+      "you": "You",
+      "viewPlan": "View plan →",
+      "days": "{{count}} days",
+      "ownPlan": "Your own plan",
+      "starAriaLabel": "{{count}} stars",
+      "outOf": "/ 5",
+      "votes": "{{count}} votes",
+      "noVotes": "No votes yet",
+      "following": "✓ Following",
+      "follow": "+ Follow"
+    }
+  },
+  "notifications": {
+    "levels": {
+      "urgent": "Urgent",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "title": "Notifications",
+    "subtitle": {
+      "empty": "Everything looks good",
+      "count": "{{count}} notifications · {{detail}}",
+      "urgentDetail": "{{count}} urgent",
+      "warningDetail": "{{count}} warning",
+      "infoDetail": "all info"
+    },
+    "clearAll": "Clear all",
+    "empty": {
+      "title": "No new notifications",
+      "description": "Your upcoming trip, budget, and weather alerts will show up here."
+    },
+    "close": "Close",
+    "push": {
+      "todayTitle": "Trip to {{dest}} today! ✈️",
+      "tomorrowTitle": "Trip to {{dest}} tomorrow! 🧳",
+      "todayBody": "Don't forget to check your plan one last time.",
+      "tomorrowBody": "Have you finished getting ready?"
+    }
+  },
+  "dashboard": {
+    "exitModal": {
+      "title": "Save this plan?",
+      "message": "Your {{destination}} plan hasn't been saved yet. Would you like to save it before leaving?",
+      "saveAndExit": "Save & Exit",
+      "exitWithoutSaving": "Exit Without Saving",
+      "backToPlan": "Back to Plan"
+    },
+    "cityGuide": {
+      "drawerTitle": "City Guide",
+      "transportation": "Transportation",
+      "localCulture": "Local Culture",
+      "usefulInfo": "Useful Info"
+    },
+    "mobileMap": {
+      "title": "Route Map",
+      "openAriaLabel": "Open map"
+    },
+    "weather": {
+      "title": "Weather"
+    },
+    "topBar": {
+      "verifyEmailAlert": "You need to verify your email before sharing a link. A verification email has been (re)sent — check your inbox and Spam folder.",
+      "daysCount": "{{count}} days",
+      "tabPlan": "Plan",
+      "tabGuide": "Guide",
+      "tabWeather": "Weather",
+      "total": "Total:",
+      "save": "Save Plan",
+      "saved": "Saved",
+      "copyLinkTitle": "Copy plan link",
+      "link": "Link",
+      "linkCopied": "Copied!",
+      "downloadPdfTitle": "Download plan as PDF",
+      "nightMode": "Night Mode",
+      "lightMode": "Light Mode"
+    },
+    "dayTabs": {
+      "ariaLabel": "Daily plan tabs",
+      "dayFallback": "Day {{number}}"
+    },
+    "budget": {
+      "label": "Budget Tracking",
+      "spent": "{{amount}} spent",
+      "exceeded": "{{amount}} over budget ⚠️",
+      "remaining": "{{amount}} left",
+      "activitiesEntered": "{{count}} activities entered · {{pct}}%",
+      "totalBudget": "Total budget: {{amount}}"
+    },
+    "daySummary": {
+      "estimated": "Estimated",
+      "spent": "Spent",
+      "panelAriaLabel": "Day {{number}} plan"
+    },
+    "map": {
+      "regionAriaLabel": "Route map",
+      "placesOptimized": "{{count}} places optimized",
+      "accommodationFallback": "Accommodation"
+    },
+    "dailyPlanView": {
+      "periods": {
+        "morning": "Morning",
+        "noon": "Noon",
+        "afternoon": "Afternoon",
+        "evening": "Evening",
+        "night": "Night"
+      },
+      "travelModes": {
+        "driving": "Drive",
+        "transit": "Transit",
+        "walking": "Walk",
+        "cycling": "Bike"
+      },
+      "calculating": "calculating…",
+      "openInGoogleMaps": "Open Google Maps with <b>{{mode}}</b>?",
+      "cancel": "Cancel",
+      "open": "Open",
+      "minutesShort": "{{mins}}min",
+      "hoursShort": "{{h}}h",
+      "hoursMinutesShort": "{{h}}h {{m}}min",
+      "vibesLabel": "Vibe:",
+      "vibes": {
+        "rest": "Rest",
+        "indoor": "Indoor",
+        "budget": "Budget",
+        "explore": "Explore"
+      },
+      "vibeUpdateError": "Error updating vibe: {{message}}",
+      "unknownError": "Unknown error",
+      "regenerating": "Optimizing...",
+      "deleteConfirm": "Delete this activity?",
+      "delete": "Delete",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "addNoteTitle": "Add note",
+      "deleteActivityTitle": "Delete activity",
+      "note": {
+        "placeholder": "Add a note… (reservation no., memory, tip...)",
+        "save": "Save",
+        "delete": "Delete Note"
+      },
+      "addActivity": {
+        "title": "Add Activity",
+        "placeholder": "What would you like to add? (e.g. museum, coffee, park...)",
+        "suggestError": "Couldn't get a suggestion, try again.",
+        "thinking": "Thinking...",
+        "suggestAI": "AI Suggest",
+        "suggestShort": "Suggest",
+        "addToPlan": "Add to Plan",
+        "suggestDifferent": "Suggest Different"
+      }
+    }
+  },
+  "mapView": {
+    "loading": "Loading map...",
+    "hotelLabel": "Your Stay"
+  },
+  "placeDetails": {
+    "label": "Place Details",
+    "loading": "Loading place info...",
+    "loadingSubtitle": "Fetching photos and reviews from Google",
+    "notFound": "No details found",
+    "notFoundSubtitle": "No information found for this place on Google.",
+    "reviewsCount": "{{count}} reviews",
+    "googleData": "Google data",
+    "openingHours": "Opening Hours",
+    "visitWebsite": "Visit Website",
+    "reviewsTitle": "Google Reviews",
+    "reviewsCountParen": "({{count}} reviews)",
+    "openInGoogleMaps": "Open in Google Maps"
+  },
+  "weatherView": {
+    "title": "Weather",
+    "loading": "Loading...",
+    "errors": {
+      "tooFar": "The forecast for these dates isn't ready yet. Check again as your trip gets closer (up to 16 days ahead).",
+      "notFound": "Location \"{{destination}}\" not found.",
+      "generic": "Couldn't fetch the weather. Check your internet connection."
+    },
+    "windyLink": "Hourly detailed forecast — Windy.com",
+    "dayLabel": "Day {{number}}",
+    "precipitationChance": "{{value}}% precipitation",
+    "noPrecipitation": "No precipitation",
+    "packingTipsTitle": "Packing Suggestions",
+    "footer": "Open-Meteo · Free open-source weather data",
+    "conditions": {
+      "clear": "Clear",
+      "mostlyClear": "Mostly Clear",
+      "partlyCloudy": "Partly Cloudy",
+      "overcast": "Overcast",
+      "fog": "Foggy",
+      "denseFog": "Dense Fog",
+      "lightDrizzle": "Light Drizzle",
+      "drizzle": "Drizzle",
+      "denseDrizzle": "Dense Drizzle",
+      "lightRain": "Light Rain",
+      "rain": "Rain",
+      "heavyRain": "Heavy Rain",
+      "lightSnow": "Light Snow",
+      "snow": "Snow",
+      "denseSnow": "Dense Snow",
+      "hail": "Hail",
+      "showers": "Showers",
+      "heavyShowers": "Heavy Showers",
+      "violentShowers": "Violent Showers",
+      "snowShowers": "Snow Showers",
+      "denseSnowShowers": "Dense Snow Showers",
+      "thunderstorm": "Thunderstorm",
+      "thunderstormHail": "Thunderstorm with Hail",
+      "severeThunderstorm": "Severe Thunderstorm",
+      "unknown": "Unknown"
+    },
+    "packingTips": {
+      "hot": "Sunscreen and sunglasses",
+      "rainy": "Umbrella or raincoat",
+      "cold": "Warm coat / layered clothing",
+      "snowy": "Waterproof boots",
+      "windy": "Windbreaker and scarf",
+      "stormy": "Prefer indoor places on stormy days"
+    }
+  },
+  "aiAssistant": {
+    "quickQuestions": [
+      { "emoji": "🌍", "text": "Best 3 cities in Europe?" },
+      { "emoji": "💶", "text": "Where can I go with €1,000?" },
+      { "emoji": "☀️", "text": "Warm destinations in January?" },
+      { "emoji": "🎒", "text": "Best places for solo travel?" },
+      { "emoji": "🛂", "text": "Visa-free countries for a Turkish passport?" },
+      { "emoji": "💑", "text": "Most romantic honeymoon destinations?" }
+    ],
+    "planQuestions": [
+      { "emoji": "📅", "text": "Which of my days is busiest?" },
+      { "emoji": "💡", "text": "What can I add to my plan?" },
+      { "emoji": "💰", "text": "Is my budget reasonable for this destination?" },
+      { "emoji": "🍽️", "text": "How are the food choices in my plan?" },
+      { "emoji": "🚌", "text": "What's the most practical way to get around {{destination}}?" },
+      { "emoji": "⚠️", "text": "Anything I should know before I go?" }
+    ],
+    "followUpChips": [
+      "Tell me more",
+      "What should my budget be?",
+      "What's the best month?",
+      "Hotel or Airbnb?"
+    ],
+    "clearChat": "Clear chat",
+    "ariaLabel": "AI Assistant",
+    "welcome": {
+      "planReady": "Your {{destination}} plan is ready!",
+      "greeting": "I'm your travel assistant!",
+      "planSubtitle": "Ask me anything about your plan — day details, suggestions, tips.",
+      "generalSubtitle": "Ask about destinations, budget, visas — anything."
+    },
+    "planConnected": "{{destination}} plan connected",
+    "genericAssistant": "Travel assistant",
+    "errorMessage": "Sorry, something went wrong. Please try again. 🙏",
+    "inputPlaceholderPlan": "Ask about your {{destination}} plan…",
+    "inputPlaceholderGeneral": "Ask something…"
+  },
+  "pwaBanner": {
+    "title": "Install Travyon",
+    "iosPrefix": "tap the button, then select",
+    "addToHomeScreen": "Add to Home Screen",
+    "iosSuffix": "to install",
+    "subtitle": "Works offline · Opens like an app · Quick access",
+    "installButton": "Install App"
+  },
+  "settings": {
+    "topbar": {
+      "back": "Back",
+      "title": "Settings"
+    },
+    "nav": {
+      "groups": {
+        "account": "ACCOUNT",
+        "travel": "TRAVEL",
+        "appearance": "APPEARANCE",
+        "notifications": "NOTIFICATIONS",
+        "privacy": "PRIVACY",
+        "billing": "BILLING",
+        "data": "MY DATA",
+        "support": "SUPPORT"
+      },
+      "items": {
+        "profile": "Profile",
+        "email": "Email",
+        "password": "Password",
+        "travelDefaults": "Default Preferences",
+        "passport": "Passport & Citizenship",
+        "locationTz": "Location & Time Zone",
+        "language": "Language",
+        "units": "Units",
+        "appNotif": "App Notifications",
+        "emailNotif": "Email Notifications",
+        "pushNotif": "Push Notifications",
+        "privacyProfile": "Profile & Plan Privacy",
+        "privacyLocation": "Location",
+        "privacyData": "Data Usage",
+        "subscription": "Subscription",
+        "billingHistory": "Billing History",
+        "payment": "Payment Method",
+        "dataExport": "Export Data",
+        "deleteAccount": "Delete Account",
+        "faq": "FAQ",
+        "contact": "Contact",
+        "reportBug": "Report a Bug"
+      }
+    },
+    "common": {
+      "comingSoon": "Coming Soon",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "add": "Add",
+      "saveFailed": "Could not save, please try again.",
+      "currentPasswordRequired": "Enter your current password.",
+      "passwordPlaceholder": "••••••••",
+      "applyAndSave": "Apply & Save",
+      "saveAndApply": "Save & Apply",
+      "logout": "Log Out"
+    },
+    "errors": {
+      "wrongPassword": "Current password is incorrect.",
+      "weakPassword": "New password must be at least 6 characters.",
+      "emailInUse": "This email is already in use.",
+      "invalidEmail": "Invalid email address.",
+      "requiresRecentLogin": "Please sign in again for security.",
+      "tooManyRequests": "Too many attempts, please wait a few minutes.",
+      "generic": "Something went wrong, please try again."
+    },
+    "countries": [
+      "Turkey",
+      "Germany",
+      "France",
+      "Italy",
+      "Spain",
+      "United Kingdom",
+      "United States",
+      "Canada",
+      "Australia",
+      "Japan",
+      "China",
+      "Russia",
+      "Brazil",
+      "India",
+      "South Korea",
+      "Netherlands",
+      "Belgium",
+      "Sweden",
+      "Norway",
+      "Denmark",
+      "Finland",
+      "Switzerland",
+      "Austria",
+      "Portugal",
+      "Poland",
+      "Czech Republic",
+      "Greece",
+      "Hungary",
+      "Romania",
+      "Bulgaria",
+      "Croatia",
+      "Serbia",
+      "Ukraine",
+      "Israel",
+      "Saudi Arabia",
+      "UAE",
+      "Egypt",
+      "Morocco",
+      "South Africa",
+      "Nigeria",
+      "Mexico",
+      "Argentina",
+      "Chile",
+      "Colombia",
+      "Singapore",
+      "Malaysia",
+      "Thailand",
+      "Indonesia",
+      "Vietnam",
+      "Philippines",
+      "New Zealand",
+      "Other"
+    ],
+    "profile": {
+      "changePhotoAria": "Change photo",
+      "photoHint": "PNG, JPG or WebP — max. 2 MB",
+      "titleFallback": "Profile Information",
+      "errors": {
+        "fileTooLarge": "File cannot exceed 5 MB.",
+        "invalidFileType": "Only PNG, JPG or WebP can be uploaded.",
+        "uploadFailed": "Upload failed, please try again."
+      },
+      "success": {
+        "photoUpdated": "Profile photo updated.",
+        "saved": "Saved."
+      },
+      "fields": {
+        "name": "Name",
+        "username": "Profile name",
+        "phone": "Phone number",
+        "birthDate": "Date of birth",
+        "nationality": "Nationality",
+        "gender": "Gender",
+        "address": "Address"
+      },
+      "placeholders": {
+        "name": "Enter your name",
+        "username": "Choose a profile name",
+        "phone": "Add a phone number",
+        "birthDate": "Enter your date of birth",
+        "gender": "Select your gender",
+        "address": "Add your address"
+      },
+      "inputPlaceholders": {
+        "name": "Full name",
+        "username": "username",
+        "phone": "530 823 45 96",
+        "address": "Street, neighborhood, city, country"
+      },
+      "helpers": {
+        "phone": "Used for reservation and travel alerts.",
+        "birthDate": "You must be older than 18."
+      },
+      "genders": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "preferNotToSay": "Prefer not to say"
+      }
+    },
+    "email": {
+      "title": "Email Address",
+      "current": "Current Email",
+      "verified": "Verified",
+      "notVerified": "Not Verified",
+      "pendingTitle": "Pending email change",
+      "pendingDescSuffix": "A verification link was sent to this address. After clicking the link, press the button below.",
+      "confirmUpdateBtn": "Email updated?",
+      "newEmailLabel": "New Email Address",
+      "currentPasswordLabel": "Current Password",
+      "newEmailPlaceholder": "new@email.com",
+      "infoNote": "A verification link will be sent to the new address. Your email won't change until you click the link. Once verified, the new email becomes active on your next sign-in.",
+      "sendVerificationBtn": "Send Verification Link",
+      "errors": {
+        "emptyEmail": "New email cannot be empty.",
+        "sameEmail": "New email is the same as your current email."
+      },
+      "verificationSent": "A verification link was sent to {{email}}. After clicking the link, press the \"Email updated?\" button.",
+      "updateSuccess": "Your email was successfully updated to {{email}}.",
+      "notChangedYet": "Your email hasn't changed yet. Click the verification link first.",
+      "statusCheckFailed": "Could not check status."
+    },
+    "password": {
+      "title": "Change Password",
+      "labels": {
+        "current": "Current Password",
+        "new": "New Password",
+        "confirm": "New Password (confirm)"
+      },
+      "newPlaceholder": "At least 6 characters",
+      "strengthPrefix": "Strength:",
+      "strength": {
+        "veryWeak": "Very weak",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong",
+        "veryStrong": "Very strong",
+        "hint": "· Add uppercase letters, numbers, and symbols"
+      },
+      "mismatch": "Passwords do not match",
+      "match": "Passwords match",
+      "tipsTitle": "For a strong password:",
+      "tips": [
+        "At least 8 characters",
+        "At least one uppercase letter (A-Z)",
+        "At least one digit (0-9)",
+        "At least one special character (!@#...)"
+      ],
+      "updateBtn": "Update Password",
+      "errors": {
+        "sameAsCurrent": "New password cannot be the same as the current password.",
+        "mismatch": "New passwords do not match."
+      },
+      "success": "Your password was successfully updated."
+    },
+    "travelDefaults": {
+      "title": "Default Travel Preferences",
+      "subtitle": "These values are pre-filled automatically when creating a new plan.",
+      "labels": {
+        "budget": "Default Budget",
+        "currency": "Currency",
+        "peopleCount": "Default Number of People",
+        "pace": "Default Pace"
+      },
+      "errors": {
+        "minBudget": "Must be at least 100"
+      },
+      "peopleUnit": "people",
+      "pace": {
+        "rahat": "Relaxed",
+        "normal": "Normal",
+        "aktif": "Active",
+        "esnek": "Flexible"
+      },
+      "infoNote": "These values set the starting values on the \"Create Plan\" page. You can change them anytime while creating a plan.",
+      "saveBtn": "Save Preferences",
+      "success": "Default preferences saved. They will be applied automatically when you create a new plan."
+    },
+    "passport": {
+      "title": "Passport & Citizenship",
+      "subtitle": "Used for visa information and travel alerts.",
+      "expired": "Your passport has expired!",
+      "expiringPrefix": "Your passport expires in",
+      "expiringSuffix": ". Renew it before planning your trip.",
+      "validPrefix": "Passport valid —",
+      "validSuffix": "remaining.",
+      "daysCount": "{{count}} days",
+      "labels": {
+        "country": "Citizenship / Passport Country",
+        "number": "Passport Number",
+        "optional": "(optional)",
+        "expiry": "Expiry Date"
+      },
+      "numberPlaceholder": "e.g. U12345678",
+      "numberHelper": "Stored only on your device, never shared with third parties.",
+      "saveBtn": "Save Information",
+      "errors": {
+        "expired": "Passport has expired. Please enter a valid date."
+      },
+      "success": "Passport information saved."
+    },
+    "locationTz": {
+      "title": "Location & Time Zone",
+      "autoDetect": {
+        "title": "Auto-Detect",
+        "desc": "Detect time zone from your browser",
+        "btn": "Detect"
+      },
+      "detectedMsg": "Detected: {{tz}}",
+      "label": "Time Zone",
+      "currentPrefix": "Currently selected:",
+      "success": "Time zone saved."
+    },
+    "language": {
+      "title": "Language",
+      "subtitle": "App interface language.",
+      "label": "App Language",
+      "saved": "Language updated."
+    },
+    "units": {
+      "title": "Units",
+      "subtitle": "Distance and temperature units used throughout plan details.",
+      "currentPrefix": "Current:",
+      "distance": {
+        "label": "Distance",
+        "km": "Kilometers (km)",
+        "mi": "Miles (mi)",
+        "currentKm": "km — Kilometers",
+        "currentMi": "mi — Miles"
+      },
+      "temp": {
+        "label": "Temperature",
+        "celsius": "Celsius (°C)",
+        "fahrenheit": "Fahrenheit (°F)",
+        "currentCelsius": "°C — Celsius",
+        "currentFahrenheit": "°F — Fahrenheit"
+      },
+      "previewTitle": "Plan preview",
+      "previewDistance": "Distance:",
+      "previewWeather": "Weather:",
+      "saveBtn": "Apply & Save",
+      "success": "Unit settings saved and applied."
+    },
+    "appNotif": {
+      "title": "App Notifications",
+      "subtitle": "Manage your in-app notification preferences.",
+      "rows": {
+        "planUpdates": {
+          "title": "Plan updates",
+          "desc": "When there is a change in your plan"
+        },
+        "community": {
+          "title": "Community notifications",
+          "desc": "Likes, comments and follow requests"
+        },
+        "appUpdates": {
+          "title": "App updates",
+          "desc": "New feature announcements"
+        }
+      }
+    },
+    "emailNotif": {
+      "title": "Email Notifications",
+      "rows": {
+        "plan": {
+          "title": "Plan notifications",
+          "desc": "Plan creation and update emails"
+        },
+        "weeklyDigest": {
+          "title": "Weekly digest",
+          "desc": "Travel suggestions every Monday"
+        },
+        "promo": {
+          "title": "Campaigns and offers",
+          "desc": "Discounts and special offers"
+        }
+      }
+    },
+    "notif": {
+      "success": "Notification settings saved."
+    },
+    "pushNotif": {
+      "title": "Push Notifications",
+      "subtitle": "Manage browser push notifications.",
+      "testNotifTitle": "Travyon Notifications Active 🎉",
+      "testNotifBody": "You'll now receive travel alerts instantly.",
+      "status": {
+        "granted": {
+          "title": "Notification permission granted",
+          "desc": "Browser push notifications are active."
+        },
+        "denied": {
+          "title": "Notification permission denied",
+          "desc": "You can allow it from the lock icon in your address bar."
+        },
+        "unsupported": {
+          "title": "Your browser doesn't support push notifications",
+          "desc": "Try a different browser (Chrome, Edge, Firefox)."
+        },
+        "pending": {
+          "title": "Waiting for notification permission",
+          "desc": "Press the button below to enable notifications."
+        }
+      },
+      "grantBtn": "Allow",
+      "rows": {
+        "push": {
+          "title": "Push notifications",
+          "desc": "Get an instant alert as your trip approaches"
+        },
+        "sound": {
+          "title": "Notification sound",
+          "desc": "Play a sound when a notification arrives"
+        }
+      }
+    },
+    "privacyProfile": {
+      "title": "Profile & Plan Privacy",
+      "subtitle": "Control how other users see you.",
+      "summary": {
+        "profile": {
+          "label": "Profile",
+          "on": "Public",
+          "off": "Private"
+        },
+        "plans": {
+          "label": "Plans",
+          "on": "Shareable",
+          "off": "Locked"
+        },
+        "follow": {
+          "label": "Follow",
+          "on": "Open",
+          "off": "Approval"
+        }
+      },
+      "publicProfile": {
+        "title": "Public profile",
+        "on": "✅ Visible in the community — other users can find you",
+        "off": "🔒 Private mode — no one can see your profile"
+      },
+      "publicPlans": {
+        "title": "My plans are public",
+        "on": "✅ You can share in the community",
+        "off": "🔒 Sharing off — the share button is locked on the Community page",
+        "warning": "⚠️ While this setting is off, you cannot share your plans from the Community page."
+      },
+      "publicFollow": {
+        "title": "Anyone can follow",
+        "on": "✅ No approval needed — anyone can follow you",
+        "off": "🔒 Approval required — follow requests wait for your approval"
+      }
+    },
+    "privacyLocation": {
+      "title": "Location Privacy",
+      "subtitle": "Control how your location is used.",
+      "geoStatus": {
+        "supported": {
+          "title": "Browser Location API",
+          "desc": "Your browser supports location. Location features are optional in this app."
+        },
+        "unsupported": {
+          "title": "Location not supported",
+          "desc": "Your browser doesn't support location."
+        }
+      },
+      "suggestions": {
+        "title": "Location-based suggestions",
+        "on": "✅ Location is used for nearby places and smart suggestions",
+        "off": "🔒 Location features disabled — general suggestions are shown"
+      },
+      "history": {
+        "title": "Location history",
+        "on": "✅ Visit history is saved — for better suggestions on future plans",
+        "off": "🔒 Location history is not stored"
+      }
+    },
+    "privacyData": {
+      "title": "Data Usage",
+      "subtitle": "Control how your data is processed.",
+      "analytics": {
+        "title": "Share analytics data",
+        "on": "✅ Anonymous usage data is sent to help improve the service",
+        "off": "🔒 No usage data is sent"
+      },
+      "storedDataHeader": "Data stored in your account",
+      "items": [
+        {
+          "label": "Profile information",
+          "desc": "Name, email, photo"
+        },
+        {
+          "label": "Travel plans",
+          "desc": "All plans you have created"
+        },
+        {
+          "label": "Preferences & settings",
+          "desc": "Notifications, appearance, privacy"
+        },
+        {
+          "label": "Passport & location",
+          "desc": "Personal information related to travel"
+        }
+      ],
+      "encryptedBadge": "Encrypted",
+      "kvkkPrefix": "Your personal data is processed under Turkish Law No. 6698 (KVKK). To download your data or delete your account, use the",
+      "kvkkDataSection": "My Data",
+      "kvkkSuffix": "section."
+    },
+    "privacy": {
+      "success": "Privacy settings saved and applied."
+    },
+    "subscription": {
+      "title": "Subscription",
+      "subtitle": "Your current plan and usage status.",
+      "proPlanName": "Pro Plan",
+      "freePlanName": "Free Plan",
+      "proDesc": "Unlimited plans + Advanced AI + Ad-free",
+      "freeDesc": "3 plan creations per month",
+      "proBadge": "Pro",
+      "freeBadge": "Free",
+      "usageLabel": "Plans created this month",
+      "limitReached": "⚠️ You've reached your monthly limit. Upgrade to Pro for unlimited plans.",
+      "remainingPlans": "You have {{count}} plan(s) left this month.",
+      "compare": {
+        "headers": {
+          "feature": "Feature",
+          "free": "Free",
+          "pro": "Pro"
+        },
+        "rows": [
+          {
+            "label": "Plan creation",
+            "free": "3 / mo",
+            "pro": "Unlimited"
+          },
+          {
+            "label": "AI plan quality",
+            "free": "Standard",
+            "pro": "Advanced"
+          },
+          {
+            "label": "Ads",
+            "free": "✅",
+            "pro": "-"
+          },
+          {
+            "label": "Community sharing",
+            "free": "✅",
+            "pro": "✅"
+          },
+          {
+            "label": "Priority support",
+            "free": "—",
+            "pro": "✅"
+          },
+          {
+            "label": "Early access",
+            "free": "—",
+            "pro": "✅"
+          }
+        ]
+      },
+      "cta": {
+        "badge": "Pro",
+        "title": "Unlimited Plans + Advanced AI",
+        "desc": "Ad-free experience, priority support, and all premium features.",
+        "btn": "Upgrade →"
+      },
+      "cancel": {
+        "title": "Cancel Subscription",
+        "desc": "You will switch to the Free plan at the end of the period.",
+        "btn": "Cancel"
+      }
+    },
+    "billingHistory": {
+      "title": "Billing History",
+      "subtitle": "View your past payments.",
+      "headers": [
+        "Date",
+        "Amount",
+        "Status",
+        "Document"
+      ],
+      "emptyPro": {
+        "title": "Your first invoice will appear here.",
+        "desc": "It will be generated automatically at the end of the next period."
+      },
+      "emptyFree": {
+        "title": "No invoices yet",
+        "desc": "Once you upgrade to Pro, all your invoices will be listed here and downloadable.",
+        "btn": "Upgrade to Pro →"
+      }
+    },
+    "payment": {
+      "title": "Payment Method",
+      "subtitle": "Manage the card used for subscription payments.",
+      "expiryPrefix": "Expires:",
+      "changeBtn": "Change",
+      "removeBtn": "Remove",
+      "empty": {
+        "title": "No saved payment method",
+        "desc": "Add a card to upgrade to Pro. Your data is stored encrypted.",
+        "addBtn": "Add Card"
+      },
+      "formInfo": "Your card details are stored encrypted. The CVV is never saved.",
+      "labels": {
+        "number": "Card Number",
+        "name": "Name on Card",
+        "expiry": "Expiry (MM/YY)",
+        "cvv": "CVV"
+      },
+      "placeholders": {
+        "number": "1234 5678 9012 3456",
+        "name": "FULL NAME",
+        "expiry": "12/27",
+        "cvv": "•••"
+      },
+      "saveBtn": "Save Card",
+      "securityNote": "Payment information is protected with 256-bit SSL encryption.",
+      "errors": {
+        "invalidNumber": "Invalid card number.",
+        "nameRequired": "Enter the name on the card.",
+        "invalidExpiryFormat": "Expiry date must be in MM/YY format.",
+        "expired": "The card's expiry date has passed.",
+        "invalidCvv": "Invalid CVV code.",
+        "actionFailed": "Action failed, please try again."
+      },
+      "success": "Card saved successfully.",
+      "removed": "Card removed."
+    },
+    "dataExport": {
+      "title": "Export My Data",
+      "subtitle": "Export all your data under KVKK.",
+      "items": [
+        {
+          "label": "Profile information",
+          "desc": "Name, username, bio"
+        },
+        {
+          "label": "Travel plans",
+          "desc": "All plans you have created"
+        },
+        {
+          "label": "Notification settings",
+          "desc": "Your preferences and settings"
+        },
+        {
+          "label": "Account activity",
+          "desc": "Sign-in and action history"
+        }
+      ],
+      "note": "A link will be sent to your email address once the data export request is created.",
+      "downloadAllBtn": "Download All"
+    },
+    "deleteAccount": {
+      "title": "Delete Account",
+      "warning": {
+        "title": "⚠️ This action cannot be undone",
+        "desc": "Your account, all your travel plans, and personal data will be permanently deleted."
+      },
+      "confirmPhrase": "DELETE MY ACCOUNT",
+      "confirmLabelPrefix": "Type",
+      "confirmLabelSuffix": "to confirm",
+      "passwordLabel": "Your Password",
+      "deleteBtn": "Permanently Delete Account",
+      "errors": {
+        "wrongConfirm": "Type the confirmation text correctly."
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "q": "What is the plan creation limit?",
+          "a": "On the Free plan you can create 3 plans per month. Pro plan is unlimited."
+        },
+        {
+          "q": "How does the AI prepare my plan?",
+          "a": "The destination, dates, budget, and preferences you enter are analyzed with Gemini AI to create a personalized plan."
+        },
+        {
+          "q": "Can I share my plans with others?",
+          "a": "Yes, you can share the plans you create with the community or via a link."
+        },
+        {
+          "q": "How can I delete my data?",
+          "a": "You can permanently remove all your data from the \"My Data → Delete Account\" section."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "subtitle": "Send a message to our support team.",
+      "labels": {
+        "subject": "Subject",
+        "message": "Message"
+      },
+      "placeholders": {
+        "subject": "Subject of your message",
+        "message": "Write your issue or suggestion..."
+      },
+      "footerNote": "destek@travyon.app · Response time: 24 hours",
+      "sendBtn": "Send",
+      "success": "Your message has been sent!"
+    },
+    "reportBug": {
+      "title": "Report a Bug",
+      "subtitle": "Report the bug you found and help us improve.",
+      "labels": {
+        "title": "Bug Title",
+        "description": "Detailed Description"
+      },
+      "placeholders": {
+        "title": "A short, descriptive title",
+        "description": "How did you trigger the bug? What did you expect vs. what happened?"
+      },
+      "sendBtn": "Send Report",
+      "errors": {
+        "required": "Title and description are required.",
+        "sendFailed": "Couldn't send, please try again."
+      },
+      "success": "Bug report sent, thank you!"
+    }
+  },
+  "travelChecklist": {
+    "back": "Back",
+    "prepDefault": "Preparation",
+    "title": "Travel Checklist",
+    "itemsCompleted": "{{checked}} / {{total}} items completed",
+    "completedOfTotal": " / {{total}} completed",
+    "ready": "You're ready!",
+    "reset": "Reset",
+    "autoSaved": "Progress is saved automatically",
+    "groups": {
+      "documents": "Documents",
+      "money": "Money & Finance",
+      "health": "Health & Safety",
+      "tech": "Tech & Transport",
+      "luggage": "Luggage & Personal"
+    },
+    "items": {
+      "passport": { "label": "Passport / ID card", "tip": "Check the validity period and expiration date." },
+      "visa": { "label": "Visa / Travel permit", "tip": "Research your destination country's visa requirements in advance." },
+      "ticket": { "label": "Flight ticket (printed or digital)", "tip": "If you checked in online, download your boarding pass." },
+      "hotel": { "label": "Hotel / accommodation reservation", "tip": "Save your reservation confirmation by email or screenshot." },
+      "insurance": { "label": "Travel insurance", "tip": "Save the policy number on your phone." },
+      "emergency": { "label": "Emergency contact information", "tip": "Embassy, local emergency, and insurance numbers." },
+      "cash": { "label": "Cash (local currency)", "tip": "Exchanging money outside the airport is usually cheaper." },
+      "card": { "label": "Bank card travel notification", "tip": "Let your bank know your travel dates." },
+      "backup": { "label": "Backup card / emergency cash", "tip": "Keep a backup stored separately from your bag." },
+      "medicine": { "label": "Regular medication (enough doses)", "tip": "Medication regulations can vary from country to country." },
+      "firstaid": { "label": "Basic first aid supplies", "tip": "Painkillers, bandages, and antiseptic." },
+      "sunscreen": { "label": "Sunscreen / insect repellent", "tip": "Choose SPF50+ or DEET-based depending on your destination." },
+      "vaccine": { "label": "Vaccination / health certificate", "tip": "Some countries require a yellow fever or COVID certificate." },
+      "charger": { "label": "Phone charger & adapter", "tip": "Check your destination's plug type." },
+      "powerbank": { "label": "Portable charger", "tip": "May need to be in your carry-on bag on the plane." },
+      "simcard": { "label": "Local SIM or roaming package", "tip": "eSIM services are usually more affordable." },
+      "offline": { "label": "Download offline maps (Maps)", "tip": "So you can follow your route without internet." },
+      "transport": { "label": "Transit card / transfer plan", "tip": "Plan how you'll get from the airport to the city center." },
+      "clothes": { "label": "Weather-appropriate clothing", "tip": "Check the current weather forecast for your destination." },
+      "shoes": { "label": "Comfortable walking shoes", "tip": "Walking 10-15 km a day while sightseeing is common." },
+      "lock": { "label": "Luggage lock", "tip": "A TSA-approved lock is required in some countries." },
+      "copies": { "label": "Document copies (photo/email)", "tip": "Save your passport and ticket to the cloud or email." },
+      "notify": { "label": "Notify home / workplace", "tip": "Share your travel plan with someone you trust." }
+    }
+  },
+  "userProfile": {
+    "purposes": {
+      "culture": "Culture",
+      "relax": "Relaxation",
+      "nightlife": "Nightlife",
+      "nature": "Adventure"
+    },
+    "defaultName": "Traveler",
+    "notFound": "User not found.",
+    "backToPrevious": "Back",
+    "sharedPlansCount": "{{count}} shared plans",
+    "unfollowConfirm": "Unfollow?",
+    "yes": "Yes",
+    "cancel": "Cancel",
+    "following": "Following",
+    "follow": "Follow",
+    "joinedOn": "Joined {{date}}",
+    "stats": {
+      "sharedPlans": "Shared Plans",
+      "totalDays": "Total Days",
+      "differentCities": "Cities Visited"
+    },
+    "visitedPlaces": "Places Visited",
+    "sharedPlans": "Shared Plans",
+    "noSharedPlans": "No shared plans yet",
+    "daysCount": "{{count}} days",
+    "viewPlan": "View plan"
+  },
+  "communityPlanView": {
+    "purposes": {
+      "culture": "Culture",
+      "relax": "Relaxation",
+      "nightlife": "Nightlife",
+      "nature": "Adventure"
+    },
+    "defaultName": "Traveler",
+    "loading": "Loading plan…",
+    "notFoundTitle": "Plan not found",
+    "notFoundBody": "This plan has been removed or you don't have access.",
+    "backToCommunity": "Back to community",
+    "cityGuide": {
+      "title": "City Guide",
+      "transport": "Transportation",
+      "localCulture": "Local Culture",
+      "usefulInfo": "Useful Info"
+    },
+    "selections": {
+      "title": "Travel Selections",
+      "loading": "Loading…",
+      "noData": "No selection info for this plan.",
+      "noDataHint": "Older shared plans don't store selections.",
+      "duration": "Duration",
+      "durationValue": "{{count}} days",
+      "peopleCount": "People",
+      "peopleCountValue": "{{count}} people",
+      "travelType": "Travel Type",
+      "pace": "Pace",
+      "earlyBird": "Early Bird",
+      "yes": "Yes",
+      "no": "No",
+      "interests": "Interests",
+      "accommodation": "Accommodation",
+      "transportLabel": "Transport",
+      "food": "Food",
+      "diet": "Diet"
+    },
+    "travelTypes": {
+      "solo_macera": "Solo",
+      "romantik": "Romantic",
+      "balayi": "Honeymoon",
+      "aile": "Family",
+      "arkadas_grubu": "Friends",
+      "is_seyahati": "Business",
+      "sehir_kacamagi": "Getaway",
+      "klasik_tatil": "Classic"
+    },
+    "paceOptions": {
+      "rahat": "Relaxed",
+      "normal": "Normal",
+      "aktif": "Active",
+      "esnek": "Flexible"
+    },
+    "purposesDetailed": {
+      "culture": "Culture & History",
+      "relax": "Relaxation",
+      "nightlife": "Nightlife",
+      "nature": "Nature & Adventure"
+    },
+    "transportOptions": {
+      "public": "Public Transit",
+      "walk": "Walking",
+      "taxi": "Taxi / Uber",
+      "car": "Car"
+    },
+    "accommodationOptions": {
+      "hotel": "Hotel",
+      "airbnb": "Airbnb / House",
+      "hostel": "Hostel",
+      "resort": "Resort"
+    },
+    "foodOptions": {
+      "iconic": "Iconic Flavors",
+      "hidden_gems": "Hidden Gems",
+      "fine_dining": "Fine Dining",
+      "street_food": "Street Food",
+      "mixed": "Mixed / Surprise"
+    },
+    "mobileMapTitle": "Route Map",
+    "byUser": "by {{name}}",
+    "daysCount": "{{count}} days",
+    "tabs": {
+      "plan": "Plan",
+      "guide": "Guide",
+      "selections": "Selections"
+    },
+    "total": "Total:",
+    "themeToggle": {
+      "dark": "Dark Mode",
+      "light": "Light Mode"
+    },
+    "dayFallback": "Day {{number}}",
+    "estimated": "Estimated",
+    "placesCount": "{{count}} places"
+  }
+}

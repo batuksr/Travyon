@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Bell, X, CheckCheck, Plane, AlertCircle, Info, ExternalLink } from 'lucide-react';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
@@ -31,7 +32,6 @@ const levelConfig = {
     badge: 'bg-accent-100 text-accent-700',
     icon:  AlertCircle,
     iconColor: 'text-accent',
-    label: 'Acil',
   },
   warning: {
     bar:   'bg-amber-400',
@@ -39,7 +39,6 @@ const levelConfig = {
     badge: 'bg-amber-100 text-amber-700',
     icon:  AlertCircle,
     iconColor: 'text-amber-400',
-    label: 'Uyarı',
   },
   info:    {
     bar:   'bg-sage',
@@ -47,11 +46,11 @@ const levelConfig = {
     badge: 'bg-sage-200 text-sage-700',
     icon:  Info,
     iconColor: 'text-sage',
-    label: 'Bilgi',
   },
 };
 
 const Notifications: React.FC = () => {
+  const { t } = useTranslation();
   const plans = useUserPlans();
   const {
     tempCelsius,
@@ -138,10 +137,13 @@ const Notifications: React.FC = () => {
       const daysLeft = Math.ceil((new Date(urgentPlan.onboardingData.startDate).getTime() - Date.now()) / 86_400_000);
       const sent = sessionStorage.getItem('push-sent-' + urgentPlan.id);
       if (!sent) {
-        new Notification(daysLeft === 0 ? `Bugün ${dest}'a yolculuk! ✈️` : `Yarın ${dest}'a yolculuk! 🧳`, {
-          body: daysLeft === 0 ? 'Planını son kez kontrol etmeyi unutma.' : 'Hazırlıklarını tamamladın mı?',
-          icon: '/favicon.ico',
-        });
+        new Notification(
+          daysLeft === 0 ? t('notifications.push.todayTitle', { dest }) : t('notifications.push.tomorrowTitle', { dest }),
+          {
+            body: daysLeft === 0 ? t('notifications.push.todayBody') : t('notifications.push.tomorrowBody'),
+            icon: '/favicon.ico',
+          }
+        );
         sessionStorage.setItem('push-sent-' + urgentPlan.id, '1');
       }
     }
@@ -162,11 +164,18 @@ const Notifications: React.FC = () => {
               <Bell size={18} strokeWidth={2.5} className="text-accent" />
             </div>
             <div>
-              <h1 className="font-heading text-xl text-text leading-none">Bildirimler</h1>
+              <h1 className="font-heading text-xl text-text leading-none">{t('notifications.title')}</h1>
               <p className="text-xs text-muted mt-1">
                 {notifications.length === 0
-                  ? 'Her şey yolunda görünüyor'
-                  : `${notifications.length} bildirim · ${urgentCount > 0 ? `${urgentCount} acil` : warningCount > 0 ? `${warningCount} uyarı` : 'hepsi bilgi'}`}
+                  ? t('notifications.subtitle.empty')
+                  : t('notifications.subtitle.count', {
+                      count: notifications.length,
+                      detail: urgentCount > 0
+                        ? t('notifications.subtitle.urgentDetail', { count: urgentCount })
+                        : warningCount > 0
+                          ? t('notifications.subtitle.warningDetail', { count: warningCount })
+                          : t('notifications.subtitle.infoDetail'),
+                    })}
               </p>
             </div>
           </div>
@@ -177,7 +186,7 @@ const Notifications: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-heading text-text hover:text-accent bg-surface border-[1.5px] border-divider rounded-full hover:shadow-sm transition-all"
             >
               <CheckCheck size={12} strokeWidth={2.5} />
-              Tümünü temizle
+              {t('notifications.clearAll')}
             </button>
           )}
         </div>
@@ -188,9 +197,9 @@ const Notifications: React.FC = () => {
             <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Plane size={22} strokeWidth={2.5} className="text-accent" />
             </div>
-            <p className="font-heading text-text">Yeni bildirim yok</p>
+            <p className="font-heading text-text">{t('notifications.empty.title')}</p>
             <p className="text-xs text-muted mt-1.5 leading-relaxed max-w-xs mx-auto">
-              Yaklaşan seyahat, bütçe veya hava durumu uyarıların burada görünecek.
+              {t('notifications.empty.description')}
             </p>
           </div>
         ) : (
@@ -210,7 +219,7 @@ const Notifications: React.FC = () => {
                     <div className="flex items-center gap-2.5">
                       <h4 className="font-heading text-[15.5px] text-text leading-tight">{n.title}</h4>
                       <span className={`text-[10px] font-heading uppercase tracking-wide px-2.5 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
-                        {cfg.label}
+                        {t(`notifications.levels.${n.level}`)}
                       </span>
                     </div>
                     <p className="text-[13.5px] text-muted leading-relaxed mt-1.5">{n.body}</p>
@@ -241,7 +250,7 @@ const Notifications: React.FC = () => {
                   <button
                     onClick={() => dismiss(n.id)}
                     className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-text transition-all text-base"
-                    aria-label="Kapat"
+                    aria-label={t('notifications.close')}
                   >
                     <X size={16} strokeWidth={2.5} />
                   </button>

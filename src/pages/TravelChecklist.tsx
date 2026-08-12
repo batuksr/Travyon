@@ -1,76 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Circle, ChevronDown, ArrowLeft, RefreshCw } from 'lucide-react';
 
 interface CheckItem {
   id: string;
-  label: string;
-  tip?: string;
 }
 
 interface CheckGroup {
-  title: string;
+  id: string;
   emoji: string;
   items: CheckItem[];
 }
 
 const CHECKLIST: CheckGroup[] = [
   {
-    title: 'Belgeler',
+    id: 'documents',
     emoji: '📄',
     items: [
-      { id: 'passport',   label: 'Pasaport / Kimlik kartı',       tip: 'Geçerlilik süresini ve bitiş tarihini kontrol et.' },
-      { id: 'visa',       label: 'Vize / Seyahat izni',            tip: 'Hedef ülkenin vize şartlarını önceden araştır.' },
-      { id: 'ticket',     label: 'Uçuş bileti (çıktı veya dijital)', tip: 'Online check-in yaptıysan boarding pass\'i indir.' },
-      { id: 'hotel',      label: 'Otel / konaklama rezervasyonu',  tip: 'Rezervasyon onayını e-posta veya ekrana kaydet.' },
-      { id: 'insurance',  label: 'Seyahat sigortası',              tip: 'Poliçe numarasını telefonuna kaydet.' },
-      { id: 'emergency',  label: 'Acil iletişim bilgileri',        tip: 'Büyükelçilik, yerel acil ve sigorta numaraları.' },
+      { id: 'passport' },
+      { id: 'visa' },
+      { id: 'ticket' },
+      { id: 'hotel' },
+      { id: 'insurance' },
+      { id: 'emergency' },
     ],
   },
   {
-    title: 'Para & Finans',
+    id: 'money',
     emoji: '💳',
     items: [
-      { id: 'cash',       label: 'Nakit para (yerel para birimi)', tip: 'Havaalanı dışında değişim yapmak genellikle daha ucuz.' },
-      { id: 'card',       label: 'Banka kartı yurt dışı bildirimi',tip: 'Bankanı seyahat tarih aralığın için bilgilendir.' },
-      { id: 'backup',     label: 'Yedek kart / acil para',         tip: 'Çantandan ayrı bir yerde saklanan yedek tut.' },
+      { id: 'cash' },
+      { id: 'card' },
+      { id: 'backup' },
     ],
   },
   {
-    title: 'Sağlık & Güvenlik',
+    id: 'health',
     emoji: '🏥',
     items: [
-      { id: 'medicine',   label: 'Düzenli ilaçlar (yeterli dozda)', tip: 'Ülkeden ülkeye ilaç düzenlemeleri farklı olabilir.' },
-      { id: 'firstaid',   label: 'Temel ilk yardım malzemeleri',   tip: 'Ağrı kesici, yara bandı ve antiseptik.' },
-      { id: 'sunscreen',  label: 'Güneş kremi / böcek ilacı',      tip: 'Destinasyona göre SPF50+ veya DEET içeren seç.' },
-      { id: 'vaccine',    label: 'Aşı / sağlık sertifikası',       tip: 'Bazı ülkeler sarı humma veya COVID belgesi ister.' },
+      { id: 'medicine' },
+      { id: 'firstaid' },
+      { id: 'sunscreen' },
+      { id: 'vaccine' },
     ],
   },
   {
-    title: 'Teknoloji & Ulaşım',
+    id: 'tech',
     emoji: '🔌',
     items: [
-      { id: 'charger',    label: 'Telefon şarj aleti & adaptör',   tip: 'Hedef ülkenin priz tipini kontrol et.' },
-      { id: 'powerbank',  label: 'Taşınabilir şarj cihazı',        tip: 'Uçakta el bagajında olması gerekebilir.' },
-      { id: 'simcard',    label: 'Yerel SIM veya roaming paketi',   tip: 'eSIM servisleri genelde daha uygun fiyatlı.' },
-      { id: 'offline',    label: 'Çevrimdışı harita indir (Maps)',  tip: 'İnternet olmadan da rotanı takip etmek için.' },
-      { id: 'transport',  label: 'Ulaşım kartı / transfer planı',  tip: 'Havaalanından şehir merkezine nasıl gideceğini planla.' },
+      { id: 'charger' },
+      { id: 'powerbank' },
+      { id: 'simcard' },
+      { id: 'offline' },
+      { id: 'transport' },
     ],
   },
   {
-    title: 'Bavul & Kişisel',
+    id: 'luggage',
     emoji: '🧳',
     items: [
-      { id: 'clothes',    label: 'Hava durumuna uygun kıyafetler', tip: 'Destinasyonun güncel hava tahminini kontrol et.' },
-      { id: 'shoes',      label: 'Rahat yürüyüş ayakkabısı',       tip: 'Gezilerde günde 10-15 km yürümek sıradan.' },
-      { id: 'lock',       label: 'Bagaj kilidi',                   tip: 'TSA onaylı kilit bazı ülkelerde zorunlu.' },
-      { id: 'copies',     label: 'Belge kopyaları (fotoğraf/email)', tip: 'Pasaport ve bileti buluta veya e-postana kaydet.' },
-      { id: 'notify',     label: 'Ev / işyerine haber ver',        tip: 'Güvendiğin biriyle seyahat planını paylaş.' },
+      { id: 'clothes' },
+      { id: 'shoes' },
+      { id: 'lock' },
+      { id: 'copies' },
+      { id: 'notify' },
     ],
   },
 ];
 
 const TravelChecklist: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('planId') ?? 'default';
@@ -84,7 +84,7 @@ const TravelChecklist: React.FC = () => {
     } catch { return new Set(); }
   });
   const [openGroups, setOpenGroups] = useState<Set<string>>(
-    () => new Set(CHECKLIST.map(g => g.title))
+    () => new Set(CHECKLIST.map(g => g.id))
   );
 
   const totalItems = CHECKLIST.flatMap(g => g.items).length;
@@ -111,10 +111,10 @@ const TravelChecklist: React.FC = () => {
     });
   };
 
-  const toggleGroup = (title: string) => {
+  const toggleGroup = (id: string) => {
     setOpenGroups(prev => {
       const next = new Set(prev);
-      next.has(title) ? next.delete(title) : next.add(title);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
@@ -134,20 +134,20 @@ const TravelChecklist: React.FC = () => {
           className="flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-8"
         >
           <ArrowLeft size={15} strokeWidth={2.5} />
-          Geri
+          {t('travelChecklist.back')}
         </button>
 
         {/* Başlık — sage gradient kart */}
         <div className="relative overflow-hidden bg-gradient-to-br from-sage to-sage-700 rounded-[26px] p-7 sm:p-8 mb-6 text-white flex items-center justify-between gap-5">
           <div>
             <p className="text-[11px] font-heading uppercase tracking-widest text-white/80">
-              {dest || 'Hazırlık'}
+              {dest || t('travelChecklist.prepDefault')}
             </p>
             <h1 className="font-heading text-[28px] mt-2 leading-tight">
-              Seyahat Listesi
+              {t('travelChecklist.title')}
             </h1>
             <p className="text-white/85 text-sm mt-1">
-              {checkedCount} / {totalItems} madde tamamlandı
+              {t('travelChecklist.itemsCompleted', { checked: checkedCount, total: totalItems })}
             </p>
           </div>
           <div className="w-[78px] h-[78px] rounded-full bg-white/18 flex items-center justify-center flex-none font-heading text-2xl">
@@ -160,21 +160,21 @@ const TravelChecklist: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <div>
               <span className="font-heading text-2xl text-text">{checkedCount}</span>
-              <span className="text-muted text-sm font-medium"> / {totalItems} tamamlandı</span>
+              <span className="text-muted text-sm font-medium">{t('travelChecklist.completedOfTotal', { total: totalItems })}</span>
             </div>
             <div className="flex items-center gap-2">
               {progress === 100 && (
                 <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                  🎉 Hazırsın!
+                  🎉 {t('travelChecklist.ready')}
                 </span>
               )}
               <button
                 onClick={reset}
                 className="flex items-center gap-1 text-xs text-muted hover:text-text transition-colors"
-                title="Sıfırla"
+                title={t('travelChecklist.reset')}
               >
                 <RefreshCw size={12} strokeWidth={2.5} />
-                Sıfırla
+                {t('travelChecklist.reset')}
               </button>
             </div>
           </div>
@@ -194,23 +194,23 @@ const TravelChecklist: React.FC = () => {
         {/* Gruplar */}
         <div className="space-y-3">
           {CHECKLIST.map(group => {
-            const isOpen = openGroups.has(group.title);
+            const isOpen = openGroups.has(group.id);
             const groupChecked = group.items.filter(i => checked.has(i.id)).length;
             const allDone = groupChecked === group.items.length;
 
             return (
               <div
-                key={group.title}
+                key={group.id}
                 className="bg-surface rounded-3xl border border-divider overflow-hidden"
               >
                 {/* Grup başlığı */}
                 <button
-                  onClick={() => toggleGroup(group.title)}
+                  onClick={() => toggleGroup(group.id)}
                   className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-2 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{group.emoji}</span>
-                    <span className="font-heading text-text text-sm">{group.title}</span>
+                    <span className="font-heading text-text text-sm">{t(`travelChecklist.groups.${group.id}`)}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       allDone
                         ? 'bg-emerald-100 text-emerald-700'
@@ -246,11 +246,11 @@ const TravelChecklist: React.FC = () => {
                                 ? 'text-muted line-through'
                                 : 'text-text'
                             }`}>
-                              {item.label}
+                              {t(`travelChecklist.items.${item.id}.label`)}
                             </p>
-                            {item.tip && !isDone && (
+                            {!isDone && (
                               <p className="text-xs text-muted mt-0.5 leading-relaxed">
-                                {item.tip}
+                                {t(`travelChecklist.items.${item.id}.tip`)}
                               </p>
                             )}
                           </div>
@@ -265,7 +265,7 @@ const TravelChecklist: React.FC = () => {
         </div>
 
         <p className="text-center text-xs text-muted mt-8">
-          İlerleme otomatik kaydedilir ✓
+          {t('travelChecklist.autoSaved')} ✓
         </p>
 
       </div>

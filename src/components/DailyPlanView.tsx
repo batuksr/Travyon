@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X, StickyNote } from 'lucide-react';
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { DailyPlan, DailyActivity } from '../services/aiService';
 import { regenerateDayWithVibe, suggestSingleActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
@@ -28,11 +30,20 @@ interface Props {
 
 const TRAVEL_MODES: TravelMode[] = ['driving', 'transit', 'walking', 'cycling'];
 const TRAVEL_ICONS: Record<TravelMode, string> = { driving: '🚗', transit: '🚌', walking: '🚶', cycling: '🚲' };
-const TRAVEL_LABELS: Record<TravelMode, string> = { driving: 'Araç', transit: 'Toplu', walking: 'Yürü', cycling: 'Bisiklet' };
 const GMAPS_MODE: Record<TravelMode, string> = { driving: 'driving', transit: 'transit', walking: 'walking', cycling: 'bicycling' };
 
+/* Period değerleri backend/AI tarafından üretilen sabit Türkçe etiketlerdir (bkz. aiService.ts);
+   sadece görüntülenen metin i18n anahtarına çevrilir, saklanan/karşılaştırılan değer değişmez. */
 const PERIODS = ['Sabah', 'Öğle', 'Öğleden Sonra', 'Akşam', 'Gece'] as const;
 type Period = typeof PERIODS[number];
+const PERIOD_I18N_KEYS: Record<Period, string> = {
+  'Sabah': 'morning',
+  'Öğle': 'noon',
+  'Öğleden Sonra': 'afternoon',
+  'Akşam': 'evening',
+  'Gece': 'night',
+};
+const periodLabelKey = (period: string): string => PERIOD_I18N_KEYS[period as Period] ?? period;
 
 /* Period sırasına göre doğru ekleme indexi */
 const getInsertIndex = (activities: DailyActivity[], newPeriod: string): number => {
@@ -54,11 +65,13 @@ const calcCentroid = (activities: DailyActivity[]): { lat: number; lng: number }
   };
 };
 
-const fmtMin = (mins: number) => {
-  if (mins < 60) return `${mins}dk`;
+const fmtMin = (mins: number, t: TFunction) => {
+  if (mins < 60) return t('dashboard.dailyPlanView.minutesShort', { mins });
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m > 0 ? `${h}sa ${m}dk` : `${h}sa`;
+  return m > 0
+    ? t('dashboard.dailyPlanView.hoursMinutesShort', { h, m })
+    : t('dashboard.dailyPlanView.hoursShort', { h });
 };
 
 /* ── TravelStrip ── */
@@ -69,6 +82,7 @@ interface TravelStripProps {
   distText:    string | null;
 }
 const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, distText }) => {
+  const { t } = useTranslation();
   const [pending, setPending] = useState<TravelMode | null>(null);
   const confirmOpen = () => {
     if (!pending) return;
@@ -79,7 +93,7 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
   if (!seg || seg.loading) return (
     <div className="flex items-center gap-2 mt-1.5">
       {distText && <span className="text-[10px] text-muted">↕ {distText}</span>}
-      <span className="text-[10px] text-muted animate-pulse">⏱ hesaplanıyor…</span>
+      <span className="text-[10px] text-muted animate-pulse">⏱ {t('dashboard.dailyPlanView.calculating')}</span>
     </div>
   );
   const available = TRAVEL_MODES.filter(m => seg[m] != null);
@@ -101,7 +115,7 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
                   : isFastest ? 'bg-accent-100 text-accent-700 border-accent/25 hover:bg-accent-200'
                   : 'bg-surface-2 text-muted border-divider hover:bg-surface-2/70'}`}>
               <span className="text-[11px] leading-none">{TRAVEL_ICONS[mode]}</span>
-              {fmtMin(mins)}
+              {fmtMin(mins, t)}
             </button>
           );
         })}
@@ -110,10 +124,14 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
         <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-divider rounded-2xl shadow-sm">
           <span className="text-base leading-none">{TRAVEL_ICONS[pending]}</span>
           <p className="flex-1 text-[11px] text-muted leading-tight">
-            <span className="font-semibold text-text">{TRAVEL_LABELS[pending]}</span> ile Google Maps açılsın mı?
+            <Trans
+              i18nKey="dashboard.dailyPlanView.openInGoogleMaps"
+              values={{ mode: t(`dashboard.dailyPlanView.travelModes.${pending}`) }}
+              components={{ b: <span className="font-semibold text-text" /> }}
+            />
           </p>
-          <button onClick={() => setPending(null)} className="text-[10px] font-semibold text-muted hover:text-text transition-colors px-1">İptal</button>
-          <button onClick={confirmOpen} className="text-[10px] font-semibold text-white bg-accent hover:brightness-105 px-2.5 py-1 rounded-lg transition-colors">Aç</button>
+          <button onClick={() => setPending(null)} className="text-[10px] font-semibold text-muted hover:text-text transition-colors px-1">{t('dashboard.dailyPlanView.cancel')}</button>
+          <button onClick={confirmOpen} className="text-[10px] font-semibold text-white bg-accent hover:brightness-105 px-2.5 py-1 rounded-lg transition-colors">{t('dashboard.dailyPlanView.open')}</button>
         </div>
       )}
     </div>
@@ -130,11 +148,13 @@ const getPeriodColor = (period: string) => {
   return { border: 'border-divider', bg: 'bg-surface-2', text: 'text-muted' };
 };
 
-const vibeConfig: Record<string, { label: string; emoji: string }> = {
-  rest:    { label: 'Dinlenme',    emoji: '😴' },
-  indoor:  { label: 'Kapalı Alan', emoji: '🌧️' },
-  budget:  { label: 'Tasarruf',    emoji: '💰' },
-  explore: { label: 'Keşif',       emoji: '🎉' },
+/* Vibe anahtarları (rest/indoor/budget/explore) nötr, dile bağımlı değil — sadece etiket i18n'den okunur */
+const VIBE_KEYS: Array<'rest' | 'indoor' | 'budget' | 'explore'> = ['rest', 'indoor', 'budget', 'explore'];
+const VIBE_EMOJIS: Record<'rest' | 'indoor' | 'budget' | 'explore', string> = {
+  rest:    '😴',
+  indoor:  '🌧️',
+  budget:  '💰',
+  explore: '🎉',
 };
 
 /* ════════════════════════════════════════
@@ -152,6 +172,7 @@ interface AddPanelProps {
 const AddActivityPanel: React.FC<AddPanelProps> = ({
   day, destination, currencyCode, currencySymbol, onClose, onAdd,
 }) => {
+  const { t, i18n } = useTranslation();
   const [period, setPeriod]       = useState<Period>('Sabah');
   const [query, setQuery]         = useState('');
   const [loading, setLoading]     = useState(false);
@@ -174,10 +195,11 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
         destination, period, query.trim(),
         existingPlaces, currencyCode, currencySymbol,
         nearbyCoords,
+        i18n.language === 'en' ? 'en' : 'tr',
       );
       setPreview(activity);
     } catch (e) {
-      setError((e as Error).message || 'Öneri alınamadı, tekrar dene.');
+      setError((e as Error).message || t('dashboard.dailyPlanView.addActivity.suggestError'));
     } finally {
       setLoading(false);
     }
@@ -195,7 +217,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
       {/* Başlık */}
       <div className="flex items-center justify-between">
         <p className="text-xs font-heading text-text flex items-center gap-1.5">
-          <Plus size={13} strokeWidth={2.5} className="text-accent" /> Aktivite Ekle
+          <Plus size={13} strokeWidth={2.5} className="text-accent" /> {t('dashboard.dailyPlanView.addActivity.title')}
         </p>
         <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-2 transition-colors">
           <X size={13} strokeWidth={2.5} className="text-muted" />
@@ -214,7 +236,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
                 : 'bg-surface text-muted border-divider hover:border-accent/40'
             }`}
           >
-            {p}
+            {t(`dashboard.dailyPlanView.periods.${PERIOD_I18N_KEYS[p]}`)}
           </button>
         ))}
       </div>
@@ -227,7 +249,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
           value={query}
           onChange={e => { setQuery(e.target.value); setPreview(null); }}
           onKeyDown={e => e.key === 'Enter' && handleSuggest()}
-          placeholder="Ne eklemek istiyorsun? (örn: müze, kahve, park...)"
+          placeholder={t('dashboard.dailyPlanView.addActivity.placeholder')}
           className="flex-1 px-3 py-2 text-xs rounded-xl border border-divider bg-surface-2 text-text placeholder:text-muted outline-none focus:border-accent transition-all"
         />
         <button
@@ -236,8 +258,8 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
           className="inline-flex items-center gap-1.5 px-3 py-2 bg-accent hover:brightness-105 disabled:opacity-50 text-white text-xs font-heading rounded-xl transition-all shrink-0"
         >
           {loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-          <span className="hidden sm:inline">{loading ? 'Düşünüyor...' : 'AI Öner'}</span>
-          <span className="sm:hidden">{loading ? '...' : 'Öner'}</span>
+          <span className="hidden sm:inline">{loading ? t('dashboard.dailyPlanView.addActivity.thinking') : t('dashboard.dailyPlanView.addActivity.suggestAI')}</span>
+          <span className="sm:hidden">{loading ? '...' : t('dashboard.dailyPlanView.addActivity.suggestShort')}</span>
         </button>
       </div>
 
@@ -261,13 +283,13 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
               onClick={handleAdd}
               className="flex-1 py-1.5 bg-accent hover:brightness-105 text-white text-xs font-heading rounded-lg transition-all"
             >
-              ✓ Plana Ekle
+              ✓ {t('dashboard.dailyPlanView.addActivity.addToPlan')}
             </button>
             <button
               onClick={() => setPreview(null)}
               className="px-3 py-1.5 bg-surface text-muted text-xs font-semibold border border-divider rounded-lg hover:bg-surface-2 transition-all"
             >
-              Farklı Öner
+              {t('dashboard.dailyPlanView.addActivity.suggestDifferent')}
             </button>
           </div>
         </div>
@@ -280,6 +302,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
    Main Component
 ════════════════════════════════════════ */
 const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
+  const { t, i18n } = useTranslation();
   const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity, updateActivityNote } = usePlanStore();
   const { data: tripData } = useOnboardingStore();
   const { distanceKm: distKm } = useAppSettingsStore();
@@ -358,12 +381,13 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
         day, plan.dailyPlans, plan.destination, newVibe,
         tripData.startDate, tripData.arrivalTime,
         tripData.endDate,   tripData.departureTime,
-        (updatedDay) => updateDayPlan(day.dayNumber, updatedDay)
+        (updatedDay) => updateDayPlan(day.dayNumber, updatedDay),
+        i18n.language === 'en' ? 'en' : 'tr',
       );
       updateDayPlan(day.dayNumber, newDay);
       setActiveVibe(null);
     } catch (error: unknown) {
-      alert('Vibe güncellenirken hata: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      alert(t('dashboard.dailyPlanView.vibeUpdateError', { message: error instanceof Error ? error.message : t('dashboard.dailyPlanView.unknownError') }));
       setActiveVibe(null);
     } finally {
       setIsRegenerating(false);
@@ -415,7 +439,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
         <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="flex items-center gap-2.5 px-4 py-2.5 bg-accent-700 text-white rounded-full text-sm font-heading shadow-lg">
             <Loader2 size={14} className="animate-spin" />
-            Optimize ediliyor...
+            {t('dashboard.dailyPlanView.regenerating')}
           </div>
         </div>
       )}
@@ -440,7 +464,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
             <div key={index}>
               {showPeriodLabel && (
                 <p className={`text-[10px] font-heading uppercase tracking-wider mb-1.5 ml-9 ${index > 0 ? 'mt-4' : ''} ${colors.text}`}>
-                  {activity.period}
+                  {t(`dashboard.dailyPlanView.periods.${periodLabelKey(activity.period)}`)}
                 </p>
               )}
 
@@ -476,7 +500,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           </p>
                         )}
                         {isDeleting && (
-                          <p className="text-xs text-red-400 mt-0.5 font-medium">Bu aktiviteyi silmek istiyor musun?</p>
+                          <p className="text-xs text-red-400 mt-0.5 font-medium">{t('dashboard.dailyPlanView.deleteConfirm')}</p>
                         )}
                       </div>
 
@@ -502,7 +526,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             value={noteText}
                             onChange={e => setNoteText(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Escape') setNoteIndex(null); }}
-                            placeholder="Not ekle… (rezervasyon no, anı, ipucu...)"
+                            placeholder={t('dashboard.dailyPlanView.note.placeholder')}
                             className="w-full text-xs px-2.5 py-2 rounded-lg border border-amber-200 bg-amber-50 text-text placeholder:text-muted outline-none focus:border-amber-400 resize-none transition-all"
                           />
                           <div className="flex gap-1.5 mt-1.5">
@@ -511,7 +535,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               onClick={() => saveNote(index)}
                               className="text-[10px] font-bold px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded-lg transition-colors"
                             >
-                              Kaydet
+                              {t('dashboard.dailyPlanView.note.save')}
                             </button>
                             {activity.note && (
                               <button
@@ -519,7 +543,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                                 onClick={() => { setNoteText(''); updateActivityNote(day.dayNumber, index, ''); setNoteIndex(null); }}
                                 className="text-[10px] font-semibold px-2.5 py-1 bg-surface text-red-400 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                               >
-                                Notu Sil
+                                {t('dashboard.dailyPlanView.note.delete')}
                               </button>
                             )}
                             <button
@@ -527,7 +551,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                               onClick={() => setNoteIndex(null)}
                               className="text-[10px] font-semibold px-2.5 py-1 bg-surface text-muted border border-divider rounded-lg hover:bg-surface-2 transition-colors"
                             >
-                              İptal
+                              {t('dashboard.dailyPlanView.cancel')}
                             </button>
                           </div>
                         </div>
@@ -543,13 +567,13 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             onClick={() => handleDelete(index)}
                             className="text-[10px] font-bold px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                           >
-                            Sil
+                            {t('dashboard.dailyPlanView.delete')}
                           </button>
                           <button
                             onClick={() => setDeletingIndex(null)}
                             className="text-[10px] font-bold px-2 py-1 bg-surface-2 text-muted rounded-lg hover:bg-divider transition-colors"
                           >
-                            İptal
+                            {t('dashboard.dailyPlanView.cancel')}
                           </button>
                         </>
                       ) : (
@@ -559,7 +583,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             <button
                               onClick={() => handleMove(index, index - 1)}
                               disabled={index === 0}
-                              title="Yukarı taşı"
+                              title={t('dashboard.dailyPlanView.moveUp')}
                               className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-muted hover:text-text hover:bg-surface-2 disabled:opacity-0 transition-all"
                             >
                               <ChevronUp size={13} />
@@ -567,7 +591,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                             <button
                               onClick={() => handleMove(index, index + 1)}
                               disabled={isLast}
-                              title="Aşağı taşı"
+                              title={t('dashboard.dailyPlanView.moveDown')}
                               className="w-7 h-7 sm:w-5 sm:h-5 flex items-center justify-center rounded text-muted hover:text-text hover:bg-surface-2 disabled:opacity-0 transition-all"
                             >
                               <ChevronDown size={13} />
@@ -577,7 +601,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           {/* Not butonu */}
                           <button
                             onClick={() => noteIndex === index ? setNoteIndex(null) : openNote(index)}
-                            title="Not ekle"
+                            title={t('dashboard.dailyPlanView.addNoteTitle')}
                             className={`w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded transition-all ${
                               activity.note
                                 ? 'text-amber-400 hover:bg-amber-50'
@@ -590,7 +614,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                           {/* Sil butonu */}
                           <button
                             onClick={() => { setDeletingIndex(index); setEditingIndex(null); setNoteIndex(null); }}
-                            title="Aktiviteyi sil"
+                            title={t('dashboard.dailyPlanView.deleteActivityTitle')}
                             className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded text-muted hover:text-red-400 hover:bg-red-50 transition-all"
                           >
                             <Trash2 size={13} />
@@ -653,7 +677,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
             className="w-full mt-3 mb-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-dashed border-divider text-xs font-heading text-muted hover:border-accent/50 hover:text-accent hover:bg-accent-100/50 transition-all"
           >
             <Plus size={13} strokeWidth={2.5} />
-            Aktivite Ekle
+            {t('dashboard.dailyPlanView.addActivity.title')}
           </button>
         )}
       </div>
@@ -672,10 +696,9 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
 
       {/* ── VİBE BAR ── */}
       <div className="sticky bottom-0 border-t border-divider bg-surface/95 backdrop-blur-sm px-3 sm:px-5 py-2.5 flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-heading text-muted uppercase tracking-wider shrink-0">Vibe:</span>
+        <span className="text-[10px] font-heading text-muted uppercase tracking-wider shrink-0">{t('dashboard.dailyPlanView.vibesLabel')}</span>
         <div className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {(Object.keys(vibeConfig) as Array<keyof typeof vibeConfig>).map(key => {
-            const cfg = vibeConfig[key];
+          {VIBE_KEYS.map(key => {
             const isActive = activeVibe === key;
             return (
               <button
@@ -687,8 +710,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
                   isActive ? 'bg-accent text-white border-accent' : 'bg-surface text-text border-divider hover:border-accent/40'
                 }`}
               >
-                <span>{cfg.emoji}</span>
-                {cfg.label}
+                <span>{VIBE_EMOJIS[key]}</span>
+                {t(`dashboard.dailyPlanView.vibes.${key}`)}
               </button>
             );
           })}

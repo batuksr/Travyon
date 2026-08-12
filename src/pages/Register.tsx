@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { motion } from 'framer-motion';
@@ -9,6 +10,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 
 const Register: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,7 +34,7 @@ const Register: React.FC = () => {
       .catch(err => {
         const code = (err as { code?: string }).code;
         if (code && code !== 'auth/no-auth-event' && code !== 'auth/null-user') {
-          setError('Google ile kayıt oluşturulmadı. Tekrar deneyin.');
+          setError(t('auth.register.errors.redirectFailed'));
         }
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -41,7 +43,7 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (password.length < 6) { setError('Şifre en az 6 karakter olmalıdır.'); return; }
+    if (password.length < 6) { setError(t('auth.register.errors.passwordTooShort')); return; }
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -55,9 +57,9 @@ const Register: React.FC = () => {
       setShowVerify(true);
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string };
-      if (firebaseErr.code === 'auth/email-already-in-use') setError('Bu e-posta zaten kayıtlı.');
-      else if (firebaseErr.code === 'auth/weak-password') setError('Şifre çok zayıf.');
-      else setError('Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
+      if (firebaseErr.code === 'auth/email-already-in-use') setError(t('auth.register.errors.emailInUse'));
+      else if (firebaseErr.code === 'auth/weak-password') setError(t('auth.register.errors.weakPassword'));
+      else setError(t('auth.register.errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -75,14 +77,14 @@ const Register: React.FC = () => {
         if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
           await signInWithRedirect(auth, googleProvider);
         } else {
-          setError('Google girişi için uygulamayı HTTPS üzerinden açın.');
+          setError(t('auth.common.httpsRequired'));
           setLoading(false);
         }
       } else if (code === 'auth/unauthorized-domain') {
-        setError('Bu domain Firebase\'de yetkilendirilmemiş. Firebase Console → Authentication → Authorized Domains\'e ekleyin.');
+        setError(t('auth.common.unauthorizedDomain'));
         setLoading(false);
       } else {
-        setError('Google ile kayıt oluşturulamadı. (' + (code || 'bilinmeyen hata') + ')');
+        setError(t('auth.register.errors.googleFailedWithCode', { code: code || t('auth.common.unknownError') }));
         setLoading(false);
       }
     }
@@ -99,10 +101,10 @@ const Register: React.FC = () => {
         setUser(auth.currentUser);
         navigate('/onboarding');
       } else {
-        setVerifyMsg('Henüz doğrulanmamış. Mailindeki linke tıkladın mı? (Spam klasörüne de bak)');
+        setVerifyMsg(t('auth.register.verify.notVerifiedYet'));
       }
     } catch {
-      setVerifyMsg('Kontrol edilemedi, tekrar dene.');
+      setVerifyMsg(t('auth.register.verify.checkFailed'));
     } finally {
       setChecking(false);
     }
@@ -123,8 +125,8 @@ const Register: React.FC = () => {
     } catch (err) {
       const code = (err as { code?: string }).code;
       setVerifyMsg(code === 'auth/too-many-requests'
-        ? 'Çok fazla istek — birkaç dakika sonra dene.'
-        : 'Mail gönderilemedi, tekrar dene.');
+        ? t('auth.register.verify.tooManyRequests')
+        : t('auth.register.verify.resendFailed'));
     } finally {
       setResending(false);
     }
@@ -144,13 +146,13 @@ const Register: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4.5 rounded-3xl bg-accent-100 flex items-center justify-center text-accent">
               <MailCheck size={30} strokeWidth={2.5} />
             </div>
-            <h2 className="font-heading text-2xl text-text mb-2">E-postanı Doğrula</h2>
+            <h2 className="font-heading text-2xl text-text mb-2">{t('auth.register.verify.title')}</h2>
             <p className="text-sm text-muted leading-relaxed mb-1.5">
-              <span className="font-semibold text-text">{email}</span> adresine bir doğrulama linki gönderdik.
+              <Trans i18nKey="auth.register.verify.sentTo" values={{ email }} components={{ b: <span className="font-semibold text-text" /> }} />
             </p>
             <p className="text-xs text-muted leading-relaxed mb-6">
-              Mailindeki linke tıkla, sonra aşağıdaki <span className="font-semibold">"Doğruladım"</span> butonuna bas.
-              <br />📥 Mail gelmedi mi? <span className="font-semibold">Spam / Gereksiz</span> klasörüne bak.
+              {t('auth.register.verify.instructions')}
+              <br />{t('auth.register.verify.spamHint')}
             </p>
 
             {verifyMsg && (
@@ -166,7 +168,7 @@ const Register: React.FC = () => {
               className="w-full py-3.5 bg-accent hover:brightness-105 text-white font-heading rounded-full flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-60 shadow-[0_12px_26px_rgba(198,113,57,0.3)] mb-2.5"
             >
               {checking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={2.75} />}
-              Doğruladım, Devam Et
+              {t('auth.register.verify.checkButton')}
             </button>
 
             <button
@@ -176,8 +178,8 @@ const Register: React.FC = () => {
               className="w-full py-3 bg-transparent border-[1.5px] border-divider text-text font-heading rounded-full flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-60"
             >
               {resending ? <Loader2 size={15} className="animate-spin" />
-                : resent ? <><Check size={15} strokeWidth={2.75} className="text-emerald-500" /> Gönderildi</>
-                : <><RefreshCw size={15} strokeWidth={2.75} /> Maili Tekrar Gönder</>}
+                : resent ? <><Check size={15} strokeWidth={2.75} className="text-emerald-500" /> {t('auth.register.verify.resendSent')}</>
+                : <><RefreshCw size={15} strokeWidth={2.75} /> {t('auth.register.verify.resendButton')}</>}
             </button>
 
             <button
@@ -185,7 +187,7 @@ const Register: React.FC = () => {
               onClick={() => navigate('/onboarding')}
               className="mt-4 text-xs text-muted hover:text-text font-medium transition-colors"
             >
-              Daha sonra doğrularım →
+              {t('auth.register.verify.laterButton')}
             </button>
           </motion.div>
         </div>
@@ -195,7 +197,7 @@ const Register: React.FC = () => {
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-[#1c140c]">
         <img
           src="https://images.unsplash.com/photo-1699654945774-2401e713f53e?q=75&w=1600&auto=format&fit=crop"
-          alt="Anıtkabir Ankara"
+          alt={t('auth.register.photoAlt')}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
           fetchPriority="high"
@@ -207,9 +209,9 @@ const Register: React.FC = () => {
           </Link>
           <div className="mt-auto">
             <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">
-              "Hayalindeki seyahati planlamak<br />artık sadece dakikalar alıyor."
+              "{t('auth.register.quoteLine1')}<br />{t('auth.register.quoteLine2')}"
             </blockquote>
-            <p className="mt-3.5 text-white/60 text-sm">Travyon ile seyahatini planla, anılarını yarat.</p>
+            <p className="mt-3.5 text-white/60 text-sm">{t('auth.common.tagline')}</p>
           </div>
         </div>
       </div>
@@ -229,8 +231,8 @@ const Register: React.FC = () => {
             </Link>
           </div>
 
-          <h1 className="font-heading text-3xl text-text">Hesap oluştur 🚀</h1>
-          <p className="text-muted text-[15px] mt-2.5 mb-7">Yapay zeka destekli planlayıcına katıl.</p>
+          <h1 className="font-heading text-3xl text-text">{t('auth.register.title')}</h1>
+          <p className="text-muted text-[15px] mt-2.5 mb-7">{t('auth.register.subtitle')}</p>
 
           {error && (
             <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm">
@@ -240,12 +242,12 @@ const Register: React.FC = () => {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="block font-heading text-[13px] text-text mb-2">Ad Soyad</label>
+              <label className="block font-heading text-[13px] text-text mb-2">{t('auth.register.nameLabel')}</label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={17} strokeWidth={2.5} />
                 <input
                   type="text"
-                  placeholder="Adınız Soyadınız"
+                  placeholder={t('auth.register.namePlaceholder')}
                   className="w-full pl-10 pr-4 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -254,12 +256,12 @@ const Register: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-heading text-[13px] text-text mb-2">E-posta</label>
+              <label className="block font-heading text-[13px] text-text mb-2">{t('auth.common.emailLabel')}</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={17} strokeWidth={2.5} />
                 <input
                   type="email"
-                  placeholder="ornek@email.com"
+                  placeholder={t('auth.common.emailPlaceholder')}
                   className="w-full pl-10 pr-4 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -269,12 +271,12 @@ const Register: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-heading text-[13px] text-text mb-2">Şifre</label>
+              <label className="block font-heading text-[13px] text-text mb-2">{t('auth.common.passwordLabel')}</label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={17} strokeWidth={2.5} />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Min. 6 karakter"
+                  placeholder={t('auth.register.passwordPlaceholder')}
                   className="w-full pl-10 pr-10 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -288,7 +290,7 @@ const Register: React.FC = () => {
                   {showPassword ? <EyeOff size={17} strokeWidth={2.5} /> : <Eye size={17} strokeWidth={2.5} />}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-muted">En az 6 karakter</p>
+              <p className="mt-2 text-xs text-muted">{t('auth.register.passwordHint')}</p>
             </div>
 
             <button
@@ -297,13 +299,13 @@ const Register: React.FC = () => {
               className="w-full py-3.5 mt-1 bg-accent hover:brightness-105 text-white font-heading rounded-full flex items-center justify-center gap-2 text-[15px] transition-all disabled:opacity-50 shadow-[0_12px_26px_rgba(198,113,57,0.3)] active:translate-y-px"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} strokeWidth={2.75} />}
-              {loading ? 'Oluşturuluyor...' : 'Hesap Oluştur'}
+              {loading ? t('auth.register.submitLoading') : t('auth.register.submit')}
             </button>
           </form>
 
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-divider" />
-            <span className="text-xs text-muted uppercase tracking-wider">veya</span>
+            <span className="text-xs text-muted uppercase tracking-wider">{t('auth.common.or')}</span>
             <div className="flex-1 h-px bg-divider" />
           </div>
 
@@ -318,13 +320,13 @@ const Register: React.FC = () => {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            Google ile Devam Et
+            {t('auth.common.googleContinue')}
           </button>
 
           <p className="text-center text-muted text-sm mt-7">
-            Zaten hesabın var mı?{' '}
+            {t('auth.register.alreadyHaveAccount')}{' '}
             <Link to="/login" className="text-accent font-heading transition-colors">
-              Giriş Yap
+              {t('auth.register.loginLink')}
             </Link>
           </p>
         </motion.div>

@@ -1,11 +1,13 @@
 ﻿import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
+import i18n, { LANGUAGE_TO_CODE } from "./i18n";
 import Sidebar from "./components/Sidebar";
 import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
 import PwaInstallBanner from "./components/PwaInstallBanner";
@@ -50,18 +52,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 /* ── Mobil alt navigasyon (sm altında gösterilir) ── */
-const BOTTOM_NAV = [
-  { icon: HomeIcon,     label: 'Ana Sayfa',    path: '/hub' },
-  { icon: Sparkles,     label: 'Plan Oluştur', path: '/onboarding' },
-  { icon: Bookmark,     label: 'Planlarım',    path: '/saved-plans' },
-  { icon: Users,        label: 'Topluluk',     path: '/community' },
-  { icon: Bell,         label: 'Bildirim',     path: '/notifications' },
-  { icon: SettingsIcon, label: 'Ayarlar',      path: '/settings' },
-] as const;
-
 const BottomNav: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate  = useNavigate();
+
+  const BOTTOM_NAV = [
+    { icon: HomeIcon,     label: t('nav.home'),              path: '/hub' },
+    { icon: Sparkles,     label: t('nav.createPlan'),        path: '/onboarding' },
+    { icon: Bookmark,     label: t('nav.myPlans'),           path: '/saved-plans' },
+    { icon: Users,        label: t('nav.community'),         path: '/community' },
+    { icon: Bell,         label: t('nav.notificationsShort'), path: '/notifications' },
+    { icon: SettingsIcon, label: t('nav.settings'),          path: '/settings' },
+  ] as const;
+
   return (
     <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
       border-t border-divider bg-surface px-1 h-14 safe-b"
@@ -131,12 +135,18 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
 function App() {
   const { user, setUser, setLoading } = useAuthStore();
   const { dark } = useThemeStore();
-  const { setSettings } = useAppSettingsStore();
+  const { language, setSettings } = useAppSettingsStore();
 
   /* Apply / remove dark class on <html> */
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
+
+  /* Ayarlar'daki dil seçimini i18next'e uygula — değişince tüm uygulama anında güncellenir */
+  useEffect(() => {
+    const code = LANGUAGE_TO_CODE[language] ?? 'tr';
+    if (i18n.language !== code) i18n.changeLanguage(code);
+  }, [language]);
 
   useEffect(() => {
     if (!auth || Object.keys(auth).length === 0) {

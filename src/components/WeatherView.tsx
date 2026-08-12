@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { X, Droplets, Wind, Cloud, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   fetchWeatherForTrip,
   getWeatherInfo,
-  getPackingTips,
   type DayWeather,
   type WeatherResult,
 } from '../services/weatherService';
@@ -26,7 +27,48 @@ const fmt = (dateStr: string): string => {
 const windyUrl = (lat: number, lng: number): string =>
   `https://www.windy.com/${lat.toFixed(4)}/${lng.toFixed(4)}/11`;
 
+/* ── WMO kod → i18n anahtarı (weatherService'teki WMO tablosuyla birebir eşleşir) ── */
+const WMO_LABEL_KEYS: Record<number, string> = {
+  0: 'clear', 1: 'mostlyClear', 2: 'partlyCloudy', 3: 'overcast',
+  45: 'fog', 48: 'denseFog',
+  51: 'lightDrizzle', 53: 'drizzle', 55: 'denseDrizzle',
+  61: 'lightRain', 63: 'rain', 65: 'heavyRain',
+  71: 'lightSnow', 73: 'snow', 75: 'denseSnow', 77: 'hail',
+  80: 'showers', 81: 'heavyShowers', 82: 'violentShowers',
+  85: 'snowShowers', 86: 'denseSnowShowers',
+  95: 'thunderstorm', 96: 'thunderstormHail', 99: 'severeThunderstorm',
+};
+
+const weatherLabel = (code: number, t: TFunction): string => {
+  const key = WMO_LABEL_KEYS[code] ?? WMO_LABEL_KEYS[Math.floor(code / 10) * 10] ?? 'unknown';
+  return t(`weatherView.conditions.${key}`);
+};
+
+/* ── Bavul önerileri — weatherService'teki getPackingTips ile aynı mantık, çevrilebilir ── */
+const PACKING_TIP_EMOJIS: Record<string, string> = {
+  hot: '🧴', rainy: '☂️', cold: '🧥', snowy: '🥾', windy: '🧣', stormy: '⚡',
+};
+
+const getPackingTipsLocalized = (weatherList: DayWeather[], t: TFunction): string[] => {
+  const hot    = weatherList.some(w => w.tempMax > 28);
+  const cold   = weatherList.some(w => w.tempMin < 12);
+  const rainy  = weatherList.some(w => w.precipitationSum > 3 || (w.precipitationProbabilityMax ?? 0) > 50);
+  const snowy  = weatherList.some(w => w.weatherCode >= 71 && w.weatherCode <= 77);
+  const windy  = weatherList.some(w => w.windSpeedMax > 30);
+  const stormy = weatherList.some(w => w.weatherCode >= 80);
+
+  const tips: string[] = [];
+  if (hot)    tips.push(`${PACKING_TIP_EMOJIS.hot} ${t('weatherView.packingTips.hot')}`);
+  if (rainy)  tips.push(`${PACKING_TIP_EMOJIS.rainy} ${t('weatherView.packingTips.rainy')}`);
+  if (cold)   tips.push(`${PACKING_TIP_EMOJIS.cold} ${t('weatherView.packingTips.cold')}`);
+  if (snowy)  tips.push(`${PACKING_TIP_EMOJIS.snowy} ${t('weatherView.packingTips.snowy')}`);
+  if (windy)  tips.push(`${PACKING_TIP_EMOJIS.windy} ${t('weatherView.packingTips.windy')}`);
+  if (stormy) tips.push(`${PACKING_TIP_EMOJIS.stormy} ${t('weatherView.packingTips.stormy')}`);
+  return tips;
+};
+
 const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
+  const { t } = useTranslation();
   const [result, setResult]   = useState<WeatherResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
@@ -41,18 +83,18 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
       .catch(err => {
         const msg: string = (err as Error).message;
         if (msg === 'TOO_FAR') {
-          setError('Bu tarihlere ait tahmin henüz hazır değil. Seyahat tarihinize yaklaştıkça tekrar kontrol edin (en fazla 16 gün öncesinden).');
+          setError(t('weatherView.errors.tooFar'));
         } else if (msg === 'NOT_FOUND') {
-          setError(`"${plan.destination}" konumu bulunamadı.`);
+          setError(t('weatherView.errors.notFound', { destination: plan.destination }));
         } else {
-          setError('Hava durumu alınamadı. İnternet bağlantınızı kontrol edin.');
+          setError(t('weatherView.errors.generic'));
         }
       })
       .finally(() => setLoading(false));
-  }, [plan.destination, onboardingData.startDate, onboardingData.endDate]);
+  }, [plan.destination, onboardingData.startDate, onboardingData.endDate, t]);
 
   const weather    = result?.weather ?? null;
-  const packingTips = weather ? getPackingTips(weather) : [];
+  const packingTips = weather ? getPackingTipsLocalized(weather, t) : [];
 
   return (
     <div className="fixed inset-0 z-40 flex">
@@ -67,7 +109,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
               <Cloud size={13} className="text-sky-500" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Hava Durumu</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('weatherView.title')}</h2>
             </div>
             <p className="text-[10px] text-slate-400">
               {plan.destination} · {fmt(onboardingData.startDate)} – {fmt(onboardingData.endDate)}
@@ -88,7 +130,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div className="w-7 h-7 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-slate-400">Yükleniyor...</p>
+              <p className="text-xs text-slate-400">{t('weatherView.loading')}</p>
             </div>
           )}
 
@@ -120,18 +162,18 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                       className="flex items-center justify-center gap-1.5 w-full py-2 bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white text-[10px] font-semibold transition-colors"
                     >
                       <ExternalLink size={9} />
-                      Saatlik detaylı tahmin — Windy.com
+                      {t('weatherView.windyLink')}
                     </a>
 
                     <div className="p-3.5">
                       {/* Üst satır */}
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-medium">Gün {day.dayNumber}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{t('weatherView.dayLabel', { number: day.dayNumber })}</p>
                           <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5">
                             {fmt(day.date)}
                           </p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{info.label}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{weatherLabel(w.weatherCode, t)}</p>
                         </div>
                         <span className="text-3xl leading-none select-none">{info.emoji}</span>
                       </div>
@@ -147,7 +189,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                         {w.precipitationProbabilityMax !== null ? (
                           <div className="flex items-center gap-1">
                             <Droplets size={9} className="text-sky-400 shrink-0" />
-                            <span>%{w.precipitationProbabilityMax} yağış</span>
+                            <span>{t('weatherView.precipitationChance', { value: w.precipitationProbabilityMax })}</span>
                           </div>
                         ) : w.precipitationSum > 0 ? (
                           <div className="flex items-center gap-1">
@@ -157,7 +199,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                         ) : (
                           <div className="flex items-center gap-1">
                             <Droplets size={9} className="text-slate-300 shrink-0" />
-                            <span>Yağış yok</span>
+                            <span>{t('weatherView.noPrecipitation')}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1">
@@ -174,7 +216,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
               {packingTips.length > 0 && (
                 <div className="rounded-xl border border-amber-100 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/10 p-3.5 mt-1">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500 mb-2">
-                    Bavul Önerileri
+                    {t('weatherView.packingTipsTitle')}
                   </p>
                   <ul className="space-y-1.5">
                     {packingTips.map((tip, i) => (
@@ -185,7 +227,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
               )}
 
               <p className="text-[9px] text-slate-300 dark:text-slate-600 text-center pt-1 pb-2">
-                Open-Meteo · Ücretsiz açık kaynak hava verisi
+                {t('weatherView.footer')}
               </p>
             </>
           )}

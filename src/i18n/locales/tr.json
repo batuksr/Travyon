@@ -1,0 +1,1846 @@
+{
+  "nav": {
+    "home": "Ana Sayfa",
+    "createPlan": "Plan Oluştur",
+    "myPlans": "Planlarım",
+    "community": "Topluluk",
+    "notifications": "Bildirimler",
+    "notificationsShort": "Bildirim",
+    "settings": "Ayarlar",
+    "theme": "Tema",
+    "themeToggleLabel": "Tema değiştir",
+    "logout": "Çıkış Yap",
+    "user": "Kullanıcı"
+  },
+  "home": {
+    "navbar": {
+      "login": "Giriş",
+      "loginFull": "Giriş Yap",
+      "start": "Başla",
+      "startFree": "Ücretsiz Başla"
+    },
+    "themeToggleLabel": "Tema değiştir",
+    "hero": {
+      "titleLine1": "Hayalindeki",
+      "titleLine2": "Seyahati",
+      "titleLine3": "Planla.",
+      "subtitle": "Bütçen, tempon ve zevklerine göre yapay zeka saniyeler içinde coğrafi olarak optimize edilmiş, kişisel seyahat planını oluşturur.",
+      "ctaButton": "Ücretsiz Plan Oluştur",
+      "goToPhoto": "{{city}} fotoğrafına geç",
+      "stats": {
+        "cityValue": "50+",
+        "cityLabel": "Desteklenen Şehir",
+        "timeValue": "15sn",
+        "timeLabel": "Ortalama Plan Süresi",
+        "personalizedValue": "%100",
+        "personalizedLabel": "Kişiselleştirilmiş"
+      }
+    },
+    "scroll": "Scroll",
+    "product": {
+      "eyebrow": "ÜRÜN",
+      "title": "Travyon'u Keşfedin",
+      "subtitle": "Dakikalar içinde kişiselleştirilmiş seyahat planın hazır."
+    },
+    "howItWorks": {
+      "eyebrow": "SÜREÇ",
+      "title": "Nasıl Çalışır?",
+      "subtitle": "Hesap oluşturmaktan mükemmel seyahat planına dört adımda ulaşın.",
+      "steps": [
+        { "title": "Hesabınızı oluşturun", "desc": "Dakikalar içinde ücretsiz hesap açın. Kredi kartı gerekmez, kurulum için teknik bilgi şart değil." },
+        { "title": "Tercihlerini gir", "desc": "Destinasyon, tarih, bütçe ve seyahat tarzını belirle. Birkaç tıklama yeter." },
+        { "title": "AI planı oluşturur", "desc": "Gemini AI, tercihlerine özel coğrafi olarak optimize edilmiş gün gün plan hazırlar." },
+        { "title": "Rotanı keşfet", "desc": "İnteraktif haritada rotanı gör, harcamalarını takip et ve dilediğin zaman vibe değiştir." }
+      ]
+    },
+    "destinations": {
+      "eyebrow": "Destinasyonlar",
+      "title": "En Popüler Destinasyonlar",
+      "subtitle": "AI bu şehirlerde uzman — saniyeler içinde optimize planlar üretir.",
+      "planShort": "Planla",
+      "planFull": "Hemen Planla",
+      "cities": {
+        "roma": "Roma",
+        "istanbul": "İstanbul",
+        "paris": "Paris",
+        "barcelona": "Barcelona",
+        "tokyo": "Tokyo",
+        "newyork": "New York"
+      }
+    },
+    "pricing": {
+      "eyebrow": "Fiyatlandırma",
+      "title": "Seyahatine uygun plan seç",
+      "subtitle": "Ücretsiz başla, ihtiyacın büyüdükçe yükselt.",
+      "perMonth": "/ay",
+      "free": {
+        "name": "Free",
+        "price": "₺0",
+        "tagline": "Sonsuza kadar ücretsiz",
+        "features": ["3 plan hakkı", "Temel AI planlama", "İnteraktif harita", "Plan kaydetme"],
+        "button": "Ücretsiz Başla"
+      },
+      "pro": {
+        "badge": "En Popüler",
+        "name": "Pro",
+        "price": "₺99",
+        "tagline": "Yıllık ödemede %20 indirim",
+        "features": ["Sınırsız plan", "Reklamsız deneyim", "Gelişmiş AI modeli", "Seyahat süreleri", "Öncelikli destek"],
+        "button": "Pro'ya Geç →"
+      },
+      "team": {
+        "name": "Team",
+        "price": "₺299",
+        "tagline": "5 kullanıcıya kadar",
+        "features": ["5 kişiye kadar", "Sınırsız plan", "Ortak düzenleme", "Paylaşılabilir planlar", "Özel destek hattı"],
+        "button": "Team'e Başla"
+      }
+    },
+    "ctaRepeat": {
+      "eyebrow": "Başlamaya hazır mısın?",
+      "titleLine1": "Sıradaki durağın",
+      "titleLine2": "sadece bir tık ötede."
+    }
+  },
+  "footer": {
+    "faq": "SSS",
+    "privacy": "Gizlilik",
+    "terms": "Kullanım Koşulları",
+    "contact": "İletişim",
+    "copyright": "© 2026 Travyon. Tüm hakları saklıdır."
+  },
+  "auth": {
+    "common": {
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ornek@email.com",
+      "passwordLabel": "Şifre",
+      "or": "veya",
+      "googleContinue": "Google ile Devam Et",
+      "tagline": "Travyon ile seyahatini planla, anılarını yarat.",
+      "httpsRequired": "Google girişi için uygulamayı HTTPS üzerinden açın.",
+      "unauthorizedDomain": "Bu domain Firebase'de yetkilendirilmemiş. Firebase Console → Authentication → Authorized Domains'e ekleyin.",
+      "unknownError": "bilinmeyen hata"
+    },
+    "login": {
+      "photoAlt": "İstanbul Galata Kulesi",
+      "quoteLine1": "Dünyanın en güzel köşeleri,",
+      "quoteLine2": "seni beklemeye devam ediyor.",
+      "title": "Tekrar hoş geldin 👋",
+      "subtitle": "Hesabına giriş yap ve planlamaya devam et.",
+      "forgotPassword": "Şifremi unuttum",
+      "submitLoading": "Giriş Yapılıyor...",
+      "submit": "Giriş Yap",
+      "noAccount": "Hesabın yok mu?",
+      "registerLink": "Kayıt Ol",
+      "errors": {
+        "redirectFailed": "Google ile giriş yapılamadı. Tekrar deneyin.",
+        "userNotFound": "Bu e-posta ile kayıtlı hesap bulunamadı.",
+        "wrongPassword": "Şifre hatalı.",
+        "invalidCredential": "E-posta veya şifre hatalı.",
+        "generic": "Giriş yapılamadı. Lütfen tekrar deneyin.",
+        "googleFailedWithCode": "Google ile giriş yapılamadı. ({{code}})"
+      }
+    },
+    "register": {
+      "photoAlt": "Anıtkabir Ankara",
+      "quoteLine1": "Hayalindeki seyahati planlamak",
+      "quoteLine2": "artık sadece dakikalar alıyor.",
+      "title": "Hesap oluştur 🚀",
+      "subtitle": "Yapay zeka destekli planlayıcına katıl.",
+      "nameLabel": "Ad Soyad",
+      "namePlaceholder": "Adınız Soyadınız",
+      "passwordPlaceholder": "Min. 6 karakter",
+      "passwordHint": "En az 6 karakter",
+      "submitLoading": "Oluşturuluyor...",
+      "submit": "Hesap Oluştur",
+      "alreadyHaveAccount": "Zaten hesabın var mı?",
+      "loginLink": "Giriş Yap",
+      "errors": {
+        "redirectFailed": "Google ile kayıt oluşturulmadı. Tekrar deneyin.",
+        "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
+        "emailInUse": "Bu e-posta zaten kayıtlı.",
+        "weakPassword": "Şifre çok zayıf.",
+        "generic": "Kayıt oluşturulamadı. Lütfen tekrar deneyin.",
+        "googleFailedWithCode": "Google ile kayıt oluşturulamadı. ({{code}})"
+      },
+      "verify": {
+        "title": "E-postanı Doğrula",
+        "sentTo": "<b>{{email}}</b> adresine bir doğrulama linki gönderdik.",
+        "instructions": "Mailindeki linke tıkla, sonra aşağıdaki \"Doğruladım\" butonuna bas.",
+        "spamHint": "📥 Mail gelmedi mi? Spam / Gereksiz klasörüne bak.",
+        "checkButton": "Doğruladım, Devam Et",
+        "resendButton": "Maili Tekrar Gönder",
+        "resendSent": "Gönderildi",
+        "laterButton": "Daha sonra doğrularım →",
+        "notVerifiedYet": "Henüz doğrulanmamış. Mailindeki linke tıkladın mı? (Spam klasörüne de bak)",
+        "checkFailed": "Kontrol edilemedi, tekrar dene.",
+        "tooManyRequests": "Çok fazla istek — birkaç dakika sonra dene.",
+        "resendFailed": "Mail gönderilemedi, tekrar dene."
+      }
+    }
+  },
+  "legal": {
+    "backHome": "Ana Sayfa",
+    "eyebrow": "Yardım & Yasal",
+    "lastUpdated": "Son güncelleme: 26 Mayıs 2026",
+    "tabs": {
+      "faq": "SSS",
+      "privacy": "Gizlilik",
+      "terms": "Kullanım Koşulları",
+      "contact": "İletişim"
+    },
+    "faq": {
+      "title": "Sıkça Sorulan Sorular",
+      "subtitle": "Aklına takılanların yanıtı burada. Bulamazsan bize yazabilirsin.",
+      "sections": [
+        {
+          "category": "Genel",
+          "items": [
+            { "q": "Travyon nedir?", "a": "Travyon, yapay zeka destekli kişiselleştirilmiş seyahat planlama platformudur. Bütçen, tarih aralığın ve seyahat tarzına göre dakikalar içinde gün gün optimize edilmiş plan oluşturur." },
+            { "q": "Ücretsiz mi kullanabilir miyim?", "a": "Evet! Free planla sınırsız süre ücretsiz kullanabilirsin. 3 plan hakkı, temel AI planlama ve interaktif harita erişimi dahildir." },
+            { "q": "Hesap açmak zorunlu mu?", "a": "Plan oluşturmak ve kaydetmek için hesap gereklidir. Kayıt işlemi yalnızca birkaç saniye sürer ve tamamen ücretsizdir." }
+          ]
+        },
+        {
+          "category": "Plan Oluşturma",
+          "items": [
+            { "q": "Plan oluşturmak ne kadar sürer?", "a": "Ortalama 15–30 saniye. Yapay zeka tercihlerini analiz ederek coğrafi olarak optimize edilmiş, gün gün planını anında hazırlar." },
+            { "q": "Hangi şehirler destekleniyor?", "a": "Dünya genelinde 50+ popüler şehir destekleniyor ve liste sürekli büyüyor. İstanbul, Paris, Tokyo, Roma, Barcelona, New York gibi tüm popüler destinasyonları kapsıyoruz." },
+            { "q": "Önerileri değiştirebilir miyim?", "a": "Tabii! Planı oluşturduktan sonra her aktiviteyi, saati ve güzergahı dilediğin gibi düzenleyebilirsin. Plan tamamen senin kontrolünde." },
+            { "q": "Birden fazla plan kaydedebilir miyim?", "a": "Free planla 3, Pro planla sınırsız plan kaydedebilirsin. Kayıtlı planlarına her zaman \"Kayıtlı Planlar\" bölümünden erişebilirsin." }
+          ]
+        },
+        {
+          "category": "Güvenlik & Gizlilik",
+          "items": [
+            { "q": "Verilerim güvende mi?", "a": "Tüm veriler Google Firebase altyapısıyla AES-256 şifreleme ile saklanır. Kişisel bilgilerin hiçbir koşulda üçüncü taraflarla paylaşılmaz." },
+            { "q": "Hesabımı silebilir miyim?", "a": "Evet, Ayarlar > Hesap bölümünden hesabını ve tüm verilerini kalıcı olarak silebilirsin." }
+          ]
+        },
+        {
+          "category": "Teknik",
+          "items": [
+            { "q": "Mobil uygulama var mı?", "a": "Şu an web tabanlı çalışıyoruz. Mobil uygulama (iOS & Android) yakında geliyor — bildirim almak için kayıt olabilirsin." },
+            { "q": "Hangi tarayıcılar destekleniyor?", "a": "Chrome, Firefox, Safari ve Edge'in güncel sürümlerinde sorunsuz çalışır. En iyi deneyim için Chrome önerilir." },
+            { "q": "İnternet bağlantısı şart mı?", "a": "Plan oluşturma ve harita görüntüleme için internet bağlantısı gereklidir. Kayıtlı planlarını çevrimdışı görüntülemek için yakında offline destek eklenecek." }
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Gizlilik Politikası",
+      "subtitle": "Verilerini nasıl koruduğumuzu ve kullandığımızı şeffafça açıklıyoruz.",
+      "intro": "Travyon (\"biz\", \"bizim\") olarak gizliliğinize saygı duyuyor ve kişisel verilerinizin korunmasına önem veriyoruz. Bu Gizlilik Politikası, hizmetlerimizi kullanırken hangi verileri topladığımızı, nasıl kullandığımızı ve koruduğumuzu açıklar.",
+      "sections": [
+        {
+          "title": "1. Toplanan Veriler",
+          "content": "Travyon olarak hizmetlerimizi sunabilmek amacıyla aşağıdaki kişisel verileri işleyebiliriz:\n\n• Hesap bilgileri: Ad, e-posta adresi ve şifre (şifreli olarak saklanır).\n• Kullanım verileri: Oluşturduğun planlar, tercihler, seyahat tarihleri ve bütçe bilgileri.\n• Cihaz bilgileri: Tarayıcı türü, işletim sistemi ve IP adresi.\n• İletişim verileri: Destek talebi veya geri bildirim gönderdiğinde paylaştığın bilgiler.\n\nGoogle ile giriş yapman durumunda Google, adın ve e-posta adresin gibi temel profil bilgilerini bizimle paylaşır."
+        },
+        {
+          "title": "2. Verilerin Kullanım Amacı",
+          "content": "Topladığımız verileri yalnızca şu amaçlarla kullanırız:\n\n• Hesabını oluşturmak ve yönetmek.\n• Seyahat planlarını oluşturmak, kaydetmek ve kişiselleştirmek.\n• Hizmet güvenliğini sağlamak ve dolandırıcılığı önlemek.\n• Uygulama performansını ve kullanıcı deneyimini iyileştirmek.\n• Talep etmen durumunda sana destek sağlamak.\n• Yasal yükümlülükleri yerine getirmek."
+        },
+        {
+          "title": "3. Veri Güvenliği",
+          "content": "Kişisel verilerinin güvenliğini sağlamak için sektör standardı güvenlik önlemlerini uygularız:\n\n• Tüm veriler Google Firebase altyapısında AES-256 şifreleme ile saklanır.\n• Bağlantılar HTTPS/TLS protokolü ile şifrelenir.\n• Şifreler hiçbir zaman düz metin olarak saklanmaz.\n• Sistemlerimiz düzenli güvenlik denetimine tabi tutulur.\n\nAncak internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını belirtiriz."
+        },
+        {
+          "title": "4. Veri Paylaşımı",
+          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
+        },
+        {
+          "title": "5. Çerezler",
+          "content": "Sitemiz oturum ve tercih bilgilerini saklamak amacıyla çerezler kullanır. Kullandığımız çerez türleri:\n\n• Zorunlu çerezler: Oturum yönetimi ve güvenlik için gereklidir.\n• Tercih çerezleri: Dil ve tema tercihlerin gibi ayarlarını hatırlar.\n• Analitik çerezler: Anonim kullanım istatistikleri toplar (isteğe bağlı).\n\nTarayıcı ayarlarından çerezleri devre dışı bırakabilirsin; ancak bu durum bazı işlevleri etkileyebilir."
+        },
+        {
+          "title": "6. Haklarınız",
+          "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında aşağıdaki haklara sahipsindir:\n\n• Kişisel verilerinin işlenip işlenmediğini öğrenme hakkı.\n• İşlenen veriler hakkında bilgi talep etme hakkı.\n• Verilerin düzeltilmesini veya silinmesini talep etme hakkı.\n• Verilerin işlenmesine itiraz etme hakkı.\n• Veri taşınabilirliği hakkı.\n\nBu haklarını kullanmak için iletisim@travyon.app adresine e-posta gönderebilirsin."
+        },
+        {
+          "title": "7. Veri Saklama Süresi",
+          "content": "Verilerini hesabın aktif olduğu sürece saklarız. Hesabını silmen durumunda kişisel verilerini 30 gün içinde sistemlerimizden kalıcı olarak sileriz. Yasal yükümlülükler gerektirdiği hallerde bazı veriler daha uzun süre saklanabilir."
+        },
+        {
+          "title": "8. Değişiklikler",
+          "content": "Bu Gizlilik Politikası'nı zaman zaman güncelleyebiliriz. Önemli değişiklikler olması durumunda kayıtlı e-posta adresine bildirim göndeririz. Politikanın güncel halini her zaman bu sayfada bulabilirsin."
+        },
+        {
+          "title": "9. İletişim",
+          "content": "Gizlilik ile ilgili soruların için:\n\nE-posta: iletisim@travyon.app\nAdres: İstanbul, Türkiye"
+        }
+      ]
+    },
+    "terms": {
+      "title": "Kullanım Koşulları",
+      "subtitle": "Travyon'u kullanırken geçerli olan kurallar ve sorumluluklar.",
+      "intro": "Bu Kullanım Koşulları, Travyon platformunu (\"Hizmet\") kullanımınızı düzenler. Lütfen platformu kullanmadan önce bu koşulları dikkatlice okuyunuz.",
+      "sections": [
+        {
+          "title": "1. Kabul",
+          "content": "Travyon'u (\"Platform\") kullanarak bu Kullanım Koşulları'nı okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz. Bu koşulları kabul etmiyorsanız lütfen platformu kullanmayınız.\n\n18 yaşından küçük kullanıcıların platformu yalnızca ebeveyn veya yasal vasi gözetiminde kullanması gerekmektedir."
+        },
+        {
+          "title": "2. Hizmet Tanımı",
+          "content": "Travyon, yapay zeka teknolojisi kullanarak kişiselleştirilmiş seyahat planları oluşturan bir web platformudur. Hizmetlerimiz şunları kapsar:\n\n• Yapay zeka destekli seyahat planı oluşturma\n• İnteraktif harita ve rota görüntüleme\n• Plan kaydetme ve yönetme\n• Topluluk özellikleri ve plan paylaşımı\n• Hava durumu ve seyahat süresi bilgileri\n\nHizmetlerin kapsamı, önceden bildirim yapılarak değiştirilebilir."
+        },
+        {
+          "title": "3. Hesap Oluşturma ve Güvenlik",
+          "content": "• Platformu kullanmak için geçerli bir e-posta adresiyle kayıt olmanız gerekmektedir.\n• Hesap bilgilerinizin doğru ve güncel olması sizin sorumluluğunuzdadır.\n• Hesabınızın güvenliğinden siz sorumlusunuz. Şifrenizi kimseyle paylaşmayınız.\n• Hesabınızın yetkisiz kullanımını fark ettiğinizde derhal bize bildirmeniz gerekmektedir.\n• Her kullanıcı yalnızca bir hesap açabilir."
+        },
+        {
+          "title": "4. Kabul Edilebilir Kullanım",
+          "content": "Platformu kullanırken aşağıdaki kurallara uymayı kabul edersiniz:\n\n✓ Platformu yalnızca yasal amaçlarla kullanacaksınız.\n✓ Başkalarının haklarına saygı göstereceksiniz.\n✓ Doğru ve gerçek bilgiler paylaşacaksınız.\n\n✗ Platformu kötü amaçlı yazılım dağıtmak için kullanmayacaksınız.\n✗ Diğer kullanıcılara zarar verecek içerikler paylaşmayacaksınız.\n✗ Platformun altyapısını aşırı yükleyecek eylemler gerçekleştirmeyeceksiniz.\n✗ Otomatik araçlarla (bot, scraper vb.) veri çekmeyeceksiniz.\n✗ Başka kişilerin hesaplarına yetkisiz erişim sağlamaya çalışmayacaksınız."
+        },
+        {
+          "title": "5. Fikri Mülkiyet",
+          "content": "Platform üzerindeki tüm içerik, tasarım, kod, logo ve marka unsurları Travyon'a aittir ve fikri mülkiyet yasalarıyla korunmaktadır.\n\nKullanıcıların platformda oluşturduğu seyahat planlarının içeriği kullanıcıya aittir. Ancak bu planların platform üzerinde saklanması ve işlenmesi için bize lisans vermiş olursunuz.\n\nPlatformun herhangi bir bölümünü kopyalamak, dağıtmak veya ticari amaçla kullanmak için önceden yazılı izin almanız gerekir."
+        },
+        {
+          "title": "6. Ücretli Planlar",
+          "content": "Pro ve Team planları için geçerli ödeme koşulları:\n\n• Abonelikler aylık veya yıllık olarak faturalandırılır.\n• Ücretli plandan çıkış, bir sonraki fatura döneminin başında geçerli olur.\n• Geri ödeme politikamız: İlk 14 gün içinde iptal ettiğinizde tam iade yapılır.\n• Fiyatlar önceden bildirim yapılarak değiştirilebilir. Mevcut abonelere en az 30 gün önceden bildirim yapılır.\n• Ödeme bilgileri güvenli ödeme altyapımız üzerinden saklanır."
+        },
+        {
+          "title": "7. Sorumluluk Sınırlaması",
+          "content": "Travyon, yapay zeka tarafından üretilen seyahat planlarının doğruluğu veya eksiksizliği konusunda garanti vermez. Planlar tavsiye niteliğindedir; nihai kararlar kullanıcıya aittir.\n\nTravyon aşağıdakilerden sorumlu tutulamaz:\n• Seyahat iptalleri, rötar veya beklenmedik koşullar\n• Üçüncü taraf hizmet sağlayıcıların (otel, havayolu vb.) eylemleri\n• Yapay zeka tarafından üretilen hatalı bilgiler\n• Platformun geçici olarak kullanılamamasından doğan zararlar"
+        },
+        {
+          "title": "8. Hesap İptali",
+          "content": "Hesabınızı istediğiniz zaman Ayarlar > Hesap bölümünden silebilirsiniz.\n\nKullanım Koşulları'nı ihlal ettiğiniz tespit edilirse hesabınızı önceden bildirim yapmaksızın askıya alma veya kapatma hakkımız saklıdır. Ciddi ihlallerde iade yapılmaz."
+        },
+        {
+          "title": "9. Uygulanacak Hukuk",
+          "content": "Bu Kullanım Koşulları, Türkiye Cumhuriyeti hukukuna tabidir. Anlaşmazlıkların çözümünde İstanbul Mahkemeleri ve İcra Müdürlükleri yetkilidir."
+        },
+        {
+          "title": "10. Değişiklikler",
+          "content": "Bu koşulları zaman zaman güncelleyebiliriz. Önemli değişiklikler için kayıtlı e-posta adresine bildirim göndeririz. Değişiklik sonrası platformu kullanmaya devam etmeniz yeni koşulları kabul ettiğiniz anlamına gelir."
+        },
+        {
+          "title": "11. İletişim",
+          "content": "Bu koşullarla ilgili sorularınız için:\n\nE-posta: iletisim@travyon.app\nAdres: İstanbul, Türkiye"
+        }
+      ]
+    },
+    "contact": {
+      "title": "İletişim",
+      "subtitle": "Sorularını, önerilerini veya iş birliklerini bize ilet.",
+      "infoCards": {
+        "email": { "title": "E-posta", "value": "iletisim@travyon.app" },
+        "address": { "title": "Adres", "value": "İstanbul, Türkiye" },
+        "hours": { "title": "Çalışma Saatleri", "value": "Pazartesi – Cuma, 09:00 – 18:00" }
+      },
+      "quickReplyTitle": "Hızlı yanıt garantisi 🚀",
+      "quickReplyDesc": "Çalışma saatleri içinde gönderilen mesajlara genellikle 2 saat içinde yanıt veriyoruz.",
+      "form": {
+        "nameLabel": "Ad Soyad",
+        "namePlaceholder": "Adınız",
+        "emailLabel": "E-posta",
+        "emailPlaceholder": "ornek@sirket.com",
+        "subjectLabel": "Konu",
+        "subjectPlaceholder": "Nasıl yardımcı olabiliriz?",
+        "messageLabel": "Mesaj",
+        "messagePlaceholder": "Mesajınızı buraya yazınız...",
+        "sendButton": "Gönder",
+        "sendingButton": "Gönderiliyor...",
+        "errorGeneric": "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
+        "successTitle": "Mesajınız iletildi!",
+        "successDesc": "En kısa sürede size dönüş yapacağız. Teşekkür ederiz.",
+        "newMessageButton": "Yeni mesaj gönder →"
+      }
+    }
+  },
+  "hub": {
+    "greeting": {
+      "morning": "Günaydın",
+      "afternoon": "İyi Öğleler",
+      "evening": "İyi Akşamlar",
+      "night": "İyi Geceler",
+      "defaultName": "Gezgin"
+    },
+    "units": {
+      "kmh": "km/s"
+    },
+    "weather": {
+      "conditions": {
+        "clear": "Açık Hava",
+        "mostlyClear": "Az Bulutlu",
+        "partlyCloudy": "Parçalı Bulutlu",
+        "overcast": "Kapalı",
+        "fog": "Sisli",
+        "drizzle": "Çiseleyen",
+        "rain": "Yağmurlu",
+        "showers": "Sağanak",
+        "snow": "Karlı",
+        "storm": "Fırtınalı",
+        "variable": "Değişken"
+      },
+      "title": "Hava Durumu",
+      "wind": "rüzgar",
+      "loadFailed": "Hava durumu yüklenemedi",
+      "retry": "Tekrar dene →"
+    },
+    "nextTrip": {
+      "next": "Bir Sonraki Seyahat",
+      "last": "Son Seyahat",
+      "daysLeft": "gün kaldı ✈️",
+      "durationDays": "{{count}} günlük seyahat",
+      "checklist": "📋 Seyahat Listesi",
+      "lastSaved": "Son kayıtlı plan",
+      "noPlanTitle": "Henüz plan yok",
+      "noPlanSubtitle": "Yeni plan oluşturmaya başla"
+    },
+    "quickActions": {
+      "title": "Hızlı Eylemler",
+      "weekend": { "title": "Bu hafta sonu", "cta": "Plan oluştur" },
+      "random": { "title": "Rastgele şehir", "subtitle": "Sürpriz destinasyon", "cta": "Deneyelim", "planCta": "Planla →" },
+      "budget": { "title": "Bütçeme göre", "defaultLabel": "Varsayılan bütçe", "cta": "Plan oluştur" },
+      "vibe": { "title": "Vibe değiştir", "noPlan": "Önce plan oluştur", "cta": "Tarz seç" }
+    },
+    "vibeOptions": {
+      "culture": "Kültür",
+      "relax": "Dinlenme",
+      "nightlife": "Gece Hayatı",
+      "nature": "Macera"
+    },
+    "stats": {
+      "title": "İstatistikler",
+      "thisMonth": "+{{count}} bu ay",
+      "totalPlans": "Toplam Plan",
+      "city": "şehir",
+      "differentCountries": "{{count}} farklı ülke",
+      "totalBudget": "Toplam Bütçe",
+      "mostVisited": "En Çok Gezilen",
+      "noData": "Henüz veri yok"
+    },
+    "activity": {
+      "title": "Son Hareketler",
+      "planCount": "{{count}} plan",
+      "replan": "Tekrar Planla →",
+      "viewPlan": "Planı Gör →",
+      "shared": "Paylaşıldı",
+      "share": "Paylaş",
+      "shareDisabledTitle": "Plan paylaşımı gizlilik ayarlarınızda kapalı",
+      "showLess": "Daha Az Göster",
+      "showMore": "Daha Fazla Göster ({{count}} plan daha)",
+      "active": {
+        "text": "Şu an {{dest}}'dasın!",
+        "sub": "{{endDate}} tarihine kadar — iyi seyahatler ✈️",
+        "timeLabel": "devam ediyor"
+      },
+      "upcoming": {
+        "text": "{{dest}} seyahatin yaklaşıyor",
+        "sub": "{{nights}} gece · {{budget}} · {{startDate}}",
+        "today": "Bugün!",
+        "tomorrow": "Yarın!",
+        "daysLeft": "{{count}} gün kaldı"
+      },
+      "completed": {
+        "text": "{{dest}} seyahatini tamamladın",
+        "sub": "{{nights}} gün · {{budget}} harcama planı"
+      },
+      "created": {
+        "text": "{{dest}} planı oluşturdun",
+        "sub": "{{nights}} gün · {{budget}}"
+      }
+    },
+    "shareErrors": {
+      "privacyDisabled": "Plan paylaşımı gizlilik ayarlarınızda kapalı.",
+      "failed": "Paylaşım başarısız"
+    },
+    "map": {
+      "title": "Dünya Haritam",
+      "exploredPrefix": "Şu ana kadar",
+      "exploredSuffix": "keşfettin!",
+      "citiesCount": "{{count}} şehir",
+      "spread": "{{countries}} ülkeye yayılan {{destinations}} destinasyon",
+      "empty": "Seyahatlerini tamamladıkça şehirler haritada belirmeye başlayacak 🗺️"
+    }
+  },
+  "onboarding": {
+    "badge": "AI Destekli Plan",
+    "sidebar": {
+      "step1": { "title": "Hayalindeki\nDestinasyon", "desc": "Nereye gideceğini ve ne kadar kalacağını söyle, gerisini biz planlayalım." },
+      "step2": { "title": "Seyahat\nTarzın", "desc": "Hızlı mı yavaş mı? Kültür mü macera mı? Sana özel tempo belirleyelim." },
+      "step3": { "title": "Damak\nZevkin", "desc": "Beslenme tercihlerini bilmeden mükemmel restoran öneremeyiz." },
+      "step4": { "title": "Konfor\nTercihin", "desc": "Nerede kalacağın ve nasıl gezeceğin planı şekillendirir." }
+    },
+    "steps": { "destination": "Destinasyon", "preferences": "Tercihler", "food": "Yemek", "stay": "Konaklama" },
+    "loadingMessages": [
+      "Destinasyon analiz ediliyor...",
+      "Rotalar optimize ediliyor...",
+      "Gizli mekanlar keşfediliyor...",
+      "Bütçe hesaplanıyor...",
+      "Son dokunuşlar yapılıyor..."
+    ],
+    "loadingTitle": "Planınız Hazırlanıyor",
+    "loadingSubtitle": "Yapay zekamız rotaları, gizli mekanları ve aktiviteleri seçiyor.",
+    "stepCounter": "Adım {{step}} / 4",
+    "stepHeader": {
+      "step1": { "title": "Nereye gidiyorsun?", "desc": "Destinasyon ve tarihleri belirle." },
+      "step2": { "title": "Tercihlerini söyle", "desc": "Seyahat tarzını ve ilgi alanlarını seç." },
+      "step3": { "title": "Yemek tarzın nasıl?", "desc": "Damak zevkine göre öneriler oluşturalım." },
+      "step4": { "title": "Nerede kalmak istersin?", "desc": "Konaklama ve ulaşım tercihlerini belirt." }
+    },
+    "step1": {
+      "destinationLabel": "Destinasyon",
+      "destinationPlaceholder": "Örn. Roma, İtalya",
+      "travelDates": "Seyahat Tarihleri",
+      "departure": "✈️ Gidiş",
+      "return": "🏠 Dönüş",
+      "arrival": "🛬 Varış",
+      "departureTime": "🛫 Ayrılış",
+      "peopleCount": "Kişi Sayısı",
+      "person": "kişi",
+      "totalBudget": "Toplam Bütçe"
+    },
+    "step2": {
+      "travelType": "Seyahat Türü",
+      "travelTypes": {
+        "solo": "Solo", "romantic": "Romantik", "honeymoon": "Balayı", "family": "Aile",
+        "friends": "Arkadaşlar", "business": "İş", "cityEscape": "Kaçamak", "classic": "Klasik"
+      },
+      "interests": "İlgi Alanları",
+      "interestsHint": "En fazla 3 tane. Seçim sırası önceliği belirler.",
+      "interestOptions": {
+        "culture":   { "title": "Kültür & Tarih", "sub": "Müzeler, tarihi mekanlar" },
+        "relax":     { "title": "Dinlenme",        "sub": "Spa, sahil, yavaş tempo" },
+        "nightlife": { "title": "Gece Hayatı",     "sub": "Bar, kulüp, canlı müzik" },
+        "nature":    { "title": "Doğa & Macera",   "sub": "Trekking, doğa yürüyüşü" }
+      },
+      "maxInterestsWarning": "En fazla 3 ilgi alanı seçebilirsin.",
+      "pace": "Günlük Tempo",
+      "paceHint": "Aktivite yoğunluğunu seç.",
+      "paceOptions": {
+        "relaxed":  { "title": "Rahat",  "desc": "Az yürüyüş",      "detail": "3–4 km/gün" },
+        "normal":   { "title": "Normal", "desc": "Standart tempo",  "detail": "6–8 km/gün" },
+        "active":   { "title": "Aktif",  "desc": "Her şeyi gör",    "detail": "10–15 km/gün" },
+        "flexible": { "title": "Esnek",  "desc": "AI karar versin", "detail": "Değişken" }
+      },
+      "earlyBirdTitle": "Erken kalkmayı severim",
+      "earlyBirdSub": "Sabah erken aktivite planlanabilir"
+    },
+    "step3": {
+      "dietaryTitle": "Beslenme Tercihleri",
+      "diets": {
+        "vegan":         { "label": "Vegan",        "emoji": "🌱" },
+        "vegetarian":    { "label": "Vejetaryen",   "emoji": "🥗" },
+        "halal":         { "label": "Helal",        "emoji": "☪️" },
+        "glutenFree":    { "label": "Glutensiz",    "emoji": "🌾" },
+        "pescatarian":   { "label": "Pesketaryen",  "emoji": "🐟" },
+        "noRestriction": { "label": "Her Şeyi Yerim", "emoji": "🍽️" }
+      },
+      "foodPhilosophy": "Yemek Felsefesi",
+      "foodPhilosophyHint": "AI sana hangi mekanları önersin?",
+      "foodPhilosophyOptions": {
+        "iconic":     { "title": "İkonik Lezzetler", "sub": "Şehrin ünlü mekanları" },
+        "hiddenGems": { "title": "Gizli Keşifler",    "sub": "Yerel favoriler, saklı köşeler" },
+        "fineDining": { "title": "Fine Dining",        "sub": "Kaliteli restoran deneyimi" },
+        "streetFood": { "title": "Sokak Yemeği",      "sub": "Tezgah lezzetleri, pazar" },
+        "mixed":      { "title": "Karışık / Sürpriz", "sub": "Her gün farklı deneyim" }
+      },
+      "mealBudget": "Öğün Başı Bütçe",
+      "mealBudgetOptions": {
+        "low":    { "title": "Düşük",  "sub": "Uygun fiyatlı" },
+        "medium": { "title": "Orta",   "sub": "Dengeli" },
+        "high":   { "title": "Yüksek", "sub": "Kalite öncelikli" }
+      }
+    },
+    "step4": {
+      "reservationStatus": "Rezervasyon Durumu",
+      "reservationOptions": {
+        "yes": { "title": "Rezervasyonum var", "sub": "Konaklama yerim belli" },
+        "no":  { "title": "Henüz seçmedim",    "sub": "Konaklama tarzımı söyleyeceğim" }
+      },
+      "accommodationPlace": "Konaklama Yeri",
+      "accommodationPlaceholder": "Örn. Hotel Roma Centro, Via del Corso 123",
+      "accommodationHint": "AI günlük rotaları bu konuma göre optimize edecek.",
+      "accommodationType": "Konaklama Tercihi",
+      "accommodationOptions": {
+        "hotel":  { "title": "Otel",       "sub": "Konforlu, tam servis" },
+        "airbnb": { "title": "Airbnb / Ev", "sub": "Yerel deneyim" },
+        "hostel": { "title": "Hostel",      "sub": "Sosyal, ekonomik" },
+        "resort": { "title": "Tatil Köyü",  "sub": "Her şey dahil" }
+      },
+      "transport": "Şehir İçi Ulaşım",
+      "transportOptions": {
+        "public": { "title": "Toplu Taşıma", "sub": "Metro, otobüs" },
+        "walk":   { "title": "Yürüyüş",       "sub": "Yürüme mesafesi" },
+        "taxi":   { "title": "Taksi / Uber",  "sub": "Kapıdan kapıya" },
+        "car":    { "title": "Araç",          "sub": "Kiralık veya kendi" }
+      }
+    },
+    "errors": {
+      "destinationBanner": "Lütfen bir destinasyon girin.",
+      "destinationField": "Destinasyon girmelisin.",
+      "startDateRequired": "Gidiş tarihi seçin.",
+      "endDateRequired": "Dönüş tarihi seçin.",
+      "startDateInPast": "Gidiş tarihi bugünden önce olamaz.",
+      "endDateInPast": "Dönüş tarihi bugünden önce olamaz.",
+      "endBeforeStart": "Dönüş tarihi gidiş tarihinden sonra olmalı.",
+      "budgetTooLowBanner": "Bütçe en az 100 olmalı.",
+      "budgetTooLowField": "Bütçe en az 100 olmalıdır.",
+      "travelTypeRequired": "Seyahat türünü seçmelisin.",
+      "interestRequired": "En az 1 ilgi alanı seç.",
+      "paceRequired": "Günlük tempo seçin.",
+      "dietaryRequired": "En az bir beslenme tercihi seçin.",
+      "foodPhilosophyRequired": "Yemek felsefeni seç.",
+      "mealBudgetRequired": "Öğün başı bütçe seçin.",
+      "reservationRequired": "Rezervasyon durumunuzu belirtin.",
+      "accommodationAddressRequired": "Konaklama adresini girin.",
+      "accommodationRequired": "Konaklama tercihi seçin.",
+      "transportRequiredBanner": "Ulaşım tercihi seçin.",
+      "transportRequiredField": "Bir ulaşım tercihi seçin.",
+      "genericGenerationError": "Plan oluşturulurken bir hata oluştu."
+    },
+    "nav": { "back": "Geri", "next": "İleri", "planning": "Planlanıyor", "createPlan": "Planı Oluştur" }
+  },
+  "savedPlans": {
+    "eyebrow": "Kayıtlı Planlar",
+    "title": "Planlarım",
+    "subtitle": {
+      "empty": "Henüz kayıtlı planın yok",
+      "count": "{{count}} plan kaydedildi"
+    },
+    "newPlan": "Yeni Plan",
+    "searchPlaceholder": "Şehir veya plan adı ara...",
+    "filters": {
+      "all": "Tümü",
+      "favorites": "Favoriler"
+    },
+    "card": {
+      "destination": "Destinasyon",
+      "days": "gün",
+      "activities": "aktivite",
+      "totalBudget": "Toplam Bütçe",
+      "createdOn": "{{date}} tarihinde oluşturuldu",
+      "open": "Aç",
+      "copyLink": "Link kopyala",
+      "rename": "Yeniden adlandır",
+      "delete": "Sil"
+    },
+    "empty": {
+      "title": "Henüz Kayıtlı Plan Yok",
+      "description": "İlk planını oluştur ve kaydet. Tüm planların burada listelenecek, istediğin zaman geri dönebilirsin.",
+      "cta": "İlk Planı Oluştur"
+    },
+    "noResults": {
+      "search": "Aramayla eşleşen plan bulunamadı",
+      "favorites": "Favori plan yok"
+    },
+    "deleteModal": {
+      "title": "Planı Sil",
+      "message": "Bu planı kalıcı olarak silmek istediğinden emin misin? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "confirm": "Sil"
+    },
+    "renameModal": {
+      "title": "Planı Yeniden Adlandır",
+      "placeholder": "Plan adı",
+      "cancel": "İptal",
+      "save": "Kaydet"
+    },
+    "alerts": {
+      "verifyEmailForLink": "Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.",
+      "copyFailed": "Link kopyalanamadı. Lütfen tekrar deneyin."
+    }
+  },
+  "community": {
+    "eyebrow": "Topluluk",
+    "title": "Gezgin Akışı",
+    "subtitle": "Diğer gezginlerin planlarını keşfet, takip et ve ilham al.",
+    "defaultDisplayName": "Gezgin",
+    "privacyBanners": {
+      "privateProfile": {
+        "label": "Gizli profil:",
+        "message": "Profiliniz başkaları tarafından görüntülenemiyor.",
+        "cta": "Ayarları değiştir →"
+      },
+      "sharingOff": {
+        "label": "Plan paylaşımı kapalı:",
+        "message": "Planlarınızı toplulukta paylaşamazsınız.",
+        "cta": "Ayarlardan aç →"
+      },
+      "approvedFollow": {
+        "label": "Onaylı takip modu:",
+        "message": "Yeni takip istekleri onayınızı bekler."
+      }
+    },
+    "tabs": {
+      "all": "Herkes",
+      "following": "Takip Ettiklerim",
+      "top": "En Beğenilenler"
+    },
+    "searchPlaceholder": {
+      "following": "Kişi ara...",
+      "all": "Kişi, şehir veya ülke ara..."
+    },
+    "errors": {
+      "verifyEmailForShare": "Plan paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.",
+      "sharingDisabled": "Plan paylaşımı gizlilik ayarlarınızda kapalı. Ayarlar → Gizlilik → Planlarım herkese açık seçeneğini etkinleştirin.",
+      "timeout": "Bağlantı zaman aşımı",
+      "shareFailed": "Paylaşım başarısız"
+    },
+    "top": {
+      "emptyTitle": "Henüz puanlanan plan yok",
+      "emptyDescription": "Planlara yıldız verdikçe burada sıralama oluşur"
+    },
+    "following": {
+      "countFound": "{{count}} kişi bulundu",
+      "countFollowing": "{{count}} kişi takip ediliyor",
+      "noMatch": "\"{{term}}\" ile eşleşen kişi yok",
+      "unfollowConfirm": "Takibi bırak?",
+      "unfollowYes": "Evet",
+      "cancel": "İptal",
+      "followingBadge": "✓ Takip Ediliyor",
+      "emptyTitle": "Henüz kimseyi takip etmiyorsun",
+      "emptyDescription": "\"Herkes\" sekmesinden gezginleri keşfet ve takip et",
+      "browseAll": "Herkese bak →"
+    },
+    "feedError": {
+      "title": "Topluluk verisi yüklenemedi",
+      "description": "Firebase bağlantısı veya kurallar kontrol edilmeli.",
+      "retry": "Tekrar dene →"
+    },
+    "feedEmpty": {
+      "searchTitle": "Sonuç bulunamadı",
+      "searchDescription": "\"{{term}}\" ile eşleşen plan yok",
+      "clearSearch": "Aramayı temizle →",
+      "title": "Henüz paylaşılan plan yok",
+      "description": "Planlarını paylaşarak topluluğa katkı sağla"
+    },
+    "showLess": "Daha az göster",
+    "showMore": "{{count}} plan daha göster",
+    "shareSection": {
+      "title": "Planlarımı Paylaş",
+      "days": "{{count}} gün",
+      "shared": "Paylaşıldı",
+      "share": "Paylaş"
+    },
+    "card": {
+      "purposes": {
+        "culture": "Kültür",
+        "relax": "Dinlenme",
+        "nightlife": "Gece Hayatı",
+        "nature": "Macera"
+      },
+      "you": "Sen",
+      "viewPlan": "Planı gör →",
+      "days": "{{count}} gün",
+      "ownPlan": "Kendi planın",
+      "starAriaLabel": "{{count}} yıldız",
+      "outOf": "/ 5",
+      "votes": "{{count}} oy",
+      "noVotes": "Henüz oy yok",
+      "following": "✓ Takip Ediliyor",
+      "follow": "+ Takip Et"
+    }
+  },
+  "notifications": {
+    "levels": {
+      "urgent": "Acil",
+      "warning": "Uyarı",
+      "info": "Bilgi"
+    },
+    "title": "Bildirimler",
+    "subtitle": {
+      "empty": "Her şey yolunda görünüyor",
+      "count": "{{count}} bildirim · {{detail}}",
+      "urgentDetail": "{{count}} acil",
+      "warningDetail": "{{count}} uyarı",
+      "infoDetail": "hepsi bilgi"
+    },
+    "clearAll": "Tümünü temizle",
+    "empty": {
+      "title": "Yeni bildirim yok",
+      "description": "Yaklaşan seyahat, bütçe veya hava durumu uyarıların burada görünecek."
+    },
+    "close": "Kapat",
+    "push": {
+      "todayTitle": "Bugün {{dest}}'a yolculuk! ✈️",
+      "tomorrowTitle": "Yarın {{dest}}'a yolculuk! 🧳",
+      "todayBody": "Planını son kez kontrol etmeyi unutma.",
+      "tomorrowBody": "Hazırlıklarını tamamladın mı?"
+    }
+  },
+  "dashboard": {
+    "exitModal": {
+      "title": "Planı kaydetmek ister misiniz?",
+      "message": "{{destination}} planınız kaydedilmedi. Çıkmadan önce kaydetmek ister misiniz?",
+      "saveAndExit": "Kaydet ve Çık",
+      "exitWithoutSaving": "Kaydetmeden Çık",
+      "backToPlan": "Plana Geri Dön"
+    },
+    "cityGuide": {
+      "drawerTitle": "Şehir Rehberi",
+      "transportation": "Ulaşım",
+      "localCulture": "Yerel Kültür",
+      "usefulInfo": "Faydalı Bilgiler"
+    },
+    "mobileMap": {
+      "title": "Rota Haritası",
+      "openAriaLabel": "Haritayı aç"
+    },
+    "weather": {
+      "title": "Hava Durumu"
+    },
+    "topBar": {
+      "verifyEmailAlert": "Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.",
+      "daysCount": "{{count}} gün",
+      "tabPlan": "Plan",
+      "tabGuide": "Rehber",
+      "tabWeather": "Hava",
+      "total": "Toplam:",
+      "save": "Planı Kaydet",
+      "saved": "Kaydedildi",
+      "copyLinkTitle": "Plan linkini kopyala",
+      "link": "Link",
+      "linkCopied": "Kopyalandı!",
+      "downloadPdfTitle": "Planı PDF olarak indir",
+      "nightMode": "Gece Modu",
+      "lightMode": "Aydınlık Mod"
+    },
+    "dayTabs": {
+      "ariaLabel": "Günlük plan sekmeleri",
+      "dayFallback": "Gün {{number}}"
+    },
+    "budget": {
+      "label": "Bütçe Takibi",
+      "spent": "{{amount}} harcandı",
+      "exceeded": "{{amount}} aşıldı ⚠️",
+      "remaining": "{{amount}} kaldı",
+      "activitiesEntered": "{{count}} aktivite girildi · %{{pct}}",
+      "totalBudget": "Toplam bütçe: {{amount}}"
+    },
+    "daySummary": {
+      "estimated": "Tahmini",
+      "spent": "Harcanan",
+      "panelAriaLabel": "{{number}}. gün planı"
+    },
+    "map": {
+      "regionAriaLabel": "Rota haritası",
+      "placesOptimized": "{{count}} mekan optimize",
+      "accommodationFallback": "Konaklama"
+    },
+    "dailyPlanView": {
+      "periods": {
+        "morning": "Sabah",
+        "noon": "Öğle",
+        "afternoon": "Öğleden Sonra",
+        "evening": "Akşam",
+        "night": "Gece"
+      },
+      "travelModes": {
+        "driving": "Araç",
+        "transit": "Toplu",
+        "walking": "Yürü",
+        "cycling": "Bisiklet"
+      },
+      "calculating": "hesaplanıyor…",
+      "openInGoogleMaps": "<b>{{mode}}</b> ile Google Maps açılsın mı?",
+      "cancel": "İptal",
+      "open": "Aç",
+      "minutesShort": "{{mins}}dk",
+      "hoursShort": "{{h}}sa",
+      "hoursMinutesShort": "{{h}}sa {{m}}dk",
+      "vibesLabel": "Vibe:",
+      "vibes": {
+        "rest": "Dinlenme",
+        "indoor": "Kapalı Alan",
+        "budget": "Tasarruf",
+        "explore": "Keşif"
+      },
+      "vibeUpdateError": "Vibe güncellenirken hata: {{message}}",
+      "unknownError": "Bilinmeyen hata",
+      "regenerating": "Optimize ediliyor...",
+      "deleteConfirm": "Bu aktiviteyi silmek istiyor musun?",
+      "delete": "Sil",
+      "moveUp": "Yukarı taşı",
+      "moveDown": "Aşağı taşı",
+      "addNoteTitle": "Not ekle",
+      "deleteActivityTitle": "Aktiviteyi sil",
+      "note": {
+        "placeholder": "Not ekle… (rezervasyon no, anı, ipucu...)",
+        "save": "Kaydet",
+        "delete": "Notu Sil"
+      },
+      "addActivity": {
+        "title": "Aktivite Ekle",
+        "placeholder": "Ne eklemek istiyorsun? (örn: müze, kahve, park...)",
+        "suggestError": "Öneri alınamadı, tekrar dene.",
+        "thinking": "Düşünüyor...",
+        "suggestAI": "AI Öner",
+        "suggestShort": "Öner",
+        "addToPlan": "Plana Ekle",
+        "suggestDifferent": "Farklı Öner"
+      }
+    }
+  },
+  "mapView": {
+    "loading": "Harita Yükleniyor...",
+    "hotelLabel": "Kaldığınız Yer"
+  },
+  "placeDetails": {
+    "label": "Mekan Detayı",
+    "loading": "Mekan bilgileri yükleniyor...",
+    "loadingSubtitle": "Google'dan fotoğraf ve yorumlar çekiliyor",
+    "notFound": "Detay bulunamadı",
+    "notFoundSubtitle": "Bu mekan için Google'da bilgi bulunamadı.",
+    "reviewsCount": "{{count}} yorum",
+    "googleData": "Google verileri",
+    "openingHours": "Çalışma Saatleri",
+    "visitWebsite": "Web Sitesini Ziyaret Et",
+    "reviewsTitle": "Google Yorumları",
+    "reviewsCountParen": "({{count}} yorum)",
+    "openInGoogleMaps": "Google Maps'te Aç"
+  },
+  "weatherView": {
+    "title": "Hava Durumu",
+    "loading": "Yükleniyor...",
+    "errors": {
+      "tooFar": "Bu tarihlere ait tahmin henüz hazır değil. Seyahat tarihinize yaklaştıkça tekrar kontrol edin (en fazla 16 gün öncesinden).",
+      "notFound": "\"{{destination}}\" konumu bulunamadı.",
+      "generic": "Hava durumu alınamadı. İnternet bağlantınızı kontrol edin."
+    },
+    "windyLink": "Saatlik detaylı tahmin — Windy.com",
+    "dayLabel": "Gün {{number}}",
+    "precipitationChance": "%{{value}} yağış",
+    "noPrecipitation": "Yağış yok",
+    "packingTipsTitle": "Bavul Önerileri",
+    "footer": "Open-Meteo · Ücretsiz açık kaynak hava verisi",
+    "conditions": {
+      "clear": "Açık",
+      "mostlyClear": "Az Bulutlu",
+      "partlyCloudy": "Parçalı Bulut",
+      "overcast": "Kapalı",
+      "fog": "Sisli",
+      "denseFog": "Yoğun Sis",
+      "lightDrizzle": "Hafif Çiseleme",
+      "drizzle": "Çiseleme",
+      "denseDrizzle": "Yoğun Çiseleme",
+      "lightRain": "Hafif Yağmur",
+      "rain": "Yağmur",
+      "heavyRain": "Şiddetli Yağmur",
+      "lightSnow": "Hafif Kar",
+      "snow": "Kar",
+      "denseSnow": "Yoğun Kar",
+      "hail": "Dolu",
+      "showers": "Sağanak",
+      "heavyShowers": "Kuvvetli Sağanak",
+      "violentShowers": "Şiddetli Sağanak",
+      "snowShowers": "Kar Sağanağı",
+      "denseSnowShowers": "Yoğun Kar Sağanağı",
+      "thunderstorm": "Fırtınalı",
+      "thunderstormHail": "Dolu Fırtınası",
+      "severeThunderstorm": "Şiddetli Fırtına",
+      "unknown": "Bilinmiyor"
+    },
+    "packingTips": {
+      "hot": "Güneş kremi ve güneş gözlüğü",
+      "rainy": "Şemsiye veya yağmurluk",
+      "cold": "Kalın mont / katmanlı giysi",
+      "snowy": "Su geçirmez bot",
+      "windy": "Rüzgarlık ve atkı",
+      "stormy": "Fırtınalı günlerde kapalı mekânları tercih et"
+    }
+  },
+  "aiAssistant": {
+    "quickQuestions": [
+      { "emoji": "🌍", "text": "Avrupa için en iyi 3 şehir?" },
+      { "emoji": "💶", "text": "1.000€ ile nereye gidebilirim?" },
+      { "emoji": "☀️", "text": "Ocak'ta sıcak tatil yerleri?" },
+      { "emoji": "🎒", "text": "Solo seyahat için neresi ideal?" },
+      { "emoji": "🛂", "text": "Türk pasaportu ile vizesiz ülkeler?" },
+      { "emoji": "💑", "text": "Balayı için en romantik destinasyonlar?" }
+    ],
+    "planQuestions": [
+      { "emoji": "📅", "text": "Hangi günüm en yoğun?" },
+      { "emoji": "💡", "text": "Planıma ne ekleyebilirim?" },
+      { "emoji": "💰", "text": "Bütçem bu destinasyon için mantıklı mı?" },
+      { "emoji": "🍽️", "text": "Planımdaki yemek seçimleri nasıl?" },
+      { "emoji": "🚌", "text": "{{destination}}'da en pratik ulaşım nasıl?" },
+      { "emoji": "⚠️", "text": "Gitmeden bilmem gereken şeyler?" }
+    ],
+    "followUpChips": [
+      "Daha detay ver",
+      "Bütçe ne olmalı?",
+      "En iyi ay hangisi?",
+      "Otel mi Airbnb mi?"
+    ],
+    "clearChat": "Sohbeti temizle",
+    "ariaLabel": "AI Asistanı",
+    "welcome": {
+      "planReady": "{{destination}} planın hazır!",
+      "greeting": "Seyahat asistanınım!",
+      "planSubtitle": "Planın hakkında her şeyi sor — gün detayları, öneriler, ipuçları.",
+      "generalSubtitle": "Destinasyon, bütçe, vize — her şeyi sor."
+    },
+    "planConnected": "{{destination}} planı bağlı",
+    "genericAssistant": "Seyahat asistanı",
+    "errorMessage": "Üzgünüm, bir hata oluştu. Tekrar dene. 🙏",
+    "inputPlaceholderPlan": "{{destination}} planın hakkında sor…",
+    "inputPlaceholderGeneral": "Bir şey sor…"
+  },
+  "pwaBanner": {
+    "title": "Travyon'u Yükle",
+    "iosPrefix": "butonuna bas →",
+    "addToHomeScreen": "Ana Ekrana Ekle",
+    "iosSuffix": "seç",
+    "subtitle": "Offline çalışır · Uygulama gibi açılır · Hızlı erişim",
+    "installButton": "Uygulamayı Yükle"
+  },
+  "settings": {
+    "topbar": {
+      "back": "Geri",
+      "title": "Ayarlar"
+    },
+    "nav": {
+      "groups": {
+        "account": "HESAP",
+        "travel": "SEYAHAT",
+        "appearance": "GÖRÜNÜM",
+        "notifications": "BİLDİRİMLER",
+        "privacy": "GİZLİLİK",
+        "billing": "FATURALAMA",
+        "data": "VERİLERİM",
+        "support": "DESTEK"
+      },
+      "items": {
+        "profile": "Profil",
+        "email": "E-posta",
+        "password": "Şifre",
+        "travelDefaults": "Varsayılan Tercihler",
+        "passport": "Pasaport & Vatandaşlık",
+        "locationTz": "Konum & Saat Dilimi",
+        "language": "Dil",
+        "units": "Ölçü Birimleri",
+        "appNotif": "Uygulama Bildirimleri",
+        "emailNotif": "E-posta Bildirimleri",
+        "pushNotif": "Push Bildirimleri",
+        "privacyProfile": "Profil & Plan Gizliliği",
+        "privacyLocation": "Lokasyon",
+        "privacyData": "Veri Kullanımı",
+        "subscription": "Abonelik",
+        "billingHistory": "Fatura Geçmişi",
+        "payment": "Ödeme Yöntemi",
+        "dataExport": "Veri İndir",
+        "deleteAccount": "Hesabı Sil",
+        "faq": "SSS",
+        "contact": "İletişim",
+        "reportBug": "Hata Bildir"
+      }
+    },
+    "common": {
+      "comingSoon": "Yakında",
+      "save": "Kaydet",
+      "cancel": "İptal",
+      "edit": "Düzenle",
+      "add": "Ekle",
+      "saveFailed": "Kaydedilemedi, tekrar deneyin.",
+      "currentPasswordRequired": "Mevcut şifrenizi girin.",
+      "passwordPlaceholder": "••••••••",
+      "applyAndSave": "Uygula & Kaydet",
+      "saveAndApply": "Kaydet & Uygula",
+      "logout": "Çıkış Yap"
+    },
+    "errors": {
+      "wrongPassword": "Mevcut şifre hatalı.",
+      "weakPassword": "Yeni şifre en az 6 karakter olmalı.",
+      "emailInUse": "Bu e-posta zaten kullanılıyor.",
+      "invalidEmail": "Geçersiz e-posta adresi.",
+      "requiresRecentLogin": "Güvenlik için lütfen tekrar giriş yapın.",
+      "tooManyRequests": "Çok fazla deneme, lütfen birkaç dakika bekleyin.",
+      "generic": "Bir hata oluştu, lütfen tekrar deneyin."
+    },
+    "countries": [
+      "Türkiye",
+      "Almanya",
+      "Fransa",
+      "İtalya",
+      "İspanya",
+      "İngiltere",
+      "Amerika Birleşik Devletleri",
+      "Kanada",
+      "Avustralya",
+      "Japonya",
+      "Çin",
+      "Rusya",
+      "Brezilya",
+      "Hindistan",
+      "Güney Kore",
+      "Hollanda",
+      "Belçika",
+      "İsveç",
+      "Norveç",
+      "Danimarka",
+      "Finlandiya",
+      "İsviçre",
+      "Avusturya",
+      "Portekiz",
+      "Polonya",
+      "Çek Cumhuriyeti",
+      "Yunanistan",
+      "Macaristan",
+      "Romanya",
+      "Bulgaristan",
+      "Hırvatistan",
+      "Sırbistan",
+      "Ukrayna",
+      "İsrail",
+      "Suudi Arabistan",
+      "BAE",
+      "Mısır",
+      "Fas",
+      "Güney Afrika",
+      "Nijerya",
+      "Meksika",
+      "Arjantin",
+      "Şili",
+      "Kolombiya",
+      "Singapur",
+      "Malezya",
+      "Tayland",
+      "Endonezya",
+      "Vietnam",
+      "Filipinler",
+      "Yeni Zelanda",
+      "Diğer"
+    ],
+    "profile": {
+      "changePhotoAria": "Fotoğraf değiştir",
+      "photoHint": "PNG, JPG veya WebP — maks. 2 MB",
+      "titleFallback": "Profil Bilgileri",
+      "errors": {
+        "fileTooLarge": "Dosya 5 MB'dan büyük olamaz.",
+        "invalidFileType": "Yalnızca PNG, JPG veya WebP yüklenebilir.",
+        "uploadFailed": "Yükleme başarısız, tekrar deneyin."
+      },
+      "success": {
+        "photoUpdated": "Profil fotoğrafı güncellendi.",
+        "saved": "Kaydedildi."
+      },
+      "fields": {
+        "name": "Ad",
+        "username": "Profil adı",
+        "phone": "Telefon numarası",
+        "birthDate": "Doğum tarihi",
+        "nationality": "Uyruk",
+        "gender": "Cinsiyet",
+        "address": "Adres"
+      },
+      "placeholders": {
+        "name": "Adınızı girin",
+        "username": "Bir profil adı seçin",
+        "phone": "Telefon numarası ekleyin",
+        "birthDate": "Doğum tarihinizi girin",
+        "gender": "Cinsiyetinizi seçin",
+        "address": "Adresinizi ekleyin"
+      },
+      "inputPlaceholders": {
+        "name": "Ad Soyad",
+        "username": "kullaniciadi",
+        "phone": "530 823 45 96",
+        "address": "Sokak, mahalle, şehir, ülke"
+      },
+      "helpers": {
+        "phone": "Rezervasyon ve seyahat uyarıları için kullanılır.",
+        "birthDate": "18 yaşından büyük olmak gerekmektedir."
+      },
+      "genders": {
+        "male": "Erkek",
+        "female": "Kadın",
+        "other": "Diğer",
+        "preferNotToSay": "Belirtmek istemiyorum"
+      }
+    },
+    "email": {
+      "title": "E-posta Adresi",
+      "current": "Mevcut E-posta",
+      "verified": "Doğrulandı",
+      "notVerified": "Doğrulanmadı",
+      "pendingTitle": "Bekleyen e-posta değişikliği",
+      "pendingDescSuffix": "adresine doğrulama bağlantısı gönderildi. Bağlantıya tıkladıktan sonra aşağıdaki butona basın.",
+      "confirmUpdateBtn": "E-posta güncellendi mi?",
+      "newEmailLabel": "Yeni E-posta Adresi",
+      "currentPasswordLabel": "Mevcut Şifreniz",
+      "newEmailPlaceholder": "yeni@eposta.com",
+      "infoNote": "Yeni adrese bir doğrulama bağlantısı gönderilir. Bağlantıya tıklayana kadar e-postanız değişmez. Doğrulandıktan sonra bir sonraki girişinizde yeni e-posta aktif olur.",
+      "sendVerificationBtn": "Doğrulama Bağlantısı Gönder",
+      "errors": {
+        "emptyEmail": "Yeni e-posta boş olamaz.",
+        "sameEmail": "Yeni e-posta mevcut e-posta ile aynı."
+      },
+      "verificationSent": "{{email}} adresine doğrulama bağlantısı gönderildi. Bağlantıya tıkladıktan sonra \"E-posta güncellendi mi?\" butonuna basın.",
+      "updateSuccess": "E-posta başarıyla {{email}} olarak güncellendi.",
+      "notChangedYet": "E-posta henüz değişmedi. Önce doğrulama bağlantısına tıklayın.",
+      "statusCheckFailed": "Durum kontrol edilemedi."
+    },
+    "password": {
+      "title": "Şifre Değiştir",
+      "labels": {
+        "current": "Mevcut Şifre",
+        "new": "Yeni Şifre",
+        "confirm": "Yeni Şifre (tekrar)"
+      },
+      "newPlaceholder": "En az 6 karakter",
+      "strengthPrefix": "Güç:",
+      "strength": {
+        "veryWeak": "Çok zayıf",
+        "weak": "Zayıf",
+        "medium": "Orta",
+        "strong": "Güçlü",
+        "veryStrong": "Çok güçlü",
+        "hint": "· Büyük harf, rakam ve sembol ekleyin"
+      },
+      "mismatch": "Şifreler eşleşmiyor",
+      "match": "Şifreler eşleşiyor",
+      "tipsTitle": "Güçlü şifre için:",
+      "tips": [
+        "En az 8 karakter",
+        "En az bir büyük harf (A-Z)",
+        "En az bir rakam (0-9)",
+        "En az bir özel karakter (!@#...)"
+      ],
+      "updateBtn": "Şifreyi Güncelle",
+      "errors": {
+        "sameAsCurrent": "Yeni şifre mevcut şifreyle aynı olamaz.",
+        "mismatch": "Yeni şifreler eşleşmiyor."
+      },
+      "success": "Şifreniz başarıyla güncellendi."
+    },
+    "travelDefaults": {
+      "title": "Varsayılan Seyahat Tercihleri",
+      "subtitle": "Yeni plan oluştururken bu değerler otomatik doldurulur.",
+      "labels": {
+        "budget": "Varsayılan Bütçe",
+        "currency": "Para Birimi",
+        "peopleCount": "Varsayılan Kişi Sayısı",
+        "pace": "Varsayılan Tempo"
+      },
+      "errors": {
+        "minBudget": "En az 100 olmalı"
+      },
+      "peopleUnit": "kişi",
+      "pace": {
+        "rahat": "Rahat",
+        "normal": "Normal",
+        "aktif": "Aktif",
+        "esnek": "Esnek"
+      },
+      "infoNote": "Bu değerler \"Plan Oluştur\" sayfasındaki başlangıç değerlerini belirler. Plan oluştururken istediğin zaman değiştirebilirsin.",
+      "saveBtn": "Tercihleri Kaydet",
+      "success": "Varsayılan tercihler kaydedildi. Yeni plan oluştururken otomatik uygulanacak."
+    },
+    "passport": {
+      "title": "Pasaport & Vatandaşlık",
+      "subtitle": "Vize bilgileri ve seyahat uyarıları için kullanılır.",
+      "expired": "Pasaportunuzun süresi dolmuş!",
+      "expiringPrefix": "Pasaportunuz",
+      "expiringSuffix": "içinde sona eriyor. Seyahat planı yapmadan önce yenileyin.",
+      "validPrefix": "Pasaport geçerli —",
+      "validSuffix": "kaldı.",
+      "daysCount": "{{count}} gün",
+      "labels": {
+        "country": "Vatandaşlık / Pasaport Ülkesi",
+        "number": "Pasaport Numarası",
+        "optional": "(isteğe bağlı)",
+        "expiry": "Son Kullanma Tarihi"
+      },
+      "numberPlaceholder": "Örn. U12345678",
+      "numberHelper": "Yalnızca cihazınızda saklanır, üçüncü taraflarla paylaşılmaz.",
+      "saveBtn": "Bilgileri Kaydet",
+      "errors": {
+        "expired": "Pasaport süresi dolmuş. Lütfen geçerli bir tarih girin."
+      },
+      "success": "Pasaport bilgileri kaydedildi."
+    },
+    "locationTz": {
+      "title": "Konum & Saat Dilimi",
+      "autoDetect": {
+        "title": "Otomatik Algıla",
+        "desc": "Tarayıcıdan saat dilimini tespit et",
+        "btn": "Algıla"
+      },
+      "detectedMsg": "Algılandı: {{tz}}",
+      "label": "Saat Dilimi",
+      "currentPrefix": "Şu an seçili:",
+      "success": "Saat dilimi kaydedildi."
+    },
+    "language": {
+      "title": "Dil",
+      "subtitle": "Uygulama arayüz dili.",
+      "label": "Uygulama Dili",
+      "saved": "Dil güncellendi."
+    },
+    "units": {
+      "title": "Ölçü Birimleri",
+      "subtitle": "Mesafe ve sıcaklık birimleri plan detaylarında kullanılır.",
+      "currentPrefix": "Mevcut:",
+      "distance": {
+        "label": "Mesafe",
+        "km": "Kilometre (km)",
+        "mi": "Mil (mi)",
+        "currentKm": "km — Kilometre",
+        "currentMi": "mi — Mil"
+      },
+      "temp": {
+        "label": "Sıcaklık",
+        "celsius": "Celsius (°C)",
+        "fahrenheit": "Fahrenheit (°F)",
+        "currentCelsius": "°C — Celsius",
+        "currentFahrenheit": "°F — Fahrenheit"
+      },
+      "previewTitle": "Plan önizleme",
+      "previewDistance": "Mesafe:",
+      "previewWeather": "Hava:",
+      "saveBtn": "Uygula & Kaydet",
+      "success": "Ölçü birimi ayarları kaydedildi ve uygulandı."
+    },
+    "appNotif": {
+      "title": "Uygulama Bildirimleri",
+      "subtitle": "Uygulama içi bildirim tercihlerini ayarla.",
+      "rows": {
+        "planUpdates": {
+          "title": "Plan güncellemeleri",
+          "desc": "Planınızda değişiklik olduğunda"
+        },
+        "community": {
+          "title": "Topluluk bildirimleri",
+          "desc": "Beğeni, yorum ve takip istekleri"
+        },
+        "appUpdates": {
+          "title": "Uygulama güncellemeleri",
+          "desc": "Yeni özellik duyuruları"
+        }
+      }
+    },
+    "emailNotif": {
+      "title": "E-posta Bildirimleri",
+      "rows": {
+        "plan": {
+          "title": "Plan bildirimleri",
+          "desc": "Plan oluşturma ve güncelleme e-postaları"
+        },
+        "weeklyDigest": {
+          "title": "Haftalık özet",
+          "desc": "Her Pazartesi seyahat önerileri"
+        },
+        "promo": {
+          "title": "Kampanya ve fırsatlar",
+          "desc": "İndirimler ve özel teklifler"
+        }
+      }
+    },
+    "notif": {
+      "success": "Bildirim ayarları kaydedildi."
+    },
+    "pushNotif": {
+      "title": "Push Bildirimleri",
+      "subtitle": "Tarayıcı anlık bildirimlerini yönet.",
+      "testNotifTitle": "Travyon Bildirimleri Aktif 🎉",
+      "testNotifBody": "Seyahat uyarılarını artık anlık alacaksınız.",
+      "status": {
+        "granted": {
+          "title": "Bildirim izni verildi",
+          "desc": "Tarayıcı anlık bildirimleri aktif."
+        },
+        "denied": {
+          "title": "Bildirim izni reddedildi",
+          "desc": "Tarayıcı adres çubuğundaki kilit ikonundan izin verebilirsiniz."
+        },
+        "unsupported": {
+          "title": "Tarayıcınız push bildirimleri desteklemiyor",
+          "desc": "Farklı bir tarayıcı deneyin (Chrome, Edge, Firefox)."
+        },
+        "pending": {
+          "title": "Bildirim izni bekleniyor",
+          "desc": "Bildirimleri etkinleştirmek için aşağıdaki butona basın."
+        }
+      },
+      "grantBtn": "İzin Ver",
+      "rows": {
+        "push": {
+          "title": "Push bildirimleri",
+          "desc": "Seyahat yaklaştığında anlık uyarı al"
+        },
+        "sound": {
+          "title": "Bildirim sesi",
+          "desc": "Bildirim geldiğinde ses çal"
+        }
+      }
+    },
+    "privacyProfile": {
+      "title": "Profil & Plan Gizliliği",
+      "subtitle": "Diğer kullanıcıların sizi nasıl göreceğini kontrol edin.",
+      "summary": {
+        "profile": {
+          "label": "Profil",
+          "on": "Herkese açık",
+          "off": "Gizli"
+        },
+        "plans": {
+          "label": "Planlar",
+          "on": "Paylaşılabilir",
+          "off": "Kilitli"
+        },
+        "follow": {
+          "label": "Takip",
+          "on": "Serbest",
+          "off": "Onaylı"
+        }
+      },
+      "publicProfile": {
+        "title": "Herkese açık profil",
+        "on": "✅ Toplulukta görünür — diğer kullanıcılar sizi bulabilir",
+        "off": "🔒 Gizli mod — kimse profilinizi göremez"
+      },
+      "publicPlans": {
+        "title": "Planlarım herkese açık",
+        "on": "✅ Toplulukta paylaşabilirsiniz",
+        "off": "🔒 Paylaşım kapalı — Topluluk sayfasında paylaşım butonu kilitlenir",
+        "warning": "⚠️ Bu ayar kapalıyken planlarınızı Topluluk sayfasından paylaşamazsınız."
+      },
+      "publicFollow": {
+        "title": "Herkes takip edebilir",
+        "on": "✅ Onaysız takip — herkes takip edebilir",
+        "off": "🔒 Onaylı takip — takip istekleri onayınızı bekler"
+      }
+    },
+    "privacyLocation": {
+      "title": "Lokasyon Gizliliği",
+      "subtitle": "Konumunuzun nasıl kullanılacağını kontrol edin.",
+      "geoStatus": {
+        "supported": {
+          "title": "Tarayıcı Konum API",
+          "desc": "Tarayıcınız konum desteğine sahip. Konum özellikleri bu uygulama için seçimlidir."
+        },
+        "unsupported": {
+          "title": "Konum desteklenmiyor",
+          "desc": "Tarayıcınız konumu desteklemiyor."
+        }
+      },
+      "suggestions": {
+        "title": "Konum tabanlı öneriler",
+        "on": "✅ Yakındaki mekanlar ve akıllı öneriler için konum kullanılır",
+        "off": "🔒 Konum özellikleri devre dışı — genel öneriler gösterilir"
+      },
+      "history": {
+        "title": "Konum geçmişi",
+        "on": "✅ Ziyaret geçmişi kaydediliyor — gelecek planlar için daha iyi öneriler",
+        "off": "🔒 Konum geçmişi saklanmıyor"
+      }
+    },
+    "privacyData": {
+      "title": "Veri Kullanımı",
+      "subtitle": "Verilerinizin nasıl işlendiğini kontrol edin.",
+      "analytics": {
+        "title": "Analitik verisi paylaş",
+        "on": "✅ Anonim kullanım verisi — hizmet iyileştirmek için gönderilir",
+        "off": "🔒 Hiçbir kullanım verisi gönderilmez"
+      },
+      "storedDataHeader": "Hesabınızda saklanan veriler",
+      "items": [
+        {
+          "label": "Profil bilgileri",
+          "desc": "Ad, e-posta, fotoğraf"
+        },
+        {
+          "label": "Seyahat planları",
+          "desc": "Oluşturduğunuz tüm planlar"
+        },
+        {
+          "label": "Tercihler & ayarlar",
+          "desc": "Bildirim, görünüm, gizlilik"
+        },
+        {
+          "label": "Pasaport & konum",
+          "desc": "Seyahat ile ilgili kişisel bilgiler"
+        }
+      ],
+      "encryptedBadge": "Şifreli",
+      "kvkkPrefix": "Kişisel verileriniz 6698 sayılı KVKK kapsamında işlenmektedir. Verilerinizi indirmek veya hesabınızı silmek için",
+      "kvkkDataSection": "Verilerim",
+      "kvkkSuffix": "bölümünü kullanın."
+    },
+    "privacy": {
+      "success": "Gizlilik ayarları kaydedildi ve uygulandı."
+    },
+    "subscription": {
+      "title": "Abonelik",
+      "subtitle": "Mevcut planınız ve kullanım durumunuz.",
+      "proPlanName": "Pro Plan",
+      "freePlanName": "Ücretsiz Plan",
+      "proDesc": "Sınırsız plan + Gelişmiş AI + Reklamsız",
+      "freeDesc": "Ayda 3 plan oluşturma hakkı",
+      "proBadge": "Pro",
+      "freeBadge": "Ücretsiz",
+      "usageLabel": "Bu ay oluşturulan planlar",
+      "limitReached": "⚠️ Aylık limitinize ulaştınız. Pro'ya geçerek sınırsız plan oluşturun.",
+      "remainingPlans": "Bu ay {{count}} plan hakkınız kaldı.",
+      "compare": {
+        "headers": {
+          "feature": "Özellik",
+          "free": "Ücretsiz",
+          "pro": "Pro"
+        },
+        "rows": [
+          {
+            "label": "Plan oluşturma",
+            "free": "3 / ay",
+            "pro": "Sınırsız"
+          },
+          {
+            "label": "AI plan kalitesi",
+            "free": "Standart",
+            "pro": "Gelişmiş"
+          },
+          {
+            "label": "Reklam",
+            "free": "✅",
+            "pro": "-"
+          },
+          {
+            "label": "Topluluk paylaşımı",
+            "free": "✅",
+            "pro": "✅"
+          },
+          {
+            "label": "Öncelikli destek",
+            "free": "—",
+            "pro": "✅"
+          },
+          {
+            "label": "Erken erişim",
+            "free": "—",
+            "pro": "✅"
+          }
+        ]
+      },
+      "cta": {
+        "badge": "Pro",
+        "title": "Sınırsız Plan + Gelişmiş AI",
+        "desc": "Reklamsız deneyim, öncelikli destek ve tüm premium özellikler.",
+        "btn": "Yükselt →"
+      },
+      "cancel": {
+        "title": "Aboneliği İptal Et",
+        "desc": "Dönem sonunda ücretsiz plana geçilir.",
+        "btn": "İptal Et"
+      }
+    },
+    "billingHistory": {
+      "title": "Fatura Geçmişi",
+      "subtitle": "Geçmiş ödemelerinizi görüntüleyin.",
+      "headers": [
+        "Tarih",
+        "Tutar",
+        "Durum",
+        "Belge"
+      ],
+      "emptyPro": {
+        "title": "İlk faturanız burada görünecek.",
+        "desc": "Bir sonraki dönem sonunda otomatik oluşturulur."
+      },
+      "emptyFree": {
+        "title": "Henüz fatura bulunmuyor",
+        "desc": "Pro aboneliğe geçtikten sonra tüm faturalarınız burada listelenir ve indirilebilir hale gelir.",
+        "btn": "Pro'ya Geç →"
+      }
+    },
+    "payment": {
+      "title": "Ödeme Yöntemi",
+      "subtitle": "Abonelik ödemelerinde kullanılacak kartı yönetin.",
+      "expiryPrefix": "Son kullanma:",
+      "changeBtn": "Değiştir",
+      "removeBtn": "Kaldır",
+      "empty": {
+        "title": "Kayıtlı ödeme yöntemi yok",
+        "desc": "Pro aboneliğe geçmek için bir kart ekleyin. Verileriniz şifreli olarak saklanır.",
+        "addBtn": "Kart Ekle"
+      },
+      "formInfo": "Kart bilgileriniz şifreli olarak saklanır. CVV numarası hiçbir zaman kaydedilmez.",
+      "labels": {
+        "number": "Kart Numarası",
+        "name": "Kart Üzerindeki Ad",
+        "expiry": "Son Kullanma (MM/YY)",
+        "cvv": "CVV"
+      },
+      "placeholders": {
+        "number": "1234 5678 9012 3456",
+        "name": "AD SOYAD",
+        "expiry": "12/27",
+        "cvv": "•••"
+      },
+      "saveBtn": "Kartı Kaydet",
+      "securityNote": "Ödeme bilgileri 256-bit SSL şifreleme ile korunur.",
+      "errors": {
+        "invalidNumber": "Geçersiz kart numarası.",
+        "nameRequired": "Kart üzerindeki adı girin.",
+        "invalidExpiryFormat": "Son kullanma tarihi MM/YY formatında olmalı.",
+        "expired": "Kartın son kullanma tarihi geçmiş.",
+        "invalidCvv": "Geçersiz CVV kodu.",
+        "actionFailed": "İşlem başarısız, tekrar deneyin."
+      },
+      "success": "Kart başarıyla kaydedildi.",
+      "removed": "Kart kaldırıldı."
+    },
+    "dataExport": {
+      "title": "Verilerimi İndir",
+      "subtitle": "KVKK kapsamında tüm verilerinizi dışa aktarın.",
+      "items": [
+        {
+          "label": "Profil bilgileri",
+          "desc": "Ad, kullanıcı adı, biyografi"
+        },
+        {
+          "label": "Seyahat planları",
+          "desc": "Tüm oluşturduğunuz planlar"
+        },
+        {
+          "label": "Bildirim ayarları",
+          "desc": "Tercih ve ayarlarınız"
+        },
+        {
+          "label": "Hesap aktivitesi",
+          "desc": "Giriş ve işlem geçmişi"
+        }
+      ],
+      "note": "Veri indirme talebi oluşturulduğunda e-posta adresinize bağlantı gönderilecektir.",
+      "downloadAllBtn": "Tümünü İndir"
+    },
+    "deleteAccount": {
+      "title": "Hesabı Sil",
+      "warning": {
+        "title": "⚠️ Bu işlem geri alınamaz",
+        "desc": "Hesabınız, tüm seyahat planlarınız ve kişisel verileriniz kalıcı olarak silinecektir."
+      },
+      "confirmPhrase": "HESABIMI SİL",
+      "confirmLabelPrefix": "Onaylamak için",
+      "confirmLabelSuffix": "yazın",
+      "passwordLabel": "Şifreniz",
+      "deleteBtn": "Hesabı Kalıcı Olarak Sil",
+      "errors": {
+        "wrongConfirm": "Onay metnini doğru yazın."
+      }
+    },
+    "faq": {
+      "title": "Sık Sorulan Sorular",
+      "items": [
+        {
+          "q": "Plan oluşturma limiti nedir?",
+          "a": "Ücretsiz planda ayda 3 plan oluşturabilirsiniz. Pro planda sınırsızdır."
+        },
+        {
+          "q": "AI planımı nasıl hazırlıyor?",
+          "a": "Girdiğiniz destinasyon, tarih, bütçe ve tercihler Gemini AI ile analiz edilip kişiselleştirilmiş plan oluşturulur."
+        },
+        {
+          "q": "Planlarımı başkalarıyla paylaşabilir miyim?",
+          "a": "Evet, oluşturduğunuz planları toplulukla veya link ile paylaşabilirsiniz."
+        },
+        {
+          "q": "Verilerimi nasıl silebilirim?",
+          "a": "\"Verilerim → Hesabı Sil\" bölümünden tüm verilerinizi kalıcı olarak kaldırabilirsiniz."
+        }
+      ]
+    },
+    "contact": {
+      "title": "İletişim",
+      "subtitle": "Destek ekibimize mesaj gönderin.",
+      "labels": {
+        "subject": "Konu",
+        "message": "Mesaj"
+      },
+      "placeholders": {
+        "subject": "Mesajınızın konusu",
+        "message": "Sorun veya önerinizi yazın..."
+      },
+      "footerNote": "destek@travyon.app · Yanıt süresi: 24 saat",
+      "sendBtn": "Gönder",
+      "success": "Mesajınız gönderildi!"
+    },
+    "reportBug": {
+      "title": "Hata Bildir",
+      "subtitle": "Bulduğunuz hatayı raporlayın, geliştirmemize yardımcı olun.",
+      "labels": {
+        "title": "Hata Başlığı",
+        "description": "Detaylı Açıklama"
+      },
+      "placeholders": {
+        "title": "Kısa ve açıklayıcı bir başlık",
+        "description": "Hatayı nasıl tetiklediniz? Beklenen ve gerçekleşen durum neydi?"
+      },
+      "sendBtn": "Raporu Gönder",
+      "errors": {
+        "required": "Başlık ve açıklama zorunlu.",
+        "sendFailed": "Gönderilemedi, tekrar deneyin."
+      },
+      "success": "Hata raporu gönderildi, teşekkürler!"
+    }
+  },
+  "travelChecklist": {
+    "back": "Geri",
+    "prepDefault": "Hazırlık",
+    "title": "Seyahat Listesi",
+    "itemsCompleted": "{{checked}} / {{total}} madde tamamlandı",
+    "completedOfTotal": " / {{total}} tamamlandı",
+    "ready": "Hazırsın!",
+    "reset": "Sıfırla",
+    "autoSaved": "İlerleme otomatik kaydedilir",
+    "groups": {
+      "documents": "Belgeler",
+      "money": "Para & Finans",
+      "health": "Sağlık & Güvenlik",
+      "tech": "Teknoloji & Ulaşım",
+      "luggage": "Bavul & Kişisel"
+    },
+    "items": {
+      "passport": { "label": "Pasaport / Kimlik kartı", "tip": "Geçerlilik süresini ve bitiş tarihini kontrol et." },
+      "visa": { "label": "Vize / Seyahat izni", "tip": "Hedef ülkenin vize şartlarını önceden araştır." },
+      "ticket": { "label": "Uçuş bileti (çıktı veya dijital)", "tip": "Online check-in yaptıysan boarding pass'i indir." },
+      "hotel": { "label": "Otel / konaklama rezervasyonu", "tip": "Rezervasyon onayını e-posta veya ekrana kaydet." },
+      "insurance": { "label": "Seyahat sigortası", "tip": "Poliçe numarasını telefonuna kaydet." },
+      "emergency": { "label": "Acil iletişim bilgileri", "tip": "Büyükelçilik, yerel acil ve sigorta numaraları." },
+      "cash": { "label": "Nakit para (yerel para birimi)", "tip": "Havaalanı dışında değişim yapmak genellikle daha ucuz." },
+      "card": { "label": "Banka kartı yurt dışı bildirimi", "tip": "Bankanı seyahat tarih aralığın için bilgilendir." },
+      "backup": { "label": "Yedek kart / acil para", "tip": "Çantandan ayrı bir yerde saklanan yedek tut." },
+      "medicine": { "label": "Düzenli ilaçlar (yeterli dozda)", "tip": "Ülkeden ülkeye ilaç düzenlemeleri farklı olabilir." },
+      "firstaid": { "label": "Temel ilk yardım malzemeleri", "tip": "Ağrı kesici, yara bandı ve antiseptik." },
+      "sunscreen": { "label": "Güneş kremi / böcek ilacı", "tip": "Destinasyona göre SPF50+ veya DEET içeren seç." },
+      "vaccine": { "label": "Aşı / sağlık sertifikası", "tip": "Bazı ülkeler sarı humma veya COVID belgesi ister." },
+      "charger": { "label": "Telefon şarj aleti & adaptör", "tip": "Hedef ülkenin priz tipini kontrol et." },
+      "powerbank": { "label": "Taşınabilir şarj cihazı", "tip": "Uçakta el bagajında olması gerekebilir." },
+      "simcard": { "label": "Yerel SIM veya roaming paketi", "tip": "eSIM servisleri genelde daha uygun fiyatlı." },
+      "offline": { "label": "Çevrimdışı harita indir (Maps)", "tip": "İnternet olmadan da rotanı takip etmek için." },
+      "transport": { "label": "Ulaşım kartı / transfer planı", "tip": "Havaalanından şehir merkezine nasıl gideceğini planla." },
+      "clothes": { "label": "Hava durumuna uygun kıyafetler", "tip": "Destinasyonun güncel hava tahminini kontrol et." },
+      "shoes": { "label": "Rahat yürüyüş ayakkabısı", "tip": "Gezilerde günde 10-15 km yürümek sıradan." },
+      "lock": { "label": "Bagaj kilidi", "tip": "TSA onaylı kilit bazı ülkelerde zorunlu." },
+      "copies": { "label": "Belge kopyaları (fotoğraf/email)", "tip": "Pasaport ve bileti buluta veya e-postana kaydet." },
+      "notify": { "label": "Ev / işyerine haber ver", "tip": "Güvendiğin biriyle seyahat planını paylaş." }
+    }
+  },
+  "userProfile": {
+    "purposes": {
+      "culture": "Kültür",
+      "relax": "Dinlenme",
+      "nightlife": "Gece Hayatı",
+      "nature": "Macera"
+    },
+    "defaultName": "Gezgin",
+    "notFound": "Kullanıcı bulunamadı.",
+    "backToPrevious": "Geri dön",
+    "sharedPlansCount": "{{count}} paylaşılan plan",
+    "unfollowConfirm": "Takibi bırak?",
+    "yes": "Evet",
+    "cancel": "İptal",
+    "following": "Takip Ediliyor",
+    "follow": "Takip Et",
+    "joinedOn": "{{date}} tarihinde katıldı",
+    "stats": {
+      "sharedPlans": "Paylaşılan Plan",
+      "totalDays": "Toplam Gün",
+      "differentCities": "Farklı Şehir"
+    },
+    "visitedPlaces": "Gezilen Yerler",
+    "sharedPlans": "Paylaşılan Planlar",
+    "noSharedPlans": "Henüz paylaşılan plan yok",
+    "daysCount": "{{count}} gün",
+    "viewPlan": "Planı gör"
+  },
+  "communityPlanView": {
+    "purposes": {
+      "culture": "Kültür",
+      "relax": "Dinlenme",
+      "nightlife": "Gece Hayatı",
+      "nature": "Macera"
+    },
+    "defaultName": "Gezgin",
+    "loading": "Plan yükleniyor…",
+    "notFoundTitle": "Plan bulunamadı",
+    "notFoundBody": "Bu plan kaldırılmış veya erişim izni yok.",
+    "backToCommunity": "Topluluğa dön",
+    "cityGuide": {
+      "title": "Şehir Rehberi",
+      "transport": "Ulaşım",
+      "localCulture": "Yerel Kültür",
+      "usefulInfo": "Faydalı Bilgiler"
+    },
+    "selections": {
+      "title": "Seyahat Seçimleri",
+      "loading": "Yükleniyor…",
+      "noData": "Bu plan için seçim bilgisi yok.",
+      "noDataHint": "Eski paylaşımlarda seçimler saklanmıyor.",
+      "duration": "Süre",
+      "durationValue": "{{count}} günlük",
+      "peopleCount": "Kişi Sayısı",
+      "peopleCountValue": "{{count}} kişi",
+      "travelType": "Seyahat Türü",
+      "pace": "Tempo",
+      "earlyBird": "Sabah Kuşu",
+      "yes": "Evet",
+      "no": "Hayır",
+      "interests": "İlgi Alanları",
+      "accommodation": "Konaklama",
+      "transportLabel": "Ulaşım",
+      "food": "Yemek",
+      "diet": "Beslenme"
+    },
+    "travelTypes": {
+      "solo_macera": "Solo",
+      "romantik": "Romantik",
+      "balayi": "Balayı",
+      "aile": "Aile",
+      "arkadas_grubu": "Arkadaşlar",
+      "is_seyahati": "İş",
+      "sehir_kacamagi": "Kaçamak",
+      "klasik_tatil": "Klasik"
+    },
+    "paceOptions": {
+      "rahat": "Rahat",
+      "normal": "Normal",
+      "aktif": "Aktif",
+      "esnek": "Esnek"
+    },
+    "purposesDetailed": {
+      "culture": "Kültür & Tarih",
+      "relax": "Dinlenme",
+      "nightlife": "Gece Hayatı",
+      "nature": "Doğa & Macera"
+    },
+    "transportOptions": {
+      "public": "Toplu Taşıma",
+      "walk": "Yürüyüş",
+      "taxi": "Taksi / Uber",
+      "car": "Araç"
+    },
+    "accommodationOptions": {
+      "hotel": "Otel",
+      "airbnb": "Airbnb / Ev",
+      "hostel": "Hostel",
+      "resort": "Tatil Köyü"
+    },
+    "foodOptions": {
+      "iconic": "İkonik Lezzetler",
+      "hidden_gems": "Gizli Keşifler",
+      "fine_dining": "Fine Dining",
+      "street_food": "Sokak Yemeği",
+      "mixed": "Karışık / Sürpriz"
+    },
+    "mobileMapTitle": "Rota Haritası",
+    "byUser": "{{name}} tarafından",
+    "daysCount": "{{count}} gün",
+    "tabs": {
+      "plan": "Plan",
+      "guide": "Rehber",
+      "selections": "Seçimler"
+    },
+    "total": "Toplam:",
+    "themeToggle": {
+      "dark": "Gece Modu",
+      "light": "Aydınlık Mod"
+    },
+    "dayFallback": "Gün {{number}}",
+    "estimated": "Tahmini",
+    "placesCount": "{{count}} mekan"
+  }
+}

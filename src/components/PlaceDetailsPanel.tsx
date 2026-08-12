@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   X, Star, MapPin, Clock, Globe, Phone,
   ChevronLeft, ChevronRight, ExternalLink,
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) => {
+  const { t, i18n } = useTranslation();
   const [details, setDetails] = useState<PlaceDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -65,7 +67,7 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
         <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white">
           <div className="min-w-0 mr-3">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Mekan Detayı
+              {t('placeDetails.label')}
             </p>
             <h2 className="font-bold text-slate-900 text-sm truncate">
               {details?.name || placeName}
@@ -87,10 +89,10 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
             <div className="p-10 text-center">
               <div className="w-10 h-10 border-[3px] border-slate-200 border-t-[#187fe7] rounded-full animate-spin mx-auto mb-3" />
               <p className="text-sm text-slate-500 font-medium">
-                Mekan bilgileri yükleniyor...
+                {t('placeDetails.loading')}
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Google'dan fotoğraf ve yorumlar çekiliyor
+                {t('placeDetails.loadingSubtitle')}
               </p>
             </div>
           ) : !details ? (
@@ -99,10 +101,10 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                 <MapPin size={20} className="text-slate-400" />
               </div>
               <p className="text-sm text-slate-700 font-semibold mb-1">
-                Detay bulunamadı
+                {t('placeDetails.notFound')}
               </p>
               <p className="text-xs text-slate-500">
-                Bu mekan için Google'da bilgi bulunamadı.
+                {t('placeDetails.notFoundSubtitle')}
               </p>
             </div>
           ) : (
@@ -168,9 +170,11 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-slate-700">
-                        {details.userRatingsTotal.toLocaleString('tr-TR')} yorum
+                        {t('placeDetails.reviewsCount', {
+                          count: details.userRatingsTotal.toLocaleString(i18n.language === 'en' ? 'en-US' : 'tr-TR'),
+                        })}
                       </p>
-                      <p className="text-[10px] text-slate-400">Google verileri</p>
+                      <p className="text-[10px] text-slate-400">{t('placeDetails.googleData')}</p>
                     </div>
                     {details.priceLevel && (
                       <div className="ml-auto text-sm font-bold text-emerald-600">
@@ -196,7 +200,7 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                     <summary className="flex items-center gap-3 cursor-pointer list-none hover:text-[#187fe7] transition-colors">
                       <Clock size={14} className="text-slate-400 shrink-0 group-hover:text-[#187fe7]" />
                       <span className="text-sm font-semibold text-slate-700 group-hover:text-[#187fe7]">
-                        Çalışma Saatleri
+                        {t('placeDetails.openingHours')}
                       </span>
                       <ChevronRight
                         size={12}
@@ -231,7 +235,7 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                     className="flex items-center gap-3 text-sm text-[#187fe7] hover:underline"
                   >
                     <Globe size={14} className="shrink-0" />
-                    <span className="font-semibold truncate">Web Sitesini Ziyaret Et</span>
+                    <span className="font-semibold truncate">{t('placeDetails.visitWebsite')}</span>
                     <ExternalLink size={11} className="shrink-0" />
                   </a>
                 )}
@@ -240,9 +244,9 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                 {details.reviews.length > 0 && (
                   <div className="pt-4 border-t border-slate-100">
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                      <span>Google Yorumları</span>
+                      <span>{t('placeDetails.reviewsTitle')}</span>
                       <span className="text-[9px] text-slate-400 font-medium normal-case tracking-normal">
-                        ({details.reviews.length} yorum)
+                        {t('placeDetails.reviewsCountParen', { count: details.reviews.length })}
                       </span>
                     </h3>
                     <div className="space-y-4">
@@ -294,7 +298,7 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors mt-4"
                 >
-                  Google Maps'te Aç
+                  {t('placeDetails.openInGoogleMaps')}
                   <ExternalLink size={13} />
                 </a>
               </div>

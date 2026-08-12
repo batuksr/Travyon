@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
+import { useTranslation } from 'react-i18next';
 import type { DailyActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -81,6 +82,7 @@ const baseMapOptions = {
 
 const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel }) => {
   const { dark } = useThemeStore();
+  const { t } = useTranslation();
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -175,7 +177,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
   if (!isLoaded) {
     return (
       <div className="w-full h-full min-h-[400px] bg-surface-2 flex items-center justify-center rounded-2xl border border-divider">
-        <div className="text-muted font-medium animate-pulse">Harita Yükleniyor...</div>
+        <div className="text-muted font-medium animate-pulse">{t('mapView.loading')}</div>
       </div>
     );
   }
@@ -193,7 +195,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
         <rect x="4" y="2" width="72" height="15" rx="4" ry="4" fill="#dc2626"/>
         <text x="40" y="10" text-anchor="middle" dominant-baseline="middle"
               font-family="-apple-system,system-ui,sans-serif"
-              font-size="8.5" font-weight="700" fill="white" letter-spacing="0.2">Kaldığınız Yer</text>
+              font-size="8.5" font-weight="700" fill="white" letter-spacing="0.2">${t('mapView.hotelLabel')}</text>
         <!-- Pin gövdesi -->
         <path d="M40 21 C33 21 27 27 27 34 C27 43.5 40 62 40 62 C40 62 53 43.5 53 34 C53 27 47 21 40 21 Z"
               fill="#dc2626" stroke="white" stroke-width="2" filter="url(#hsh)"/>

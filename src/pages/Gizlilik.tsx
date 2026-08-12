@@ -1,110 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
 
-const SECTIONS = [
-  {
-    title: '1. Toplanan Veriler',
-    content: `Travyon olarak hizmetlerimizi sunabilmek amacıyla aşağıdaki kişisel verileri işleyebiliriz:
-
-• Hesap bilgileri: Ad, e-posta adresi ve şifre (şifreli olarak saklanır).
-• Kullanım verileri: Oluşturduğun planlar, tercihler, seyahat tarihleri ve bütçe bilgileri.
-• Cihaz bilgileri: Tarayıcı türü, işletim sistemi ve IP adresi.
-• İletişim verileri: Destek talebi veya geri bildirim gönderdiğinde paylaştığın bilgiler.
-
-Google ile giriş yapman durumunda Google, adın ve e-posta adresin gibi temel profil bilgilerini bizimle paylaşır.`,
-  },
-  {
-    title: '2. Verilerin Kullanım Amacı',
-    content: `Topladığımız verileri yalnızca şu amaçlarla kullanırız:
-
-• Hesabını oluşturmak ve yönetmek.
-• Seyahat planlarını oluşturmak, kaydetmek ve kişiselleştirmek.
-• Hizmet güvenliğini sağlamak ve dolandırıcılığı önlemek.
-• Uygulama performansını ve kullanıcı deneyimini iyileştirmek.
-• Talep etmen durumunda sana destek sağlamak.
-• Yasal yükümlülükleri yerine getirmek.`,
-  },
-  {
-    title: '3. Veri Güvenliği',
-    content: `Kişisel verilerinin güvenliğini sağlamak için sektör standardı güvenlik önlemlerini uygularız:
-
-• Tüm veriler Google Firebase altyapısında AES-256 şifreleme ile saklanır.
-• Bağlantılar HTTPS/TLS protokolü ile şifrelenir.
-• Şifreler hiçbir zaman düz metin olarak saklanmaz.
-• Sistemlerimiz düzenli güvenlik denetimine tabi tutulur.
-
-Ancak internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını belirtiriz.`,
-  },
-  {
-    title: '4. Veri Paylaşımı',
-    content: `Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:
-
-• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma) gibi teknik altyapı sağlayıcıları.
-• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.
-• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak.`,
-  },
-  {
-    title: '5. Çerezler',
-    content: `Sitemiz oturum ve tercih bilgilerini saklamak amacıyla çerezler kullanır. Kullandığımız çerez türleri:
-
-• Zorunlu çerezler: Oturum yönetimi ve güvenlik için gereklidir.
-• Tercih çerezleri: Dil ve tema tercihlerin gibi ayarlarını hatırlar.
-• Analitik çerezler: Anonim kullanım istatistikleri toplar (isteğe bağlı).
-
-Tarayıcı ayarlarından çerezleri devre dışı bırakabilirsin; ancak bu durum bazı işlevleri etkileyebilir.`,
-  },
-  {
-    title: '6. Haklarınız',
-    content: `6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında aşağıdaki haklara sahipsindir:
-
-• Kişisel verilerinin işlenip işlenmediğini öğrenme hakkı.
-• İşlenen veriler hakkında bilgi talep etme hakkı.
-• Verilerin düzeltilmesini veya silinmesini talep etme hakkı.
-• Verilerin işlenmesine itiraz etme hakkı.
-• Veri taşınabilirliği hakkı.
-
-Bu haklarını kullanmak için iletisim@travyon.app adresine e-posta gönderebilirsin.`,
-  },
-  {
-    title: '7. Veri Saklama Süresi',
-    content: `Verilerini hesabın aktif olduğu sürece saklarız. Hesabını silmen durumunda kişisel verilerini 30 gün içinde sistemlerimizden kalıcı olarak sileriz. Yasal yükümlülükler gerektirdiği hallerde bazı veriler daha uzun süre saklanabilir.`,
-  },
-  {
-    title: '8. Değişiklikler',
-    content: `Bu Gizlilik Politikası'nı zaman zaman güncelleyebiliriz. Önemli değişiklikler olması durumunda kayıtlı e-posta adresine bildirim göndeririz. Politikanın güncel halini her zaman bu sayfada bulabilirsin.`,
-  },
-  {
-    title: '9. İletişim',
-    content: `Gizlilik ile ilgili soruların için:\n\nE-posta: iletisim@travyon.app\nAdres: İstanbul, Türkiye`,
-  },
-];
+type LegalSection = { title: string; content: string };
 
 const TABS = [
-  { to: '/sss', label: 'SSS' },
-  { to: '/gizlilik', label: 'Gizlilik' },
-  { to: '/kullanim-kosullari', label: 'Kullanım Koşulları' },
-  { to: '/iletisim', label: 'İletişim' },
-];
+  { to: '/sss', key: 'faq' },
+  { to: '/gizlilik', key: 'privacy' },
+  { to: '/kullanim-kosullari', key: 'terms' },
+  { to: '/iletisim', key: 'contact' },
+] as const;
 
-const PageTabs: React.FC<{ active: string }> = ({ active }) => (
-  <div className="flex gap-1.5 flex-wrap justify-center bg-surface-2 p-[5px] rounded-full w-fit mx-auto mt-6">
-    {TABS.map(t => (
-      <Link
-        key={t.to}
-        to={t.to}
-        className={`font-heading text-sm px-5 py-2.5 rounded-full whitespace-nowrap transition-colors ${
-          active === t.to ? 'bg-accent text-white' : 'text-muted hover:text-text'
-        }`}
-      >
-        {t.label}
-      </Link>
-    ))}
-  </div>
-);
+const PageTabs: React.FC<{ active: string }> = ({ active }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-1.5 flex-wrap justify-center bg-surface-2 p-[5px] rounded-full w-fit mx-auto mt-6">
+      {TABS.map(tab => (
+        <Link
+          key={tab.to}
+          to={tab.to}
+          className={`font-heading text-sm px-5 py-2.5 rounded-full whitespace-nowrap transition-colors ${
+            active === tab.to ? 'bg-accent text-white' : 'text-muted hover:text-text'
+          }`}
+        >
+          {t(`legal.tabs.${tab.key}`)}
+        </Link>
+      ))}
+    </div>
+  );
+};
 
 const Gizlilik: React.FC = () => {
+  const { t } = useTranslation();
+  const SECTIONS = t('legal.privacy.sections', { returnObjects: true }) as LegalSection[];
   return (
     <div className="min-h-screen bg-bg">
 
@@ -119,17 +49,17 @@ const Gizlilik: React.FC = () => {
             className="flex items-center gap-1.5 text-sm text-text bg-surface-2 border border-divider rounded-full px-4 py-2.5 hover:bg-surface transition-colors"
           >
             <ArrowLeft size={14} strokeWidth={2.5} />
-            Ana Sayfa
+            {t('legal.backHome')}
           </Link>
         </div>
       </header>
 
       {/* Hero */}
       <div className="text-center py-10 sm:py-12 px-4 sm:px-6">
-        <p className="text-xs font-heading text-accent-700 uppercase tracking-widest mb-2">Yardım & Yasal</p>
-        <h1 className="font-heading text-3xl sm:text-4xl text-text">Gizlilik Politikası</h1>
+        <p className="text-xs font-heading text-accent-700 uppercase tracking-widest mb-2">{t('legal.eyebrow')}</p>
+        <h1 className="font-heading text-3xl sm:text-4xl text-text">{t('legal.privacy.title')}</h1>
         <p className="text-muted mt-3.5 text-sm">
-          Verilerini nasıl koruduğumuzu ve kullandığımızı şeffafça açıklıyoruz.
+          {t('legal.privacy.subtitle')}
         </p>
         <PageTabs active="/gizlilik" />
       </div>
@@ -138,8 +68,7 @@ const Gizlilik: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col gap-[26px]">
           <p className="text-sm text-muted leading-relaxed">
-            Travyon ("biz", "bizim") olarak gizliliğinize saygı duyuyor ve kişisel verilerinizin korunmasına önem veriyoruz.
-            Bu Gizlilik Politikası, hizmetlerimizi kullanırken hangi verileri topladığımızı, nasıl kullandığımızı ve koruduğumuzu açıklar.
+            {t('legal.privacy.intro')}
           </p>
 
           {SECTIONS.map((section) => (
@@ -150,7 +79,7 @@ const Gizlilik: React.FC = () => {
               </p>
             </div>
           ))}
-          <p className="text-xs text-muted text-center">Son güncelleme: 26 Mayıs 2026</p>
+          <p className="text-xs text-muted text-center">{t('legal.lastUpdated')}</p>
         </div>
       </div>
 
@@ -158,7 +87,7 @@ const Gizlilik: React.FC = () => {
       <footer className="border-t border-divider mt-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-[22px] flex flex-wrap items-center justify-between gap-3">
           <TravyonLogo size={28} />
-          <span className="text-xs text-muted">© 2026 Travyon. Tüm hakları saklıdır.</span>
+          <span className="text-xs text-muted">{t('footer.copyright')}</span>
         </div>
       </footer>
 

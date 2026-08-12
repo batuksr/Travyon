@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Bot, X, Send, Loader2, RotateCcw, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { askTravelAssistant } from '../services/assistantService';
 import { usePlanStore } from '../store/usePlanStore';
 import type { TravelPlanResponse } from '../services/aiService';
@@ -29,33 +30,6 @@ ${dayLines}
 Kullanıcı bu plana atıfta bulunabilir. "3. günümde ne var?", "planımda...", "hangi gün..." gibi
 sorularda yukarıdaki plan detaylarını kullan. Plan dışı genel seyahat sorularını da yanıtla.`;
 };
-
-/* ── Sabit hızlı sorular ── */
-const QUICK_QUESTIONS = [
-  { emoji: '🌍', text: 'Avrupa için en iyi 3 şehir?' },
-  { emoji: '💶', text: '1.000€ ile nereye gidebilirim?' },
-  { emoji: '☀️', text: 'Ocak\'ta sıcak tatil yerleri?' },
-  { emoji: '🎒', text: 'Solo seyahat için neresi ideal?' },
-  { emoji: '🛂', text: 'Türk pasaportu ile vizesiz ülkeler?' },
-  { emoji: '💑', text: 'Balayı için en romantik destinasyonlar?' },
-];
-
-/* ── Plan aktifken özel hızlı sorular ── */
-const planQuestions = (destination: string) => [
-  { emoji: '📅', text: 'Hangi günüm en yoğun?' },
-  { emoji: '💡', text: 'Planıma ne ekleyebilirim?' },
-  { emoji: '💰', text: 'Bütçem bu destinasyon için mantıklı mı?' },
-  { emoji: '🍽️', text: 'Planımdaki yemek seçimleri nasıl?' },
-  { emoji: '🚌', text: `${destination}'da en pratik ulaşım nasıl?` },
-  { emoji: '⚠️', text: 'Gitmeden bilmem gereken şeyler?' },
-];
-
-const FOLLOW_UP_CHIPS = [
-  'Daha detay ver',
-  'Bütçe ne olmalı?',
-  'En iyi ay hangisi?',
-  'Otel mi Airbnb mi?',
-];
 
 /* ── Types ── */
 interface Message {
@@ -102,21 +76,25 @@ const WelcomeScreen: React.FC<{
   hasPlan: boolean;
   destination?: string;
 }> = ({ onQuestion, hasPlan, destination }) => {
+  const { t } = useTranslation();
+  const quickQuestions = t('aiAssistant.quickQuestions', { returnObjects: true }) as { emoji: string; text: string }[];
+  const planQuestions = (t('aiAssistant.planQuestions', { returnObjects: true }) as { emoji: string; text: string }[])
+    .map(q => ({ ...q, text: q.text.replace('{{destination}}', destination ?? '') }));
   const questions = hasPlan && destination
-    ? planQuestions(destination)
-    : QUICK_QUESTIONS;
+    ? planQuestions
+    : quickQuestions;
 
   return (
     <div className="h-full flex flex-col justify-center px-4 py-6 gap-5">
       <div className="text-center">
         <div className="text-5xl mb-3">{hasPlan ? '✈️' : '🌐'}</div>
         <p className="text-sm font-bold text-slate-800">
-          {hasPlan ? `${destination} planın hazır!` : 'Seyahat asistanınım!'}
+          {hasPlan && destination ? t('aiAssistant.welcome.planReady', { destination }) : t('aiAssistant.welcome.greeting')}
         </p>
         <p className="text-xs text-slate-400 mt-1 leading-relaxed">
           {hasPlan
-            ? 'Planın hakkında her şeyi sor — gün detayları, öneriler, ipuçları.'
-            : 'Destinasyon, bütçe, vize — her şeyi sor.'}
+            ? t('aiAssistant.welcome.planSubtitle')
+            : t('aiAssistant.welcome.generalSubtitle')}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -141,6 +119,7 @@ const WelcomeScreen: React.FC<{
    Main Widget
 ════════════════════════════════════════ */
 export const AiAssistantWidget: React.FC = () => {
+  const { t } = useTranslation();
   const [open, setOpen]           = useState(false);
   const [messages, setMessages]   = useState<Message[]>([]);
   const [input, setInput]         = useState('');
@@ -193,13 +172,13 @@ export const AiAssistantWidget: React.FC = () => {
     } catch {
       setMessages(prev => prev.map(m =>
         m.id === aiMsgId
-          ? { ...m, text: 'Üzgünüm, bir hata oluştu. Tekrar dene. 🙏', loading: false }
+          ? { ...m, text: t('aiAssistant.errorMessage'), loading: false }
           : m
       ));
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, planContext]);
+  }, [isLoading, planContext, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
@@ -229,16 +208,16 @@ export const AiAssistantWidget: React.FC = () => {
                 {plan ? (
                   <p className="text-white/80 text-[10px] leading-tight flex items-center gap-1 truncate">
                     <MapPin size={9} />
-                    {destination} planı bağlı
+                    {t('aiAssistant.planConnected', { destination })}
                   </p>
                 ) : (
-                  <p className="text-white/70 text-[10px] leading-tight">Seyahat asistanı</p>
+                  <p className="text-white/70 text-[10px] leading-tight">{t('aiAssistant.genericAssistant')}</p>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
               {hasMessages && (
-                <button onClick={() => setMessages([])} title="Sohbeti temizle"
+                <button onClick={() => setMessages([])} title={t('aiAssistant.clearChat')}
                   className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/15 rounded-full transition-all">
                   <RotateCcw size={13} />
                 </button>
@@ -264,7 +243,7 @@ export const AiAssistantWidget: React.FC = () => {
           {/* Follow-up chips */}
           {hasMessages && (
             <div className="px-3 pb-1 pt-2 flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden flex-shrink-0">
-              {FOLLOW_UP_CHIPS.map(chip => (
+              {(t('aiAssistant.followUpChips', { returnObjects: true }) as string[]).map(chip => (
                 <button key={chip} onClick={() => sendMessage(chip)} disabled={isLoading}
                   className="flex-shrink-0 text-[10px] font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full transition-colors disabled:opacity-40 whitespace-nowrap">
                   {chip}
@@ -281,7 +260,7 @@ export const AiAssistantWidget: React.FC = () => {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={plan ? `${destination} planın hakkında sor…` : 'Bir şey sor…'}
+              placeholder={plan ? t('aiAssistant.inputPlaceholderPlan', { destination }) : t('aiAssistant.inputPlaceholderGeneral')}
               disabled={isLoading}
               className="flex-1 text-sm bg-white border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-[#f8981d] focus:ring-2 focus:ring-[#f8981d]/10 transition-all placeholder:text-slate-400 disabled:opacity-60"
             />
@@ -300,7 +279,7 @@ export const AiAssistantWidget: React.FC = () => {
       <button
         onClick={() => setOpen(v => !v)}
         className="relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-gradient-to-br from-[#f8981d] to-[#e08518] text-white"
-        aria-label="AI Asistanı"
+        aria-label={t('aiAssistant.ariaLabel')}
       >
         {open ? <X size={22} /> : <Bot size={22} />}
         {!open && !hasMessages && (

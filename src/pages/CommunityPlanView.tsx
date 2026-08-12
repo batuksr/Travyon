@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, Bus, Users, Lightbulb, Map, X, Sun, Moon, Loader2, SlidersHorizontal,
 } from 'lucide-react';
@@ -15,14 +16,29 @@ import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 
-const PURPOSE_LABELS: Record<string, string> = {
-  culture:   'Kültür',
-  relax:     'Dinlenme',
-  nightlife: 'Gece Hayatı',
-  nature:    'Macera',
+const TRAVEL_TYPE_EMOJI: Record<string, string> = {
+  solo_macera: '🧍', romantik: '❤️', balayi: '✨', aile: '👨‍👩‍👧',
+  arkadas_grubu: '👯', is_seyahati: '💼', sehir_kacamagi: '☕', klasik_tatil: '🗺️',
+};
+const PACE_EMOJI: Record<string, string> = {
+  rahat: '🛋️', normal: '🚶', aktif: '⚡', esnek: '🧭',
+};
+const PURPOSE_DETAILED_EMOJI: Record<string, string> = {
+  culture: '🏛️', relax: '😴', nightlife: '🌙', nature: '🏔️',
+};
+const TRANSPORT_EMOJI: Record<string, string> = {
+  public: '🚇', walk: '🚶', taxi: '🚕', car: '🚗',
+};
+const ACCOMMODATION_EMOJI: Record<string, string> = {
+  hotel: '🏨', airbnb: '🏠', hostel: '🛏️', resort: '🌴',
+};
+const FOOD_EMOJI: Record<string, string> = {
+  iconic: '⭐', hidden_gems: '🗺️', fine_dining: '🍷', street_food: '🌮', mixed: '🎲',
 };
 
 const CommunityPlanView: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const localeCode = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const { planId }  = useParams<{ planId: string }>();
   const navigate    = useNavigate();
   const { dark, toggle: toggleTheme } = useThemeStore();
@@ -133,7 +149,7 @@ const CommunityPlanView: React.FC = () => {
   const activeDay = plan?.dailyPlans[activeDayIndex];
 
   /* ── Avatar ── */
-  const initials = (meta?.userDisplayName ?? 'G')
+  const initials = (meta?.userDisplayName ?? t('communityPlanView.defaultName'))
     .split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase();
 
   /* ── Yükleniyor ── */
@@ -142,7 +158,7 @@ const CommunityPlanView: React.FC = () => {
       <div className="h-screen flex items-center justify-center bg-bg">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={28} className="animate-spin text-accent" />
-          <p className="text-sm text-muted font-medium">Plan yükleniyor…</p>
+          <p className="text-sm text-muted font-medium">{t('communityPlanView.loading')}</p>
         </div>
       </div>
     );
@@ -154,13 +170,13 @@ const CommunityPlanView: React.FC = () => {
       <div className="h-screen flex items-center justify-center bg-bg">
         <div className="text-center space-y-3 p-8">
           <p className="text-4xl">😕</p>
-          <p className="font-heading text-base text-text">Plan bulunamadı</p>
-          <p className="text-sm text-muted">Bu plan kaldırılmış veya erişim izni yok.</p>
+          <p className="font-heading text-base text-text">{t('communityPlanView.notFoundTitle')}</p>
+          <p className="text-sm text-muted">{t('communityPlanView.notFoundBody')}</p>
           <button
             onClick={() => navigate('/community')}
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-heading text-accent hover:text-accent-700"
           >
-            <ArrowLeft size={14} strokeWidth={2.5} /> Topluluğa dön
+            <ArrowLeft size={14} strokeWidth={2.5} /> {t('communityPlanView.backToCommunity')}
           </button>
         </div>
       </div>
@@ -177,7 +193,7 @@ const CommunityPlanView: React.FC = () => {
           <div className="hidden sm:flex flex-1 bg-black/30" onClick={() => setGuideOpen(false)} />
           <div className="w-full sm:w-80 bg-surface border-l border-divider flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-divider shrink-0">
-              <h2 className="font-heading text-sm text-text">Şehir Rehberi</h2>
+              <h2 className="font-heading text-sm text-text">{t('communityPlanView.cityGuide.title')}</h2>
               <button
                 onClick={() => setGuideOpen(false)}
                 className="w-8 h-8 rounded-xl hover:bg-surface-2 flex items-center justify-center text-muted transition-colors"
@@ -189,21 +205,21 @@ const CommunityPlanView: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Bus size={13} strokeWidth={2.5} className="text-blue-500" />
-                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">Ulaşım</h3>
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">{t('communityPlanView.cityGuide.transport')}</h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">{plan.cityGuide.transportationTips}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={13} strokeWidth={2.5} className="text-accent" />
-                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">Yerel Kültür</h3>
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">{t('communityPlanView.cityGuide.localCulture')}</h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">{plan.cityGuide.localCustoms}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Lightbulb size={13} strokeWidth={2.5} className="text-sage" />
-                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">Faydalı Bilgiler</h3>
+                  <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">{t('communityPlanView.cityGuide.usefulInfo')}</h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">{plan.cityGuide.generalAdvice}</p>
               </div>
@@ -218,84 +234,75 @@ const CommunityPlanView: React.FC = () => {
           <div className="hidden sm:flex flex-1 bg-black/30" onClick={() => setSelectionsOpen(false)} />
           <div className="w-full sm:w-80 bg-surface border-l border-divider flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-divider shrink-0">
-              <h2 className="font-heading text-sm text-text">Seyahat Seçimleri</h2>
+              <h2 className="font-heading text-sm text-text">{t('communityPlanView.selections.title')}</h2>
               <button onClick={() => setSelectionsOpen(false)} className="w-8 h-8 rounded-xl hover:bg-surface-2 flex items-center justify-center text-muted transition-colors">
                 <X size={14} strokeWidth={2.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {meta ? (() => {
-                const TRAVEL_TYPE: Record<string, string> = {
-                  solo_macera:    '🧍 Solo',
-                  romantik:       '❤️ Romantik',
-                  balayi:         '✨ Balayı',
-                  aile:           '👨‍👩‍👧 Aile',
-                  arkadas_grubu:  '👯 Arkadaşlar',
-                  is_seyahati:    '💼 İş',
-                  sehir_kacamagi: '☕ Kaçamak',
-                  klasik_tatil:   '🗺️ Klasik',
+                const travelTypeLabel = (key: string) => {
+                  const emoji = TRAVEL_TYPE_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.travelTypes.${key}`)}` : key;
                 };
-                const PACE: Record<string, string> = {
-                  rahat:  '🛋️ Rahat',
-                  normal: '🚶 Normal',
-                  aktif:  '⚡ Aktif',
-                  esnek:  '🧭 Esnek',
+                const paceLabel = (key: string) => {
+                  const emoji = PACE_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.paceOptions.${key}`)}` : key;
                 };
-                const PURPOSES: Record<string, string> = {
-                  culture:   '🏛️ Kültür & Tarih',
-                  relax:     '😴 Dinlenme',
-                  nightlife: '🌙 Gece Hayatı',
-                  nature:    '🏔️ Doğa & Macera',
+                const purposeDetailedLabel = (key: string) => {
+                  const emoji = PURPOSE_DETAILED_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.purposesDetailed.${key}`)}` : key;
                 };
-                const TRANSPORT: Record<string, string> = {
-                  public: '🚇 Toplu Taşıma',
-                  walk:   '🚶 Yürüyüş',
-                  taxi:   '🚕 Taksi / Uber',
-                  car:    '🚗 Araç',
+                const transportLabel = (key: string) => {
+                  const emoji = TRANSPORT_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.transportOptions.${key}`)}` : key;
                 };
-                const ACCOM: Record<string, string> = {
-                  hotel:  '🏨 Otel',
-                  airbnb: '🏠 Airbnb / Ev',
-                  hostel: '🛏️ Hostel',
-                  resort: '🌴 Tatil Köyü',
+                const accommodationLabel = (key: string) => {
+                  const emoji = ACCOMMODATION_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.accommodationOptions.${key}`)}` : key;
                 };
-                const FOOD: Record<string, string> = {
-                  iconic:      '⭐ İkonik Lezzetler',
-                  hidden_gems: '🗺️ Gizli Keşifler',
-                  fine_dining: '🍷 Fine Dining',
-                  street_food: '🌮 Sokak Yemeği',
-                  mixed:       '🎲 Karışık / Sürpriz',
+                const foodLabel = (key: string) => {
+                  const emoji = FOOD_EMOJI[key];
+                  return emoji ? `${emoji} ${t(`communityPlanView.foodOptions.${key}`)}` : key;
+                };
+                // Yeni planlar diyet tercihlerini neutral key olarak saklar (örn. 'vegan');
+                // eski planlar doğrudan görüntülenebilir Türkçe metin saklar (örn. 'Vegan') —
+                // defaultValue sayesinde eşleşme yoksa ham değer aynen gösterilir.
+                const dietLabel = (key: string) => {
+                  const emoji = t(`onboarding.step3.diets.${key}.emoji`, { defaultValue: '' });
+                  const label = t(`onboarding.step3.diets.${key}.label`, { defaultValue: key });
+                  return emoji ? `${emoji} ${label}` : label;
                 };
                 const rows: { label: string; value: string }[] = [];
 
                 // Süre: gün sayısı (tarihleri değil)
                 const dayCount = plan?.dailyPlans.length ?? meta.dailyPlanCount;
                 if (dayCount)
-                  rows.push({ label: 'Süre', value: `${dayCount} günlük` });
+                  rows.push({ label: t('communityPlanView.selections.duration'), value: t('communityPlanView.selections.durationValue', { count: dayCount }) });
                 if (meta.peopleCount)
-                  rows.push({ label: 'Kişi Sayısı', value: `${meta.peopleCount} kişi` });
+                  rows.push({ label: t('communityPlanView.selections.peopleCount'), value: t('communityPlanView.selections.peopleCountValue', { count: meta.peopleCount }) });
                 if (meta.travelType)
-                  rows.push({ label: 'Seyahat Türü', value: TRAVEL_TYPE[meta.travelType] ?? meta.travelType });
+                  rows.push({ label: t('communityPlanView.selections.travelType'), value: travelTypeLabel(meta.travelType) });
                 if (meta.pace)
-                  rows.push({ label: 'Tempo', value: PACE[meta.pace] ?? meta.pace });
+                  rows.push({ label: t('communityPlanView.selections.pace'), value: paceLabel(meta.pace) });
                 if (meta.earlyBird != null)
-                  rows.push({ label: 'Sabah Kuşu', value: meta.earlyBird ? '✅ Evet' : '❌ Hayır' });
+                  rows.push({ label: t('communityPlanView.selections.earlyBird'), value: meta.earlyBird ? `✅ ${t('communityPlanView.selections.yes')}` : `❌ ${t('communityPlanView.selections.no')}` });
                 if (meta.purposes?.length)
-                  rows.push({ label: 'İlgi Alanları', value: meta.purposes.map(p => PURPOSES[p] ?? p).join(', ') });
+                  rows.push({ label: t('communityPlanView.selections.interests'), value: meta.purposes.map(p => purposeDetailedLabel(p)).join(', ') });
                 if (meta.accommodation)
-                  rows.push({ label: 'Konaklama', value: ACCOM[meta.accommodation] ?? meta.accommodation });
+                  rows.push({ label: t('communityPlanView.selections.accommodation'), value: accommodationLabel(meta.accommodation) });
                 if (meta.transport)
-                  rows.push({ label: 'Ulaşım', value: TRANSPORT[meta.transport] ?? meta.transport });
+                  rows.push({ label: t('communityPlanView.selections.transportLabel'), value: transportLabel(meta.transport) });
                 if (meta.foodPhilosophy)
-                  rows.push({ label: 'Yemek', value: FOOD[meta.foodPhilosophy] ?? meta.foodPhilosophy });
+                  rows.push({ label: t('communityPlanView.selections.food'), value: foodLabel(meta.foodPhilosophy) });
                 if (meta.dietaryRestrictions?.length)
-                  rows.push({ label: 'Beslenme', value: meta.dietaryRestrictions.join(', ') });
+                  rows.push({ label: t('communityPlanView.selections.diet'), value: meta.dietaryRestrictions.map(dietLabel).join(', ') });
 
                 if (rows.length === 0) return (
                   <div className="text-center py-8">
                     <p className="text-3xl mb-2">🔍</p>
-                    <p className="text-sm text-muted">Bu plan için seçim bilgisi yok.</p>
-                    <p className="text-xs text-muted mt-1">Eski paylaşımlarda seçimler saklanmıyor.</p>
+                    <p className="text-sm text-muted">{t('communityPlanView.selections.noData')}</p>
+                    <p className="text-xs text-muted mt-1">{t('communityPlanView.selections.noDataHint')}</p>
                   </div>
                 );
 
@@ -311,7 +318,7 @@ const CommunityPlanView: React.FC = () => {
                 );
               })() : (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted">Yükleniyor…</p>
+                  <p className="text-sm text-muted">{t('communityPlanView.selections.loading')}</p>
                 </div>
               )}
             </div>
@@ -323,7 +330,7 @@ const CommunityPlanView: React.FC = () => {
       {showMobileMap && (
         <div className="lg:hidden fixed inset-0 z-50 bg-surface flex flex-col">
           <div className="h-12 flex items-center justify-between px-4 border-b border-divider shrink-0">
-            <span className="font-heading text-sm text-text">Rota Haritası</span>
+            <span className="font-heading text-sm text-text">{t('communityPlanView.mobileMapTitle')}</span>
             <button
               onClick={() => setShowMobileMap(false)}
               className="w-8 h-8 rounded-xl hover:bg-surface-2 flex items-center justify-center text-text transition-colors"
@@ -359,13 +366,13 @@ const CommunityPlanView: React.FC = () => {
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] text-muted leading-none truncate">{meta?.userDisplayName ?? 'Gezgin'} tarafından</p>
+            <p className="text-[10px] text-muted leading-none truncate">{t('communityPlanView.byUser', { name: meta?.userDisplayName ?? t('communityPlanView.defaultName') })}</p>
             <div className="flex items-center gap-2">
               <h1 className="font-heading text-base text-text truncate">{plan.destination}</h1>
-              <span className="text-xs text-muted font-medium shrink-0">• {plan.dailyPlans.length} gün</span>
+              <span className="text-xs text-muted font-medium shrink-0">• {t('communityPlanView.daysCount', { count: plan.dailyPlans.length })}</span>
               {meta?.tripPurpose && (
                 <span className="hidden sm:inline text-[10px] font-bold bg-surface-2 text-muted px-1.5 py-0.5 rounded-full shrink-0">
-                  {PURPOSE_LABELS[meta.tripPurpose] ?? meta.tripPurpose}
+                  {t(`communityPlanView.purposes.${meta.tripPurpose}`, { defaultValue: meta.tripPurpose })}
                 </span>
               )}
             </div>
@@ -375,14 +382,14 @@ const CommunityPlanView: React.FC = () => {
         {/* Orta: Plan / Rehber / Seçimler sekmeleri */}
         <div className="hidden md:flex items-center gap-1 bg-surface-2 p-0.5 rounded-full">
           <button className="px-3.5 py-1.5 text-xs font-heading bg-surface rounded-full shadow-sm text-text">
-            Plan
+            {t('communityPlanView.tabs.plan')}
           </button>
           {plan.cityGuide && (
             <button
               onClick={() => setGuideOpen(true)}
               className="px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
             >
-              Rehber
+              {t('communityPlanView.tabs.guide')}
             </button>
           )}
           <button
@@ -390,7 +397,7 @@ const CommunityPlanView: React.FC = () => {
             className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
           >
             <SlidersHorizontal size={11} strokeWidth={2.5} />
-            Seçimler
+            {t('communityPlanView.tabs.selections')}
           </button>
         </div>
 
@@ -401,7 +408,7 @@ const CommunityPlanView: React.FC = () => {
             <button
               onClick={() => setGuideOpen(true)}
               className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
-              title="Rehber"
+              title={t('communityPlanView.tabs.guide')}
             >
               <Bus size={14} strokeWidth={2.5} />
             </button>
@@ -409,22 +416,22 @@ const CommunityPlanView: React.FC = () => {
           <button
             onClick={() => setSelectionsOpen(true)}
             className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
-            title="Seçimler"
+            title={t('communityPlanView.tabs.selections')}
           >
             <SlidersHorizontal size={14} strokeWidth={2.5} />
           </button>
           {plan.totalEstimatedCost > 0 && (
             <div className="hidden md:flex items-center gap-1.5 text-xs">
-              <span className="text-muted">Toplam:</span>
+              <span className="text-muted">{t('communityPlanView.total')}</span>
               <span className="font-heading text-text">
-                {meta?.currencySymbol ?? '₺'}{plan.totalEstimatedCost.toLocaleString('tr-TR')}
+                {meta?.currencySymbol ?? '₺'}{plan.totalEstimatedCost.toLocaleString(localeCode)}
               </span>
             </div>
           )}
           <button
             onClick={(e) => toggleWithCircle(toggleTheme, e)}
             className="w-8 h-8 rounded-full border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors shrink-0"
-            title={dark ? 'Gece Modu' : 'Aydınlık Mod'}
+            title={dark ? t('communityPlanView.themeToggle.dark') : t('communityPlanView.themeToggle.light')}
           >
             <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
               {dark ? <Moon size={14} /> : <Sun size={14} />}
@@ -459,7 +466,7 @@ const CommunityPlanView: React.FC = () => {
                   }`}>
                     {day.dayNumber}
                   </span>
-                  {day.date?.slice(5) ?? `Gün ${day.dayNumber}`}
+                  {day.date?.slice(5) ?? t('communityPlanView.dayFallback', { number: day.dayNumber })}
                   <span className={`text-[10px] font-normal ${activeDayIndex === index ? 'text-white/80' : 'text-muted'}`}>
                     ({day.activities.length})
                   </span>
@@ -477,9 +484,9 @@ const CommunityPlanView: React.FC = () => {
                   <p className="text-sm font-semibold text-text truncate">{activeDay.daySummary}</p>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                  <p className="text-[10px] text-muted">Tahmini</p>
+                  <p className="text-[10px] text-muted">{t('communityPlanView.estimated')}</p>
                   <p className="font-heading text-sm text-text">
-                    {meta?.currencySymbol ?? '₺'}{activeDay.totalEstimatedCost.toLocaleString('tr-TR')}
+                    {meta?.currencySymbol ?? '₺'}{activeDay.totalEstimatedCost.toLocaleString(localeCode)}
                   </p>
                 </div>
               </div>
@@ -508,7 +515,7 @@ const CommunityPlanView: React.FC = () => {
           <div className="absolute top-3 right-3 bg-surface border border-divider rounded-xl shadow-sm px-3.5 py-2 flex items-center gap-2 z-[5]">
             <div className="w-1.5 h-1.5 bg-sage rounded-full" />
             <span className="text-xs font-heading text-text">
-              {activeDayActivities.length} mekan
+              {t('communityPlanView.placesCount', { count: activeDayActivities.length })}
             </span>
           </div>
         </div>

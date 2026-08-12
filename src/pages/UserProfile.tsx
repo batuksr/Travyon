@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
@@ -21,14 +22,9 @@ interface ProfileData {
   createdAt?: string;
 }
 
-const PURPOSE_LABELS: Record<string, string> = {
-  culture:   'Kültür',
-  relax:     'Dinlenme',
-  nightlife: 'Gece Hayatı',
-  nature:    'Macera',
-};
-
 const UserProfile: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const localeCode = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const { uid } = useParams<{ uid: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -48,14 +44,14 @@ const UserProfile: React.FC = () => {
     setLoading(true);
 
     // Başlangıç: minimal profil — hiçbir şey bulunamazsa bile gösterilir
-    let profileData: ProfileData = { uid, displayName: 'Gezgin', photoURL: null };
+    let profileData: ProfileData = { uid, displayName: t('userProfile.defaultName'), photoURL: null };
 
     try {
       // 1) Kendi profilimizse store + auth'tan al
       if (isOwnProfile) {
         profileData = {
           uid,
-          displayName: user?.displayName || 'Gezgin',
+          displayName: user?.displayName || t('userProfile.defaultName'),
           photoURL:    storePhotoURL || user?.photoURL || null,
           email:       user?.email ?? undefined,
         };
@@ -67,7 +63,7 @@ const UserProfile: React.FC = () => {
             const d = userSnap.data();
             profileData = {
               uid,
-              displayName: (d.displayName as string) || 'Gezgin',
+              displayName: (d.displayName as string) || t('userProfile.defaultName'),
               photoURL:    (d.photoURL    as string | null) ?? null,
               email:       (d.email       as string | undefined),
               createdAt:   (d.createdAt   as string | undefined),
@@ -83,9 +79,9 @@ const UserProfile: React.FC = () => {
 
       // 4) publicPlans'tan profil bilgisini zenginleştir (isim/foto eksikse)
       if (!isOwnProfile && userPlans.length > 0) {
-        if (profileData.displayName === 'Gezgin' || !profileData.photoURL) {
+        if (profileData.displayName === t('userProfile.defaultName') || !profileData.photoURL) {
           const planData = userPlans[0];
-          if (profileData.displayName === 'Gezgin') profileData.displayName = planData.userDisplayName;
+          if (profileData.displayName === t('userProfile.defaultName')) profileData.displayName = planData.userDisplayName;
           if (!profileData.photoURL)               profileData.photoURL    = planData.userPhotoURL;
         }
       }
@@ -136,8 +132,8 @@ const UserProfile: React.FC = () => {
   if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg gap-3">
-        <p className="text-muted">Kullanıcı bulunamadı.</p>
-        <button onClick={() => navigate(-1)} className="text-sm font-heading text-accent">← Geri dön</button>
+        <p className="text-muted">{t('userProfile.notFound')}</p>
+        <button onClick={() => navigate(-1)} className="text-sm font-heading text-accent">← {t('userProfile.backToPrevious')}</button>
       </div>
     );
   }
@@ -161,7 +157,7 @@ const UserProfile: React.FC = () => {
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-heading text-text truncate">{profile.displayName}</p>
-            <p className="text-[11px] text-muted">{plans.length} paylaşılan plan</p>
+            <p className="text-[11px] text-muted">{t('userProfile.sharedPlansCount', { count: plans.length })}</p>
           </div>
         </div>
       </div>
@@ -188,7 +184,7 @@ const UserProfile: React.FC = () => {
           {profile.createdAt && (
             <p className="text-xs text-muted mt-1 flex items-center gap-1">
               <Calendar size={11} strokeWidth={2.5} />
-              {new Date(profile.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })} tarihinde katıldı
+              {t('userProfile.joinedOn', { date: new Date(profile.createdAt).toLocaleDateString(localeCode, { month: 'long', year: 'numeric' }) })}
             </p>
           )}
 
@@ -197,19 +193,19 @@ const UserProfile: React.FC = () => {
             <div className="mt-4">
               {unfollowConfirm ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted">Takibi bırak?</span>
+                  <span className="text-xs text-muted">{t('userProfile.unfollowConfirm')}</span>
                   <button
                     onClick={handleToggleFollow}
                     disabled={followLoading}
                     className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50"
                   >
-                    {followLoading ? <Loader2 size={12} className="animate-spin" /> : 'Evet'}
+                    {followLoading ? <Loader2 size={12} className="animate-spin" /> : t('userProfile.yes')}
                   </button>
                   <button
                     onClick={() => setUnfollowConfirm(false)}
                     className="text-xs font-bold px-3 py-1.5 rounded-full bg-surface-2 text-muted hover:bg-divider transition-all"
                   >
-                    İptal
+                    {t('userProfile.cancel')}
                   </button>
                 </div>
               ) : isFollowing ? (
@@ -217,7 +213,7 @@ const UserProfile: React.FC = () => {
                   onClick={() => setUnfollowConfirm(true)}
                   className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-surface-2 text-text font-heading text-sm hover:bg-red-50 hover:text-red-500 transition-all"
                 >
-                  <Users size={14} strokeWidth={2.5} /> Takip Ediliyor
+                  <Users size={14} strokeWidth={2.5} /> {t('userProfile.following')}
                 </button>
               ) : (
                 <button
@@ -226,7 +222,7 @@ const UserProfile: React.FC = () => {
                   className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-accent text-white font-heading text-sm hover:brightness-105 transition-all disabled:opacity-50 shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
                 >
                   {followLoading ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} strokeWidth={2.5} />}
-                  Takip Et
+                  {t('userProfile.follow')}
                 </button>
               )}
             </div>
@@ -237,15 +233,15 @@ const UserProfile: React.FC = () => {
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
             <p className="font-heading text-2xl text-accent">{plans.length}</p>
-            <p className="text-xs text-muted mt-0.5 font-medium">Paylaşılan Plan</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">{t('userProfile.stats.sharedPlans')}</p>
           </div>
           <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
             <p className="font-heading text-2xl text-sage-700">{totalDays}</p>
-            <p className="text-xs text-muted mt-0.5 font-medium">Toplam Gün</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">{t('userProfile.stats.totalDays')}</p>
           </div>
           <div className="bg-surface border border-divider rounded-3xl p-4 text-center">
             <p className="font-heading text-2xl text-emerald-500">{destinations.length}</p>
-            <p className="text-xs text-muted mt-0.5 font-medium">Farklı Şehir</p>
+            <p className="text-xs text-muted mt-0.5 font-medium">{t('userProfile.stats.differentCities')}</p>
           </div>
         </div>
 
@@ -253,7 +249,7 @@ const UserProfile: React.FC = () => {
         {destinations.length > 0 && (
           <div className="mb-6">
             <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <MapPin size={12} strokeWidth={2.5} className="text-accent" /> Gezilen Yerler
+              <MapPin size={12} strokeWidth={2.5} className="text-accent" /> {t('userProfile.visitedPlaces')}
             </p>
             <div className="flex flex-wrap gap-2">
               {destinations.map(dest => (
@@ -268,18 +264,18 @@ const UserProfile: React.FC = () => {
         {/* ── Planlar ── */}
         <div>
           <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Globe size={12} strokeWidth={2.5} className="text-sage-700" /> Paylaşılan Planlar
+            <Globe size={12} strokeWidth={2.5} className="text-sage-700" /> {t('userProfile.sharedPlans')}
           </p>
 
           {plans.length === 0 ? (
             <div className="bg-surface border border-dashed border-divider rounded-3xl p-10 text-center">
               <p className="text-2xl mb-2">🗺️</p>
-              <p className="text-sm font-heading text-text">Henüz paylaşılan plan yok</p>
+              <p className="text-sm font-heading text-text">{t('userProfile.noSharedPlans')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {plans.map(plan => {
-                const purposeLabel = PURPOSE_LABELS[plan.tripPurpose] ?? plan.tripPurpose;
+                const purposeLabel = t(`userProfile.purposes.${plan.tripPurpose}`, { defaultValue: plan.tripPurpose });
                 const avgDisplay = plan.ratingCount > 0 ? plan.avgRating.toFixed(1) : null;
                 return (
                   <div
@@ -300,7 +296,7 @@ const UserProfile: React.FC = () => {
                           )}
                         </div>
                         <p className="text-xs text-muted">
-                          {plan.dailyPlanCount} gün · {plan.currencySymbol}{plan.budget.toLocaleString('tr-TR')}
+                          {t('userProfile.daysCount', { count: plan.dailyPlanCount })} · {plan.currencySymbol}{plan.budget.toLocaleString(localeCode)}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
@@ -310,7 +306,7 @@ const UserProfile: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <p className="text-[11px] text-accent font-semibold mt-2">Planı gör →</p>
+                    <p className="text-[11px] text-accent font-semibold mt-2">{t('userProfile.viewPlan')} →</p>
                   </div>
                 );
               })}

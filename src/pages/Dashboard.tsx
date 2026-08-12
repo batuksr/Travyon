@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { useSavedPlansStore, useUserPlans } from '../store/useSavedPlansStore';
@@ -33,6 +34,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { isEmailVerified, resendVerification } from '../utils/authUtils';
 
 const Dashboard: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
   const { user } = useAuthStore();
   const { addPlan, updatePlan } = useSavedPlansStore();
@@ -159,7 +162,7 @@ const Dashboard: React.FC = () => {
       ? {
           lat:  onboardingData.accommodationLat,
           lng:  onboardingData.accommodationLng,
-          name: onboardingData.accommodationAddress || 'Konaklama',
+          name: onboardingData.accommodationAddress || t('dashboard.map.accommodationFallback'),
         }
       : null;
 
@@ -181,7 +184,7 @@ const Dashboard: React.FC = () => {
     // E-posta doğrulama — link paylaşmak için zorunlu
     if (!(await isEmailVerified())) {
       resendVerification().catch(() => {});
-      alert('Link paylaşmak için önce e-postanı doğrulamalısın. Doğrulama maili (tekrar) gönderildi — gelen kutunu ve Spam klasörünü kontrol et.');
+      alert(t('dashboard.topBar.verifyEmailAlert'));
       return;
     }
     try {
@@ -236,10 +239,10 @@ const Dashboard: React.FC = () => {
                 <Bookmark size={26} strokeWidth={2.5} className="text-accent" />
               </div>
               <h3 className="font-heading text-base text-text">
-                Planı kaydetmek ister misiniz?
+                {t('dashboard.exitModal.title')}
               </h3>
               <p className="text-sm text-muted mt-1.5 leading-relaxed">
-                {plan?.destination} planınız kaydedilmedi. Çıkmadan önce kaydetmek ister misiniz?
+                {t('dashboard.exitModal.message', { destination: plan?.destination })}
               </p>
             </div>
 
@@ -251,21 +254,21 @@ const Dashboard: React.FC = () => {
                 className="w-full py-3 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all flex items-center justify-center gap-2 shadow-[0_10px_22px_rgba(198,113,57,0.28)]"
               >
                 <BookmarkCheck size={15} strokeWidth={2.5} />
-                Kaydet ve Çık
+                {t('dashboard.exitModal.saveAndExit')}
               </button>
               <button
                 type="button"
                 onClick={handleExitWithoutSave}
                 className="w-full py-2.5 bg-surface-2 hover:brightness-95 text-text font-semibold rounded-full text-sm transition-all"
               >
-                Kaydetmeden Çık
+                {t('dashboard.exitModal.exitWithoutSaving')}
               </button>
               <button
                 type="button"
                 onClick={() => setShowExitModal(false)}
                 className="w-full py-2 text-muted hover:text-text font-medium text-xs transition-colors"
               >
-                Plana Geri Dön
+                {t('dashboard.exitModal.backToPlan')}
               </button>
             </div>
           </div>
@@ -281,7 +284,7 @@ const Dashboard: React.FC = () => {
           />
           <div className="w-full sm:w-80 bg-surface border-l border-divider flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-divider shrink-0">
-              <h2 className="font-heading text-sm text-text">Şehir Rehberi</h2>
+              <h2 className="font-heading text-sm text-text">{t('dashboard.cityGuide.drawerTitle')}</h2>
               <button
                 type="button"
                 onClick={() => setGuideOpen(false)}
@@ -295,7 +298,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Bus size={13} strokeWidth={2.5} className="text-blue-500" />
                   <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
-                    Ulaşım
+                    {t('dashboard.cityGuide.transportation')}
                   </h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">
@@ -306,7 +309,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={13} strokeWidth={2.5} className="text-accent" />
                   <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
-                    Yerel Kültür
+                    {t('dashboard.cityGuide.localCulture')}
                   </h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">
@@ -317,7 +320,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Lightbulb size={13} strokeWidth={2.5} className="text-sage" />
                   <h3 className="text-[10px] font-heading uppercase tracking-wider text-text">
-                    Faydalı Bilgiler
+                    {t('dashboard.cityGuide.usefulInfo')}
                   </h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed">
@@ -342,7 +345,7 @@ const Dashboard: React.FC = () => {
       {showMobileMap && (
         <div className="lg:hidden fixed inset-0 z-50 bg-surface flex flex-col">
           <div className="h-12 flex items-center justify-between px-4 border-b border-divider shrink-0">
-            <span className="font-heading text-sm text-text">Rota Haritası</span>
+            <span className="font-heading text-sm text-text">{t('dashboard.mobileMap.title')}</span>
             <button
               type="button"
               onClick={() => setShowMobileMap(false)}
@@ -375,7 +378,7 @@ const Dashboard: React.FC = () => {
             {plan.destination}
           </h1>
           <span className="text-xs text-muted font-medium shrink-0 hidden sm:inline">
-            • {plan.dailyPlans.length} gün
+            • {t('dashboard.topBar.daysCount', { count: plan.dailyPlans.length })}
           </span>
         </div>
 
@@ -385,14 +388,14 @@ const Dashboard: React.FC = () => {
             type="button"
             className="px-3.5 py-1.5 text-xs font-heading bg-surface rounded-full shadow-sm text-text"
           >
-            Plan
+            {t('dashboard.topBar.tabPlan')}
           </button>
           <button
             type="button"
             onClick={() => { setWeatherOpen(false); setGuideOpen(true); }}
             className="px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
           >
-            Rehber
+            {t('dashboard.topBar.tabGuide')}
           </button>
           <button
             type="button"
@@ -400,7 +403,7 @@ const Dashboard: React.FC = () => {
             className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-heading text-muted hover:text-text transition-colors rounded-full"
           >
             <Cloud size={11} strokeWidth={2.5} />
-            Hava
+            {t('dashboard.topBar.tabWeather')}
           </button>
         </div>
 
@@ -409,9 +412,9 @@ const Dashboard: React.FC = () => {
 
           {/* Toplam maliyet — sadece md+ */}
           <div className="hidden md:flex items-center gap-1.5 text-xs">
-            <span className="text-muted">Toplam:</span>
+            <span className="text-muted">{t('dashboard.topBar.total')}</span>
             <span className="font-heading text-text">
-              {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString()}
+              {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString(locale)}
             </span>
           </div>
 
@@ -420,7 +423,7 @@ const Dashboard: React.FC = () => {
             type="button"
             onClick={() => { setWeatherOpen(false); setGuideOpen(g => !g); }}
             className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
-            title="Şehir Rehberi"
+            title={t('dashboard.cityGuide.drawerTitle')}
           >
             <Map size={14} strokeWidth={2.5} />
           </button>
@@ -428,7 +431,7 @@ const Dashboard: React.FC = () => {
             type="button"
             onClick={() => { setGuideOpen(false); setWeatherOpen(w => !w); }}
             className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
-            title="Hava Durumu"
+            title={t('dashboard.weather.title')}
           >
             <Cloud size={14} strokeWidth={2.5} />
           </button>
@@ -445,7 +448,7 @@ const Dashboard: React.FC = () => {
             }`}
           >
             {justSaved ? <BookmarkCheck size={12} strokeWidth={2.5} /> : <Bookmark size={12} strokeWidth={2.5} />}
-            <span className="hidden sm:inline">{justSaved ? 'Kaydedildi' : 'Planı Kaydet'}</span>
+            <span className="hidden sm:inline">{justSaved ? t('dashboard.topBar.saved') : t('dashboard.topBar.save')}</span>
           </button>
 
           {/* Link Paylaş — sadece kayıtlı planlarda */}
@@ -459,10 +462,10 @@ const Dashboard: React.FC = () => {
                   ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
                   : 'bg-surface border-[1.5px] border-divider text-text hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
               }`}
-              title="Plan linkini kopyala"
+              title={t('dashboard.topBar.copyLinkTitle')}
             >
               {linkCopied ? <Check size={12} strokeWidth={2.5} /> : <Link2 size={12} strokeWidth={2.5} />}
-              <span className="hidden sm:inline">{linkCopied ? 'Kopyalandı!' : 'Link'}</span>
+              <span className="hidden sm:inline">{linkCopied ? t('dashboard.topBar.linkCopied') : t('dashboard.topBar.link')}</span>
             </button>
           )}
 
@@ -471,7 +474,7 @@ const Dashboard: React.FC = () => {
             type="button"
             onClick={() => exportPlanAsPDF(plan, onboardingData)}
             className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs bg-surface border-[1.5px] border-divider text-text hover:bg-surface-2 transition-all"
-            title="Planı PDF olarak indir"
+            title={t('dashboard.topBar.downloadPdfTitle')}
           >
             <Download size={12} strokeWidth={2.5} />
             <span className="hidden sm:inline">PDF</span>
@@ -482,7 +485,7 @@ const Dashboard: React.FC = () => {
             type="button"
             onClick={(e) => toggleWithCircle(toggleTheme, e)}
             className="w-8 h-8 rounded-full border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors shrink-0"
-            title={dark ? 'Gece Modu' : 'Aydınlık Mod'}
+            title={dark ? t('dashboard.topBar.nightMode') : t('dashboard.topBar.lightMode')}
           >
             <span key={dark ? 'moon' : 'sun'} className="theme-icon-in">
               {dark ? <Moon size={14} /> : <Sun size={14} />}
@@ -504,7 +507,7 @@ const Dashboard: React.FC = () => {
           <div className="shrink-0 border-b border-divider px-5 py-2.5 bg-bg">
             <div
               role="tablist"
-              aria-label="Günlük plan sekmeleri"
+              aria-label={t('dashboard.dayTabs.ariaLabel')}
               className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
               {plan.dailyPlans.map((day, index) => (
@@ -527,7 +530,7 @@ const Dashboard: React.FC = () => {
                   }`}>
                     {day.dayNumber}
                   </span>
-                  {day.date?.slice(5) ?? `Gün ${day.dayNumber}`}
+                  {day.date?.slice(5) ?? t('dashboard.dayTabs.dayFallback', { number: day.dayNumber })}
                   <span className={`text-[10px] font-normal ${
                     activeDayIndex === index ? 'text-white/80' : 'text-muted'
                   }`}>
@@ -545,18 +548,18 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <Wallet size={11} strokeWidth={2.5} className="text-muted" />
                   <span className="text-[10px] font-heading text-muted uppercase tracking-wider">
-                    Bütçe Takibi
+                    {t('dashboard.budget.label')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-semibold">
                   <span className="text-text">
-                    {plan.currencySymbol}{budgetStats.actualSpent.toLocaleString('tr-TR')} harcandı
+                    {t('dashboard.budget.spent', { amount: `${plan.currencySymbol}${budgetStats.actualSpent.toLocaleString(locale)}` })}
                   </span>
                   <span className="text-muted">·</span>
                   <span className={budgetStats.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}>
                     {budgetStats.remaining < 0
-                      ? `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString('tr-TR')} aşıldı ⚠️`
-                      : `${plan.currencySymbol}${budgetStats.remaining.toLocaleString('tr-TR')} kaldı`}
+                      ? t('dashboard.budget.exceeded', { amount: `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString(locale)}` })
+                      : t('dashboard.budget.remaining', { amount: `${plan.currencySymbol}${budgetStats.remaining.toLocaleString(locale)}` })}
                   </span>
                 </div>
               </div>
@@ -575,10 +578,10 @@ const Dashboard: React.FC = () => {
 
               <div className="flex items-center justify-between mt-1">
                 <span className="text-[9px] text-muted">
-                  {budgetStats.enteredCount} aktivite girildi · %{budgetStats.pct.toFixed(0)}
+                  {t('dashboard.budget.activitiesEntered', { count: budgetStats.enteredCount, pct: budgetStats.pct.toFixed(0) })}
                 </span>
                 <span className="text-[9px] text-muted">
-                  Toplam bütçe: {plan.currencySymbol}{budgetStats.totalBudget.toLocaleString('tr-TR')}
+                  {t('dashboard.budget.totalBudget', { amount: `${plan.currencySymbol}${budgetStats.totalBudget.toLocaleString(locale)}` })}
                 </span>
               </div>
             </div>
@@ -598,27 +601,27 @@ const Dashboard: React.FC = () => {
                   {dayBudgetStats.enteredCount > 0 ? (
                     <>
                       <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] text-muted">Tahmini</span>
+                        <span className="text-[9px] text-muted">{t('dashboard.daySummary.estimated')}</span>
                         <span className="text-xs font-semibold text-muted line-through">
-                          {plan.currencySymbol}{dayBudgetStats.estimated.toLocaleString('tr-TR')}
+                          {plan.currencySymbol}{dayBudgetStats.estimated.toLocaleString(locale)}
                         </span>
                       </div>
                       <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-[9px] text-muted">Harcanan</span>
+                        <span className="text-[9px] text-muted">{t('dashboard.daySummary.spent')}</span>
                         <span className={`text-sm font-bold ${
                           dayBudgetStats.actualSpent > dayBudgetStats.estimated
                             ? 'text-red-500'
                             : 'text-emerald-600'
                         }`}>
-                          {plan.currencySymbol}{dayBudgetStats.actualSpent.toLocaleString('tr-TR')}
+                          {plan.currencySymbol}{dayBudgetStats.actualSpent.toLocaleString(locale)}
                         </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      <p className="text-[10px] text-muted">Tahmini</p>
+                      <p className="text-[10px] text-muted">{t('dashboard.daySummary.estimated')}</p>
                       <p className="font-heading text-sm text-text">
-                        {plan.currencySymbol}{activeDay.totalEstimatedCost.toLocaleString()}
+                        {plan.currencySymbol}{activeDay.totalEstimatedCost.toLocaleString(locale)}
                       </p>
                     </>
                   )}
@@ -630,7 +633,7 @@ const Dashboard: React.FC = () => {
           {/* Aktivite listesi — scroll edilebilir */}
           <div
             role="tabpanel"
-            aria-label={activeDay ? `${activeDay.dayNumber}. gün planı` : 'Plan'}
+            aria-label={activeDay ? t('dashboard.daySummary.panelAriaLabel', { number: activeDay.dayNumber }) : t('dashboard.topBar.tabPlan')}
             className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} /> : null}
@@ -646,7 +649,7 @@ const Dashboard: React.FC = () => {
         {/* SAĞ PANEL — Harita */}
         <div
           role="region"
-          aria-label="Rota haritası"
+          aria-label={t('dashboard.map.regionAriaLabel')}
           className="hidden lg:flex flex-1 relative"
         >
           <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} hotel={hotelMarker} />
@@ -655,7 +658,7 @@ const Dashboard: React.FC = () => {
           <div className="absolute top-3 right-3 bg-surface border border-divider rounded-xl shadow-sm px-3.5 py-2 flex items-center gap-2 z-[5]">
             <div className="w-1.5 h-1.5 bg-sage rounded-full" />
             <span className="text-xs font-heading text-text">
-              {activeDayActivities.length} mekan optimize
+              {t('dashboard.map.placesOptimized', { count: activeDayActivities.length })}
             </span>
           </div>
         </div>
@@ -665,7 +668,7 @@ const Dashboard: React.FC = () => {
       <button
         type="button"
         onClick={() => setShowMobileMap(true)}
-        aria-label="Haritayı aç"
+        aria-label={t('dashboard.mobileMap.openAriaLabel')}
         className="lg:hidden fixed bottom-4 right-4 z-30 w-12 h-12 bg-accent text-white rounded-full shadow-[0_10px_22px_rgba(198,113,57,0.3)] flex items-center justify-center hover:brightness-105 transition-colors"
       >
         <Map size={18} strokeWidth={2.5} />

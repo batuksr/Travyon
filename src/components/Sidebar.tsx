@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -12,19 +13,12 @@ import { useSidebarStore } from '../store/useSidebarStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 
-const mainNavItems = [
-  { icon: Home,     label: 'Ana Sayfa',   path: '/hub' },
-  { icon: Sparkles, label: 'Plan Oluştur', path: '/onboarding' },
-  { icon: Bookmark, label: 'Planlarım',   path: '/saved-plans' },
-  { icon: Users,    label: 'Topluluk',     path: '/community' },
-  { icon: Bell,     label: 'Bildirimler',  path: '/notifications' },
-];
-
 const navBtn = 'w-full flex items-center gap-3.5 px-[15px] py-[11px] rounded-2xl font-heading text-sm text-left cursor-pointer transition-colors';
 const navIdle = 'text-muted hover:bg-[color-mix(in_srgb,var(--color-text)_6%,transparent)] hover:text-text';
 const navActive = 'bg-accent-100 text-accent-700';
 
 const Sidebar: React.FC = () => {
+  const { t } = useTranslation();
   const { expanded, setExpanded } = useSidebarStore();
   const transitioningRef = React.useRef(false);
   const isHoveredRef = React.useRef(false);
@@ -33,6 +27,14 @@ const Sidebar: React.FC = () => {
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
   const { photoURL: storePhotoURL, setSettings } = useAppSettingsStore();
+
+  const mainNavItems = [
+    { icon: Home,     label: t('nav.home'),       path: '/hub' },
+    { icon: Sparkles, label: t('nav.createPlan'), path: '/onboarding' },
+    { icon: Bookmark, label: t('nav.myPlans'),    path: '/saved-plans' },
+    { icon: Users,    label: t('nav.community'),  path: '/community' },
+    { icon: Bell,     label: t('nav.notifications'), path: '/notifications' },
+  ];
 
   const handleLogout = async () => {
     setSettings({ photoURL: null }); // localStorage'daki fotoğrafı temizle
@@ -88,7 +90,7 @@ const Sidebar: React.FC = () => {
         >
           <Settings size={20} strokeWidth={2.5} className="shrink-0" />
           <span className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
-            Ayarlar
+            {t('nav.settings')}
           </span>
         </button>
 
@@ -104,13 +106,13 @@ const Sidebar: React.FC = () => {
             }, 700);
           }}
           className={`${navBtn} ${navIdle}`}
-          aria-label="Tema değiştir"
+          aria-label={t('nav.themeToggleLabel')}
         >
           <span className="w-5 flex items-center justify-center shrink-0">
             {dark ? <Sun size={17} strokeWidth={2.5} /> : <Moon size={17} strokeWidth={2.5} />}
           </span>
           <span className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
-            Tema
+            {t('nav.theme')}
           </span>
         </button>
 
@@ -125,7 +127,7 @@ const Sidebar: React.FC = () => {
             </div>
             <div className={`text-left min-w-0 whitespace-nowrap overflow-hidden transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
               <p className="font-heading text-[13.5px] text-text truncate m-0">
-                {user.displayName || 'Kullanıcı'}
+                {user.displayName || t('nav.user')}
               </p>
             </div>
           </div>
@@ -139,7 +141,7 @@ const Sidebar: React.FC = () => {
         >
           <LogOut size={19} strokeWidth={2.5} className="shrink-0" />
           <span className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
-            Çıkış Yap
+            {t('nav.logout')}
           </span>
         </button>
       </div>

@@ -11,17 +11,29 @@ const genAI = new GoogleGenerativeAI(apiKey || "");
 const log  = import.meta.env.DEV ? (...a: unknown[]) => console.log(...a)  : () => {};
 const warn = import.meta.env.DEV ? (...a: unknown[]) => console.warn(...a) : () => {};
 
-const getFriendlyError = (msg: string): string => {
+/* Gemini'ye üretilecek planın dilini bildiren tip — 'tr' (varsayılan) veya 'en' */
+export type PlanLanguage = 'tr' | 'en';
+
+const getFriendlyError = (msg: string, lang: PlanLanguage = 'tr'): string => {
   const m = msg.toLowerCase();
-  if (m.includes('429'))
-    return 'İstek limiti aşıldı — 1 dakika bekleyip tekrar deneyin.';
-  if (m.includes('503') || m.includes('overloaded'))
-    return 'Yapay zeka sunucusu şu an meşgul — birkaç saniye sonra tekrar deneyin.';
-  if (m.includes('api') && m.includes('key'))
-    return 'Servis yapılandırma hatası — lütfen yöneticinizle iletişime geçin.';
-  if (m.includes('json parse') || m.includes('geçersiz plan'))
-    return 'Plan verisi işlenemedi — tekrar deneyin, farklı bir sonuç gelebilir.';
-  return 'Plan oluşturulamadı — lütfen tekrar deneyin.';
+  const messages = lang === 'en' ? {
+    rateLimit: 'Request limit exceeded — wait a minute and try again.',
+    busy: 'The AI server is busy right now — try again in a few seconds.',
+    configError: 'Service configuration error — please contact an administrator.',
+    parseError: "Couldn't process the plan data — try again, a different result may come through.",
+    generic: "Couldn't create the plan — please try again.",
+  } : {
+    rateLimit: 'İstek limiti aşıldı — 1 dakika bekleyip tekrar deneyin.',
+    busy: 'Yapay zeka sunucusu şu an meşgul — birkaç saniye sonra tekrar deneyin.',
+    configError: 'Servis yapılandırma hatası — lütfen yöneticinizle iletişime geçin.',
+    parseError: 'Plan verisi işlenemedi — tekrar deneyin, farklı bir sonuç gelebilir.',
+    generic: 'Plan oluşturulamadı — lütfen tekrar deneyin.',
+  };
+  if (m.includes('429')) return messages.rateLimit;
+  if (m.includes('503') || m.includes('overloaded')) return messages.busy;
+  if (m.includes('api') && m.includes('key')) return messages.configError;
+  if (m.includes('json parse') || m.includes('geçersiz plan')) return messages.parseError;
+  return messages.generic;
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
@@ -666,7 +678,7 @@ const calculateTripDays = (startDate: string, endDate: string): number => {
   return Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
 };
 
-const buildPrompt = (data: OnboardingData): string => {
+const buildPrompt = (data: OnboardingData, lang: PlanLanguage): string => {
   const tripDays = calculateTripDays(data.startDate, data.endDate);
   const dailyBudget = Math.round(data.budget / tripDays);
   const perPersonBudget = Math.round(data.budget / Math.max(data.peopleCount, 1));
@@ -785,13 +797,17 @@ Her günü tek tip yapma, KARMA günler oluştur. Örnek: sabah kültür, öğle
     car:    'Kullanıcı ARABA kullanacak (kiralık veya kendi aracı). KRİTİK BİLGİLER ver: 1) Şehir merkezinde park yeri durumu — kısıtlı bölgeleri uyar (örn Roma ZTL/Zona a Traffico Limitato bölgelerini SAKINDIRMA, ceza kesilir); 2) Her aktivite için yakın park önerisi ve tahmini ücret; 3) ŞEHİR DIŞI gezi fırsatlarını muhakkak öner (örn Roma → Tivoli, Castel Gandolfo; Paris → Versailles, Giverny); 4) Trafik yoğun saatleri belirt ve o saatlerde araç yerine toplu taşıma öner; 5) Konaklama için otopark varlığını sorgulat veya yakın otopark öner; 6) Araba sayesinde ulaşılabilen ama toplu taşımayla zor olan yerleri özellikle vurgula.',
   };
 
+  const languageDirective = lang === 'en'
+    ? `\n[LANGUAGE]\nWrite ALL free-text content fields in ENGLISH: "overallSummary", "daySummary", every "description", and all three "cityGuide" fields (transportationTips, localCustoms, generalAdvice). For "placeName", use the place's real local-language name, with an English translation in parentheses if it aids understanding (e.g. "Notre-Dame de Paris (Notre Dame Cathedral)"). Do NOT translate the "period" values — they must remain EXACTLY one of: "Sabah", "Öğle", "Öğleden Sonra", "Akşam", "Gece" (these are fixed internal tokens the app relies on, not user-facing text).\n`
+    : `\n[DİL]\nTüm serbest metin alanlarını TÜRKÇE yaz: "overallSummary", "daySummary", her "description" ve üç "cityGuide" alanı (transportationTips, localCustoms, generalAdvice). "placeName" için yerin gerçek yerel adını kullan, anlaşılmayı kolaylaştırıyorsa parantez içinde Türkçe karşılığını ekle. "period" değerlerini KESİNLİKLE şu beşten biri olarak bırak: "Sabah", "Öğle", "Öğleden Sonra", "Akşam", "Gece".\n`;
+
   return `
 [ROL TANIMI]
 Sen ${data.destination} şehrini bizzat yaşamış, yerel rehber seviyesinde tanıyan bir seyahat planlayıcısısın. Kullanıcının profiline göre TUTARLI bir plan üreteceksin — lüks ile sokak lezzetlerini, dinlenme ile maceraya, hızlı ile yavaşı birbirine karıştırmayacaksın.
 
 [ÇIKTI FORMATI]
 SADECE geçerli JSON. Markdown, açıklama, kod bloğu YOK.
-
+${languageDirective}
 ═══════════════════════════════════════════════
 KULLANICI PROFİLİ
 ═══════════════════════════════════════════════
@@ -970,8 +986,9 @@ export const suggestSingleActivity = async (
   currencyCode: string,
   currencySymbol: string,
   nearbyCoords?: { lat: number; lng: number },  // o günkü aktivitelerin merkezi
+  lang: PlanLanguage = 'tr',
 ): Promise<DailyActivity> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
+  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
 
   const avoidList = existingPlaces.length > 0
     ? `\nZaten planda olanlar — BUNLARI ÖNERME:\n${existingPlaces.map(p => `- ${p}`).join('\n')}`
@@ -983,6 +1000,13 @@ Günün aktivitelerinin merkezi: lat=${nearbyCoords.lat.toFixed(4)}, lng=${nearb
 Bu koordinata en fazla 3 km uzaklıkta bir yer öner. Şehrin uzak köşelerine gitme.`
     : '';
 
+  const placeNameHint = lang === 'en'
+    ? 'Real full place name (local language + English translation in parentheses if applicable)'
+    : 'Gerçek ve tam yer adı (yerel dilde + parantezde Türkçe varsa)';
+  const descriptionHint = lang === 'en'
+    ? '2-3 sentences, insider-tip style description written in ENGLISH. Give a specific detail.'
+    : '2-3 cümle, insider tip içeren Türkçe açıklama. Spesifik detay ver.';
+
   const prompt = `Sen ${destination} şehrini bizzat yaşamış yerel rehber seviyesinde bir seyahat uzmanısın.
 Kullanıcı "${period}" periyoduna şunu eklemek istiyor: "${userRequest}"
 ${avoidList}${proximityRule}
@@ -990,8 +1014,8 @@ ${avoidList}${proximityRule}
 Tek bir aktivite JSON nesnesi döndür — başka hiçbir şey yazma:
 {
   "period": "${period}",
-  "placeName": "Gerçek ve tam yer adı (yerel dilde + parantezde Türkçe varsa)",
-  "description": "2-3 cümle, insider tip içeren Türkçe açıklama. Spesifik detay ver.",
+  "placeName": "${placeNameHint}",
+  "description": "${descriptionHint}",
   "coordinates": { "lat": gerçek_enlem_sayı, "lng": gerçek_boylam_sayı },
   "estimatedCost": makul_sayısal_değer
 }
@@ -1015,7 +1039,7 @@ Kurallar:
     }
     return { ...activity, period, currencySymbol } as DailyActivity;
   } catch (err) {
-    throw new Error(getFriendlyError((err as Error).message));
+    throw new Error(getFriendlyError((err as Error).message, lang));
   }
 };
 
@@ -1023,11 +1047,12 @@ Kurallar:
 
 export const generateTravelPlan = async (
   data: OnboardingData,
-  onPlanUpdate: (plan: TravelPlanResponse) => void
+  onPlanUpdate: (plan: TravelPlanResponse) => void,
+  lang: PlanLanguage = 'tr',
 ): Promise<TravelPlanResponse> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
+  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
 
-  const prompt = buildPrompt(data);
+  const prompt = buildPrompt(data, lang);
 
   try {
     const textResult = await executeWithFallback(prompt);
@@ -1092,7 +1117,7 @@ export const generateTravelPlan = async (
     return resultPlan;
   } catch (error: unknown) {
     const errMsg = (error as Error).message || 'Bilinmeyen bir hata oluştu.';
-    throw new Error(getFriendlyError(errMsg));
+    throw new Error(getFriendlyError(errMsg, lang));
   }
 };
 
@@ -1105,9 +1130,10 @@ export const regenerateDayWithVibe = async (
   arrivalTime: string,
   departureDate: string,
   departureTime: string,
-  onDayUpdate: (day: DailyPlan) => void
+  onDayUpdate: (day: DailyPlan) => void,
+  lang: PlanLanguage = 'tr',
 ): Promise<DailyPlan> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key'));
+  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
 
   const vibeMap: Record<string, string> = {
     'rest':    '😴 Dinlenme Modu (Yorucu olmayan kafeler, parklar, spa, yavaş tempo)',
@@ -1129,6 +1155,10 @@ export const regenerateDayWithVibe = async (
     ? `\n⛔ ZATEN ZİYARET EDİLMİŞ MEKANLAR — KESİNLİKLE TEKRARLAMA:\n${visitedLines.join('\n')}\nBu mekanlar plandan çıkartıldı; eşdeğer veya daha az bilinen alternatiflerini öner.\n`
     : '';
 
+  const languageRule = lang === 'en'
+    ? 'KURAL 10: DİL — "daySummary" ve her aktivitenin "description" alanını İNGİLİZCE yaz. "placeName" gerçek yerel isim olsun, gerekirse parantezde İngilizce çevirisini ekle. "period" değerlerini AYNEN "Sabah"/"Öğle"/"Öğleden Sonra"/"Akşam"/"Gece" olarak bırak, çevirme.'
+    : 'KURAL 10: DİL — "daySummary" ve her aktivitenin "description" alanını TÜRKÇE yaz.';
+
   const prompt = `
 Sen uzman bir seyahat danışmanısın. Kullanıcı ${destination} şehrinde ${allDayPlans.length} günlük bir gezi yapıyor.
 ${allDayPlans.length > 1 ? `Toplam gezi planı ${allDayPlans.length} günden oluşuyor; bu istek Gün ${dayPlan.dayNumber}'ı yeniden oluşturmak için.` : ''}
@@ -1145,6 +1175,7 @@ ${getFlexiblePeriodSchedulingRule(arrivalDate, arrivalTime, departureDate, depar
 ${dayPlan.date !== departureDate ? '- Normal günlerde 3 öğün şarttır. Sandviççiler, fırınlar, sokak lezzetleri ekle.' : '- Bu dönüş günüdür; dönüş saatine göre kaç aktivite sığıyorsa o kadar ekle, 3 öğün zorunluluğu yok.'}
 KURAL 8: Koordinatlar (Lat/Lng) GERÇEĞİ yansıtmalı.
 KURAL 9: SADECE JSON ÇIKTISI VER. Mevcut JSON formatının BİREBİR aynısını (tek bir DailyPlan objesi) döndür.
+${languageRule}
 
 ÖRNEK AKTİVİTE ÇIKTISI:
 { "period": "Sabah", "placeName": "Eyfel Kulesi", "description": "Demir leydinin ihtişamı...", "coordinates": { "lat": 48.8584, "lng": 2.2945 }, "estimatedCost": 28 }
@@ -1180,6 +1211,6 @@ ${JSON.stringify(dayPlan, null, 2)}
     return resultDay;
   } catch (error: unknown) {
     const errMsg = (error as Error).message || 'Bilinmeyen bir hata oluştu.';
-    throw new Error(getFriendlyError(errMsg));
+    throw new Error(getFriendlyError(errMsg, lang));
   }
 };

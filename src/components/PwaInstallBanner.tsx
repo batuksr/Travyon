@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X, Share } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../store/useThemeStore';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISSED_KEY = 'travyon-pwa-dismissed';
 
 const PwaInstallBanner: React.FC = () => {
+  const { t } = useTranslation();
   const { dark } = useThemeStore();
   const [prompt, setPrompt]       = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow]           = useState(false);
@@ -89,16 +91,16 @@ const PwaInstallBanner: React.FC = () => {
           {/* İçerik */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-slate-800 dark:text-white">
-              Travyon'u Yükle
+              {t('pwaBanner.title')}
             </p>
             {isIOS ? (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                 <Share size={10} className="inline mb-0.5 mr-0.5" />
-                butonuna bas → <strong className="text-slate-700 dark:text-slate-200">"Ana Ekrana Ekle"</strong> seç
+                {t('pwaBanner.iosPrefix')} <strong className="text-slate-700 dark:text-slate-200">"{t('pwaBanner.addToHomeScreen')}"</strong> {t('pwaBanner.iosSuffix')}
               </p>
             ) : (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Offline çalışır · Uygulama gibi açılır · Hızlı erişim
+                {t('pwaBanner.subtitle')}
               </p>
             )}
           </div>
@@ -118,7 +120,7 @@ const PwaInstallBanner: React.FC = () => {
             onClick={handleInstall}
             className="mt-3 w-full py-2.5 bg-[#f8981d] hover:bg-[#e08518] text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-[#f8981d]/20"
           >
-            Uygulamayı Yükle
+            {t('pwaBanner.installButton')}
           </button>
         )}
       </div>

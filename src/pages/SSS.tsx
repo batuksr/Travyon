@@ -1,103 +1,40 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
 
-const FAQ_ITEMS = [
-  {
-    category: 'Genel',
-    items: [
-      {
-        q: 'Travyon nedir?',
-        a: 'Travyon, yapay zeka destekli kişiselleştirilmiş seyahat planlama platformudur. Bütçen, tarih aralığın ve seyahat tarzına göre dakikalar içinde gün gün optimize edilmiş plan oluşturur.',
-      },
-      {
-        q: 'Ücretsiz mi kullanabilir miyim?',
-        a: 'Evet! Free planla sınırsız süre ücretsiz kullanabilirsin. 3 plan hakkı, temel AI planlama ve interaktif harita erişimi dahildir.',
-      },
-      {
-        q: 'Hesap açmak zorunlu mu?',
-        a: 'Plan oluşturmak ve kaydetmek için hesap gereklidir. Kayıt işlemi yalnızca birkaç saniye sürer ve tamamen ücretsizdir.',
-      },
-    ],
-  },
-  {
-    category: 'Plan Oluşturma',
-    items: [
-      {
-        q: 'Plan oluşturmak ne kadar sürer?',
-        a: 'Ortalama 15–30 saniye. Yapay zeka tercihlerini analiz ederek coğrafi olarak optimize edilmiş, gün gün planını anında hazırlar.',
-      },
-      {
-        q: 'Hangi şehirler destekleniyor?',
-        a: 'Dünya genelinde 50+ popüler şehir destekleniyor ve liste sürekli büyüyor. İstanbul, Paris, Tokyo, Roma, Barcelona, New York gibi tüm popüler destinasyonları kapsıyoruz.',
-      },
-      {
-        q: 'Önerileri değiştirebilir miyim?',
-        a: 'Tabii! Planı oluşturduktan sonra her aktiviteyi, saati ve güzergahı dilediğin gibi düzenleyebilirsin. Plan tamamen senin kontrolünde.',
-      },
-      {
-        q: 'Birden fazla plan kaydedebilir miyim?',
-        a: 'Free planla 3, Pro planla sınırsız plan kaydedebilirsin. Kayıtlı planlarına her zaman "Kayıtlı Planlar" bölümünden erişebilirsin.',
-      },
-    ],
-  },
-  {
-    category: 'Güvenlik & Gizlilik',
-    items: [
-      {
-        q: 'Verilerim güvende mi?',
-        a: 'Tüm veriler Google Firebase altyapısıyla AES-256 şifreleme ile saklanır. Kişisel bilgilerin hiçbir koşulda üçüncü taraflarla paylaşılmaz.',
-      },
-      {
-        q: 'Hesabımı silebilir miyim?',
-        a: 'Evet, Ayarlar > Hesap bölümünden hesabını ve tüm verilerini kalıcı olarak silebilirsin.',
-      },
-    ],
-  },
-  {
-    category: 'Teknik',
-    items: [
-      {
-        q: 'Mobil uygulama var mı?',
-        a: 'Şu an web tabanlı çalışıyoruz. Mobil uygulama (iOS & Android) yakında geliyor — bildirim almak için kayıt olabilirsin.',
-      },
-      {
-        q: 'Hangi tarayıcılar destekleniyor?',
-        a: 'Chrome, Firefox, Safari ve Edge\'in güncel sürümlerinde sorunsuz çalışır. En iyi deneyim için Chrome önerilir.',
-      },
-      {
-        q: 'İnternet bağlantısı şart mı?',
-        a: 'Plan oluşturma ve harita görüntüleme için internet bağlantısı gereklidir. Kayıtlı planlarını çevrimdışı görüntülemek için yakında offline destek eklenecek.',
-      },
-    ],
-  },
-];
+type FaqSection = { category: string; items: { q: string; a: string }[] };
 
 const TABS = [
-  { to: '/sss', label: 'SSS' },
-  { to: '/gizlilik', label: 'Gizlilik' },
-  { to: '/kullanim-kosullari', label: 'Kullanım Koşulları' },
-  { to: '/iletisim', label: 'İletişim' },
-];
+  { to: '/sss', key: 'faq' },
+  { to: '/gizlilik', key: 'privacy' },
+  { to: '/kullanim-kosullari', key: 'terms' },
+  { to: '/iletisim', key: 'contact' },
+] as const;
 
-const PageTabs: React.FC<{ active: string }> = ({ active }) => (
-  <div className="flex gap-1.5 flex-wrap justify-center bg-surface-2 p-[5px] rounded-full w-fit mx-auto mt-6">
-    {TABS.map(t => (
-      <Link
-        key={t.to}
-        to={t.to}
-        className={`font-heading text-sm px-5 py-2.5 rounded-full whitespace-nowrap transition-colors ${
-          active === t.to ? 'bg-accent text-white' : 'text-muted hover:text-text'
-        }`}
-      >
-        {t.label}
-      </Link>
-    ))}
-  </div>
-);
+const PageTabs: React.FC<{ active: string }> = ({ active }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-1.5 flex-wrap justify-center bg-surface-2 p-[5px] rounded-full w-fit mx-auto mt-6">
+      {TABS.map(tab => (
+        <Link
+          key={tab.to}
+          to={tab.to}
+          className={`font-heading text-sm px-5 py-2.5 rounded-full whitespace-nowrap transition-colors ${
+            active === tab.to ? 'bg-accent text-white' : 'text-muted hover:text-text'
+          }`}
+        >
+          {t(`legal.tabs.${tab.key}`)}
+        </Link>
+      ))}
+    </div>
+  );
+};
 
 const SSS: React.FC = () => {
+  const { t } = useTranslation();
+  const FAQ_ITEMS = t('legal.faq.sections', { returnObjects: true }) as FaqSection[];
   const [openItem, setOpenItem] = useState<string | null>(null);
 
   const toggle = (key: string) => setOpenItem(prev => prev === key ? null : key);
@@ -116,17 +53,17 @@ const SSS: React.FC = () => {
             className="flex items-center gap-1.5 text-sm text-text bg-surface-2 border border-divider rounded-full px-4 py-2.5 hover:bg-surface transition-colors"
           >
             <ArrowLeft size={14} strokeWidth={2.5} />
-            Ana Sayfa
+            {t('legal.backHome')}
           </Link>
         </div>
       </header>
 
       {/* Hero */}
       <div className="text-center py-10 sm:py-12 px-4 sm:px-6">
-        <p className="text-xs font-heading text-accent-700 uppercase tracking-widest mb-2">Yardım & Yasal</p>
-        <h1 className="font-heading text-3xl sm:text-4xl text-text">Sıkça Sorulan Sorular</h1>
+        <p className="text-xs font-heading text-accent-700 uppercase tracking-widest mb-2">{t('legal.eyebrow')}</p>
+        <h1 className="font-heading text-3xl sm:text-4xl text-text">{t('legal.faq.title')}</h1>
         <p className="text-muted mt-3.5 text-sm max-w-lg mx-auto">
-          Aklına takılanların yanıtı burada. Bulamazsan bize yazabilirsin.
+          {t('legal.faq.subtitle')}
         </p>
         <PageTabs active="/sss" />
       </div>
@@ -170,7 +107,7 @@ const SSS: React.FC = () => {
       <footer className="border-t border-divider mt-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-[22px] flex flex-wrap items-center justify-between gap-3">
           <TravyonLogo size={28} />
-          <span className="text-xs text-muted">© 2026 Travyon. Tüm hakları saklıdır.</span>
+          <span className="text-xs text-muted">{t('footer.copyright')}</span>
         </div>
       </footer>
 

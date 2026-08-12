@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
@@ -20,12 +22,12 @@ import { AiAssistantWidget } from '../components/AiAssistantWidget';
 const LIBRARIES: ('places')[] = ['places'];
 
 /* ── Greeting ── */
-const getGreeting = (): { text: string; emoji: string } => {
+const getGreeting = (t: TFunction): { text: string; emoji: string } => {
   const h = new Date().getHours();
-  if (h >= 5  && h < 12) return { text: 'Günaydın',     emoji: '☀️' };
-  if (h >= 12 && h < 18) return { text: 'İyi Öğleler',  emoji: '🌤️' };
-  if (h >= 18 && h < 22) return { text: 'İyi Akşamlar', emoji: '🌆' };
-  return                         { text: 'İyi Geceler',  emoji: '🌙' };
+  if (h >= 5  && h < 12) return { text: t('hub.greeting.morning'),   emoji: '☀️' };
+  if (h >= 12 && h < 18) return { text: t('hub.greeting.afternoon'), emoji: '🌤️' };
+  if (h >= 18 && h < 22) return { text: t('hub.greeting.evening'),   emoji: '🌆' };
+  return                         { text: t('hub.greeting.night'),     emoji: '🌙' };
 };
 
 /* ── Weather helpers (open-meteo WMO codes) ── */
@@ -40,18 +42,18 @@ const weatherIcon = (code: number) => {
   if ([95, 96, 99].includes(code)) return '⛈️';
   return '🌡️';
 };
-const weatherLabel = (code: number) => {
-  if (code === 0) return 'Açık Hava';
-  if (code === 1) return 'Az Bulutlu';
-  if (code === 2) return 'Parçalı Bulutlu';
-  if (code === 3) return 'Kapalı';
-  if ([45, 48].includes(code)) return 'Sisli';
-  if ([51, 53, 55, 56, 57].includes(code)) return 'Çiseleyen';
-  if ([61, 63, 65, 66, 67].includes(code)) return 'Yağmurlu';
-  if ([80, 81, 82].includes(code)) return 'Sağanak';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Karlı';
-  if ([95, 96, 99].includes(code)) return 'Fırtınalı';
-  return 'Değişken';
+const weatherLabel = (code: number, t: TFunction) => {
+  if (code === 0) return t('hub.weather.conditions.clear');
+  if (code === 1) return t('hub.weather.conditions.mostlyClear');
+  if (code === 2) return t('hub.weather.conditions.partlyCloudy');
+  if (code === 3) return t('hub.weather.conditions.overcast');
+  if ([45, 48].includes(code)) return t('hub.weather.conditions.fog');
+  if ([51, 53, 55, 56, 57].includes(code)) return t('hub.weather.conditions.drizzle');
+  if ([61, 63, 65, 66, 67].includes(code)) return t('hub.weather.conditions.rain');
+  if ([80, 81, 82].includes(code)) return t('hub.weather.conditions.showers');
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return t('hub.weather.conditions.snow');
+  if ([95, 96, 99].includes(code)) return t('hub.weather.conditions.storm');
+  return t('hub.weather.conditions.variable');
 };
 
 /* ── Country flag ── */
@@ -152,16 +154,18 @@ interface ActivityItem {
 
 /* ── Vibe options ── */
 const VIBE_OPTIONS = [
-  { val: 'culture',   emoji: '🏛️', label: 'Kültür'     },
-  { val: 'relax',     emoji: '😴', label: 'Dinlenme'   },
-  { val: 'nightlife', emoji: '🌙', label: 'Gece Hayatı' },
-  { val: 'nature',    emoji: '🏔️', label: 'Macera'     },
+  { val: 'culture',   emoji: '🏛️', labelKey: 'culture'   },
+  { val: 'relax',     emoji: '😴', labelKey: 'relax'     },
+  { val: 'nightlife', emoji: '🌙', labelKey: 'nightlife' },
+  { val: 'nature',    emoji: '🏔️', labelKey: 'nature'    },
 ] as const;
 
 /* ══════════════════════════════════════════════
    HUB
 ═══════════════════════════════════════════════ */
 const Hub: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const localeCode = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const navigate   = useNavigate();
   const { user }   = useAuthStore();
   const plans      = useUserPlans();
@@ -183,7 +187,7 @@ const Hub: React.FC = () => {
 
   /* Birim yardımcıları */
   const displayTemp  = (c: number) => tempCelsius ? `${c}°C` : `${Math.round(c * 9 / 5 + 32)}°F`;
-  const displayWind  = (kmh: number) => distKm ? `${kmh} km/s` : `${Math.round(kmh * 0.621371)} mph`;
+  const displayWind  = (kmh: number) => distKm ? `${kmh} ${t('hub.units.kmh')}` : `${Math.round(kmh * 0.621371)} mph`;
 
   /* ── Social state (paylaş butonu için) ── */
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());
@@ -207,7 +211,7 @@ const Hub: React.FC = () => {
     if (!user) return;
     // Gizlilik kontrolü — sadece geri almaya izin ver
     if (!plansPublic && !sharedPlanIds.has(planId)) {
-      setShareError('Plan paylaşımı gizlilik ayarlarınızda kapalı.');
+      setShareError(t('hub.shareErrors.privacyDisabled'));
       setTimeout(() => setShareError(null), 4000);
       return;
     }
@@ -228,7 +232,7 @@ const Hub: React.FC = () => {
         setSharedPlanIds(prev => new Set([...prev, planId]));
       }
     } catch {
-      setShareError('Paylaşım başarısız');
+      setShareError(t('hub.shareErrors.failed'));
       setTimeout(() => setShareError(null), 3000);
     } finally {
       setSavingShare(null);
@@ -258,9 +262,10 @@ const Hub: React.FC = () => {
     return {
       startDate: sat.toISOString().split('T')[0],
       endDate:   sun.toISOString().split('T')[0],
-      label: `${sat.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`,
+      label: `${sat.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })}`,
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localeCode]);
 
   /* ── Avg budget from past plans ── */
   const avgBudget = useMemo(() => {
@@ -270,6 +275,8 @@ const Hub: React.FC = () => {
     const avg = Math.round(src.reduce((s, p) => s + p.onboardingData.budget, 0) / src.length / 1000) * 1000;
     return { amount: avg, symbol: src[0].onboardingData.currencySymbol ?? '₺', code: src[0].onboardingData.currencyCode ?? 'TRY' };
   }, [plans]);
+
+  const fmtNumber = useCallback((n: number) => n.toLocaleString(localeCode), [localeCode]);
 
   /* ── Quick Action handlers ── */
   const handleWeekend = () => {
@@ -338,26 +345,26 @@ const Hub: React.FC = () => {
       const daysUntil = Math.ceil((startTs - now) / 86_400_000);
       const daysSinceEnd = Math.floor((now - endTs) / 86_400_000);
       const nights    = p.plan.dailyPlans.length;
-      const budget    = `${p.onboardingData.currencySymbol ?? '₺'}${p.onboardingData.budget.toLocaleString('tr-TR')}`;
+      const budget    = `${p.onboardingData.currencySymbol ?? '₺'}${fmtNumber(p.onboardingData.budget)}`;
 
       /* Currently traveling */
       if (p.onboardingData.startDate <= todayStr && p.onboardingData.endDate >= todayStr) {
         return {
           id: p.id + '-active', type: 'active', planId: p.id, destination: dest,
-          text: `Şu an ${dest}'dasın!`,
-          sub: `${p.onboardingData.endDate} tarihine kadar — iyi seyahatler ✈️`,
-          timeLabel: 'devam ediyor',
+          text: t('hub.activity.active.text', { dest }),
+          sub: t('hub.activity.active.sub', { endDate: p.onboardingData.endDate }),
+          timeLabel: t('hub.activity.active.timeLabel'),
           sortKey: now + 9e15,
         };
       }
 
       /* Upcoming trip */
       if (p.onboardingData.startDate > todayStr) {
-        const countdown = daysUntil <= 0 ? 'Bugün!' : daysUntil === 1 ? 'Yarın!' : `${daysUntil} gün kaldı`;
+        const countdown = daysUntil <= 0 ? t('hub.activity.upcoming.today') : daysUntil === 1 ? t('hub.activity.upcoming.tomorrow') : t('hub.activity.upcoming.daysLeft', { count: daysUntil });
         return {
           id: p.id + '-upcoming', type: 'upcoming', planId: p.id, destination: dest,
-          text: `${dest} seyahatin yaklaşıyor`,
-          sub: `${nights} gece · ${budget} · ${p.onboardingData.startDate}`,
+          text: t('hub.activity.upcoming.text', { dest }),
+          sub: t('hub.activity.upcoming.sub', { nights, budget, startDate: p.onboardingData.startDate }),
           timeLabel: countdown,
           sortKey: now - daysUntil * 86_400_000 + 8e15,
         };
@@ -367,8 +374,8 @@ const Hub: React.FC = () => {
       if (daysSinceEnd >= 0 && daysSinceEnd <= 90) {
         return {
           id: p.id + '-done', type: 'completed', planId: p.id, destination: dest,
-          text: `${dest} seyahatini tamamladın`,
-          sub: `${nights} gün · ${budget} harcama planı`,
+          text: t('hub.activity.completed.text', { dest }),
+          sub: t('hub.activity.completed.sub', { nights, budget }),
           timeLabel: relativeTime(endTs),
           sortKey: endTs,
         };
@@ -377,18 +384,19 @@ const Hub: React.FC = () => {
       /* Default: plan created */
       return {
         id: p.id + '-created', type: 'created', planId: p.id, destination: dest,
-        text: `${dest} planı oluşturdun`,
-        sub: `${nights} gün · ${budget}`,
+        text: t('hub.activity.created.text', { dest }),
+        sub: t('hub.activity.created.sub', { nights, budget }),
         timeLabel: relativeTime(p.createdAt),
         sortKey: p.createdAt,
       };
     })
     .sort((a, b) => b.sortKey - a.sortKey)
     .slice(0, 5);
-  }, [plans]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans, fmtNumber, t]);
 
-  const firstName = user?.displayName?.split(' ')[0] ?? 'Gezgin';
-  const greeting  = getGreeting();
+  const firstName = user?.displayName?.split(' ')[0] ?? t('hub.greeting.defaultName');
+  const greeting  = getGreeting(t);
   const todayStr  = new Date().toISOString().split('T')[0];
 
   const onMapLoad = useCallback((m: google.maps.Map) => {
@@ -552,7 +560,7 @@ const Hub: React.FC = () => {
           try {
             // 1) Şehri koordinata çevir (open-meteo geocoding — ücretsiz, güvenilir)
             const geoRes = await withTimeout(
-              fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=tr&format=json`),
+              fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=${i18n.language}&format=json`),
               8000,
             );
             if (!geoRes.ok) continue;
@@ -627,7 +635,7 @@ const Hub: React.FC = () => {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-muted text-sm mb-1">
-                {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                {new Date().toLocaleDateString(localeCode, { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
               <div className="flex items-center gap-2.5">
                 <span className="text-3xl leading-none">{greeting.emoji}</span>
@@ -650,7 +658,7 @@ const Hub: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Plane size={14} className="text-white/75" />
                   <span className="text-white/75 text-[11px] font-heading uppercase tracking-widest">
-                    {isFuture ? 'Bir Sonraki Seyahat' : 'Son Seyahat'}
+                    {isFuture ? t('hub.nextTrip.next') : t('hub.nextTrip.last')}
                   </span>
                 </div>
                 <div>
@@ -666,9 +674,9 @@ const Hub: React.FC = () => {
                     <div className="flex items-end gap-3">
                       <span className="font-heading text-5xl leading-none">{daysUntil}</span>
                       <div className="pb-1 space-y-0.5">
-                        <span className="text-white/90 font-semibold text-sm block">gün kaldı ✈️</span>
+                        <span className="text-white/90 font-semibold text-sm block">{t('hub.nextTrip.daysLeft')}</span>
                         {tripDuration > 0 && (
-                          <span className="text-white/60 text-xs">{tripDuration} günlük seyahat</span>
+                          <span className="text-white/60 text-xs">{t('hub.nextTrip.durationDays', { count: tripDuration })}</span>
                         )}
                       </div>
                     </div>
@@ -686,13 +694,13 @@ const Hub: React.FC = () => {
                       onClick={() => navigate('/travel-checklist')}
                       className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl px-4 py-2.5 flex items-center justify-between text-sm font-semibold transition-all duration-200"
                     >
-                      <span>📋 Seyahat Listesi</span>
+                      <span>{t('hub.nextTrip.checklist')}</span>
                       <ChevronRight size={15} />
                     </button>
                   </div>
                 ) : (
                   <div className="mt-auto bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2.5 inline-flex items-center gap-2 self-start">
-                    <span className="text-sm font-semibold">Son kayıtlı plan</span>
+                    <span className="text-sm font-semibold">{t('hub.nextTrip.lastSaved')}</span>
                   </div>
                 )}
               </div>
@@ -703,8 +711,8 @@ const Hub: React.FC = () => {
                 <Plane size={24} className="text-accent" />
               </div>
               <div>
-                <p className="font-heading text-text">Henüz plan yok</p>
-                <p className="text-muted text-sm mt-0.5">Yeni plan oluşturmaya başla</p>
+                <p className="font-heading text-text">{t('hub.nextTrip.noPlanTitle')}</p>
+                <p className="text-muted text-sm mt-0.5">{t('hub.nextTrip.noPlanSubtitle')}</p>
               </div>
             </div>
           )}
@@ -713,7 +721,7 @@ const Hub: React.FC = () => {
             <div className="relative overflow-hidden bg-surface border border-divider rounded-3xl p-6">
               <div className="absolute -right-8 -top-8 w-28 h-28 bg-surface-2 rounded-full pointer-events-none" />
               <div className="relative z-10 flex flex-col h-full">
-                <span className="text-muted text-[11px] font-heading uppercase tracking-widest mb-1">Hava Durumu</span>
+                <span className="text-muted text-[11px] font-heading uppercase tracking-widest mb-1">{t('hub.weather.title')}</span>
                 <div className="flex items-center gap-1.5 mb-4">
                   <MapPin size={12} className="text-accent" />
                   <span className="text-text text-sm font-heading">{cityName}</span>
@@ -731,16 +739,16 @@ const Hub: React.FC = () => {
                     <span className="text-7xl leading-none select-none">{weatherIcon(weather.code)}</span>
                     <div>
                       <p className="font-heading text-5xl text-text leading-none">{displayTemp(weather.temp)}</p>
-                      <p className="text-muted text-sm font-medium mt-1">{weatherLabel(weather.code)}</p>
+                      <p className="text-muted text-sm font-medium mt-1">{weatherLabel(weather.code, t)}</p>
                       <div className="flex items-center gap-1 mt-1.5">
                         <Wind size={11} className="text-muted" />
-                        <span className="text-muted text-xs">{displayWind(weather.windspeed)} rüzgar</span>
+                        <span className="text-muted text-xs">{displayWind(weather.windspeed)} {t('hub.weather.wind')}</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="mt-auto flex flex-col gap-2">
-                    <p className="text-muted text-sm">Hava durumu yüklenemedi</p>
+                    <p className="text-muted text-sm">{t('hub.weather.loadFailed')}</p>
                     <button
                       onClick={() => {
                         if (!cityName) return;
@@ -776,7 +784,7 @@ const Hub: React.FC = () => {
                       }}
                       className="text-xs font-heading text-accent hover:text-accent-700 transition-colors self-start"
                     >
-                      Tekrar dene →
+                      {t('hub.weather.retry')}
                     </button>
                   </div>
                 )}
@@ -788,7 +796,7 @@ const Hub: React.FC = () => {
         {/* ── Hızlı Eylemler ── */}
         <div className="mb-8">
           <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Zap size={12} /> Hızlı Eylemler
+            <Zap size={12} /> {t('hub.quickActions.title')}
           </p>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -801,10 +809,10 @@ const Hub: React.FC = () => {
               <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center mb-3">
                 <CalendarDays size={15} className="text-accent" />
               </div>
-              <p className="text-sm font-heading text-text mb-0.5">Bu hafta sonu</p>
+              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.weekend.title')}</p>
               <p className="text-xs text-muted mb-3">{nextWeekend.label}</p>
               <span className="text-xs font-heading text-accent flex items-center gap-0.5">
-                Plan oluştur <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                {t('hub.quickActions.weekend.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </span>
             </button>
 
@@ -816,13 +824,13 @@ const Hub: React.FC = () => {
               <div className="w-8 h-8 bg-surface-2 rounded-lg flex items-center justify-center mb-3">
                 <Shuffle size={15} className="text-muted" />
               </div>
-              <p className="text-sm font-heading text-text mb-0.5">Rastgele şehir</p>
+              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.random.title')}</p>
 
               {randState === 'idle' && (
                 <>
-                  <p className="text-xs text-muted mb-3">Sürpriz destinasyon</p>
+                  <p className="text-xs text-muted mb-3">{t('hub.quickActions.random.subtitle')}</p>
                   <span className="text-xs font-heading text-muted flex items-center gap-0.5 group-hover:text-text transition-colors">
-                    Deneyelim <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                    {t('hub.quickActions.random.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </>
               )}
@@ -835,7 +843,7 @@ const Hub: React.FC = () => {
                   <p className="text-xs text-muted mb-2">{randCity.country}</p>
                   <div className="flex gap-1.5">
                     <button onClick={handleGoRandom} className="text-xs font-heading bg-accent text-white px-2.5 py-1 rounded-full hover:brightness-105 transition-all">
-                      Planla →
+                      {t('hub.quickActions.random.planCta')}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setRandState('idle'); setRandCity(null); setDisplayCity(''); }}
@@ -854,12 +862,12 @@ const Hub: React.FC = () => {
               <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center mb-3">
                 <Wallet size={15} className="text-emerald-600" />
               </div>
-              <p className="text-sm font-heading text-text mb-0.5">Bütçeme göre</p>
+              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.budget.title')}</p>
               <p className="text-xs text-muted mb-3">
-                {plans.length > 0 ? avgBudget.symbol + avgBudget.amount.toLocaleString('tr-TR') : 'Varsayılan bütçe'}
+                {plans.length > 0 ? avgBudget.symbol + fmtNumber(avgBudget.amount) : t('hub.quickActions.budget.defaultLabel')}
               </p>
               <span className="text-xs font-heading text-emerald-600 flex items-center gap-0.5">
-                Plan oluştur <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                {t('hub.quickActions.budget.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </span>
             </button>
 
@@ -871,14 +879,14 @@ const Hub: React.FC = () => {
               <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center mb-3">
                 <Sparkles size={15} className="text-violet-500" />
               </div>
-              <p className="text-sm font-heading text-text mb-0.5">Vibe değiştir</p>
+              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.vibe.title')}</p>
               {!showVibe ? (
                 <>
                   <p className="text-xs text-muted mb-3">
-                    {plans.length > 0 ? `"${plans[0].plan.destination.split(',')[0]}"` : 'Önce plan oluştur'}
+                    {plans.length > 0 ? `"${plans[0].plan.destination.split(',')[0]}"` : t('hub.quickActions.vibe.noPlan')}
                   </p>
                   <span className="text-xs font-heading text-violet-500 flex items-center gap-0.5">
-                    Tarz seç <ChevronRight size={11} />
+                    {t('hub.quickActions.vibe.cta')} <ChevronRight size={11} />
                   </span>
                 </>
               ) : (
@@ -889,7 +897,7 @@ const Hub: React.FC = () => {
                       onClick={(e) => { e.stopPropagation(); handleVibe(v.val); }}
                       className="flex items-center gap-1 bg-surface-2 hover:bg-violet-50 border border-divider hover:border-violet-200 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-text transition-colors"
                     >
-                      <span>{v.emoji}</span><span>{v.label}</span>
+                      <span>{v.emoji}</span><span>{t(`hub.vibeOptions.${v.labelKey}`)}</span>
                     </button>
                   ))}
                 </div>
@@ -904,7 +912,7 @@ const Hub: React.FC = () => {
         {plans.length > 0 && (
           <>
             <p className="text-xs font-heading text-muted uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <LayoutGrid size={12} /> İstatistikler
+              <LayoutGrid size={12} /> {t('hub.stats.title')}
             </p>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
@@ -916,12 +924,12 @@ const Hub: React.FC = () => {
                   </div>
                   {stats.thisMonthCount > 0 && (
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                      +{stats.thisMonthCount} bu ay
+                      {t('hub.stats.thisMonth', { count: stats.thisMonthCount })}
                     </span>
                   )}
                 </div>
                 <p className="font-heading text-2xl text-text leading-none">{plans.length}</p>
-                <p className="text-muted text-xs mt-1">Toplam Plan</p>
+                <p className="text-muted text-xs mt-1">{t('hub.stats.totalPlans')}</p>
               </div>
 
               {/* Şehir & Ülke */}
@@ -931,9 +939,9 @@ const Hub: React.FC = () => {
                 </div>
                 <div className="flex items-baseline gap-1.5 mb-1">
                   <p className="font-heading text-2xl text-text leading-none">{stats.uniqueCities}</p>
-                  <span className="text-muted text-xs">şehir</span>
+                  <span className="text-muted text-xs">{t('hub.stats.city')}</span>
                 </div>
-                <p className="text-muted text-xs mb-3">{stats.uniqueCountries} farklı ülke</p>
+                <p className="text-muted text-xs mb-3">{t('hub.stats.differentCountries', { count: stats.uniqueCountries })}</p>
                 {stats.uniqueFlags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {stats.uniqueFlags.map(f => (
@@ -948,11 +956,11 @@ const Hub: React.FC = () => {
                 <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center mb-3">
                   <Wallet size={16} className="text-violet-500" />
                 </div>
-                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-2">Toplam Bütçe</p>
+                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-2">{t('hub.stats.totalBudget')}</p>
                 <div className="space-y-1.5">
                   {stats.budgets.map(([code, { symbol, total }]) => (
                     <div key={code} className="flex items-baseline gap-1">
-                      <span className="font-heading text-base text-text leading-none">{symbol}{total.toLocaleString('tr-TR')}</span>
+                      <span className="font-heading text-base text-text leading-none">{symbol}{fmtNumber(total)}</span>
                       <span className="text-muted text-[10px]">{code}</span>
                     </div>
                   ))}
@@ -964,7 +972,7 @@ const Hub: React.FC = () => {
                 <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center mb-3">
                   <Trophy size={16} className="text-amber-500" />
                 </div>
-                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-3">En Çok Gezilen</p>
+                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-3">{t('hub.stats.mostVisited')}</p>
                 {stats.topCountries.length > 0 ? (
                   <div className="space-y-2">
                     {stats.topCountries.map(([country, count], i) => (
@@ -983,7 +991,7 @@ const Hub: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-muted text-sm">Henüz veri yok</p>}
+                ) : <p className="text-muted text-sm">{t('hub.stats.noData')}</p>}
               </div>
             </div>
 
@@ -1002,9 +1010,9 @@ const Hub: React.FC = () => {
                 <div className="px-6 pt-5 pb-4 border-b border-divider flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock size={13} className="text-muted" />
-                    <span className="text-xs font-heading text-muted uppercase tracking-wider">Son Hareketler</span>
+                    <span className="text-xs font-heading text-muted uppercase tracking-wider">{t('hub.activity.title')}</span>
                   </div>
-                  <span className="text-xs text-muted">{plans.length} plan</span>
+                  <span className="text-xs text-muted">{t('hub.activity.planCount', { count: plans.length })}</span>
                 </div>
 
                 {/* Timeline list */}
@@ -1073,7 +1081,7 @@ const Hub: React.FC = () => {
                                     onClick={() => { resetForm(); updateData({ destination: item.destination }); navigate('/onboarding'); }}
                                     className="text-xs font-bold text-accent hover:text-accent-700 transition-colors"
                                   >
-                                    Tekrar Planla →
+                                    {t('hub.activity.replan')}
                                   </button>
                                 )}
                                 {isUpcoming && (
@@ -1081,7 +1089,7 @@ const Hub: React.FC = () => {
                                     onClick={() => navigate('/saved-plans')}
                                     className="text-xs font-bold text-blue-500 hover:text-blue-700 transition-colors"
                                   >
-                                    Planı Gör →
+                                    {t('hub.activity.viewPlan')}
                                   </button>
                                 )}
                               </div>
@@ -1090,7 +1098,7 @@ const Hub: React.FC = () => {
                               <button
                                 onClick={() => handleShare(item.planId)}
                                 disabled={savingShare === item.planId || (!plansPublic && !sharedPlanIds.has(item.planId))}
-                                title={!plansPublic && !sharedPlanIds.has(item.planId) ? 'Plan paylaşımı gizlilik ayarlarınızda kapalı' : undefined}
+                                title={!plansPublic && !sharedPlanIds.has(item.planId) ? t('hub.activity.shareDisabledTitle') : undefined}
                                 className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all flex-shrink-0 ${
                                   !plansPublic && !sharedPlanIds.has(item.planId)
                                     ? 'bg-surface-2 text-muted border-divider cursor-not-allowed opacity-60'
@@ -1102,8 +1110,8 @@ const Hub: React.FC = () => {
                                 {savingShare === item.planId
                                   ? <Loader2 size={10} className="animate-spin" />
                                   : sharedPlanIds.has(item.planId)
-                                    ? <><Globe size={10} />Paylaşıldı</>
-                                    : <><Globe size={10} />Paylaş</>
+                                    ? <><Globe size={10} />{t('hub.activity.shared')}</>
+                                    : <><Globe size={10} />{t('hub.activity.share')}</>
                                 }
                               </button>
                             </div>
@@ -1120,9 +1128,9 @@ const Hub: React.FC = () => {
                       className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted hover:text-text hover:bg-surface-2 transition-colors border-t border-divider"
                     >
                       {activitiesShowAll ? (
-                        <>Daha Az Göster <ChevronRight size={13} className="rotate-[-90deg]" /></>
+                        <>{t('hub.activity.showLess')} <ChevronRight size={13} className="rotate-[-90deg]" /></>
                       ) : (
-                        <>Daha Fazla Göster ({activities.length - 2} plan daha) <ChevronRight size={13} className="rotate-90" /></>
+                        <>{t('hub.activity.showMore', { count: activities.length - 2 })} <ChevronRight size={13} className="rotate-90" /></>
                       )}
                     </button>
                   )}
@@ -1142,15 +1150,15 @@ const Hub: React.FC = () => {
               <div className="w-5 h-5 bg-accent-100 rounded-md flex items-center justify-center">
                 <Globe size={11} className="text-accent" />
               </div>
-              <span className="text-xs font-heading text-muted uppercase tracking-widest">Dünya Haritam</span>
+              <span className="text-xs font-heading text-muted uppercase tracking-widest">{t('hub.map.title')}</span>
             </div>
             <p className="font-heading text-lg text-text">
-              Şu ana kadar{' '}
-              <span className="text-accent">{stats.uniqueCities} şehir</span>{' '}
-              keşfettin!
+              {t('hub.map.exploredPrefix')}{' '}
+              <span className="text-accent">{t('hub.map.citiesCount', { count: stats.uniqueCities })}</span>{' '}
+              {t('hub.map.exploredSuffix')}
             </p>
             <p className="text-muted text-xs mt-0.5">
-              {stats.uniqueCountries} ülkeye yayılan {destPins.length} destinasyon
+              {t('hub.map.spread', { countries: stats.uniqueCountries, destinations: destPins.length })}
             </p>
           </div>
 
@@ -1216,7 +1224,7 @@ const Hub: React.FC = () => {
           {/* Harita alt bilgi */}
           {destPins.length === 0 && (
             <div className="px-6 py-3 border-t border-divider">
-              <p className="text-muted text-xs text-center">Seyahatlerini tamamladıkça şehirler haritada belirmeye başlayacak 🗺️</p>
+              <p className="text-muted text-xs text-center">{t('hub.map.empty')}</p>
             </div>
           )}
         </div>
