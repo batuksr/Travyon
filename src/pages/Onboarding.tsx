@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -14,6 +15,8 @@ import {
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
 import TravyonLogo from '../components/TravyonLogo';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
+import DateRangeCalendar from '../components/DateRangeCalendar';
+import TimePicker from '../components/TimePicker';
 import { generateTravelPlan } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { searchCities, type CityOption } from '../data/cities';
@@ -194,6 +197,105 @@ const Onboarding: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  /* Tarih aralığı takvimi — clipping sorunlarından kaçınmak için portal ile document.body'ye render edilir */
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarPos, setCalendarPos] = useState<{ top: number; left: number } | null>(null);
+  const dateTriggerRef = useRef<HTMLButtonElement>(null);
+  const calendarPopoverRef = useRef<HTMLDivElement>(null);
+
+  const CALENDAR_WIDTH = 248;
+
+  const openCalendar = () => {
+    const rect = dateTriggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const left = rect.left + rect.width / 2 - CALENDAR_WIDTH / 2;
+      setCalendarPos({ top: rect.bottom - 28, left: Math.max(8, left) });
+    }
+    setShowCalendar((v) => !v);
+  };
+
+  useEffect(() => {
+    if (!showCalendar) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        dateTriggerRef.current && !dateTriggerRef.current.contains(target) &&
+        calendarPopoverRef.current && !calendarPopoverRef.current.contains(target)
+      ) {
+        setShowCalendar(false);
+      }
+    };
+    const closeOnScroll = () => setShowCalendar(false);
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('scroll', closeOnScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('scroll', closeOnScroll, true);
+    };
+  }, [showCalendar]);
+
+  const handleDateRangeChange = (newStart: string, newEnd: string) => {
+    updateData({ startDate: newStart, endDate: newEnd });
+    setHints((h) => ({ ...h, startDate: false, endDate: false }));
+    if (newStart && newEnd) setShowCalendar(false);
+  };
+
+  const handleDateRangeClear = () => updateData({ startDate: '', endDate: '' });
+
+  const formatDisplayDate = (dateStr: string): string => {
+    if (!dateStr) return t('onboarding.step1.calendar.selectDate');
+    const d = new Date(dateStr + 'T00:00:00');
+    return new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-US' : 'tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+  };
+
+  /* Varış/Ayrılış saat seçici — aynı portal deseni, tek popover iki alan arasında paylaşılır */
+  const [openTimeField, setOpenTimeField] = useState<'arrival' | 'departure' | null>(null);
+  const [timePickerPos, setTimePickerPos] = useState<{ top: number; left: number } | null>(null);
+  const arrivalTriggerRef = useRef<HTMLButtonElement>(null);
+  const departureTriggerRef = useRef<HTMLButtonElement>(null);
+  const timePickerPopoverRef = useRef<HTMLDivElement>(null);
+
+  const TIME_PICKER_WIDTH = 136;
+
+  const openTimePicker = (field: 'arrival' | 'departure') => {
+    const triggerRef = field === 'arrival' ? arrivalTriggerRef : departureTriggerRef;
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const left = rect.right - TIME_PICKER_WIDTH;
+      setTimePickerPos({ top: rect.bottom - 15, left: Math.max(8, left) });
+    }
+    setOpenTimeField((cur) => (cur === field ? null : field));
+  };
+
+  useEffect(() => {
+    if (!openTimeField) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const triggerRef = openTimeField === 'arrival' ? arrivalTriggerRef : departureTriggerRef;
+      if (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        timePickerPopoverRef.current && !timePickerPopoverRef.current.contains(target)
+      ) {
+        setOpenTimeField(null);
+      }
+    };
+    // Not: TimePicker açılışta seçili saate scrollIntoView yapıyor — bu kendi içindeki
+    // bir 'scroll' event'i tetikler ve capture-phase listener'a yakalanır. Popover içinden
+    // gelen scroll'ları yok sayarak açılır açılmaz kapanmasını önlüyoruz.
+    const closeOnScroll = (e: Event) => {
+      if (timePickerPopoverRef.current && e.target instanceof Node && timePickerPopoverRef.current.contains(e.target)) {
+        return;
+      }
+      setOpenTimeField(null);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('scroll', closeOnScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('scroll', closeOnScroll, true);
+    };
+  }, [openTimeField]);
+
   const handleDestinationChange = (val: string) => {
     updateData({ destination: val });
     setHints((h) => ({ ...h, destination: false }));
@@ -323,10 +425,10 @@ const Onboarding: React.FC = () => {
         )}
 
         {/* Üst bar — step indikatörleri */}
-        <div className="shrink-0 px-4 sm:px-8 lg:px-12 pt-7 pb-5 border-b border-divider">
+        <div className="shrink-0 px-4 sm:px-8 lg:px-12 pt-4 pb-3 border-b border-divider">
 
           {/* Mobil logo */}
-          <div className="lg:hidden mb-5">
+          <div className="lg:hidden mb-3">
             <TravyonLogo size={64} />
           </div>
 
@@ -359,7 +461,7 @@ const Onboarding: React.FC = () => {
           </div>
 
           {/* Thin progress bar */}
-          <div className="mt-4 h-px bg-divider rounded-full overflow-hidden max-w-2xl">
+          <div className="mt-3 h-px bg-divider rounded-full overflow-hidden max-w-2xl">
             <motion.div
               className="h-full bg-accent"
               animate={{ width: `${(currentStep / 4) * 100}%` }}
@@ -450,7 +552,7 @@ const Onboarding: React.FC = () => {
                       <FieldError msg={hints.destination ? t('onboarding.errors.destinationField') : undefined} />
                     </div>
 
-                    {/* Tarihler + Saatler — satır bazlı iOS tarzı layout */}
+                    {/* Tarihler + Saatler — tek kutucuk, gidiş/dönüş yan yana */}
                     <div className="rounded-2xl border border-divider overflow-hidden">
                       {/* Başlık şeridi */}
                       <div className="bg-surface-2 px-4 py-2.5 border-b border-divider">
@@ -459,64 +561,77 @@ const Onboarding: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Satırlar */}
                       <div className="bg-surface divide-y divide-divider">
-
-                        {/* Gidiş */}
-                        <div className={`flex items-center px-4 py-3.5 ${hints.startDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.departure')}</span>
-                          <input
-                            type="date" min={today}
-                            value={data.startDate}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val && val < today) return;
-                              updateData({ startDate: val });
-                              setHints((h) => ({ ...h, startDate: false }));
-                            }}
-                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
-                          />
-                        </div>
-
-                        {/* Dönüş */}
-                        <div className={`flex items-center px-4 py-3.5 ${hints.endDate ? 'bg-rose-50/50' : ''}`}>
-                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.return')}</span>
-                          <input
-                            type="date" min={data.startDate || today}
-                            value={data.endDate}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const minDate = data.startDate || today;
-                              if (val && val < minDate) return;
-                              updateData({ endDate: val });
-                              setHints((h) => ({ ...h, endDate: false }));
-                            }}
-                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
-                          />
-                        </div>
+                        {/* Gidiş + Dönüş — tek satır, iki sütun */}
+                        <button
+                          type="button"
+                          ref={dateTriggerRef}
+                          onClick={openCalendar}
+                          className={`w-full grid grid-cols-2 text-left ${(hints.startDate || hints.endDate) ? 'bg-rose-50/50' : ''}`}
+                        >
+                          <div className="px-4 py-3 border-r border-divider">
+                            <p className="text-[10px] text-muted mb-0.5">{t('onboarding.step1.departure')}</p>
+                            <p className={`text-[14.5px] ${data.startDate ? 'text-text' : 'text-muted'}`}>{formatDisplayDate(data.startDate)}</p>
+                          </div>
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-muted mb-0.5">{t('onboarding.step1.return')}</p>
+                            <p className={`text-[14.5px] ${data.endDate ? 'text-text' : 'text-muted'}`}>{formatDisplayDate(data.endDate)}</p>
+                          </div>
+                        </button>
 
                         {/* Varış Saati */}
-                        <div className="flex items-center px-4 py-3.5">
+                        <button
+                          type="button"
+                          ref={arrivalTriggerRef}
+                          onClick={() => openTimePicker('arrival')}
+                          className="w-full flex items-center px-4 py-3.5 text-left hover:bg-surface-2/50 transition-colors"
+                        >
                           <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.arrival')}</span>
-                          <input
-                            type="time"
-                            value={data.arrivalTime}
-                            onChange={(e) => updateData({ arrivalTime: e.target.value })}
-                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
-                          />
-                        </div>
+                          <span className="flex-1 text-[14.5px] text-text text-right">{data.arrivalTime}</span>
+                        </button>
 
                         {/* Ayrılış Saati */}
-                        <div className="flex items-center px-4 py-3.5">
+                        <button
+                          type="button"
+                          ref={departureTriggerRef}
+                          onClick={() => openTimePicker('departure')}
+                          className="w-full flex items-center px-4 py-3.5 text-left hover:bg-surface-2/50 transition-colors"
+                        >
                           <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.departureTime')}</span>
-                          <input
-                            type="time"
-                            value={data.departureTime}
-                            onChange={(e) => updateData({ departureTime: e.target.value })}
-                            className="flex-1 text-[14.5px] text-text bg-transparent outline-none text-right"
-                          />
-                        </div>
+                          <span className="flex-1 text-[14.5px] text-text text-right">{data.departureTime}</span>
+                        </button>
                       </div>
+
+                      {showCalendar && calendarPos && createPortal(
+                        <div
+                          ref={calendarPopoverRef}
+                          style={{ position: 'fixed', top: calendarPos.top, left: calendarPos.left, zIndex: 100 }}
+                        >
+                          <DateRangeCalendar
+                            startDate={data.startDate}
+                            endDate={data.endDate}
+                            minDate={today}
+                            onChange={handleDateRangeChange}
+                            onClear={handleDateRangeClear}
+                          />
+                        </div>,
+                        document.body
+                      )}
+
+                      {openTimeField && timePickerPos && createPortal(
+                        <div
+                          ref={timePickerPopoverRef}
+                          style={{ position: 'fixed', top: timePickerPos.top, left: timePickerPos.left, zIndex: 100 }}
+                        >
+                          <TimePicker
+                            value={openTimeField === 'arrival' ? data.arrivalTime : data.departureTime}
+                            onChange={(val) =>
+                              updateData(openTimeField === 'arrival' ? { arrivalTime: val } : { departureTime: val })
+                            }
+                          />
+                        </div>,
+                        document.body
+                      )}
 
                       {/* Hata mesajları */}
                       {(hints.startDate || hints.endDate) && (
@@ -1049,13 +1164,13 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Alt bar — navigasyon */}
-        <div className="shrink-0 border-t border-divider px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between">
+        <div className="shrink-0 border-t border-divider px-4 sm:px-8 lg:px-12 py-2.5 flex items-center justify-between">
 
           <button
             type="button"
             onClick={handleBack}
             disabled={currentStep === 1 || isGenerating}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 text-text hover:text-accent font-heading text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-text hover:text-accent font-heading text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isGenerating ? 'invisible' : ''}`}
           >
             <ArrowLeft size={14} strokeWidth={2.75} />
             {t('onboarding.nav.back')}
@@ -1074,7 +1189,7 @@ const Onboarding: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent hover:brightness-105 text-white font-heading rounded-full text-sm transition-all shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px"
             >
               {t('onboarding.nav.next')}
               <ArrowRight size={14} strokeWidth={2.75} />
@@ -1084,7 +1199,7 @@ const Onboarding: React.FC = () => {
               type="button"
               onClick={handleFinish}
               disabled={isGenerating}
-              className={`inline-flex items-center gap-2 px-6 py-3 font-heading rounded-full text-sm transition-all
+              className={`inline-flex items-center gap-2 px-6 py-2.5 font-heading rounded-full text-sm transition-all
                 ${isGenerating
                   ? 'bg-surface-2 text-muted cursor-not-allowed'
                   : 'bg-accent hover:brightness-105 text-white shadow-[0_10px_22px_rgba(198,113,57,0.28)] active:translate-y-px'}`}

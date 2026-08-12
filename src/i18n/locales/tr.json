@@ -497,7 +497,12 @@
       "departureTime": "🛫 Ayrılış",
       "peopleCount": "Kişi Sayısı",
       "person": "kişi",
-      "totalBudget": "Toplam Bütçe"
+      "totalBudget": "Toplam Bütçe",
+      "calendar": {
+        "selectDate": "Tarih seç",
+        "clear": "Temizle",
+        "today": "Bugün"
+      }
     },
     "step2": {
       "travelType": "Seyahat Türü",

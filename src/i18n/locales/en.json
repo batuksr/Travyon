@@ -497,7 +497,12 @@
       "departureTime": "🛫 Departure Time",
       "peopleCount": "Number of People",
       "person": "people",
-      "totalBudget": "Total Budget"
+      "totalBudget": "Total Budget",
+      "calendar": {
+        "selectDate": "Select date",
+        "clear": "Clear",
+        "today": "Today"
+      }
     },
     "step2": {
       "travelType": "Trip Type",
