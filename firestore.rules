@@ -44,5 +44,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null
                          && request.auth.uid == uid;
     }
+
+    // E-posta doğrulama kodları — sadece Cloud Functions (Admin SDK) erişir,
+    // istemci tarafından doğrudan okunamaz/yazılamaz.
+    match /emailVerificationCodes/{uid} {
+      allow read, write: if false;
+    }
   }
 }

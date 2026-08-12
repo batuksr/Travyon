@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
 const firebaseConfig = {
@@ -24,4 +25,6 @@ try {
 export const auth = app ? getAuth(app) : ({} as any);
 export const db = app ? getFirestore(app) : ({} as any);
 export const storage = app ? getStorage(app) : ({} as any);
+// Cloud Functions'daki setGlobalOptions region'ıyla eşleşmeli (functions/src/index.ts)
+export const functions = app ? getFunctions(app, "europe-west1") : ({} as any);
 export const googleProvider = new GoogleAuthProvider();

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
-import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
+import { sendVerificationCode, verifyEmailCode, VerifyCodeError } from '../services/emailVerificationService';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User, MailCheck, RefreshCw, Check } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
@@ -10,7 +11,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 
 const Register: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,11 +22,20 @@ const Register: React.FC = () => {
   const { setUser } = useAuthStore();
 
   /* E-posta doğrulama popup durumu */
-  const [showVerify, setShowVerify]   = useState(false);
-  const [checking, setChecking]       = useState(false);
-  const [resending, setResending]     = useState(false);
-  const [resent, setResent]           = useState(false);
-  const [verifyMsg, setVerifyMsg]     = useState('');
+  const [showVerify, setShowVerify]           = useState(false);
+  const [code, setCode]                       = useState('');
+  const [verifying, setVerifying]             = useState(false);
+  const [resending, setResending]             = useState(false);
+  const [resent, setResent]                   = useState(false);
+  const [resendCooldownMs, setResendCooldownMs] = useState(0);
+  const [verifyMsg, setVerifyMsg]             = useState('');
+
+  /* Yeniden gönderme geri sayımı */
+  useEffect(() => {
+    if (resendCooldownMs <= 0) return;
+    const id = setInterval(() => setResendCooldownMs(ms => Math.max(0, ms - 1000)), 1000);
+    return () => clearInterval(id);
+  }, [resendCooldownMs]);
 
   // Redirect sonucu al (mobil Google kaydı sonrası)
   useEffect(() => {
@@ -48,11 +58,11 @@ const Register: React.FC = () => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
-      // Doğrulama maili gönder — doğrulayınca uygulamaya geri dönsün
-      sendEmailVerification(cred.user, {
-        url: `${window.location.origin}/hub`,
-        handleCodeInApp: false,
-      }).catch(() => { /* sessizce geç */ });
+      // Doğrulama kodu gönder — kod girilince uygulamaya geçilsin
+      try {
+        const { cooldownMs } = await sendVerificationCode(i18n.language === 'en' ? 'en' : 'tr');
+        setResendCooldownMs(cooldownMs);
+      } catch { /* gönderilemedi, kullanıcı modaldan "Tekrar Gönder" ile deneyebilir */ }
       // Navigate yerine doğrulama popup'ı göster
       setShowVerify(true);
     } catch (err: unknown) {
@@ -90,43 +100,38 @@ const Register: React.FC = () => {
     }
   };
 
-  /* Doğrulama popup — "Doğruladım" kontrolü */
-  const handleVerifyCheck = async () => {
-    if (!auth.currentUser || checking) return;
+  /* Doğrulama popup — girilen kodu doğrula */
+  const handleVerifyCode = async () => {
+    if (verifying || code.length !== 6) return;
     setVerifyMsg('');
-    setChecking(true);
+    setVerifying(true);
     try {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
-        setUser(auth.currentUser);
-        navigate('/onboarding');
-      } else {
-        setVerifyMsg(t('auth.register.verify.notVerifiedYet'));
-      }
-    } catch {
-      setVerifyMsg(t('auth.register.verify.checkFailed'));
+      await verifyEmailCode(code);
+      await auth.currentUser?.reload();
+      if (auth.currentUser) setUser(auth.currentUser);
+      navigate('/onboarding');
+    } catch (err) {
+      const reason = err instanceof VerifyCodeError ? err.reason : 'unknown';
+      setVerifyMsg(t(`auth.register.verify.errors.${reason}`));
+      setCode('');
     } finally {
-      setChecking(false);
+      setVerifying(false);
     }
   };
 
-  /* Doğrulama popup — maili tekrar gönder */
+  /* Doğrulama popup — kodu tekrar gönder */
   const handleVerifyResend = async () => {
-    if (!auth.currentUser || resending) return;
+    if (resending || resendCooldownMs > 0) return;
     setVerifyMsg('');
     setResending(true);
     try {
-      await sendEmailVerification(auth.currentUser, {
-        url: `${window.location.origin}/hub`,
-        handleCodeInApp: false,
-      });
+      const { cooldownMs } = await sendVerificationCode(i18n.language === 'en' ? 'en' : 'tr');
+      setResendCooldownMs(cooldownMs);
       setResent(true);
       setTimeout(() => setResent(false), 4000);
     } catch (err) {
-      const code = (err as { code?: string }).code;
-      setVerifyMsg(code === 'auth/too-many-requests'
-        ? t('auth.register.verify.tooManyRequests')
-        : t('auth.register.verify.resendFailed'));
+      const reason = err instanceof VerifyCodeError ? err.reason : 'unknown';
+      setVerifyMsg(t(`auth.register.verify.errors.${reason === 'too_many_attempts' ? 'cooldown' : 'unknown'}`));
     } finally {
       setResending(false);
     }
@@ -148,12 +153,26 @@ const Register: React.FC = () => {
             </div>
             <h2 className="font-heading text-2xl text-text mb-2">{t('auth.register.verify.title')}</h2>
             <p className="text-sm text-muted leading-relaxed mb-1.5">
-              <Trans i18nKey="auth.register.verify.sentTo" values={{ email }} components={{ b: <span className="font-semibold text-text" /> }} />
+              <Trans i18nKey="auth.register.verify.sentToCode" values={{ email }} components={{ b: <span className="font-semibold text-text" /> }} />
             </p>
             <p className="text-xs text-muted leading-relaxed mb-6">
-              {t('auth.register.verify.instructions')}
-              <br />{t('auth.register.verify.spamHint')}
+              {t('auth.register.verify.spamHint')}
             </p>
+
+            <div className="mb-5 text-left">
+              <label className="block font-heading text-[13px] text-text mb-2">{t('auth.register.verify.codeLabel')}</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
+                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onKeyDown={e => { if (e.key === 'Enter') handleVerifyCode(); }}
+                placeholder={t('auth.register.verify.codePlaceholder')}
+                className="w-full px-4 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-center text-2xl tracking-[0.5em] font-heading placeholder:text-muted placeholder:tracking-[0.5em] outline-none focus:border-accent transition-colors"
+              />
+            </div>
 
             {verifyMsg && (
               <p className="text-xs text-rose-500 font-medium mb-4 bg-rose-50 border border-rose-100 rounded-2xl px-3 py-2">
@@ -163,31 +182,24 @@ const Register: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleVerifyCheck}
-              disabled={checking}
+              onClick={handleVerifyCode}
+              disabled={verifying || code.length !== 6}
               className="w-full py-3.5 bg-accent hover:brightness-105 text-white font-heading rounded-full flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-60 shadow-[0_12px_26px_rgba(198,113,57,0.3)] mb-2.5"
             >
-              {checking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={2.75} />}
-              {t('auth.register.verify.checkButton')}
+              {verifying ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={2.75} />}
+              {t('auth.register.verify.verifyButton')}
             </button>
 
             <button
               type="button"
               onClick={handleVerifyResend}
-              disabled={resending || resent}
+              disabled={resending || resent || resendCooldownMs > 0}
               className="w-full py-3 bg-transparent border-[1.5px] border-divider text-text font-heading rounded-full flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-60"
             >
               {resending ? <Loader2 size={15} className="animate-spin" />
                 : resent ? <><Check size={15} strokeWidth={2.75} className="text-emerald-500" /> {t('auth.register.verify.resendSent')}</>
+                : resendCooldownMs > 0 ? t('auth.register.verify.resendCooldown', { seconds: Math.ceil(resendCooldownMs / 1000) })
                 : <><RefreshCw size={15} strokeWidth={2.75} /> {t('auth.register.verify.resendButton')}</>}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate('/onboarding')}
-              className="mt-4 text-xs text-muted hover:text-text font-medium transition-colors"
-            >
-              {t('auth.register.verify.laterButton')}
             </button>
           </motion.div>
         </div>

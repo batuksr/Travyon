@@ -165,17 +165,23 @@
       },
       "verify": {
         "title": "Verify Your Email",
-        "sentTo": "We sent a verification link to <b>{{email}}</b>.",
-        "instructions": "Click the link in your email, then tap \"I Verified\" below.",
+        "sentToCode": "We sent a 6-digit verification code to <b>{{email}}</b>.",
         "spamHint": "📥 Didn't get the email? Check your Spam / Junk folder.",
-        "checkButton": "I Verified, Continue",
-        "resendButton": "Resend Email",
+        "codeLabel": "Verification Code",
+        "codePlaceholder": "000000",
+        "verifyButton": "Verify",
+        "resendButton": "Resend Code",
+        "resendCooldown": "Resend in {{seconds}}s",
         "resendSent": "Sent",
-        "laterButton": "I'll verify later →",
-        "notVerifiedYet": "Not verified yet. Did you click the link in the email? (Check spam too)",
-        "checkFailed": "Couldn't check, please try again.",
-        "tooManyRequests": "Too many requests — try again in a few minutes.",
-        "resendFailed": "Couldn't send the email, please try again."
+        "errors": {
+          "invalid_format": "Code must be 6 digits.",
+          "no_pending_code": "No code found, request a new one.",
+          "expired": "Code expired, request a new one.",
+          "too_many_attempts": "Too many attempts, try again later.",
+          "wrong_code": "Incorrect code, try again.",
+          "unknown": "Something went wrong, try again.",
+          "cooldown": "A code was just sent, please wait a moment."
+        }
       }
     }
   },

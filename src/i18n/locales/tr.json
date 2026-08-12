@@ -165,17 +165,23 @@
       },
       "verify": {
         "title": "E-postanı Doğrula",
-        "sentTo": "<b>{{email}}</b> adresine bir doğrulama linki gönderdik.",
-        "instructions": "Mailindeki linke tıkla, sonra aşağıdaki \"Doğruladım\" butonuna bas.",
+        "sentToCode": "<b>{{email}}</b> adresine 6 haneli bir doğrulama kodu gönderdik.",
         "spamHint": "📥 Mail gelmedi mi? Spam / Gereksiz klasörüne bak.",
-        "checkButton": "Doğruladım, Devam Et",
-        "resendButton": "Maili Tekrar Gönder",
+        "codeLabel": "Doğrulama Kodu",
+        "codePlaceholder": "000000",
+        "verifyButton": "Doğrula",
+        "resendButton": "Kodu Tekrar Gönder",
+        "resendCooldown": "{{seconds}} sn sonra tekrar gönder",
         "resendSent": "Gönderildi",
-        "laterButton": "Daha sonra doğrularım →",
-        "notVerifiedYet": "Henüz doğrulanmamış. Mailindeki linke tıkladın mı? (Spam klasörüne de bak)",
-        "checkFailed": "Kontrol edilemedi, tekrar dene.",
-        "tooManyRequests": "Çok fazla istek — birkaç dakika sonra dene.",
-        "resendFailed": "Mail gönderilemedi, tekrar dene."
+        "errors": {
+          "invalid_format": "Kod 6 haneli olmalı.",
+          "no_pending_code": "Kod bulunamadı, yeni kod iste.",
+          "expired": "Kodun süresi doldu, yeni kod iste.",
+          "too_many_attempts": "Çok fazla deneme yapıldı, biraz sonra tekrar dene.",
+          "wrong_code": "Kod hatalı, tekrar dene.",
+          "unknown": "Bir şeyler ters gitti, tekrar dene.",
+          "cooldown": "Az önce kod gönderildi, biraz bekle."
+        }
       }
     }
   },
