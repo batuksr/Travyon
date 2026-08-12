@@ -50,6 +50,8 @@
         "destination": "Rome, Italy",
         "yourStay": "Your Stay",
         "resetLabel": "Start over",
+        "showMap": "Show Map",
+        "showList": "Back to List",
         "moveUp": "Move up",
         "moveDown": "Move down",
         "delete": "Delete",

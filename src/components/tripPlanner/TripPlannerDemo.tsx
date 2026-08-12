@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence } from 'framer-motion';
+import { List as ListIcon } from 'lucide-react';
 import TopBar, { type PanelKind } from './TopBar';
 import DayTabs from './DayTabs';
 import DaySummary from './DaySummary';
@@ -54,6 +55,9 @@ const TripPlannerDemo: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const savedTimeoutRef = useRef<number | undefined>(undefined);
 
+  /* Mobilde liste + harita yan yana sığmadığı için tek seferde biri tam boyda gösterilir */
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+
   /* Sol panel / harita arası sürüklenebilir ayraç — Dashboard.tsx'teki resize deseniyle aynı */
   const [leftWidthPct, setLeftWidthPct] = useState(45);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,6 +95,7 @@ const TripPlannerDemo: React.FC = () => {
     setPanel(null);
     setAddOpen(false);
     setActiveMapId(null);
+    setMobileView('list');
   };
 
   const handleMove = (uid: string, dir: -1 | 1) => {
@@ -140,7 +145,7 @@ const TripPlannerDemo: React.FC = () => {
   }));
 
   return (
-    <div className="flex flex-col h-[640px] sm:h-[680px] bg-surface">
+    <div className="flex flex-col h-[580px] sm:h-[610px] bg-surface">
       <TopBar
         dayCount={DEMO_DAYS.length}
         total={total}
@@ -152,9 +157,10 @@ const TripPlannerDemo: React.FC = () => {
       />
 
       <div ref={containerRef} className="flex-1 min-h-0 relative flex flex-col md:flex-row">
-        {/* SOL SÜTUN */}
+        {/* SOL SÜTUN — mobilde yalnızca "list" görünümündeyken gösterilir, tam yükseklik alır */}
         <div
-          className="relative flex flex-col min-h-0 w-full h-[340px] md:h-auto border-b md:border-b-0 md:border-r border-divider bg-surface"
+          className={`relative min-h-0 w-full flex-col md:h-auto border-b md:border-b-0 md:border-r border-divider bg-surface
+            ${mobileView === 'list' ? 'flex flex-1' : 'hidden'} md:flex`}
           style={typeof window !== 'undefined' && window.innerWidth >= 768 ? { width: `${leftWidthPct}%`, minWidth: 320 } : undefined}
         >
           <DayTabs
@@ -179,7 +185,12 @@ const TripPlannerDemo: React.FC = () => {
 
           {addOpen && <AddActivityPanel onClose={() => setAddOpen(false)} />}
 
-          <VibeBar active={vibes} onToggle={toggleVibe} />
+          <VibeBar
+            active={vibes}
+            onToggle={toggleVibe}
+            onToggleMobileView={panel === null ? () => setMobileView('map') : undefined}
+            mobileView="list"
+          />
         </div>
 
         {/* SÜRÜKLENEBİLİR AYRAÇ */}
@@ -188,9 +199,10 @@ const TripPlannerDemo: React.FC = () => {
           onMouseDown={handleResizeMouseDown}
         />
 
-        {/* HARİTA — isolate: Leaflet'in kendi iç katmanları (z-index ~1000'e kadar) bu
-            kapsayıcının dışına taşıp Rehber/Hava panellerinin üstüne çıkmasın diye */}
-        <div className="flex-1 relative min-h-[220px] isolate">
+        {/* HARİTA — mobilde yalnızca "map" görünümündeyken gösterilir. isolate: Leaflet'in
+            kendi iç katmanları (z-index ~1000'e kadar) bu kapsayıcının dışına taşıp
+            Rehber/Hava panellerinin üstüne çıkmasın diye */}
+        <div className={`relative min-h-[220px] isolate ${mobileView === 'map' ? 'flex-1' : 'hidden'} md:flex-1 md:block`}>
           <Suspense fallback={<MapLoadingFallback />}>
             <RealMap
               pins={pins}
@@ -199,6 +211,18 @@ const TripPlannerDemo: React.FC = () => {
               onSelect={(id) => setActiveMapId((cur) => (cur === id ? null : id))}
             />
           </Suspense>
+
+          {/* Mobilde haritadan listeye dönüş — yalnızca Plan sekmesinde anlamlı */}
+          {panel === null && (
+            <button
+              type="button"
+              onClick={() => setMobileView('list')}
+              className="md:hidden absolute bottom-3 left-3 z-[500] inline-flex items-center gap-1.5 px-3 py-2 bg-text text-bg text-[12px] font-heading font-semibold rounded-full shadow-lg"
+            >
+              <ListIcon size={12} strokeWidth={2.2} />
+              {t('home.product.demo.showList')}
+            </button>
+          )}
         </div>
 
         <AnimatePresence>

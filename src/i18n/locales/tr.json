@@ -50,6 +50,8 @@
         "destination": "Roma, İtalya",
         "yourStay": "Konaklama Yerin",
         "resetLabel": "Baştan başla",
+        "showMap": "Haritayı Göster",
+        "showList": "Listeye Dön",
         "moveUp": "Yukarı taşı",
         "moveDown": "Aşağı taşı",
         "delete": "Sil",
