@@ -134,20 +134,13 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({ startDate, endDat
       </div>
 
       {/* Alt aksiyonlar */}
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-divider">
+      <div className="flex items-center justify-end mt-2 pt-2 border-t border-divider">
         <button
           type="button"
           onClick={onClear}
           className="text-[11px] font-semibold text-muted hover:text-text transition-colors"
         >
           {t('onboarding.step1.calendar.clear')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewDate(min)}
-          className="text-[11px] font-semibold text-accent hover:text-accent-700 transition-colors"
-        >
-          {t('onboarding.step1.calendar.today')}
         </button>
       </div>
     </div>

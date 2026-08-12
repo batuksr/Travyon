@@ -38,9 +38,141 @@
     },
     "scroll": "Scroll",
     "product": {
-      "eyebrow": "PRODUCT",
-      "title": "Discover Travyon",
-      "subtitle": "Your personalized travel plan, ready in minutes."
+      "eyebrow": "Live Preview",
+      "title": "Bring your plan to life in seconds",
+      "subtitle": "Try the app without signing up by exploring the sample Rome plan below — switch days, add activities, open the guide and the weather.",
+      "nudge": {
+        "title": "This is just a live preview!",
+        "body": "In the real app you can build much more detailed plans and unlock every feature. Start exploring the sample plan however you like.",
+        "ok": "Got it"
+      },
+      "demo": {
+        "destination": "Rome, Italy",
+        "yourStay": "Your Stay",
+        "resetLabel": "Start over",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "delete": "Delete",
+        "summaries": {
+          "day1": "Step into the heart of the city with a start that will leave you in awe of Ancient Rome's grandeur.",
+          "day2": "A day full of the Vatican's sacred art treasures and the majesty of St. Peter's awaits you.",
+          "day3": "A delightful day of discovery among Baroque Rome's piazzas and hidden corners.",
+          "day4": "A peaceful farewell to Rome, with park views and final flavor stops."
+        },
+        "items": {
+          "d1-panificio": {
+            "title": "Panificio Forno (Bakery & Pizza al Taglio)",
+            "desc": "Experience Rome's famous pizza al taglio (pizza by the slice). Pick up fresh slices from this affordable bakery near the Colosseum for a quick, tasty lunch. There are usually several varieties — try the most popular ones."
+          },
+          "d1-oppio": {
+            "title": "Parco del Colle Oppio (Oppian Hill Park)",
+            "desc": "Stroll through this park for a breathtaking panoramic view of the Colosseum. Visit early to avoid the crowds and catch a peaceful photo — the hill's elevation offers wonderful angles."
+          },
+          "d1-colosseo": {
+            "title": "Colosseum and the Arch of Constantine",
+            "desc": "Admire the exterior of the Colosseum, symbol of the Roman Empire, and the details of the Arch of Constantine. On a tighter budget, take in the scale and grandeur of these ancient structures from the outside and snap plenty of photos. Soak up the atmosphere of the surrounding piazza."
+          },
+          "d1-venezia": {
+            "title": "Piazza Venezia and the Altare della Patria",
+            "desc": "See one of Rome's central squares, Piazza Venezia, and the imposing monument that symbolizes Italy's unification, from the outside. Enjoy free views of the city from the monument's terraces and take some great photos — note that sitting on the steps is sometimes prohibited."
+          },
+          "d1-trevi": {
+            "title": "Trevi Fountain",
+            "desc": "Witness the mesmerizing beauty of the world-famous Trevi Fountain. Toss a coin over your shoulder for the traditional wish to return to Rome — it can get crowded, so try different angles for the best photos."
+          },
+          "d1-monti": {
+            "title": "Pasta Chef - Monti (Trattoria)",
+            "desc": "Try affordable, fresh handmade pasta at this small trattoria loved by locals. Don't miss the daily specials, and expect generous portions. Arriving early makes it easier to find a table."
+          },
+          "d2-vatikan": {
+            "title": "Vatican Museums and the Sistine Chapel",
+            "desc": "See the Sistine Chapel, famous for Michelangelo's ceiling frescoes, inside the Vatican Museums — home to one of the richest art collections in the world. Book your ticket online in advance to skip the long queues."
+          },
+          "d2-pizzarium": {
+            "title": "Pizzarium Bonci (Pizza by the Slice)",
+            "desc": "Taste an array of fresh pizza sold by weight at what's considered one of Rome's best slice shops. Ideal for a quick, satisfying lunch on the go."
+          },
+          "d2-sanpietro": {
+            "title": "St. Peter's Basilica (outer piazza)",
+            "desc": "Wander through St. Peter's Square, ringed by Bernini's magnificent colonnade, and admire the basilica's striking façade for free. Climbing the dome carries a separate fee."
+          },
+          "d2-castel": {
+            "title": "Castel Sant'Angelo (exterior)",
+            "desc": "See the striking architecture of this cylindrical fortress on the banks of the Tiber from the outside. The nearby bridge offers great photos of the river and the castle."
+          },
+          "d2-ponte": {
+            "title": "Ponte Sant'Angelo (Bridge of Angels)",
+            "desc": "Walk across this historic pedestrian bridge, adorned with Bernini's angel statues. Sunset brings the best views and photo angles."
+          },
+          "d2-trastevere": {
+            "title": "Evening Stroll in Trastevere",
+            "desc": "Soak up the evening atmosphere in the narrow, cobblestoned streets of Trastevere, Rome's liveliest and most colorful neighborhood. Worth exploring for its street musicians and cozy atmosphere."
+          },
+          "d2-enzo": {
+            "title": "Da Enzo al 29 (Trattoria)",
+            "desc": "Taste classic Roman cuisine at this beloved little Trastevere eatery. Cacio e pepe and carbonara are among the favorites — we recommend arriving early to get a table."
+          },
+          "d3-navona": {
+            "title": "Piazza Navona",
+            "desc": "Sip your morning coffee in this grand Baroque piazza, home to Bernini's famous Fountain of the Four Rivers. One of Rome's liveliest squares, with street artists and historic façades."
+          },
+          "d3-pantheon": {
+            "title": "Pantheon",
+            "desc": "Marvel at the massive dome and oculus of the Pantheon, one of the best-preserved buildings of the ancient world. This engineering wonder can be visited for free today."
+          },
+          "d3-eustachio": {
+            "title": "Sant'Eustachio Il Caffè",
+            "desc": "Try one of the city's best espressos at this legendary Roman coffeehouse. Its frothy coffee, made with a secret recipe, is a must-taste."
+          },
+          "d3-campodefiori": {
+            "title": "Campo de' Fiori Market",
+            "desc": "Browse fresh produce, spices, and local goods at this square, which turns into a lively open-air market each morning. The colorful stalls make for great photos."
+          },
+          "d3-farnese": {
+            "title": "Palazzo Farnese (exterior)",
+            "desc": "Admire the façade of this magnificent palace, a masterpiece of Renaissance architecture, from the outside. Today home to the French Embassy, it lends elegance to the square."
+          },
+          "d3-roscioli": {
+            "title": "Roscioli Salumeria (Dinner)",
+            "desc": "Taste exquisite Italian cheeses, cured meats, and superb pasta at this famous deli-and-restaurant combo. Reservations are strongly recommended."
+          },
+          "d4-borghese-gardens": {
+            "title": "Villa Borghese Gardens",
+            "desc": "Take a morning walk in one of Rome's largest parks, relax by the lake, or rent a bike. An ideal, peaceful start away from the city's bustle."
+          },
+          "d4-galleria": {
+            "title": "Galleria Borghese",
+            "desc": "Enjoy masterpieces by Bernini and Caravaggio at this elegant gallery. Visitor numbers are limited, so be sure to book your ticket in advance."
+          },
+          "d4-gelateria": {
+            "title": "Gelateria La Romana (Ice Cream)",
+            "desc": "Try the rich variety of handmade Italian gelato at this legendary ice cream shop, serving since 1947. A refreshing break on a hot August day."
+          },
+          "d4-popolo": {
+            "title": "Piazza del Popolo",
+            "desc": "Take your last photos at this expansive square, famous for its twin churches and the Egyptian obelisk at its center. Enjoy panoramic city views from the Pincio Terrace."
+          },
+          "d4-margutta": {
+            "title": "Il Margutta (Dinner)",
+            "desc": "Enjoy your last dinner in Rome at this stylish vegetarian restaurant set in an art-gallery atmosphere. A special choice for a farewell, with creative presentation and a warm ambience."
+          }
+        },
+        "guide": {
+          "panelTitle": "City Guide",
+          "transport": {
+            "title": "Getting Around",
+            "body": "Rome's historic center is protected by a Limited Traffic Zone (ZTL); driving into these areas carries heavy fines. Leave your car in a paid car park outside the ZTL (e.g. Parcheggio Esquilino or Parcheggio Via Veneto near Termini) and reach the center by public transport or on foot. A car comes in handy for day trips outside the city, like Tivoli — research parking at your destination in advance. Public transport can be the better option during morning and evening rush hour (7:30–9:30 and 17:30–19:30). Always confirm whether your hotel has parking when you book."
+          },
+          "culture": {
+            "title": "Local Culture",
+            "body": "Tipping (mancia) isn't mandatory in restaurants, but it's appreciated for good service — typically 5–10%. When visiting churches and religious sites, keep your shoulders and knees covered; carrying a light shawl can help. It's common to greet people with 'Buongiorno' (good day) or 'Buonasera' (good evening). Drinking coffee standing at the counter is cheaper than sitting down — a local custom known as 'al banco'."
+          },
+          "tips": {
+            "title": "Good to Know",
+            "body": "You can get free, clean drinking water from Rome's public fountains, known as 'nasoni' — bring a bottle. Type C, F, and L plugs are used, so pack a universal adapter. Watch out for pickpockets in the city center, especially in crowded tourist spots and on public transport. Wear comfortable walking shoes, as you'll be covering a lot of ground at an active pace. August runs hot, so don't forget sunscreen and a hat."
+          }
+        }
+      }
     },
     "howItWorks": {
       "eyebrow": "PROCESS",
@@ -500,8 +632,7 @@
       "totalBudget": "Total Budget",
       "calendar": {
         "selectDate": "Select date",
-        "clear": "Clear",
-        "today": "Today"
+        "clear": "Clear"
       }
     },
     "step2": {

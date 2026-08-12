@@ -38,9 +38,141 @@
     },
     "scroll": "Scroll",
     "product": {
-      "eyebrow": "ÜRÜN",
-      "title": "Travyon'u Keşfedin",
-      "subtitle": "Dakikalar içinde kişiselleştirilmiş seyahat planın hazır."
+      "eyebrow": "Canlı Önizleme",
+      "title": "Planını saniyeler içinde canlandır",
+      "subtitle": "Aşağıdaki örnek Roma planında gezinerek uygulamayı üye olmadan deneyin — günleri değiştirin, aktivite ekleyin, rehberi ve hava durumunu açın.",
+      "nudge": {
+        "title": "Bu sadece canlı bir önizleme!",
+        "body": "Gerçek uygulamada çok daha detaylı planlar oluşturabilir, tüm özelliklere ulaşabilirsin. Örnek planı dilediğin gibi keşfetmeye başla.",
+        "ok": "Tamam"
+      },
+      "demo": {
+        "destination": "Roma, İtalya",
+        "yourStay": "Konaklama Yerin",
+        "resetLabel": "Baştan başla",
+        "moveUp": "Yukarı taşı",
+        "moveDown": "Aşağı taşı",
+        "delete": "Sil",
+        "summaries": {
+          "day1": "Antik Roma'nın ihtişamına tanıklık edeceğiniz bir başlangıçla şehrin kalbine adım atın.",
+          "day2": "Vatikan'ın kutsal sanat hazineleri ve Aziz Petrus'un ihtişamıyla dolu bir gün sizi bekliyor.",
+          "day3": "Barok Roma'nın meydanları ve gizli köşeleri arasında keyifli bir keşif günü.",
+          "day4": "Roma'ya veda ederken park manzaraları ve son lezzet duraklarıyla huzurlu bir gün."
+        },
+        "items": {
+          "d1-panificio": {
+            "title": "Panificio Forno (Fırın & Pizza Al Taglio)",
+            "desc": "Roma'nın meşhur pizza al taglio (dilim pizza) lezzetini deneyimleyin. Kolezyum çevresinde uygun fiyata bulabileceğiniz bu fırından taze pizzaları alarak öğle yemeğinizi pratik ve lezzetli hale getirin. Genelde farklı çeşitler bulunur, en popüler olanları deneyin."
+          },
+          "d1-oppio": {
+            "title": "Parco del Colle Oppio (Oppio Tepesi Parkı)",
+            "desc": "Kolezyum'un nefes kesici bir panoramik manzarasını sunan bu parkta dolaşın. Sabahın erken saatlerinde kalabalıklardan uzak, huzurlu bir fotoğraf çekme şansı yakalayın. Parkın yükseltisinden harika açılar yakalayabilirsiniz."
+          },
+          "d1-colosseo": {
+            "title": "Kolezyum (Colosseo) ve Constantinus Kemeri",
+            "desc": "Roma İmparatorluğu'nun sembolü Kolezyum'un dış cephesini ve Constantinus Kemeri'nin detaylarını hayranlıkla izleyin. Bütçeniz kısıtlı olduğundan, bu tarihi yapıların büyüklüğünü ve ihtişamını dışarıdan hissederek bol bol fotoğraf çekin. Çevresindeki meydanın atmosferini soluyun."
+          },
+          "d1-venezia": {
+            "title": "Piazza Venezia ve Altare della Patria (Vatan Anıtı)",
+            "desc": "Roma'nın merkezi meydanlarından Piazza Venezia'yı ve İtalya'nın birleşmesini simgeleyen görkemli Vatan Anıtı'nı dışarıdan görün. Anıtın teraslarından şehrin manzarasını ücretsiz seyredebilir ve güzel fotoğraflar çekebilirsiniz. Dikkatli olun, merdivenlerde oturmak bazen yasak olabilir."
+          },
+          "d1-trevi": {
+            "title": "Fontana di Trevi (Aşk Çeşmesi)",
+            "desc": "Dünyaca ünlü Trevi Çeşmesi'nin büyüleyici güzelliğine tanık olun. Geleneksel olarak çeşmeye madeni para atarak Roma'ya tekrar gelme dileğinde bulunun; kalabalık olabilir, bu yüzden en iyi fotoğraflar için farklı açılar deneyin."
+          },
+          "d1-monti": {
+            "title": "Pasta Chef - Monti (Trattoria)",
+            "desc": "Yerel halkın favorisi olan bu küçük trattoriada uygun fiyata taze el yapımı makarnaların tadına bakın. Menüdeki günlük spesialleri kaçırmayın ve porsiyonların doyurucu olduğunu unutmayın. Erken saatlerde yer bulmak daha kolay olabilir."
+          },
+          "d2-vatikan": {
+            "title": "Vatikan Müzeleri ve Sistine Şapeli",
+            "desc": "Dünyanın en zengin sanat koleksiyonlarından birini barındıran Vatikan Müzeleri'nde Michelangelo'nun tavan freskleriyle ünlü Sistine Şapeli'ni görün. Uzun kuyrukları önlemek için biletinizi önceden çevrimiçi alın."
+          },
+          "d2-pizzarium": {
+            "title": "Pizzarium Bonci (Dilim Pizza)",
+            "desc": "Roma'nın en iyi dilim pizzacılarından biri kabul edilen bu mekânda çeşit çeşit taze pizzayı gramla satın alarak tadın. Ayaküstü hızlı ve doyurucu bir öğle molası için ideal."
+          },
+          "d2-sanpietro": {
+            "title": "Aziz Petrus Bazilikası (dış meydan)",
+            "desc": "Bernini'nin görkemli sütun dizisiyle çevrili San Pietro Meydanı'nda dolaşın ve bazilikanın etkileyici cephesini ücretsiz izleyin. Kubbeye çıkmak isterseniz ayrı bir ücret uygulanır."
+          },
+          "d2-castel": {
+            "title": "Castel Sant'Angelo (dış)",
+            "desc": "Tiber Nehri kıyısındaki bu silindirik kalenin etkileyici mimarisini dışarıdan görün. Çevresindeki köprüden nehir ve kale manzaralı fotoğraflar çekebilirsiniz."
+          },
+          "d2-ponte": {
+            "title": "Ponte Sant'Angelo (Melekler Köprüsü)",
+            "desc": "Bernini'nin melek heykelleriyle süslü bu tarihi yaya köprüsünden yürüyerek geçin. Gün batımında en güzel manzarayı ve fotoğraf açılarını yakalarsınız."
+          },
+          "d2-trastevere": {
+            "title": "Trastevere Akşam Yürüyüşü",
+            "desc": "Roma'nın en canlı ve renkli mahallesi Trastevere'nin dar arnavut kaldırımlı sokaklarında akşam havasının tadını çıkarın. Sokak müzisyenleri ve samimi atmosferiyle keşfetmeye değer."
+          },
+          "d2-enzo": {
+            "title": "Da Enzo al 29 (Trattoria)",
+            "desc": "Trastevere'nin gözde küçük lokantasında geleneksel Roma mutfağının klasiklerini tadın. Cacio e pepe ve carbonara favoriler arasında; yer bulmak için erken gitmenizi öneririz."
+          },
+          "d3-navona": {
+            "title": "Piazza Navona",
+            "desc": "Bernini'nin ünlü Dört Nehir Çeşmesi'ne ev sahipliği yapan bu görkemli barok meydanda sabah kahvenizi yudumlayın. Sokak sanatçıları ve tarihi cepheleriyle Roma'nın en canlı meydanlarından biri."
+          },
+          "d3-pantheon": {
+            "title": "Pantheon",
+            "desc": "Antik dünyanın en iyi korunmuş yapılarından Pantheon'un devasa kubbesi ve oculus'unu hayranlıkla izleyin. Mühendislik harikası bu tapınak günümüzde ücretsiz ziyaret edilebilir."
+          },
+          "d3-eustachio": {
+            "title": "Sant'Eustachio Il Caffè",
+            "desc": "Roma'nın efsanevi kahvecisinde şehrin en iyi espresso'larından birini deneyin. Gizli tarifiyle hazırlanan köpüklü kahvesi mutlaka tadılmalı."
+          },
+          "d3-campodefiori": {
+            "title": "Campo de' Fiori Pazarı",
+            "desc": "Sabahları canlı bir açık hava pazarına dönüşen bu meydanda taze meyve, baharat ve yerel ürünlere göz atın. Renkli tezgahlar fotoğraf için harika bir fırsat sunar."
+          },
+          "d3-farnese": {
+            "title": "Palazzo Farnese (dış cephe)",
+            "desc": "Rönesans mimarisinin başyapıtlarından bu görkemli sarayın cephesini dışarıdan inceleyin. Bugün Fransa Büyükelçiliği olarak kullanılan yapı meydana zarafet katıyor."
+          },
+          "d3-roscioli": {
+            "title": "Roscioli Salumeria (Akşam Yemeği)",
+            "desc": "Şarküteri ve restoranı bir arada sunan bu ünlü mekânda seçkin İtalyan peynirleri, şarkütüri ürünleri ve enfes makarnaların tadına bakın. Rezervasyon yaptırmanız şiddetle önerilir."
+          },
+          "d4-borghese-gardens": {
+            "title": "Villa Borghese Bahçeleri",
+            "desc": "Roma'nın en büyük parklarından birinde sabah yürüyüşü yapın, göl kenarında dinlenin veya bisiklet kiralayın. Şehrin gürültüsünden uzak huzurlu bir başlangıç için ideal."
+          },
+          "d4-galleria": {
+            "title": "Galleria Borghese",
+            "desc": "Bernini ve Caravaggio'nun başyapıtlarını barındıran bu şık galeride sanatın tadını çıkarın. Ziyaretçi sayısı sınırlı olduğundan biletinizi mutlaka önceden ayırtın."
+          },
+          "d4-gelateria": {
+            "title": "Gelateria La Romana (Dondurma)",
+            "desc": "1947'den beri hizmet veren bu efsanevi dondurmacıda el yapımı İtalyan gelatolarının zengin çeşitlerini deneyin. Sıcak Ağustos gününde ferahlatıcı bir mola."
+          },
+          "d4-popolo": {
+            "title": "Piazza del Popolo",
+            "desc": "İkiz kiliseleri ve merkezindeki Mısır dikilitaşıyla ünlü bu geniş meydanda son fotoğraflarınızı çekin. Pincio Terası'ndan şehrin panoramik manzarasını izleyebilirsiniz."
+          },
+          "d4-margutta": {
+            "title": "Il Margutta (Akşam Yemeği)",
+            "desc": "Sanat galerisi atmosferindeki bu şık vejetaryen restoranda Roma'daki son akşam yemeğinizin keyfini çıkarın. Yaratıcı sunumları ve sıcak ambiyansıyla veda için özel bir seçim."
+          }
+        },
+        "guide": {
+          "panelTitle": "Şehir Rehberi",
+          "transport": {
+            "title": "Ulaşım",
+            "body": "Roma'nın tarihi merkezi Zona a Traffico Limitato (ZTL) ile koruma altındadır; bu bölgelere araçla girmek ağır cezalara tabidir. Aracınızı ZTL dışındaki ücretli otoparklara (örn. Termini çevresinde Parcheggio Esquilino veya Parcheggio Via Veneto) bırakıp merkeze toplu taşıma veya yürüyerek ulaşım sağlayın. Tivoli gibi şehir dışı gezilerde aracınız çok işe yarayacaktır; varış noktasında park imkanlarını önceden araştırın. Sabah ve akşam yoğun trafikte (07:30-09:30 ve 17:30-19:30) toplu taşıma daha avantajlı olabilir. Otelinizde otopark olup olmadığını rezervasyon sırasında mutlaka teyit edin."
+          },
+          "culture": {
+            "title": "Yerel Kültür",
+            "body": "Restoranlarda bahşiş (mancia) zorunlu değildir ancak iyi hizmet için bahşiş bırakmak takdir edilir (genelde %5-10). Kilise ve dini mekanları ziyaret ederken omuzların ve dizlerin kapalı olmasına özen gösterin, yanınızda bir şal bulundurmanız faydalı olabilir. İnsanlarla tanışırken 'Buongiorno' (iyi günler) veya 'Buonasera' (iyi akşamlar) demek yaygındır. Barlarda ve kafelerde ayakta kahve içmek oturmaya göre daha uygun fiyatlıdır, bu 'al banco' denilen yerel bir adettir."
+          },
+          "tips": {
+            "title": "Faydalı Bilgiler",
+            "body": "Roma'da 'nasoni' adı verilen halk çeşmelerinden ücretsiz ve temiz içme suyu temin edebilirsiniz, yanınızda bir matara bulundurun. Şarj adaptörü için C, F ve L tipi fişler kullanılır; yanınıza bir evrensel adaptör alın. Şehir merkezinde yankesicilere karşı dikkatli olun, özellikle kalabalık turistik yerlerde ve toplu taşıma araçlarında eşyalarınıza sahip çıkın. Rahat yürüyüş ayakkabıları tercih edin, çünkü aktif bir tempoda çok yürüyeceksiniz. Ağustos ayı sıcak geçecektir, güneş kremi ve şapka kullanmayı unutmayın."
+          }
+        }
+      }
     },
     "howItWorks": {
       "eyebrow": "SÜREÇ",
@@ -500,8 +632,7 @@
       "totalBudget": "Toplam Bütçe",
       "calendar": {
         "selectDate": "Tarih seç",
-        "clear": "Temizle",
-        "today": "Bugün"
+        "clear": "Temizle"
       }
     },
     "step2": {

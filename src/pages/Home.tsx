@@ -7,6 +7,8 @@ import { ArrowRight, Sun, Moon, Plane } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import TravyonLogo from '../components/TravyonLogo';
+import TripPlannerDemo from '../components/tripPlanner/TripPlannerDemo';
+import PreviewNudge from '../components/PreviewNudge';
 
 // three.js + @react-three/fiber ağır olduğu için sadece bölüm görünüme
 // yaklaşınca ve yalnızca masaüstünde yükleniyor — hero animasyonuyla çakışmasın.
@@ -161,6 +163,10 @@ const Home: React.FC = () => {
   const STEPS = stepsData.map((s, i) => ({ num: STEP_NUMS[i], ...s }));
 
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showPreviewNudge, setShowPreviewNudge] = useState(false);
+  const nudgeTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => { if (nudgeTimerRef.current) window.clearTimeout(nudgeTimerRef.current); }, []);
 
   /* Hero fotoğrafları belirli aralıklarla otomatik döner */
   useEffect(() => {
@@ -412,7 +418,7 @@ const Home: React.FC = () => {
           BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
          ══════════════════════════════════════════ */}
       <section className="bg-bg py-10 sm:py-20 lg:py-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
           <motion.div
@@ -431,10 +437,13 @@ const Home: React.FC = () => {
 
           {/* Video kartı */}
           <motion.div
-            initial={{ opacity: 0, y: 32, scale: 0.97 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            onViewportEnter={() => {
+              nudgeTimerRef.current = window.setTimeout(() => setShowPreviewNudge(true), 900);
+            }}
             className="relative rounded-3xl overflow-hidden border border-divider shadow-[0_20px_50px_rgba(46,43,37,0.18)]"
           >
             {/* Browser şerit */}
@@ -451,14 +460,9 @@ const Home: React.FC = () => {
               </div>
             </div>
 
-            <video
-              src="/videos/travyon.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full block bg-surface-2"
-            />
+            <TripPlannerDemo />
+
+            {showPreviewNudge && <PreviewNudge onClose={() => setShowPreviewNudge(false)} />}
           </motion.div>
         </div>
       </section>
