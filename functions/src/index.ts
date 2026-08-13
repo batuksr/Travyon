@@ -1,11 +1,12 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { defineSecret } from "firebase-functions/params";
+import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
+import { defineSecret, defineString } from "firebase-functions/params";
 import { setGlobalOptions } from "firebase-functions/v2";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -21,12 +22,30 @@ const RESEND_FROM = defineSecret("RESEND_FROM");
 // Gemini API anahtarı — istemciye ASLA gönderilmez, sadece burada okunur.
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
+// iyzico abonelik ödemeleri — kimlik bilgileri Secret Manager'da, koda hiç yazılmaz.
+const IYZICO_API_KEY = defineSecret("IYZICO_API_KEY");
+const IYZICO_SECRET_KEY = defineSecret("IYZICO_SECRET_KEY");
+const IYZICO_MERCHANT_ID = defineSecret("IYZICO_MERCHANT_ID");
+const IYZICO_PRICING_PLAN_REF = defineSecret("IYZICO_PRICING_PLAN_REF");
+// Sandbox/prod geçişi kod değişikliği değil, deploy-zamanı config değişikliği olsun.
+const IYZICO_BASE_URL = defineString("IYZICO_BASE_URL", { default: "https://sandbox-api.iyzipay.com" });
+
+// Custom domain bağlanana kadar Firebase Hosting'in varsayılan adresi.
+const SITE_URL = "https://travyon-5fb01.web.app";
+
 const CODE_LENGTH = 6;
 const CODE_TTL_MS = 10 * 60 * 1000; // 10 dakika
 const RESEND_COOLDOWN_MS = 45 * 1000; // 45 saniye
 const MAX_ATTEMPTS = 5;
 const DAILY_SEND_LIMIT = 8; // normal kullanım için bol, script suistimalini engeller
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MONTH_MS = 30 * DAY_MS;
+const PLAN_MONTH_LIMIT = 3; // ücretsiz kullanıcı için aylık plan oluşturma sınırı
+// iyzico Pro ödeme akışı (bkz. Settings.tsx PRO_CHECKOUT_ENABLED) secret'lar
+// girilene kadar pasif — bu sınır da onunla birlikte pasif tutuluyor, aksi
+// halde kullanıcı sınıra takılır ama Pro'ya geçecek bir yol olmaz. İkisi
+// birlikte true yapılır.
+const PLAN_LIMIT_ENABLED = false;
 
 /* ══════════════════════════════════════════════
    RATE LIMITING — kullanıcı (uid) başına, fonksiyon başına
@@ -42,6 +61,8 @@ const RATE_LIMITS: Record<string, number> = {
   submitBugReport: 5,
   sharePublicPlan: 10,
   followUserAction: 30,
+  initiateSubscriptionCheckout: 3,
+  cancelSubscription: 5,
 };
 
 // generateAIContent/askTravelAssistant için mesaj bilinçli olarak bu sabit
@@ -67,6 +88,50 @@ const checkRateLimit = async (uid: string, fnName: string, message = DEFAULT_RAT
       throw new HttpsError("resource-exhausted", message);
     }
     tx.update(ref, { count: FieldValue.increment(1) });
+  });
+};
+
+/**
+ * Kullanıcı şu an Pro erişimine sahip mi? isPro tek başına yeterli değil —
+ * abonelik iptal edilse bile ödenen dönem sonuna (currentPeriodEnd) kadar
+ * erişim devam etmeli. currentPeriodEnd yoksa (eski/hiç ödeme yapmamış veri)
+ * isPro'nun kendisine güvenilir (var olmayan alan sınırsız erişim vermez —
+ * çünkü isPro zaten yalnızca activateSubscription() tarafından true yapılır).
+ */
+const isProActive = (d: Record<string, unknown> | undefined): boolean => {
+  if (!d?.isPro) return false;
+  const periodEnd = d.currentPeriodEnd as { toMillis?: () => number } | undefined;
+  const periodEndMs = periodEnd?.toMillis?.() ?? 0;
+  return periodEndMs === 0 || Date.now() < periodEndMs;
+};
+
+/**
+ * Ücretsiz kullanıcılar için aylık (30 günlük kayan pencere) plan oluşturma
+ * sınırı — sendVerificationCode'daki günlük-limit deseniyle aynı fikir,
+ * ama eşzamanlı çift istekte yarış durumuna açılmaması için transaction'lı.
+ */
+const checkAndIncrementPlanUsage = async (uid: string): Promise<void> => {
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const data = snap.data();
+    if (isProActive(data)) return; // Pro kullanıcı sınırsız
+
+    const windowStart = (data?.plansMonthWindowStart as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+    const now = Date.now();
+
+    if (!windowStart || now - windowStart > MONTH_MS) {
+      tx.set(userRef, {
+        plansUsedThisMonth: 1,
+        plansMonthWindowStart: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return;
+    }
+
+    if ((data?.plansUsedThisMonth ?? 0) >= PLAN_MONTH_LIMIT) {
+      throw new HttpsError("resource-exhausted", "plan_limit");
+    }
+    tx.set(userRef, { plansUsedThisMonth: FieldValue.increment(1) }, { merge: true });
   });
 };
 
@@ -346,6 +411,9 @@ export const generateAIContent = onCall<GenerateAIContentRequest>(
     }
 
     await checkRateLimit(request.auth.uid, "generateAIContent");
+    if (type === "plan" && PLAN_LIMIT_ENABLED) {
+      await checkAndIncrementPlanUsage(request.auth.uid);
+    }
 
     const apiKey = GEMINI_API_KEY.value();
     if (!apiKey) {
@@ -693,3 +761,418 @@ export const followUserAction = onCall<FollowUserActionRequest>(async (request) 
 
   return { ok: true };
 });
+
+/* ══════════════════════════════════════════════
+   iyzico PRO ABONELİK ÖDEMESİ
+   Akış: initiateSubscriptionCheckout (onCall) → iyzico hosted checkout →
+   subscriptionCallback (onRequest, redirect doğrulama) VE/VEYA
+   subscriptionWebhook (onRequest, tekrarlayan ödeme/başarısızlık bildirimi).
+   İkisi de aynı activateSubscription() yardımcısını kullanır — kod tekrarı
+   ve callback/webhook arasında davranış ayrışması önlenir.
+═══════════════════════════════════════════════ */
+
+const IDENTITY_NUMBER_RE = /^\d{11}$/;
+
+/** IYZWSv2 — resmi iyzipay SDK'sı bu v2/subscription uçlarını desteklemiyor,
+ *  bu yüzden imzalama Node'un yerleşik crypto'suyla elle yapılıyor. */
+const iyzicoAuthHeader = (
+  apiKey: string,
+  secretKey: string,
+  uriPath: string,
+  bodyJson: string,
+): { authorization: string; randomKey: string } => {
+  const randomKey = `${Date.now()}${Math.random().toString().slice(2, 12)}`;
+  const signature = createHmac("sha256", secretKey)
+    .update(randomKey + uriPath + bodyJson)
+    .digest("hex");
+  const authString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${signature}`;
+  return {
+    authorization: `IYZWSv2 ${Buffer.from(authString).toString("base64")}`,
+    randomKey,
+  };
+};
+
+/** iyzico v2 API'sine imzalı ham fetch. POST'lar (para hareketi başlatanlar)
+ *  ASLA otomatik tekrar denenmez — timeout'ta retry çift abonelik/çift
+ *  ücretlendirme riski taşır. Sadece GET (retrieve) çağıranlar serbestçe
+ *  tekrarlanabilir. */
+const iyzicoRequest = async <T>(
+  method: "GET" | "POST",
+  path: string,
+  body?: Record<string, unknown>,
+): Promise<T> => {
+  const apiKey = IYZICO_API_KEY.value();
+  const secretKey = IYZICO_SECRET_KEY.value();
+  const baseUrl = IYZICO_BASE_URL.value();
+  const bodyJson = body ? JSON.stringify(body) : "";
+  const { authorization, randomKey } = iyzicoAuthHeader(apiKey, secretKey, path, bodyJson);
+
+  const res = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authorization,
+      "x-iyzi-rnd": randomKey,
+    },
+    body: body ? bodyJson : undefined,
+  });
+
+  const json = await res.json().catch(() => null) as (Record<string, unknown> & { status?: string }) | null;
+  if (!res.ok || !json || json.status !== "success") {
+    logger.error("[iyzico] request failed", { path, httpStatus: res.status, json });
+    throw new Error(`iyzico_request_failed:${path}`);
+  }
+  return json as T;
+};
+
+/** X-IYZ-SIGNATURE-V3 doğrulaması — bu, herkese açık webhook uç noktasını
+ *  sahte isteklerden koruyan TEK mekanizma. Uzunluk farkı varsa
+ *  timingSafeEqual'i ÇAĞIRMADAN reddet (aksi halde exception atar). */
+const verifyIyzicoWebhookSignature = (
+  headerSignature: string | undefined,
+  secretKey: string,
+  merchantId: string,
+  eventType: string,
+  subscriptionReferenceCode: string,
+  orderReferenceCode: string,
+  customerReferenceCode: string,
+): boolean => {
+  if (!headerSignature) return false;
+  const input = merchantId + secretKey + eventType + subscriptionReferenceCode + orderReferenceCode + customerReferenceCode;
+  const computed = createHmac("sha256", secretKey).update(input).digest("hex");
+  try {
+    const a = Buffer.from(computed, "hex");
+    const b = Buffer.from(headerSignature, "hex");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Callback (redirect doğrulama) ve webhook'un (tekrarlayan ödeme bildirimi)
+ * İKİSİ de aynı ilk ödeme için tetiklenebilir — payments/{orderReferenceCode}
+ * dokümanının transaction içinde var olup olmadığı kontrolü doğal bir dedupe
+ * guard'ı: aynı ödeme iki kez işlenmez. proSince yalnızca İLK aktivasyonda
+ * yazılır; lastPaymentAt ve currentPeriodEnd her başarılı ödemede güncellenir.
+ */
+const activateSubscription = async (
+  uid: string,
+  params: { subscriptionReferenceCode: string; orderReferenceCode: string },
+): Promise<void> => {
+  const userRef = db.collection("users").doc(uid);
+  const paymentRef = db.collection("payments").doc(params.orderReferenceCode);
+
+  await db.runTransaction(async (tx) => {
+    const paymentSnap = await tx.get(paymentRef);
+    if (paymentSnap.exists) return; // zaten işlendi — idempotent no-op
+
+    const userSnap = await tx.get(userRef);
+    const userData = userSnap.data() ?? {};
+    const currentPeriodEnd = new Date(Date.now() + 30 * DAY_MS);
+
+    const update: Record<string, unknown> = {
+      isPro: true,
+      subscriptionReferenceCode: params.subscriptionReferenceCode,
+      subscriptionStatus: "active",
+      lastPaymentAt: FieldValue.serverTimestamp(),
+      currentPeriodEnd,
+    };
+    if (!userData.proSince) update.proSince = FieldValue.serverTimestamp();
+
+    tx.set(userRef, update, { merge: true });
+    tx.set(paymentRef, {
+      uid,
+      subscriptionReferenceCode: params.subscriptionReferenceCode,
+      amount: "49.90",
+      currency: "TRY",
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  });
+};
+
+/** İyzico'nun kuyrukladığı, henüz eşlemesi bulunamamış bir webhook olayı
+ *  varsa (callback'ten önce gelmiş) uygular ve kuyruktan siler. */
+const drainPendingWebhookEvent = async (uid: string, subscriptionReferenceCode: string): Promise<void> => {
+  const pendingRef = db.collection("pendingWebhookEvents").doc(subscriptionReferenceCode);
+  const pendingSnap = await pendingRef.get();
+  if (!pendingSnap.exists) return;
+
+  const pending = pendingSnap.data()!;
+  if (pending.eventType === "subscription.order.success") {
+    await activateSubscription(uid, {
+      subscriptionReferenceCode,
+      orderReferenceCode: pending.orderReferenceCode as string,
+    });
+  } else if (pending.eventType === "subscription.order.failure") {
+    await db.collection("users").doc(uid).set({ subscriptionStatus: "past_due" }, { merge: true });
+  }
+  await pendingRef.delete();
+};
+
+interface InitiateCheckoutRequest {
+  identityNumber: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+}
+
+interface IyzicoCheckoutInitializeResponse {
+  status: string;
+  token?: string;
+  checkoutFormContent?: string;
+  paymentPageUrl?: string;
+  subscriptionReferenceCode?: string;
+}
+
+/**
+ * "Yükselt" butonunun tetiklediği fonksiyon. Fatura bilgileri (TCKN/telefon/
+ * adres) client'tan gelir — iyzico'nun customer nesnesi bunları zorunlu
+ * kılıyor ve Firebase Auth'ta karşılığı yok. Ad/soyad/e-posta ise Auth
+ * kaydından alınır (client'tan güvenilmez).
+ */
+export const initiateSubscriptionCheckout = onCall<InitiateCheckoutRequest>(
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_PRICING_PLAN_REF] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
+
+    const { identityNumber, phone, address, city, country } =
+      request.data ?? ({} as Partial<InitiateCheckoutRequest>);
+    if (typeof identityNumber !== "string" || !IDENTITY_NUMBER_RE.test(identityNumber)) {
+      throw new HttpsError("invalid-argument", "invalid identityNumber");
+    }
+    if (typeof phone !== "string" || phone.trim().length < 6 || phone.length > 20) {
+      throw new HttpsError("invalid-argument", "invalid phone");
+    }
+    if (typeof address !== "string" || !address.trim() || address.length > 500) {
+      throw new HttpsError("invalid-argument", "invalid address");
+    }
+    if (typeof city !== "string" || !city.trim() || city.length > 100) {
+      throw new HttpsError("invalid-argument", "invalid city");
+    }
+    if (typeof country !== "string" || !country.trim() || country.length > 100) {
+      throw new HttpsError("invalid-argument", "invalid country");
+    }
+
+    const uid = request.auth.uid;
+    await checkRateLimit(uid, "initiateSubscriptionCheckout", "Rate limit exceeded — try again later.");
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    if (isProActive(userSnap.data())) {
+      throw new HttpsError("failed-precondition", "already_subscribed");
+    }
+
+    const authUser = await getAuth().getUser(uid);
+    const email = authUser.email;
+    if (!email) throw new HttpsError("failed-precondition", "Hesapta e-posta bulunamadı.");
+    const fullName = (authUser.displayName || "Travyon Kullanici").trim();
+    const [name, ...rest] = fullName.split(/\s+/);
+    const surname = rest.join(" ") || name;
+
+    let result: IyzicoCheckoutInitializeResponse;
+    try {
+      result = await iyzicoRequest<IyzicoCheckoutInitializeResponse>(
+        "POST",
+        "/v2/subscription/checkoutform/initialize",
+        {
+          locale: "tr",
+          conversationId: `${uid}_${Date.now()}`,
+          pricingPlanReferenceCode: IYZICO_PRICING_PLAN_REF.value(),
+          subscriptionInitialStatus: "ACTIVE",
+          callbackUrl: `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/subscriptionCallback`,
+          customer: {
+            name,
+            surname,
+            email,
+            gsmNumber: phone,
+            identityNumber,
+            billingAddress: { contactName: fullName, address, city, country },
+          },
+        },
+      );
+    } catch (err) {
+      logger.error("[initiateSubscriptionCheckout] iyzico call failed", {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      throw new HttpsError("internal", "Ödeme başlatılamadı.");
+    }
+
+    if (!result.token) {
+      logger.error("[initiateSubscriptionCheckout] no token in response", { result });
+      throw new HttpsError("internal", "Ödeme başlatılamadı.");
+    }
+
+    await db.collection("subscriptionCheckouts").doc(result.token).set({
+      uid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    // Initialize yanıtı referans kodunu baştan veriyorsa eşlemeyi hemen yaz —
+    // webhook callback'ten önce gelirse eşleme zaten hazır olur (yarış durumu önlenir).
+    if (result.subscriptionReferenceCode) {
+      await db.collection("subscriptionsByRef").doc(result.subscriptionReferenceCode).set({ uid });
+    }
+
+    return {
+      checkoutFormContent: result.checkoutFormContent ?? null,
+      paymentPageUrl: result.paymentPageUrl ?? null,
+    };
+  },
+);
+
+interface IyzicoCheckoutRetrieveResponse {
+  status: string;
+  paymentStatus?: string;
+  subscriptionReferenceCode?: string;
+  orderReferenceCode?: string;
+}
+
+/**
+ * iyzico kullanıcıyı buraya yönlendirir (GET query veya POST form-body ile
+ * token gelebilir — ikisi de kontrol edilir). Redirect'in kendisine ASLA
+ * güvenilmez; sonuç her zaman iyzico'nun retrieve uç noktasından
+ * SUNUCU TARAFINDA doğrulanır.
+ */
+export const subscriptionCallback = onRequest(
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY], cors: false, maxInstances: 5 },
+  async (req, res) => {
+    const fail = () => res.redirect(302, `${SITE_URL}/settings?checkout=failed`);
+    try {
+      const token = (req.query.token as string | undefined) || (req.body?.token as string | undefined);
+      if (!token) { fail(); return; }
+
+      const result = await iyzicoRequest<IyzicoCheckoutRetrieveResponse>(
+        "GET",
+        `/v2/subscription/checkoutform/${encodeURIComponent(token)}`,
+      );
+
+      if (result.paymentStatus !== "SUCCESS" || !result.subscriptionReferenceCode) {
+        fail(); return;
+      }
+
+      const checkoutSnap = await db.collection("subscriptionCheckouts").doc(token).get();
+      const uid = checkoutSnap.data()?.uid as string | undefined;
+      if (!uid) {
+        logger.error("[subscriptionCallback] no checkout mapping for token", { token });
+        fail(); return;
+      }
+
+      await db.collection("subscriptionsByRef").doc(result.subscriptionReferenceCode).set({ uid });
+      await activateSubscription(uid, {
+        subscriptionReferenceCode: result.subscriptionReferenceCode,
+        orderReferenceCode: result.orderReferenceCode ?? result.subscriptionReferenceCode,
+      });
+      await drainPendingWebhookEvent(uid, result.subscriptionReferenceCode);
+
+      res.redirect(302, `${SITE_URL}/settings?checkout=success`);
+    } catch (err) {
+      logger.error("[subscriptionCallback] failed", { err: err instanceof Error ? err.message : String(err) });
+      fail();
+    }
+  },
+);
+
+/**
+ * iyzico paneline "Abonelik Bildirimleri" URL'i olarak kayıt edilecek uç
+ * nokta — her tekrarlayan ödeme başarısı/başarısızlığında çağrılır.
+ * İmza doğrulanmadan HİÇBİR Firestore erişimi yapılmaz.
+ */
+export const subscriptionWebhook = onRequest(
+  { secrets: [IYZICO_SECRET_KEY, IYZICO_MERCHANT_ID], cors: false, maxInstances: 5 },
+  async (req, res) => {
+    try {
+      if (req.method !== "POST") { res.status(405).send("method not allowed"); return; }
+
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const eventType = body.iyziEventType as string | undefined;
+      const subscriptionReferenceCode = body.subscriptionReferenceCode as string | undefined;
+      const orderReferenceCode = body.orderReferenceCode as string | undefined;
+      const customerReferenceCode = body.customerReferenceCode as string | undefined;
+      const headerSignature = req.get("X-IYZ-SIGNATURE-V3");
+
+      if (!eventType || !subscriptionReferenceCode || !orderReferenceCode || !customerReferenceCode) {
+        res.status(400).send("missing fields"); return;
+      }
+
+      const valid = verifyIyzicoWebhookSignature(
+        headerSignature,
+        IYZICO_SECRET_KEY.value(),
+        IYZICO_MERCHANT_ID.value(),
+        eventType,
+        subscriptionReferenceCode,
+        orderReferenceCode,
+        customerReferenceCode,
+      );
+      if (!valid) {
+        logger.error("[subscriptionWebhook] invalid signature", { eventType, subscriptionReferenceCode });
+        res.status(401).send("invalid signature"); return;
+      }
+
+      const mapSnap = await db.collection("subscriptionsByRef").doc(subscriptionReferenceCode).get();
+      const uid = mapSnap.data()?.uid as string | undefined;
+
+      if (!uid) {
+        // Eşleme henüz yok (callback bu event'ten sonra koşacak olabilir) —
+        // kuyruğa al, 200 dön. iyzico'yu sonsuz retry'a zorlamamak kritik.
+        await db.collection("pendingWebhookEvents").doc(subscriptionReferenceCode).set({
+          eventType, orderReferenceCode, customerReferenceCode,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        res.status(200).send("queued"); return;
+      }
+
+      if (eventType === "subscription.order.success") {
+        await activateSubscription(uid, { subscriptionReferenceCode, orderReferenceCode });
+      } else if (eventType === "subscription.order.failure") {
+        // isPro hemen kapatılmaz — currentPeriodEnd'e kadar erişim sürer,
+        // bkz. isProActive(). Yenileme hiç gelmezse erişim doğal olarak biter.
+        await db.collection("users").doc(uid).set({ subscriptionStatus: "past_due" }, { merge: true });
+      }
+
+      res.status(200).send("ok");
+    } catch (err) {
+      logger.error("[subscriptionWebhook] failed", { err: err instanceof Error ? err.message : String(err) });
+      res.status(500).send("error");
+    }
+  },
+);
+
+/**
+ * "İptal Et" butonu. iyzico'nun cancel çağrısı BAŞARILI olmadan yerel durum
+ * DEĞİŞTİRİLMEZ. isPro hemen false yapılmaz — ürün metni (settings.subscription
+ * .cancel.desc) zaten "dönem sonunda ücretsiz plana geçilir" diyor; erişim
+ * currentPeriodEnd'e kadar sürer (bkz. isProActive()).
+ */
+export const cancelSubscription = onCall(
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    const uid = request.auth.uid;
+    await checkRateLimit(uid, "cancelSubscription", "Rate limit exceeded — try again later.");
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const referenceCode = userSnap.data()?.subscriptionReferenceCode as string | undefined;
+    if (!referenceCode) throw new HttpsError("failed-precondition", "no_active_subscription");
+
+    try {
+      await iyzicoRequest(
+        "POST",
+        `/v2/subscription/subscriptions/${encodeURIComponent(referenceCode)}/cancel`,
+        { reason: "Kullanici istegi" },
+      );
+    } catch (err) {
+      logger.error("[cancelSubscription] iyzico cancel failed", {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      throw new HttpsError("internal", "İptal işlemi başarısız.");
+    }
+
+    await db.collection("users").doc(uid).set({ subscriptionStatus: "cancelling" }, { merge: true });
+
+    return { ok: true };
+  },
+);

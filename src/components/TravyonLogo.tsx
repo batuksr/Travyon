@@ -12,12 +12,16 @@ interface TravyonLogoProps {
   size?: number;
   /** Show "travyon" text */
   showText?: boolean;
+  /** "trav" rengini temaya bağlı --color-text yerine sabit beyaz yapar —
+   *  koyu hero fotoğrafı gibi tema-bağımsız koyu zeminler için. */
+  light?: boolean;
   className?: string;
 }
 
 const TravyonLogo: React.FC<TravyonLogoProps> = ({
   size = 40,
   showText = true,
+  light = false,
   className = '',
 }) => {
   const fontPx = Math.round(size * 0.5);
@@ -45,7 +49,7 @@ const TravyonLogo: React.FC<TravyonLogoProps> = ({
             fontSize: fontPx,
             lineHeight: 1,
             letterSpacing: '-0.01em',
-            color: 'var(--color-text)',
+            color: light ? '#f8f5f5' : 'var(--color-text)',
           }}
         >
           trav

@@ -445,7 +445,7 @@
         },
         {
           "title": "6. Ücretli Planlar",
-          "content": "Pro ve Team planları için geçerli ödeme koşulları:\n\n• Abonelikler aylık veya yıllık olarak faturalandırılır.\n• Ücretli plandan çıkış, bir sonraki fatura döneminin başında geçerli olur.\n• Geri ödeme politikamız: İlk 14 gün içinde iptal ettiğinizde tam iade yapılır.\n• Fiyatlar önceden bildirim yapılarak değiştirilebilir. Mevcut abonelere en az 30 gün önceden bildirim yapılır.\n• Ödeme bilgileri güvenli ödeme altyapımız üzerinden saklanır."
+          "content": "Pro plan için geçerli ödeme koşulları:\n\n• Abonelik aylık olarak faturalandırılır ve otomatik yenilenir.\n• İptal ettiğinizde abonelik bir sonraki yenileme tarihinde ücretlendirilmez; ödediğiniz dönemin sonuna kadar Pro erişiminiz devam eder.\n• Geri ödeme talepleri otomatik değildir: İlk 14 gün içinde İletişim formu üzerinden bize ulaşarak iade talep edebilirsiniz, talepler manuel olarak değerlendirilir.\n• Fiyatlar önceden bildirim yapılarak değiştirilebilir. Mevcut abonelere en az 30 gün önceden bildirim yapılır.\n• Ödemeler iyzico güvenli ödeme altyapısı üzerinden işlenir; kart bilgileriniz bizim sunucularımızda hiç saklanmaz."
         },
         {
           "title": "7. Sorumluluk Sınırlaması",
@@ -1173,7 +1173,7 @@
         "privacyData": "Veri Kullanımı",
         "subscription": "Abonelik",
         "billingHistory": "Fatura Geçmişi",
-        "payment": "Ödeme Yöntemi",
+        "billingDetails": "Fatura Bilgileri",
         "dataExport": "Veri İndir",
         "deleteAccount": "Hesabı Sil",
         "faq": "SSS",
@@ -1188,6 +1188,7 @@
       "edit": "Düzenle",
       "add": "Ekle",
       "saveFailed": "Kaydedilemedi, tekrar deneyin.",
+      "saved": "Kaydedildi.",
       "currentPasswordRequired": "Mevcut şifrenizi girin.",
       "passwordPlaceholder": "••••••••",
       "applyAndSave": "Uygula & Kaydet",
@@ -1677,7 +1678,12 @@
         "title": "Aboneliği İptal Et",
         "desc": "Dönem sonunda ücretsiz plana geçilir.",
         "btn": "İptal Et"
-      }
+      },
+      "cancellingUntil": "İptal edildi — {{date}} tarihine kadar Pro erişiminiz devam eder.",
+      "cancelSuccess": "Abonelik iptal edildi. Dönem sonuna kadar Pro erişiminiz sürecek.",
+      "checkoutSuccess": "Ödeme başarılı! Pro'ya hoş geldiniz.",
+      "checkoutFailed": "Ödeme tamamlanamadı, lütfen tekrar deneyin.",
+      "billingDetailsRequired": "Yükseltmeden önce Fatura Bilgileri'ni ve Profil'deki telefon/adres bilgilerinizi tamamlayın."
     },
     "billingHistory": {
       "title": "Fatura Geçmişi",
@@ -1685,9 +1691,10 @@
       "headers": [
         "Tarih",
         "Tutar",
-        "Durum",
-        "Belge"
+        "Plan",
+        "Durum"
       ],
+      "paid": "Ödendi",
       "emptyPro": {
         "title": "İlk faturanız burada görünecek.",
         "desc": "Bir sonraki dönem sonunda otomatik oluşturulur."
@@ -1698,42 +1705,24 @@
         "btn": "Pro'ya Geç →"
       }
     },
-    "payment": {
-      "title": "Ödeme Yöntemi",
-      "subtitle": "Abonelik ödemelerinde kullanılacak kartı yönetin.",
-      "expiryPrefix": "Son kullanma:",
-      "changeBtn": "Değiştir",
-      "removeBtn": "Kaldır",
-      "empty": {
-        "title": "Kayıtlı ödeme yöntemi yok",
-        "desc": "Pro aboneliğe geçmek için bir kart ekleyin. Verileriniz şifreli olarak saklanır.",
-        "addBtn": "Kart Ekle"
-      },
-      "formInfo": "Kart bilgileriniz şifreli olarak saklanır. CVV numarası hiçbir zaman kaydedilmez.",
+    "billingDetails": {
+      "title": "Fatura Bilgileri",
+      "subtitle": "iyzico ödeme sağlayıcısının fatura için zorunlu kıldığı bilgiler.",
+      "info": "Bu bilgiler yalnızca ödeme sağlayıcımız iyzico'ya fatura kesimi için iletilir. Telefon ve adres bilgileriniz Profil sekmesinden yönetilir.",
       "labels": {
-        "number": "Kart Numarası",
-        "name": "Kart Üzerindeki Ad",
-        "expiry": "Son Kullanma (MM/YY)",
-        "cvv": "CVV"
+        "identityNumber": "T.C. Kimlik Numarası",
+        "city": "Şehir"
       },
       "placeholders": {
-        "number": "1234 5678 9012 3456",
-        "name": "AD SOYAD",
-        "expiry": "12/27",
-        "cvv": "•••"
+        "identityNumber": "11 haneli T.C. kimlik numaranız",
+        "city": "Örn. İstanbul"
       },
-      "saveBtn": "Kartı Kaydet",
-      "securityNote": "Ödeme bilgileri 256-bit SSL şifreleme ile korunur.",
+      "phoneAddressMissing": "Telefon ve adres bilgileriniz eksik — Profil sekmesinden ekleyin.",
+      "securityNote": "Bilgileriniz 256-bit SSL şifreleme ile korunur, kart bilgisi bu ekranda hiç toplanmaz.",
       "errors": {
-        "invalidNumber": "Geçersiz kart numarası.",
-        "nameRequired": "Kart üzerindeki adı girin.",
-        "invalidExpiryFormat": "Son kullanma tarihi MM/YY formatında olmalı.",
-        "expired": "Kartın son kullanma tarihi geçmiş.",
-        "invalidCvv": "Geçersiz CVV kodu.",
-        "actionFailed": "İşlem başarısız, tekrar deneyin."
-      },
-      "success": "Kart başarıyla kaydedildi.",
-      "removed": "Kart kaldırıldı."
+        "invalidIdentity": "T.C. kimlik numarası 11 haneli olmalı.",
+        "cityRequired": "Şehir bilgisi gerekli."
+      }
     },
     "dataExport": {
       "title": "Verilerimi İndir",

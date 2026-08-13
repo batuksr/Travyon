@@ -3,15 +3,20 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Kullanıcı profil ve ayarları — sadece kendi belgesi.
-    // isPro alanı istisna: bu, ödeme durumunu belirlediği için kullanıcı
-    // kendi kendine yazamaz — sadece güvenilir bir sunucu (Admin SDK,
-    // Firestore rule'larını atlar) tarafından değiştirilebilir.
+    // isPro ve abonelik/kullanım alanları istisna: ödeme durumunu ve
+    // ücretsiz-plan sayacını belirledikleri için kullanıcı kendi kendine
+    // yazamaz — sadece güvenilir bir sunucu (Admin SDK, Firestore
+    // rule'larını atlar) tarafından değiştirilebilir.
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid
                     && (!('isPro' in request.resource.data) || request.resource.data.isPro == false);
       allow update: if request.auth != null && request.auth.uid == uid
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPro']);
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                      'isPro', 'subscriptionReferenceCode', 'subscriptionStatus',
+                      'proSince', 'lastPaymentAt', 'currentPeriodEnd',
+                      'plansUsedThisMonth', 'plansMonthWindowStart'
+                    ]);
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -86,6 +91,26 @@ service cloud.firestore {
     // İletişim formu cooldown'ları — sadece Cloud Functions (Admin SDK) erişir.
     match /contactCooldowns/{docId} {
       allow read, write: if false;
+    }
+
+    // iyzico abonelik ödemeleri — token→uid ve referans kodu→uid eşlemeleri,
+    // kuyruklanmış webhook olayları: hepsi sadece Cloud Functions (Admin SDK)
+    // yazar/okur, client'a hiç açılmaz.
+    match /subscriptionCheckouts/{token} {
+      allow read, write: if false;
+    }
+    match /subscriptionsByRef/{refCode} {
+      allow read, write: if false;
+    }
+    match /pendingWebhookEvents/{refCode} {
+      allow read, write: if false;
+    }
+
+    // Ödeme kayıtları — sadece Cloud Functions yazar (activateSubscription).
+    // Kullanıcı SADECE kendi ödemelerini okuyabilir (Fatura Geçmişi ekranı).
+    match /payments/{orderReferenceCode} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow write: if false;
     }
   }
 }

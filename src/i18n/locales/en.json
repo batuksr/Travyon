@@ -445,7 +445,7 @@
         },
         {
           "title": "6. Paid Plans",
-          "content": "Payment terms applicable to Pro and Team plans:\n\n• Subscriptions are billed monthly or annually.\n• Cancelling a paid plan takes effect at the start of the next billing period.\n• Our refund policy: A full refund is issued if you cancel within the first 14 days.\n• Prices may change with prior notice. Existing subscribers are notified at least 30 days in advance.\n• Payment information is stored via our secure payment infrastructure."
+          "content": "Payment terms applicable to the Pro plan:\n\n• The subscription is billed monthly and renews automatically.\n• If you cancel, you will not be charged at the next renewal date; your Pro access continues until the end of the period you already paid for.\n• Refund requests are not automatic: contact us via the Contact form within the first 14 days to request a refund; requests are reviewed manually.\n• Prices may change with prior notice. Existing subscribers are notified at least 30 days in advance.\n• Payments are processed through iyzico's secure payment infrastructure; your card details are never stored on our servers."
         },
         {
           "title": "7. Limitation of Liability",
@@ -1173,7 +1173,7 @@
         "privacyData": "Data Usage",
         "subscription": "Subscription",
         "billingHistory": "Billing History",
-        "payment": "Payment Method",
+        "billingDetails": "Billing Details",
         "dataExport": "Export Data",
         "deleteAccount": "Delete Account",
         "faq": "FAQ",
@@ -1188,6 +1188,7 @@
       "edit": "Edit",
       "add": "Add",
       "saveFailed": "Could not save, please try again.",
+      "saved": "Saved.",
       "currentPasswordRequired": "Enter your current password.",
       "passwordPlaceholder": "••••••••",
       "applyAndSave": "Apply & Save",
@@ -1677,7 +1678,12 @@
         "title": "Cancel Subscription",
         "desc": "You will switch to the Free plan at the end of the period.",
         "btn": "Cancel"
-      }
+      },
+      "cancellingUntil": "Cancelled — your Pro access continues until {{date}}.",
+      "cancelSuccess": "Subscription cancelled. Your Pro access continues until the end of the period.",
+      "checkoutSuccess": "Payment successful! Welcome to Pro.",
+      "checkoutFailed": "Payment could not be completed, please try again.",
+      "billingDetailsRequired": "Complete your Billing Details and your phone/address in Profile before upgrading."
     },
     "billingHistory": {
       "title": "Billing History",
@@ -1685,9 +1691,10 @@
       "headers": [
         "Date",
         "Amount",
-        "Status",
-        "Document"
+        "Plan",
+        "Status"
       ],
+      "paid": "Paid",
       "emptyPro": {
         "title": "Your first invoice will appear here.",
         "desc": "It will be generated automatically at the end of the next period."
@@ -1698,42 +1705,24 @@
         "btn": "Upgrade to Pro →"
       }
     },
-    "payment": {
-      "title": "Payment Method",
-      "subtitle": "Manage the card used for subscription payments.",
-      "expiryPrefix": "Expires:",
-      "changeBtn": "Change",
-      "removeBtn": "Remove",
-      "empty": {
-        "title": "No saved payment method",
-        "desc": "Add a card to upgrade to Pro. Your data is stored encrypted.",
-        "addBtn": "Add Card"
-      },
-      "formInfo": "Your card details are stored encrypted. The CVV is never saved.",
+    "billingDetails": {
+      "title": "Billing Details",
+      "subtitle": "Information our payment provider iyzico requires for billing.",
+      "info": "This information is only sent to our payment provider iyzico for invoicing. Your phone and address are managed in the Profile tab.",
       "labels": {
-        "number": "Card Number",
-        "name": "Name on Card",
-        "expiry": "Expiry (MM/YY)",
-        "cvv": "CVV"
+        "identityNumber": "Turkish National ID Number",
+        "city": "City"
       },
       "placeholders": {
-        "number": "1234 5678 9012 3456",
-        "name": "FULL NAME",
-        "expiry": "12/27",
-        "cvv": "•••"
+        "identityNumber": "Your 11-digit Turkish ID number",
+        "city": "e.g. Istanbul"
       },
-      "saveBtn": "Save Card",
-      "securityNote": "Payment information is protected with 256-bit SSL encryption.",
+      "phoneAddressMissing": "Your phone and address are missing — add them in the Profile tab.",
+      "securityNote": "Your data is protected with 256-bit SSL encryption; card details are never collected on this screen.",
       "errors": {
-        "invalidNumber": "Invalid card number.",
-        "nameRequired": "Enter the name on the card.",
-        "invalidExpiryFormat": "Expiry date must be in MM/YY format.",
-        "expired": "The card's expiry date has passed.",
-        "invalidCvv": "Invalid CVV code.",
-        "actionFailed": "Action failed, please try again."
-      },
-      "success": "Card saved successfully.",
-      "removed": "Card removed."
+        "invalidIdentity": "The ID number must be 11 digits.",
+        "cityRequired": "City is required."
+      }
     },
     "dataExport": {
       "title": "Export My Data",

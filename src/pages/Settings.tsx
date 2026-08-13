@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   updateProfile,
@@ -10,17 +10,19 @@ import {
   deleteUser,
   signOut,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { submitBugReport } from '../services/bugReportService';
+import { initiateSubscriptionCheckout, cancelSubscription as cancelSubscriptionCall } from '../services/subscriptionService';
+import IyzicoCheckoutModal from '../components/IyzicoCheckoutModal';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore, CURRENCY_MAP } from '../store/useAppSettingsStore';
 import {
   User, Mail, Lock, ChevronRight, Check, AlertCircle, Loader2, Camera,
   Settings2, BookOpen, MapPin, Globe, Ruler,
   BellRing, Smartphone, Eye, EyeOff, Database,
-  CreditCard, Receipt, Wallet, Download, Trash2,
-  HelpCircle, MessageCircle, Bug, LogOut,
+  CreditCard, Receipt, Download, Trash2,
+  HelpCircle, MessageCircle, Bug, LogOut, IdCard,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -193,6 +195,13 @@ const SettingRow: React.FC<{ title: string; desc: string; children: React.ReactN
   </div>
 );
 
+// iyzico ödeme altyapısı (Cloud Functions, firestore.rules) hazır ve tam
+// çalışır durumda, ama iyzico sandbox/prod secret'ları henüz girilmedi —
+// site lansmanında "Yükselt" akışı bilinçli olarak pasif tutuluyor. İlgi
+// olursa: secret'lar girilip sandbox'ta test edildikten sonra bu tek satır
+// true yapılır, başka hiçbir kod değişikliği gerekmez.
+const PRO_CHECKOUT_ENABLED = false;
+
 const ComingSoonBadge: React.FC<{ label: string }> = ({ label }) => (
   <span className="text-[10px] font-bold bg-surface-2 text-muted px-2 py-0.5 rounded-full uppercase tracking-widest">{label}</span>
 );
@@ -272,7 +281,7 @@ const NAV_GROUPS: { labelKey: string; items: { id: Section; icon: LucideIcon; la
     items: [
       { id: 'subscription',    icon: CreditCard, labelKey: 'settings.nav.items.subscription' },
       { id: 'billing_history', icon: Receipt,    labelKey: 'settings.nav.items.billingHistory' },
-      { id: 'payment',         icon: Wallet,     labelKey: 'settings.nav.items.payment' },
+      { id: 'payment',         icon: IdCard,     labelKey: 'settings.nav.items.billingDetails' },
     ],
   },
   {
@@ -419,15 +428,20 @@ const Settings: React.FC = () => {
 
   /* ── FATURALAMA ── */
   const [isPro, setIsPro] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<number | null>(null);
   const [plansUsedThisMonth, setPlansUsedThisMonth] = useState(0);
-  const [savedCard, setSavedCard] = useState<{ last4: string; brand: string; expiry: string } | null>(null);
-  const [showCardForm, setShowCardForm] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [cardStatus, setCardStatus] = useState<Status>(null);
-  const [cardLoading, setCardLoading] = useState(false);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [subscriptionStatusMsg, setSubscriptionStatusMsg] = useState<Status>(null);
+  const [checkoutFormHtml, setCheckoutFormHtml] = useState<string | null>(null);
+  const [billingHistory, setBillingHistory] = useState<{ id: string; amount: string; currency: string; createdAt: number }[]>([]);
+
+  /* ── FATURA BİLGİLERİ (checkout için iyzico'nun zorunlu kıldığı alanlar) ── */
+  const [identityNumber, setIdentityNumber] = useState('');
+  const [billingCity, setBillingCity] = useState('');
+  const [billingStatus, setBillingStatus] = useState<Status>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   /* ── VERİLERİM ── */
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -482,11 +496,56 @@ const Settings: React.FC = () => {
         setPassportExpiry(d.passportExpiry ?? '');
         setTimezone(d.timezone ?? detectTimezone());
         setIsPro(d.isPro ?? false);
+        setSubscriptionStatus(d.subscriptionStatus ?? null);
+        setCurrentPeriodEnd(d.currentPeriodEnd instanceof Timestamp ? d.currentPeriodEnd.toMillis() : null);
         setPlansUsedThisMonth(d.plansUsedThisMonth ?? 0);
-        setSavedCard(d.savedCard ?? null);
+        setIdentityNumber(d.identityNumber ?? '');
+        setBillingCity(d.billingCity ?? '');
       }
     } catch { /* Auth verisi yüklü */ }
   }, [user]);
+
+  // Pro erişimi isPro TEK BAŞINA yeterli değil — abonelik iptal edilse bile
+  // ödenen dönem sonuna kadar erişim sürer (bkz. functions/src/index.ts isProActive()).
+  // eslint-disable-next-line react-hooks/purity -- salt görüntüleme kontrolü, milisaniyelik render-arası fark önemsiz
+  const currentlyPro = isPro && (currentPeriodEnd === null || Date.now() < currentPeriodEnd);
+
+  /* Fatura geçmişi — sadece kendi ödemeleri (firestore.rules: payments okuma kendi uid'iyle sınırlı) */
+  const loadBillingHistory = useCallback(async () => {
+    if (!user) return;
+    try {
+      const q = query(collection(db, 'payments'), where('uid', '==', user.uid), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      setBillingHistory(snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          amount: data.amount ?? '0',
+          currency: data.currency ?? 'TRY',
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
+        };
+      }));
+    } catch { /* sessiz — boş durum gösterilir */ }
+  }, [user]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadBillingHistory(); }, [loadBillingHistory]);
+
+  /* Checkout redirect sonucu — subscriptionCallback bizi buraya ?checkout=success|failed ile yönlendirir */
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const checkoutResult = searchParams.get('checkout');
+    if (!checkoutResult) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSubscriptionStatusMsg(
+      checkoutResult === 'success'
+        ? { type: 'success', message: t('settings.subscription.checkoutSuccess') }
+        : { type: 'error', message: t('settings.subscription.checkoutFailed') }
+    );
+    if (checkoutResult === 'success') { loadUserData(); loadBillingHistory(); }
+    setSearchParams(prev => { prev.delete('checkout'); return prev; }, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadUserData(); }, [loadUserData]);
@@ -721,52 +780,61 @@ const Settings: React.FC = () => {
     } finally { setPrivacyLoading(false); }
   };
 
-  /* ── Kart formatters ── */
-  const fmtCardNumber = (v: string) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  const fmtCardExpiry = (v: string) => {
-    const d = v.replace(/\D/g, '').slice(0, 4);
-    return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
-  };
-  const detectBrand = (num: string) => {
-    const n = num.replace(/\s/g, '');
-    if (n.startsWith('4')) return 'Visa';
-    if (/^5[1-5]/.test(n)) return 'Mastercard';
-    if (/^3[47]/.test(n)) return 'Amex';
-    return 'Kart';
-  };
+  /* ── Fatura bilgileri (TCKN/şehir) — telefon/adres zaten Profil sekmesinde ── */
+  const IDENTITY_NUMBER_RE = /^\d{11}$/;
 
-  const handleCardSave = async () => {
+  const handleBillingSave = async () => {
     if (!user) return;
-    const digits = cardNumber.replace(/\s/g, '');
-    if (digits.length < 13) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidNumber') }); return; }
-    if (!cardName.trim()) { setCardStatus({ type: 'error', message: t('settings.payment.errors.nameRequired') }); return; }
-    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidExpiryFormat') }); return; }
-    const [mm, yy] = cardExpiry.split('/').map(Number);
-    const expDate = new Date(2000 + yy, mm - 1, 1);
-    if (expDate < new Date()) { setCardStatus({ type: 'error', message: t('settings.payment.errors.expired') }); return; }
-    if (cardCvv.length < 3) { setCardStatus({ type: 'error', message: t('settings.payment.errors.invalidCvv') }); return; }
-    setCardLoading(true); setCardStatus(null);
+    if (!IDENTITY_NUMBER_RE.test(identityNumber)) {
+      setBillingStatus({ type: 'error', message: t('settings.billingDetails.errors.invalidIdentity') }); return;
+    }
+    if (!billingCity.trim()) {
+      setBillingStatus({ type: 'error', message: t('settings.billingDetails.errors.cityRequired') }); return;
+    }
+    setBillingLoading(true); setBillingStatus(null);
     try {
-      const card = { last4: digits.slice(-4), brand: detectBrand(digits), expiry: cardExpiry };
-      await setDoc(doc(db, 'users', user.uid), { savedCard: card }, { merge: true });
-      setSavedCard(card);
-      setShowCardForm(false);
-      setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv('');
-      setCardStatus({ type: 'success', message: t('settings.payment.success') });
+      await setDoc(doc(db, 'users', user.uid), { identityNumber, billingCity }, { merge: true });
+      setBillingStatus({ type: 'success', message: t('settings.common.saved') });
     } catch {
-      setCardStatus({ type: 'error', message: t('settings.common.saveFailed') });
-    } finally { setCardLoading(false); }
+      setBillingStatus({ type: 'error', message: t('settings.common.saveFailed') });
+    } finally { setBillingLoading(false); }
   };
 
-  const handleCardDelete = async () => {
-    if (!user || !savedCard) return;
-    try {
-      await setDoc(doc(db, 'users', user.uid), { savedCard: null }, { merge: true });
-      setSavedCard(null);
-      setCardStatus({ type: 'success', message: t('settings.payment.removed') });
-    } catch {
-      setCardStatus({ type: 'error', message: t('settings.payment.errors.actionFailed') });
+  const billingDetailsComplete = IDENTITY_NUMBER_RE.test(identityNumber) && !!billingCity.trim() && !!phone.trim() && !!address.trim();
+
+  /* ── iyzico checkout ── */
+  const handleUpgradeClick = async () => {
+    if (!billingDetailsComplete) {
+      setActiveSection('payment');
+      setSubscriptionStatusMsg({ type: 'error', message: t('settings.subscription.billingDetailsRequired') });
+      return;
     }
+    setUpgradeLoading(true); setSubscriptionStatusMsg(null);
+    try {
+      const result = await initiateSubscriptionCheckout({
+        identityNumber, phone: `+90${phone}`, address, city: billingCity, country: 'Turkey',
+      });
+      if (result.paymentPageUrl) {
+        window.location.href = result.paymentPageUrl;
+      } else if (result.checkoutFormContent) {
+        setCheckoutFormHtml(result.checkoutFormContent);
+      } else {
+        setSubscriptionStatusMsg({ type: 'error', message: t('settings.subscription.checkoutFailed') });
+      }
+    } catch (e) {
+      setSubscriptionStatusMsg({ type: 'error', message: e instanceof Error ? e.message : t('settings.subscription.checkoutFailed') });
+    } finally { setUpgradeLoading(false); }
+  };
+
+  const handleCancelClick = async () => {
+    setCancelLoading(true); setSubscriptionStatusMsg(null);
+    try {
+      await cancelSubscriptionCall();
+      await loadUserData();
+      setSubscriptionStatusMsg({ type: 'success', message: t('settings.subscription.cancelSuccess') });
+    } catch (e) {
+      setSubscriptionStatusMsg({ type: 'error', message: e instanceof Error ? e.message : t('settings.common.saveFailed') });
+    } finally { setCancelLoading(false); }
   };
 
   const handleDeleteAccount = async () => {
@@ -1883,29 +1951,35 @@ const Settings: React.FC = () => {
             const barColor = usagePct >= 100 ? 'bg-rose-500' : usagePct >= 67 ? 'bg-amber-400' : 'bg-emerald-500';
             return (
               <CardWrap title={t('settings.subscription.title')} subtitle={t('settings.subscription.subtitle')}>
+                <StatusBanner status={subscriptionStatusMsg} />
 
                 {/* Mevcut plan kartı */}
-                <div className={`rounded-xl border p-5 mb-5 ${isPro
+                <div className={`rounded-xl border p-5 mb-5 ${currentlyPro
                   ? 'bg-gradient-to-br from-sage-200 to-sage-200 border-sage/30'
                   : 'bg-surface-2 border-divider'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="font-bold text-text text-base">
-                        {isPro ? `✨ ${t('settings.subscription.proPlanName')}` : t('settings.subscription.freePlanName')}
+                        {currentlyPro ? `✨ ${t('settings.subscription.proPlanName')}` : t('settings.subscription.freePlanName')}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
-                        {isPro ? t('settings.subscription.proDesc') : t('settings.subscription.freeDesc')}
+                        {currentlyPro ? t('settings.subscription.proDesc') : t('settings.subscription.freeDesc')}
                       </p>
+                      {currentlyPro && subscriptionStatus === 'cancelling' && currentPeriodEnd && (
+                        <p className="text-[11px] text-amber-600 font-semibold mt-1">
+                          {t('settings.subscription.cancellingUntil', { date: new Date(currentPeriodEnd).toLocaleDateString('tr-TR') })}
+                        </p>
+                      )}
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPro
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${currentlyPro
                       ? 'bg-sage text-white'
                       : 'bg-divider text-muted'}`}>
-                      {isPro ? t('settings.subscription.proBadge') : t('settings.subscription.freeBadge')}
+                      {currentlyPro ? t('settings.subscription.proBadge') : t('settings.subscription.freeBadge')}
                     </span>
                   </div>
 
                   {/* Aylık kullanım metresi — sadece Free'de */}
-                  {!isPro && (
+                  {!currentlyPro && (
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <p className="text-xs font-semibold text-muted">{t('settings.subscription.usageLabel')}</p>
@@ -1950,7 +2024,7 @@ const Settings: React.FC = () => {
                 </div>
 
                 {/* Upgrade CTA — sadece Free kullanıcılara */}
-                {!isPro && (
+                {!currentlyPro && (
                   <div className="relative bg-gradient-to-br from-sage to-sage-700 rounded-2xl p-5 overflow-hidden">
                     <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/25 rounded-full blur-3xl pointer-events-none" />
                     <div className="relative flex items-center justify-between gap-4">
@@ -1961,22 +2035,31 @@ const Settings: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        className="shrink-0 px-5 py-2.5 bg-white text-sage-700 font-bold text-sm rounded-full hover:bg-slate-50 transition-colors shadow-lg"
+                        onClick={handleUpgradeClick}
+                        disabled={upgradeLoading || !PRO_CHECKOUT_ENABLED}
+                        className="shrink-0 px-5 py-2.5 bg-white text-sage-700 font-bold text-sm rounded-full hover:bg-slate-50 transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
                       >
-                        {t('settings.subscription.cta.btn')}
+                        {upgradeLoading && <Loader2 size={14} className="animate-spin" />}
+                        {PRO_CHECKOUT_ENABLED ? t('settings.subscription.cta.btn') : t('settings.common.comingSoon')}
                       </button>
                     </div>
                   </div>
                 )}
 
                 {/* Pro iptal */}
-                {isPro && (
+                {currentlyPro && subscriptionStatus !== 'cancelling' && (
                   <div className="p-4 rounded-xl bg-surface-2 border border-divider flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-text">{t('settings.subscription.cancel.title')}</p>
                       <p className="text-xs text-muted mt-0.5">{t('settings.subscription.cancel.desc')}</p>
                     </div>
-                    <button type="button" className="px-3.5 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">
+                    <button
+                      type="button"
+                      onClick={handleCancelClick}
+                      disabled={cancelLoading}
+                      className="px-3.5 py-2 text-xs font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+                    >
+                      {cancelLoading && <Loader2 size={12} className="animate-spin" />}
                       {t('settings.subscription.cancel.btn')}
                     </button>
                   </div>
@@ -1988,19 +2071,29 @@ const Settings: React.FC = () => {
           {/* ══ FATURALAMA — Fatura Geçmişi ══ */}
           {activeSection === 'billing_history' && (
             <CardWrap title={t('settings.billingHistory.title')} subtitle={t('settings.billingHistory.subtitle')}>
-              {isPro ? (
-                /* Pro kullanıcı — tablo (başlangıçta boş, ilerleyen dönemde dolar) */
+              {currentlyPro || billingHistory.length > 0 ? (
                 <div className="rounded-xl border border-divider overflow-hidden">
                   <div className="grid grid-cols-4 bg-surface-2 border-b border-divider px-4 py-2.5">
                     {(t('settings.billingHistory.headers', { returnObjects: true }) as string[]).map(h => (
                       <p key={h} className="text-[10px] font-extrabold uppercase tracking-widest text-muted">{h}</p>
                     ))}
                   </div>
-                  <div className="py-10 text-center">
-                    <Receipt size={32} className="mx-auto text-divider mb-2" />
-                    <p className="text-sm text-muted font-medium">{t('settings.billingHistory.emptyPro.title')}</p>
-                    <p className="text-xs text-muted mt-1">{t('settings.billingHistory.emptyPro.desc')}</p>
-                  </div>
+                  {billingHistory.length === 0 ? (
+                    <div className="py-10 text-center">
+                      <Receipt size={32} className="mx-auto text-divider mb-2" />
+                      <p className="text-sm text-muted font-medium">{t('settings.billingHistory.emptyPro.title')}</p>
+                      <p className="text-xs text-muted mt-1">{t('settings.billingHistory.emptyPro.desc')}</p>
+                    </div>
+                  ) : (
+                    billingHistory.map(row => (
+                      <div key={row.id} className="grid grid-cols-4 px-4 py-3 border-b border-divider last:border-0 text-xs">
+                        <p className="text-text font-medium">{new Date(row.createdAt).toLocaleDateString('tr-TR')}</p>
+                        <p className="text-muted">{t('settings.subscription.proPlanName')}</p>
+                        <p className="text-text font-semibold">₺{row.amount}</p>
+                        <p className="text-emerald-600 font-semibold">{t('settings.billingHistory.paid')}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               ) : (
                 /* Free kullanıcı */
@@ -2024,151 +2117,60 @@ const Settings: React.FC = () => {
             </CardWrap>
           )}
 
-          {/* ══ FATURALAMA — Ödeme Yöntemi ══ */}
+          {/* ══ FATURALAMA — Fatura Bilgileri ══ */}
           {activeSection === 'payment' && (
-            <CardWrap title={t('settings.payment.title')} subtitle={t('settings.payment.subtitle')}>
-              <StatusBanner status={cardStatus} />
+            <CardWrap title={t('settings.billingDetails.title')} subtitle={t('settings.billingDetails.subtitle')}>
+              <StatusBanner status={billingStatus} />
 
-              {/* Kayıtlı kart */}
-              {savedCard && !showCardForm && (
-                <div className="flex items-center gap-4 p-4 rounded-xl border border-divider bg-surface-2 mb-5">
-                  <div className="w-12 h-8 rounded-md bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shrink-0">
-                    <CreditCard size={18} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-text">
-                      {savedCard.brand} •••• {savedCard.last4}
-                    </p>
-                    <p className="text-xs text-muted mt-0.5">{t('settings.payment.expiryPrefix')} {savedCard.expiry}</p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => { setShowCardForm(true); setCardStatus(null); }}
-                      className="px-3 py-1.5 text-xs font-semibold text-muted border border-divider rounded-lg hover:bg-surface-2 transition-colors"
-                    >
-                      {t('settings.payment.changeBtn')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCardDelete}
-                      className="px-3 py-1.5 text-xs font-semibold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
-                    >
-                      {t('settings.payment.removeBtn')}
-                    </button>
-                  </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-4">
+                <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                  {t('settings.billingDetails.info')}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.identityNumber')}</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={identityNumber}
+                    onChange={e => setIdentityNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    className={inputCls()}
+                    placeholder={t('settings.billingDetails.placeholders.identityNumber')}
+                    maxLength={11}
+                  />
                 </div>
-              )}
-
-              {/* Boş durum — kart yok ve form kapalı */}
-              {!savedCard && !showCardForm && (
-                <div className="flex flex-col items-center py-10 text-center mb-4">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
-                    <Wallet size={28} className="text-muted" />
-                  </div>
-                  <p className="text-sm font-semibold text-muted mb-1">{t('settings.payment.empty.title')}</p>
-                  <p className="text-xs text-muted max-w-xs leading-relaxed">
-                    {t('settings.payment.empty.desc')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => { setShowCardForm(true); setCardStatus(null); }}
-                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-full hover:brightness-105 transition-colors"
-                  >
-                    <CreditCard size={14} /> {t('settings.payment.empty.addBtn')}
-                  </button>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.city')}</label>
+                  <input
+                    type="text"
+                    value={billingCity}
+                    onChange={e => setBillingCity(e.target.value)}
+                    className={inputCls()}
+                    placeholder={t('settings.billingDetails.placeholders.city')}
+                  />
                 </div>
-              )}
 
-              {/* Kart formu */}
-              {showCardForm && (
-                <div className="space-y-4">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-2">
-                    <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                      {t('settings.payment.formInfo')}
+                {(!phone.trim() || !address.trim()) && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-xl flex items-start gap-2">
+                    <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                      {t('settings.billingDetails.phoneAddressMissing')}
                     </p>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.number')}</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={e => setCardNumber(fmtCardNumber(e.target.value))}
-                        className={inputCls()}
-                        placeholder={t('settings.payment.placeholders.number')}
-                        maxLength={19}
-                        autoComplete="cc-number"
-                      />
-                      {cardNumber && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-muted">
-                          {detectBrand(cardNumber)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.name')}</label>
-                    <input
-                      type="text"
-                      value={cardName}
-                      onChange={e => setCardName(e.target.value.toUpperCase())}
-                      className={inputCls()}
-                      placeholder={t('settings.payment.placeholders.name')}
-                      autoComplete="cc-name"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.expiry')}</label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={e => setCardExpiry(fmtCardExpiry(e.target.value))}
-                        className={inputCls()}
-                        placeholder={t('settings.payment.placeholders.expiry')}
-                        maxLength={5}
-                        autoComplete="cc-exp"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.payment.labels.cvv')}</label>
-                      <input
-                        type="password"
-                        value={cardCvv}
-                        onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        className={inputCls()}
-                        placeholder={t('settings.payment.placeholders.cvv')}
-                        maxLength={4}
-                        autoComplete="cc-csc"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-3 border-t border-divider">
-                    <button
-                      type="button"
-                      onClick={() => { setShowCardForm(false); setCardStatus(null); setCardNumber(''); setCardName(''); setCardExpiry(''); setCardCvv(''); }}
-                      className="px-4 py-2 rounded-xl text-sm font-semibold text-muted border border-divider hover:bg-surface-2 transition-colors"
-                    >
-                      {t('settings.common.cancel')}
-                    </button>
-                    <SaveBtn onClick={handleCardSave} loading={cardLoading} label={t('settings.payment.saveBtn')} />
-                  </div>
+                <div className="flex justify-end pt-3 border-t border-divider">
+                  <SaveBtn onClick={handleBillingSave} loading={billingLoading} label={t('settings.common.save')} />
                 </div>
-              )}
+              </div>
 
-              {/* Güvenlik notu */}
-              {!showCardForm && (
-                <div className="flex items-center gap-2 mt-2 text-[11px] text-muted">
-                  <span>🔐</span>
-                  <span>{t('settings.payment.securityNote')}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 mt-4 text-[11px] text-muted">
+                <span>🔐</span>
+                <span>{t('settings.billingDetails.securityNote')}</span>
+              </div>
             </CardWrap>
           )}
 
@@ -2335,6 +2337,13 @@ const Settings: React.FC = () => {
 
         </div>
       </div>
+
+      {checkoutFormHtml && (
+        <IyzicoCheckoutModal
+          formContent={checkoutFormHtml}
+          onClose={() => setCheckoutFormHtml(null)}
+        />
+      )}
     </div>
   );
 };

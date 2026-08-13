@@ -42,14 +42,17 @@ const getFriendlyError = (msg: string, lang: PlanLanguage = 'tr'): string => {
     busy: 'The AI server is busy right now — try again in a few seconds.',
     configError: 'Service configuration error — please contact an administrator.',
     parseError: "Couldn't process the plan data — try again, a different result may come through.",
+    planLimit: "You've reached your free monthly plan limit. Upgrade to Pro in Settings for unlimited plans.",
     generic: "Couldn't create the plan — please try again.",
   } : {
     rateLimit: 'İstek limiti aşıldı — 1 dakika bekleyip tekrar deneyin.',
     busy: 'Yapay zeka sunucusu şu an meşgul — birkaç saniye sonra tekrar deneyin.',
     configError: 'Servis yapılandırma hatası — lütfen yöneticinizle iletişime geçin.',
     parseError: 'Plan verisi işlenemedi — tekrar deneyin, farklı bir sonuç gelebilir.',
+    planLimit: 'Ücretsiz aylık plan hakkınızı doldurdunuz. Sınırsız plan için Ayarlar\'dan Pro\'ya geçin.',
     generic: 'Plan oluşturulamadı — lütfen tekrar deneyin.',
   };
+  if (m.includes('plan_limit')) return messages.planLimit;
   if (m.includes('429')) return messages.rateLimit;
   if (m.includes('503') || m.includes('overloaded')) return messages.busy;
   if (m.includes('api') && m.includes('key')) return messages.configError;
