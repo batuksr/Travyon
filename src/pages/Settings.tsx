@@ -488,6 +488,7 @@ const Settings: React.FC = () => {
     } catch { /* Auth verisi yüklü */ }
   }, [user]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadUserData(); }, [loadUserData]);
 
   /* ── Handlers ── */

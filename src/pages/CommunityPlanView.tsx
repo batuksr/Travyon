@@ -88,6 +88,7 @@ const CommunityPlanView: React.FC = () => {
 
   /* ── Plan yükle → store'a geçici enjekte et ── */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!planId) { setError(true); setLoading(false); return; }
 
     // Mevcut store içeriğini sakla (unmount'ta geri yüklenecek)

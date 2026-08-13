@@ -334,6 +334,9 @@ const Hub: React.FC = () => {
 
   /* ── Activity feed ── */
   const activities = useMemo((): ActivityItem[] => {
+    // Gün seviyesinde bir "yakın zamanda" etiketi için — saniye hassasiyeti gerekmiyor,
+    // render sırasında Date.now() okumak bilinçli (React purity kuralı bunu işaretliyor).
+    // eslint-disable-next-line react-hooks/purity
     const now      = Date.now();
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -407,7 +410,9 @@ const Hub: React.FC = () => {
     .filter(p => p.onboardingData.startDate > todayStr)
     .sort((a, b) => a.onboardingData.startDate.localeCompare(b.onboardingData.startDate))[0]
     ?? plans[0];
+  // Gün seviyesinde geri sayım — Date.now() render sırasında bilinçli okunuyor.
   const daysUntil = nextTrip
+    // eslint-disable-next-line react-hooks/purity
     ? Math.ceil((new Date(nextTrip.onboardingData.startDate).getTime() - Date.now()) / 86_400_000)
     : null;
   const isFuture  = daysUntil !== null && daysUntil > 0;
@@ -423,6 +428,7 @@ const Hub: React.FC = () => {
     ? Math.max(1, Math.round((_startMs - _createdMs) / 86_400_000))
     : null;
   const elapsedDays = _createdMs
+    // eslint-disable-next-line react-hooks/purity
     ? Math.max(0, Math.round((Date.now() - _createdMs) / 86_400_000))
     : 0;
   const countdownProgressPct = totalCountdownDays
@@ -545,6 +551,7 @@ const Hub: React.FC = () => {
 
   useEffect(() => {
     if (!cityName) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWeatherLoading(true);
     setWeather(null);
 

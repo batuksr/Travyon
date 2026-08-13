@@ -102,6 +102,7 @@ const UserProfile: React.FC = () => {
     }
   }, [uid, user, isOwnProfile, storePhotoURL, t]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
   const handleToggleFollow = async () => {

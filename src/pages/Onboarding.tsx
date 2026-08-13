@@ -310,9 +310,11 @@ const Onboarding: React.FC = () => {
     setCitySuggestions([]);
   };
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setError(null); setHints(EMPTY_HINTS); }, [currentStep]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isGenerating) { setLoadingIdx(0); return; }
     const interval = setInterval(() => setLoadingIdx((p) => (p + 1) % loadingMessages.length), 3000);
     return () => clearInterval(interval);

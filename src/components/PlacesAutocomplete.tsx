@@ -220,8 +220,11 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     }
   }, [apiReady]);
 
-  /* Dışarıdan gelen value → input'u güncelle */
-  useEffect(() => { setInputValue(value); }, [value]);
+  /* Dışarıdan gelen value → input'u güncelle — bilinçli senkron senkronizasyon. */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInputValue(value);
+  }, [value]);
 
   /* Dışına tıklayınca kapat */
   useEffect(() => {

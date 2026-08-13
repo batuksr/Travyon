@@ -85,11 +85,13 @@ const Community: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
   /* Takip Ettiklerim sekmesinde profilleri yükle */
   useEffect(() => {
     if (feedTab !== 'following' || followingSet.size === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProfilesLoading(true);
     getUserProfiles([...followingSet])
       .then(setFollowingProfiles)

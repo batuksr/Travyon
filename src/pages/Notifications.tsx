@@ -113,6 +113,9 @@ const Notifications: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // React Compiler bu memo'yu kendi optimizasyonuyla yeniden üretemiyor (notifs'in
+  // sırayla filtrelenmesi nedeniyle) — normal useMemo olarak çalışmaya devam ediyor.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const allNotifications = useMemo(() => {
     let notifs = buildNotifications(plans, weather, todayStr, cityName, tempCelsius);
     if (!appPlanNotif)      notifs = notifs.filter(n => n.id.startsWith('weather-'));
