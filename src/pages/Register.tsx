@@ -54,7 +54,7 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (password.length < 6) { setError(t('auth.register.errors.passwordTooShort')); return; }
+    if (password.length < 8) { setError(t('auth.register.errors.passwordTooShort')); return; }
     if (!agreedToTerms) { setError(t('auth.register.errors.termsRequired')); return; }
     setLoading(true);
     try {
@@ -298,6 +298,7 @@ const Register: React.FC = () => {
                   className="w-full pl-10 pr-10 py-3.5 bg-surface-2 border-[1.5px] border-divider rounded-2xl text-text text-[14.5px] placeholder:text-muted outline-none focus:border-accent transition-colors"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  minLength={8}
                   required
                 />
                 <button
