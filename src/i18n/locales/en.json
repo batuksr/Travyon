@@ -390,7 +390,7 @@
         },
         {
           "title": "4. Data Sharing",
-          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps), Google Gemini AI (plan generation), and Resend (email delivery — verification codes and contact form messages).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
+          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps), Google Gemini AI (plan generation), Resend (email delivery — verification codes and contact form messages), and Sentry (tracking technical errors that occur in your browser — diagnostic/error data only, no personal data is shared).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
         },
         {
           "title": "5. Cookies",

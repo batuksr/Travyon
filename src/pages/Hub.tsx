@@ -264,7 +264,6 @@ const Hub: React.FC = () => {
       endDate:   sun.toISOString().split('T')[0],
       label: `${sat.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })}`,
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localeCode]);
 
   /* ── Avg budget from past plans ── */
@@ -392,7 +391,6 @@ const Hub: React.FC = () => {
     })
     .sort((a, b) => b.sortKey - a.sortKey)
     .slice(0, 5);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plans, fmtNumber, t]);
 
   const firstName = user?.displayName?.split(' ')[0] ?? t('hub.greeting.defaultName');

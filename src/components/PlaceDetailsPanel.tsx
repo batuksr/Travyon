@@ -22,6 +22,9 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
+    // placeName/lat/lng değişince yeni bir yer için paneli sıfırlayıp yeniden
+    // yüklüyoruz — bilinçli senkron reset, veri çekme başlamadan önce gerekli.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setDetails(null);
     setPhotoIndex(0);

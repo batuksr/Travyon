@@ -24,6 +24,8 @@ const PwaInstallBanner: React.FC = () => {
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as { standalone?: boolean }).standalone
     ) {
+      // Tarayıcı API'sini mount sonrası okuyup duruma göre erken çıkış — bilinçli.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInstalled(true);
       return;
     }

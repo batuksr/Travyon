@@ -97,7 +97,7 @@ const extractAndParseJSON = <T>(rawText: string): T => {
       }
     }
     return JSON.parse(extractedJson) as T;
-  } catch (e) {
+  } catch {
     warn("JSON parse hatası. Ham metin:", rawText);
     throw new Error("Yapay zeka geçerli bir veri formatı döndüremedi. (JSON Parse Error)");
   }

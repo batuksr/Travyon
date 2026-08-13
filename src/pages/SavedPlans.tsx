@@ -24,6 +24,8 @@ const useCityPhoto = (destination: string): string => {
 
   useEffect(() => {
     if (photoCache.has(city)) {
+      // Modül-seviyesi önbellekte zaten varsa senkron kullan — bilinçli erken çıkış.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUrl(photoCache.get(city)!);
       return;
     }

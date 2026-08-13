@@ -93,8 +93,10 @@ const TravelChecklist: React.FC = () => {
 
   // planId değişince o plana ait kaydı yükle
   useEffect(() => {
+    // storageKey (plan) değişince o plana ait kaydı yükle — bilinçli senkron reset.
     try {
       const saved = localStorage.getItem(storageKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setChecked(saved ? new Set(JSON.parse(saved)) : new Set());
     } catch { setChecked(new Set()); }
   }, [storageKey]);
@@ -106,7 +108,7 @@ const TravelChecklist: React.FC = () => {
   const toggle = (id: string) => {
     setChecked(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -114,7 +116,7 @@ const TravelChecklist: React.FC = () => {
   const toggleGroup = (id: string) => {
     setOpenGroups(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };

@@ -125,10 +125,14 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
   );
   const prevKeyRef = useRef<string>('');
 
-  // Düz nokta dizisi (fitBounds ve arc hesabı için temel)
+  // Düz nokta dizisi (fitBounds ve arc hesabı için temel) — bilinçli olarak
+  // activities yerine activitiesKey'e bağlı: sadece koordinatlar değişince
+  // yeniden hesaplansın, activities referansı (örn. başlık düzenlemesi)
+  // değişince map gereksiz yere fitBounds/pan yapmasın.
   const path = useMemo(
     () => activities.map(a => ({ lat: a.coordinates.lat, lng: a.coordinates.lng })),
-    [activitiesKey], // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activitiesKey],
   );
 
   // Tüm segment yaylarını birleştiren sürekli eğri

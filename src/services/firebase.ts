@@ -1,8 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getFunctions } from "firebase/functions";
+import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getFunctions, type Functions } from "firebase/functions";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
@@ -20,7 +20,7 @@ const firebaseConfig = {
 let app;
 try {
   app = initializeApp(firebaseConfig);
-} catch (error) {
+} catch {
   console.warn("Firebase başlatılamadı. Muhtemelen .env yapılandırması eksik.");
 }
 
@@ -48,9 +48,9 @@ if (app && recaptchaSiteKey) {
 }
 
 // Servisleri dışarı aktar
-export const auth = app ? getAuth(app) : ({} as any);
-export const db = app ? getFirestore(app) : ({} as any);
-export const storage = app ? getStorage(app) : ({} as any);
+export const auth = app ? getAuth(app) : ({} as unknown as Auth);
+export const db = app ? getFirestore(app) : ({} as unknown as Firestore);
+export const storage = app ? getStorage(app) : ({} as unknown as FirebaseStorage);
 // Cloud Functions'daki setGlobalOptions region'ıyla eşleşmeli (functions/src/index.ts)
-export const functions = app ? getFunctions(app, "europe-west1") : ({} as any);
+export const functions = app ? getFunctions(app, "europe-west1") : ({} as unknown as Functions);
 export const googleProvider = new GoogleAuthProvider();

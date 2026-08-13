@@ -137,6 +137,9 @@ const firebaseErrorMsg = (code: string, t: TFunc): string => {
   return map[code] ?? t('settings.errors.generic');
 };
 
+const getErrCode = (err: unknown): string =>
+  (err as { code?: string })?.code ?? '';
+
 /* ── Shared UI ── */
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <button
@@ -582,8 +585,8 @@ const Settings: React.FC = () => {
       setPendingEmail(trimmed);
       setEmailStatus({ type: 'success', message: t('settings.email.verificationSent', { email: trimmed }) });
       setNewEmail(''); setEmailCurrentPassword('');
-    } catch (err: any) {
-      setEmailStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
+    } catch (err: unknown) {
+      setEmailStatus({ type: 'error', message: firebaseErrorMsg(getErrCode(err), t) });
     } finally { setEmailLoading(false); }
   };
 
@@ -622,8 +625,8 @@ const Settings: React.FC = () => {
       setPasswordStatus({ type: 'success', message: t('settings.password.success') });
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
       setShowCurrentPw(false); setShowNewPw(false); setShowConfirmPw(false);
-    } catch (err: any) {
-      setPasswordStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
+    } catch (err: unknown) {
+      setPasswordStatus({ type: 'error', message: firebaseErrorMsg(getErrCode(err), t) });
     } finally { setPasswordLoading(false); }
   };
 
@@ -775,8 +778,8 @@ const Settings: React.FC = () => {
       await deleteDoc(doc(db, 'users', user.uid));
       await deleteUser(auth.currentUser);
       navigate('/login');
-    } catch (err: any) {
-      setDeleteStatus({ type: 'error', message: firebaseErrorMsg(err.code, t) });
+    } catch (err: unknown) {
+      setDeleteStatus({ type: 'error', message: firebaseErrorMsg(getErrCode(err), t) });
     } finally { setDeleteLoading(false); }
   };
 
@@ -911,7 +914,7 @@ const Settings: React.FC = () => {
                   <div className="relative shrink-0 group">
                     <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-accent to-sage flex items-center justify-center text-white text-2xl font-heading ring-4 ring-surface shadow-md">
                       {(localPhotoURL || user?.photoURL)
-                        ? <img src={localPhotoURL || user?.photoURL!} alt="avatar" className="w-full h-full object-cover" />
+                        ? <img src={localPhotoURL || user?.photoURL || ''} alt="avatar" className="w-full h-full object-cover" />
                         : (displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U')
                       }
                     </div>

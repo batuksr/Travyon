@@ -93,8 +93,9 @@ const Dashboard: React.FC = () => {
   // plan referansı değil, içeriği değişince (destination + gün sayısı)
   const planKey = plan ? `${plan.destination}__${plan.dailyPlans.length}` : null;
   useEffect(() => {
+    // planKey değişince (yeni plan) bilinçli senkron reset.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveDayIndex(0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planKey]);
 
   /* ── Browser back button → intercept ── */

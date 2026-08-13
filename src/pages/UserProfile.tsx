@@ -100,7 +100,7 @@ const UserProfile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [uid, user, isOwnProfile, storePhotoURL]);
+  }, [uid, user, isOwnProfile, storePhotoURL, t]);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
 

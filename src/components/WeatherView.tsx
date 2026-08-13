@@ -74,6 +74,8 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
   const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
+    // plan/tarih değişince yeni bir hava durumu sorgusu öncesi bilinçli reset.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     setResult(null);

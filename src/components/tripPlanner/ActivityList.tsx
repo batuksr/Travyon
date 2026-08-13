@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronUp, ChevronDown, Trash2, Pencil, Plus } from 'lucide-react';
 import { GROUP_COLORS, type RuntimeActivity } from './types';
-import type { DemoGroup, DemoTravelTimes } from '../../data/tripPlannerDemo';
+import type { DemoTravelTimes } from '../../data/tripPlannerDemo';
 
 const TRAVEL_MODES = ['car', 'bus', 'walk', 'bike'] as const;
 type TravelMode = typeof TRAVEL_MODES[number];
@@ -51,15 +51,13 @@ const iconBtnClass =
 
 const ActivityList: React.FC<ActivityListProps> = ({ items, expandedIds, onToggleOpen, onMove, onDelete, onOpenAdd }) => {
   const { t } = useTranslation();
-  let lastGroup: DemoGroup | null = null;
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-3.5 pb-4">
       {items.map((item, i) => {
         const { title, desc } = resolveText(item, t);
         const colors = GROUP_COLORS[item.group];
-        const showHeader = item.group !== lastGroup;
-        lastGroup = item.group;
+        const showHeader = i === 0 || item.group !== items[i - 1].group;
         const open = expandedIds.has(item.uid);
 
         return (

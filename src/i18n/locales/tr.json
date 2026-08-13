@@ -390,7 +390,7 @@
         },
         {
           "title": "4. Veri Paylaşımı",
-          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma), Resend (e-posta gönderimi — doğrulama kodları ve iletişim formu mesajları) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
+          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma), Resend (e-posta gönderimi — doğrulama kodları ve iletişim formu mesajları), Sentry (tarayıcıda oluşan teknik hataların izlenmesi — kişisel veri paylaşılmadan, sadece hata/teşhis bilgisi) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
         },
         {
           "title": "5. Çerezler",

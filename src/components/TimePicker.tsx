@@ -20,7 +20,6 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange }) => {
     };
     scrollToSelected(hourColRef.current);
     scrollToSelected(minuteColRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setHour = (hh: string) => onChange(`${hh}:${m}`);
