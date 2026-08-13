@@ -19,6 +19,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { setUser } = useAuthStore();
 
   /* E-posta doğrulama popup durumu */
@@ -54,6 +55,7 @@ const Register: React.FC = () => {
     e.preventDefault();
     setError('');
     if (password.length < 6) { setError(t('auth.register.errors.passwordTooShort')); return; }
+    if (!agreedToTerms) { setError(t('auth.register.errors.termsRequired')); return; }
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -77,6 +79,7 @@ const Register: React.FC = () => {
 
   const handleGoogleRegister = async () => {
     setError('');
+    if (!agreedToTerms) { setError(t('auth.register.errors.termsRequired')); return; }
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -108,6 +111,9 @@ const Register: React.FC = () => {
     try {
       await verifyEmailCode(code);
       await auth.currentUser?.reload();
+      // ID token'ı zorla tazele — Firestore rule'larının email_verified'ı
+      // hemen görebilmesi için (.reload() sadece yerel User nesnesini günceller).
+      await auth.currentUser?.getIdToken(true);
       if (auth.currentUser) setUser(auth.currentUser);
       navigate('/onboarding');
     } catch (err) {
@@ -305,9 +311,27 @@ const Register: React.FC = () => {
               <p className="mt-2 text-xs text-muted">{t('auth.register.passwordHint')}</p>
             </div>
 
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={e => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 shrink-0 accent-accent cursor-pointer"
+              />
+              <span className="text-xs text-muted leading-relaxed">
+                <Trans
+                  i18nKey="auth.register.termsAgreement"
+                  components={{
+                    terms: <Link to="/kullanim-kosullari" target="_blank" rel="noopener noreferrer" className="text-accent font-medium" />,
+                    privacy: <Link to="/gizlilik" target="_blank" rel="noopener noreferrer" className="text-accent font-medium" />,
+                  }}
+                />
+              </span>
+            </label>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               className="w-full py-3.5 mt-1 bg-accent hover:brightness-105 text-white font-heading rounded-full flex items-center justify-center gap-2 text-[15px] transition-all disabled:opacity-50 shadow-[0_12px_26px_rgba(198,113,57,0.3)] active:translate-y-px"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} strokeWidth={2.75} />}
@@ -323,7 +347,7 @@ const Register: React.FC = () => {
 
           <button
             onClick={handleGoogleRegister}
-            disabled={loading}
+            disabled={loading || !agreedToTerms}
             className="w-full py-3.5 bg-surface hover:bg-surface-2 border-[1.5px] border-divider text-text font-heading rounded-full flex items-center justify-center gap-2.5 text-[14.5px] transition-all disabled:opacity-50"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">

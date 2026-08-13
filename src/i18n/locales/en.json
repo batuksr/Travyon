@@ -266,6 +266,7 @@
       "submit": "Log In",
       "noAccount": "Don't have an account?",
       "registerLink": "Sign Up",
+      "googleTermsNote": "By continuing with Google you agree to the <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
       "errors": {
         "redirectFailed": "Couldn't sign in with Google. Please try again.",
         "userNotFound": "No account found with this email.",
@@ -289,13 +290,16 @@
       "submit": "Create Account",
       "alreadyHaveAccount": "Already have an account?",
       "loginLink": "Log In",
+      "termsAgreement": "I've read and agree to the <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
+      "googleTermsNote": "By continuing with Google you agree to the <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
       "errors": {
         "redirectFailed": "Couldn't sign up with Google. Please try again.",
         "passwordTooShort": "Password must be at least 6 characters.",
         "emailInUse": "This email is already registered.",
         "weakPassword": "Password is too weak.",
         "generic": "Couldn't create account. Please try again.",
-        "googleFailedWithCode": "Couldn't sign up with Google. ({{code}})"
+        "googleFailedWithCode": "Couldn't sign up with Google. ({{code}})",
+        "termsRequired": "You must agree to the Terms of Use and Privacy Policy to continue."
       },
       "verify": {
         "title": "Verify Your Email",
@@ -386,7 +390,7 @@
         },
         {
           "title": "4. Data Sharing",
-          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps) and Google Gemini AI (plan generation).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
+          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps), Google Gemini AI (plan generation), and Resend (email delivery — verification codes and contact form messages).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
         },
         {
           "title": "5. Cookies",
@@ -487,6 +491,7 @@
         "sendButton": "Send",
         "sendingButton": "Sending...",
         "errorGeneric": "Couldn't send the message. Please try again.",
+        "errorCooldown": "You just sent a message — please wait a few minutes and try again.",
         "successTitle": "Your message has been sent!",
         "successDesc": "We'll get back to you as soon as possible. Thank you.",
         "newMessageButton": "Send a new message →"

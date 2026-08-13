@@ -25,6 +25,8 @@ const CODE_LENGTH = 6;
 const CODE_TTL_MS = 10 * 60 * 1000; // 10 dakika
 const RESEND_COOLDOWN_MS = 45 * 1000; // 45 saniye
 const MAX_ATTEMPTS = 5;
+const DAILY_SEND_LIMIT = 8; // normal kullanım için bol, script suistimalini engeller
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /* ══════════════════════════════════════════════
    RATE LIMITING — kullanıcı (uid) başına, fonksiyon başına
@@ -104,6 +106,9 @@ export const sendVerificationCode = onCall(
 
     const ref = codeDocRef(auth.uid);
     const existing = await ref.get();
+    let dailyCount = 1;
+    let dailyWindowStart = Date.now();
+
     if (existing.exists) {
       const data = existing.data()!;
       const lastSentAt = data.lastSentAt?.toMillis?.() ?? 0;
@@ -114,6 +119,17 @@ export const sendVerificationCode = onCall(
           "cooldown",
           { retryAfterMs: RESEND_COOLDOWN_MS - sinceLast }
         );
+      }
+
+      // Günlük gönderim tavanı — cooldown'u tek başına aşan bir script'in
+      // günde binlerce e-posta tetiklemesini (Resend maliyeti) önler.
+      const existingDayStart = data.dailyWindowStart?.toMillis?.() ?? 0;
+      if (Date.now() - existingDayStart < DAY_MS) {
+        if ((data.dailyCount ?? 0) >= DAILY_SEND_LIMIT) {
+          throw new HttpsError("resource-exhausted", "daily_limit");
+        }
+        dailyCount = (data.dailyCount ?? 0) + 1;
+        dailyWindowStart = existingDayStart;
       }
     }
 
@@ -126,6 +142,8 @@ export const sendVerificationCode = onCall(
       createdAt: FieldValue.serverTimestamp(),
       lastSentAt: FieldValue.serverTimestamp(),
       expiresAt: new Date(Date.now() + CODE_TTL_MS),
+      dailyCount,
+      dailyWindowStart: new Date(dailyWindowStart),
     });
 
     const fromAddress = RESEND_FROM.value() || "Travyon <onboarding@resend.dev>";
@@ -415,5 +433,91 @@ export const askTravelAssistant = onCall<AskAssistantRequest>(
         throw new HttpsError("internal", "AI assistant failed.");
       }
     }
+  }
+);
+
+/* ══════════════════════════════════════════════
+   İLETİŞİM FORMU — genel sayfa, giriş şartı yok
+═══════════════════════════════════════════════ */
+
+const CONTACT_EMAIL = "iletisim@travyon.app";
+const CONTACT_COOLDOWN_MS = 2 * 60 * 1000; // 2 dakika
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface ContactMessageRequest {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+const escapeHtml = (s: string): string =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+
+/**
+ * İletişim sayfasındaki formu Resend üzerinden gerçek bir e-postaya çevirir.
+ * Anonim ziyaretçiler de kullanabilir (giriş şartı yok) — bu yüzden uid
+ * bazlı değil, gönderilen e-posta adresine bağlı bir cooldown var.
+ */
+export const submitContactMessage = onCall<ContactMessageRequest>(
+  { secrets: [RESEND_API_KEY, RESEND_FROM] },
+  async (request) => {
+    const { name, email, subject, message } = request.data ?? ({} as Partial<ContactMessageRequest>);
+
+    if (typeof name !== "string" || !name.trim() || name.length > 100) {
+      throw new HttpsError("invalid-argument", "invalid name");
+    }
+    if (typeof email !== "string" || !EMAIL_RE.test(email) || email.length > 200) {
+      throw new HttpsError("invalid-argument", "invalid email");
+    }
+    if (typeof subject !== "string" || !subject.trim() || subject.length > 200) {
+      throw new HttpsError("invalid-argument", "invalid subject");
+    }
+    if (typeof message !== "string" || !message.trim() || message.length > 5000) {
+      throw new HttpsError("invalid-argument", "invalid message");
+    }
+
+    const cooldownRef = db
+      .collection("contactCooldowns")
+      .doc(Buffer.from(email.toLowerCase()).toString("base64url"));
+    const existing = await cooldownRef.get();
+    if (existing.exists) {
+      const lastSentAt = existing.data()?.lastSentAt?.toMillis?.() ?? 0;
+      if (Date.now() - lastSentAt < CONTACT_COOLDOWN_MS) {
+        throw new HttpsError("resource-exhausted", "cooldown");
+      }
+    }
+    await cooldownRef.set({ lastSentAt: FieldValue.serverTimestamp() });
+
+    const fromAddress = RESEND_FROM.value() || "Travyon <onboarding@resend.dev>";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: [CONTACT_EMAIL],
+        reply_to: email,
+        subject: `[İletişim Formu] ${subject}`,
+        html: `
+        <div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+          <p><strong>Ad:</strong> ${escapeHtml(name)}</p>
+          <p><strong>E-posta:</strong> ${escapeHtml(email)}</p>
+          <p><strong>Konu:</strong> ${escapeHtml(subject)}</p>
+          <p><strong>Mesaj:</strong></p>
+          <p style="white-space:pre-line;">${escapeHtml(message)}</p>
+        </div>`,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      logger.error("[submitContactMessage] Resend gönderim hatası", { status: res.status, text });
+      throw new HttpsError("internal", "Mesaj gönderilemedi.");
+    }
+
+    return { ok: true };
   }
 );

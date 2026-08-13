@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { motion } from 'framer-motion';
@@ -195,6 +195,16 @@ const Login: React.FC = () => {
             </svg>
             {t('auth.common.googleContinue')}
           </button>
+
+          <p className="text-center text-[11px] text-muted leading-relaxed mt-3">
+            <Trans
+              i18nKey="auth.login.googleTermsNote"
+              components={{
+                terms: <Link to="/kullanim-kosullari" target="_blank" rel="noopener noreferrer" className="text-accent font-medium" />,
+                privacy: <Link to="/gizlilik" target="_blank" rel="noopener noreferrer" className="text-accent font-medium" />,
+              }}
+            />
+          </p>
 
           <p className="text-center text-muted text-sm mt-7">
             {t('auth.login.noAccount')}{' '}

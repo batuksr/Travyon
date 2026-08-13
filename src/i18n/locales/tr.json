@@ -266,6 +266,7 @@
       "submit": "Giriş Yap",
       "noAccount": "Hesabın yok mu?",
       "registerLink": "Kayıt Ol",
+      "googleTermsNote": "Google ile devam ederek <terms>Kullanım Koşulları</terms>'nı ve <privacy>Gizlilik Politikası</privacy>'nı kabul etmiş olursun.",
       "errors": {
         "redirectFailed": "Google ile giriş yapılamadı. Tekrar deneyin.",
         "userNotFound": "Bu e-posta ile kayıtlı hesap bulunamadı.",
@@ -289,13 +290,16 @@
       "submit": "Hesap Oluştur",
       "alreadyHaveAccount": "Zaten hesabın var mı?",
       "loginLink": "Giriş Yap",
+      "termsAgreement": "<terms>Kullanım Koşulları</terms>'nı ve <privacy>Gizlilik Politikası</privacy>'nı okudum, kabul ediyorum.",
+      "googleTermsNote": "Google ile devam ederek <terms>Kullanım Koşulları</terms>'nı ve <privacy>Gizlilik Politikası</privacy>'nı kabul etmiş olursun.",
       "errors": {
         "redirectFailed": "Google ile kayıt oluşturulmadı. Tekrar deneyin.",
         "passwordTooShort": "Şifre en az 6 karakter olmalıdır.",
         "emailInUse": "Bu e-posta zaten kayıtlı.",
         "weakPassword": "Şifre çok zayıf.",
         "generic": "Kayıt oluşturulamadı. Lütfen tekrar deneyin.",
-        "googleFailedWithCode": "Google ile kayıt oluşturulamadı. ({{code}})"
+        "googleFailedWithCode": "Google ile kayıt oluşturulamadı. ({{code}})",
+        "termsRequired": "Devam etmek için Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmelisin."
       },
       "verify": {
         "title": "E-postanı Doğrula",
@@ -386,7 +390,7 @@
         },
         {
           "title": "4. Veri Paylaşımı",
-          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
+          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma), Resend (e-posta gönderimi — doğrulama kodları ve iletişim formu mesajları) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
         },
         {
           "title": "5. Çerezler",
@@ -487,6 +491,7 @@
         "sendButton": "Gönder",
         "sendingButton": "Gönderiliyor...",
         "errorGeneric": "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
+        "errorCooldown": "Az önce bir mesaj gönderdiniz, lütfen birkaç dakika bekleyip tekrar deneyin.",
         "successTitle": "Mesajınız iletildi!",
         "successDesc": "En kısa sürede size dönüş yapacağız. Teşekkür ederiz.",
         "newMessageButton": "Yeni mesaj gönder →"

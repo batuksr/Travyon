@@ -11,6 +11,9 @@ export const isEmailVerified = async (): Promise<boolean> => {
     await current.reload();
     if (auth.currentUser?.emailVerified) {
       useAuthStore.getState().setUser(auth.currentUser);
+      // ID token'ı zorla tazele — Firestore rule'ları request.auth.token.email_verified'a
+      // bakıyor, .reload() sadece yerel User nesnesini günceller, token'ı değil.
+      await auth.currentUser.getIdToken(true);
       return true;
     }
   } catch { /* yoksay */ }

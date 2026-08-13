@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { httpsCallable, FunctionsError } from 'firebase/functions';
 import { Mail, MapPin, Clock, ArrowLeft, Send, CheckCircle, Loader2 } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
+import { functions } from '../services/firebase';
 
 const INFO_CARD_META = [
   { icon: Mail, key: 'email', href: 'mailto:iletisim@travyon.app' },
@@ -52,11 +54,18 @@ const Iletisim: React.FC = () => {
     setError('');
     setSending(true);
     try {
-      await new Promise(r => setTimeout(r, 1200));
-      // Gerçek entegrasyon için EmailJS veya backend eklenebilir
+      const fn = httpsCallable<
+        { name: string; email: string; subject: string; message: string },
+        { ok: true }
+      >(functions, 'submitContactMessage');
+      await fn(form);
       setSent(true);
-    } catch {
-      setError(t('legal.contact.form.errorGeneric'));
+    } catch (err) {
+      if (err instanceof FunctionsError && err.code === 'functions/resource-exhausted') {
+        setError(t('legal.contact.form.errorCooldown'));
+      } else {
+        setError(t('legal.contact.form.errorGeneric'));
+      }
     } finally {
       setSending(false);
     }
