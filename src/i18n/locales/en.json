@@ -394,7 +394,7 @@
         },
         {
           "title": "5. Cookies",
-          "content": "Our site uses cookies to store session and preference information. The types of cookies we use:\n\n• Essential cookies: Required for session management and security.\n• Preference cookies: Remember settings like your language and theme preferences.\n• Analytics cookies: Collect anonymous usage statistics (optional).\n\nYou can disable cookies from your browser settings; however, this may affect some functionality."
+          "content": "Our site uses cookies/local storage to store session and preference information. The types we use:\n\n• Essential: Required for session management and security.\n• Preference: Remember settings like your language and theme preferences.\n\nWe do not currently use any analytics or advertising tracking cookies. If we add any in the future, this policy will be updated along with the appropriate consent mechanism.\n\nYou can disable cookies from your browser settings; however, this may affect some functionality."
         },
         {
           "title": "6. Your Rights",

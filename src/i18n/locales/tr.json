@@ -394,7 +394,7 @@
         },
         {
           "title": "5. Çerezler",
-          "content": "Sitemiz oturum ve tercih bilgilerini saklamak amacıyla çerezler kullanır. Kullandığımız çerez türleri:\n\n• Zorunlu çerezler: Oturum yönetimi ve güvenlik için gereklidir.\n• Tercih çerezleri: Dil ve tema tercihlerin gibi ayarlarını hatırlar.\n• Analitik çerezler: Anonim kullanım istatistikleri toplar (isteğe bağlı).\n\nTarayıcı ayarlarından çerezleri devre dışı bırakabilirsin; ancak bu durum bazı işlevleri etkileyebilir."
+          "content": "Sitemiz oturum ve tercih bilgilerini saklamak amacıyla çerez/yerel depolama kullanır. Kullandığımız türler:\n\n• Zorunlu: Oturum yönetimi ve güvenlik için gereklidir.\n• Tercih: Dil ve tema tercihlerin gibi ayarlarını hatırlar.\n\nŞu an herhangi bir analiz veya reklam amaçlı takip çerezi kullanmıyoruz. İleride eklenirse bu politika güncellenip gerekli onay mekanizması eklenecektir.\n\nTarayıcı ayarlarından çerezleri devre dışı bırakabilirsin; ancak bu durum bazı işlevleri etkileyebilir."
         },
         {
           "title": "6. Haklarınız",
