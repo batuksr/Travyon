@@ -1,9 +1,30 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { httpsCallable, FunctionsError } from 'firebase/functions';
+import { functions } from './firebase';
 import type { OnboardingData } from "../store/useOnboardingStore";
 import { optimizeRouteTSP } from "../utils/geoOptimization";
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey || "");
+/* Gemini çağrıları artık istemciden değil, generateAIContent Cloud Function'ı
+   üzerinden yapılıyor — gerçek API key bu bundle'a hiç gömülmüyor.
+   functions/src/index.ts'teki generateAIContent'in retry/backoff mantığı,
+   buradaki eski executeWithFallback ile birebir aynı semantiği taşır. */
+type AIContentType = 'plan' | 'suggestion';
+
+const callGenerateAIContent = async (prompt: string, type: AIContentType): Promise<string> => {
+  try {
+    const fn = httpsCallable<{ prompt: string; type: AIContentType }, { text: string }>(
+      functions, 'generateAIContent', { timeout: 190_000 },
+    );
+    const res = await fn({ prompt, type });
+    return res.data.text;
+  } catch (err) {
+    // Sunucudaki HttpsError mesajı (bkz. functions/src/index.ts toSafeClientMessage)
+    // sabit, güvenli bir string — ama aşağıdaki getFriendlyError()'ın aradığı
+    // '429' / '503'/'overloaded' / 'api'+'key' / 'json parse' alt-dizgelerini
+    // hâlâ içeriyor, bu yüzden getFriendlyError değişmeden çalışmaya devam ediyor.
+    if (err instanceof FunctionsError && err.message) throw new Error(err.message);
+    throw new Error('AI generation failed.');
+  }
+};
 
 // --- YARDIMCI FONKSİYONLAR (HELPERS) ---
 
@@ -37,57 +58,7 @@ const getFriendlyError = (msg: string, lang: PlanLanguage = 'tr'): string => {
 };
 
 const executeWithFallback = async (prompt: string): Promise<string> => {
-  // Sadece flash — free tier'da pro çalışmaz, gereksiz başarısız denemeleri önler.
-  // Flash de meşgulse yedek olarak 1.5-flash denenir (o da ücretsiz).
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
-  let lastError;
-
-  for (const modelName of models) {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        log(`[AI] ${modelName} deneniyor (Deneme ${attempt + 1}/3)...`);
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const result = await model.generateContent(prompt);
-        log(`[AI] ✅ ${modelName} başarılı!`);
-        return result.response.text();
-      } catch (err: unknown) {
-        const error = err as Error;
-        const msg = error.message.toLowerCase();
-        warn(`[AI] ❌ ${modelName} (Deneme ${attempt + 1}) başarısız: ${error.message}`);
-        lastError = error;
-
-        // 400/401 = geçersiz istek veya API anahtarı → hiçbir model çözemez, direkt fırlat
-        if (msg.includes('400') || msg.includes('401') || msg.includes('invalid_api_key') || msg.includes('json parse')) {
-          throw error;
-        }
-
-        // 403 = bu model için erişim yok → sonraki modeli dene
-        if (msg.includes('403')) {
-          log(`[AI] 403 erişim reddi — "${modelName}" atlanıyor, sonraki modele geçiliyor`);
-          break;
-        }
-
-        // 503 = sunucu meşgul → sonraki modele geç
-        if (msg.includes('503') || msg.includes('overloaded')) {
-          log(`[AI] 503/overloaded — "${modelName}" atlanıyor, alternatif modele geçiliyor`);
-          break;
-        }
-
-        // 429 = rate limit → bekle ve aynı modeli tekrar dene
-        if (msg.includes('429')) {
-          const waitMs = (attempt + 1) * 4000;
-          log(`[AI] ⏳ Rate limit — ${waitMs / 1000}s bekleniyor...`);
-          await new Promise(resolve => setTimeout(resolve, waitMs));
-        } else {
-          break;
-        }
-      }
-    }
-  }
-  throw lastError;
+  return callGenerateAIContent(prompt, 'plan');
 };
 
 // Kırılmaz JSON Ayrıştırıcı
@@ -988,8 +959,6 @@ export const suggestSingleActivity = async (
   nearbyCoords?: { lat: number; lng: number },  // o günkü aktivitelerin merkezi
   lang: PlanLanguage = 'tr',
 ): Promise<DailyActivity> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
-
   const avoidList = existingPlaces.length > 0
     ? `\nZaten planda olanlar — BUNLARI ÖNERME:\n${existingPlaces.map(p => `- ${p}`).join('\n')}`
     : '';
@@ -1026,14 +995,9 @@ Kurallar:
 - description'da "Sonra şuraya git" gibi sıralama referansı olmasın
 - SADECE JSON döndür`;
 
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-pro',
-    generationConfig: { responseMimeType: 'application/json' },
-  });
-
   try {
-    const result = await model.generateContent(prompt);
-    const activity = extractAndParseJSON<DailyActivity>(result.response.text());
+    const text = await callGenerateAIContent(prompt, 'suggestion');
+    const activity = extractAndParseJSON<DailyActivity>(text);
     if (!activity.placeName || !activity.coordinates?.lat) {
       throw new Error('Geçersiz aktivite formatı');
     }
@@ -1050,8 +1014,6 @@ export const generateTravelPlan = async (
   onPlanUpdate: (plan: TravelPlanResponse) => void,
   lang: PlanLanguage = 'tr',
 ): Promise<TravelPlanResponse> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
-
   const prompt = buildPrompt(data, lang);
 
   try {
@@ -1133,8 +1095,6 @@ export const regenerateDayWithVibe = async (
   onDayUpdate: (day: DailyPlan) => void,
   lang: PlanLanguage = 'tr',
 ): Promise<DailyPlan> => {
-  if (!apiKey) throw new Error(getFriendlyError('invalid_api_key', lang));
-
   const vibeMap: Record<string, string> = {
     'rest':    '😴 Dinlenme Modu (Yorucu olmayan kafeler, parklar, spa, yavaş tempo)',
     'indoor':  '🌧️ Hava/Kapalı Alan Modu (Müzeler, kapalı çarşılar, sergiler, restoranlar)',

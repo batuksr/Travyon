@@ -17,7 +17,7 @@ const AddActivityPanel: React.FC<AddActivityPanelProps> = ({ onClose }) => {
   return (
     <div className="absolute inset-x-0 bottom-11 z-10 bg-surface border-t border-divider shadow-[0_-12px_30px_rgba(46,43,37,0.12)] px-3.5 py-3.5">
       <div className="flex items-center justify-between mb-2.5">
-        <p className="flex items-center gap-2 font-semibold text-[14px] text-text">
+        <p className="flex items-center gap-2 font-medium text-[14px] text-text">
           <Plus size={15} className="text-accent" strokeWidth={2.4} />
           {t('dashboard.dailyPlanView.addActivity.title')}
         </p>
@@ -30,7 +30,7 @@ const AddActivityPanel: React.FC<AddActivityPanelProps> = ({ onClose }) => {
         {GROUP_ORDER.map((g) => (
           <span
             key={g}
-            className={`px-2.5 py-1 rounded-full text-[12px] font-heading font-semibold border select-none
+            className={`px-2.5 py-1 rounded-full text-[12px] font-medium border select-none
               ${g === DISPLAY_SLOT ? 'bg-accent text-white border-accent' : 'bg-surface-2 text-muted border-divider'}`}
           >
             {t(`dashboard.dailyPlanView.periods.${g}`)}
@@ -45,7 +45,7 @@ const AddActivityPanel: React.FC<AddActivityPanelProps> = ({ onClose }) => {
           placeholder={t('dashboard.dailyPlanView.addActivity.placeholder')}
           className="flex-1 px-3 py-2.5 text-[13px] rounded-xl border border-divider bg-surface-2 text-text placeholder:text-muted outline-none cursor-default"
         />
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-accent text-white text-[13px] font-heading font-semibold rounded-xl shrink-0 select-none">
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-accent text-white text-[13px] font-medium rounded-xl shrink-0 select-none">
           <Sparkles size={13} />
           {t('dashboard.dailyPlanView.addActivity.suggestAI')}
         </span>
