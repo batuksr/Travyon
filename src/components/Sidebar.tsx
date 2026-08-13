@@ -53,7 +53,7 @@ const Sidebar: React.FC = () => {
     >
 
       {/* LOGO */}
-      <div className="h-[74px] flex items-center border-b border-divider px-5 shrink-0 overflow-hidden">
+      <div className={`h-[74px] flex items-center border-b border-divider px-5 shrink-0 overflow-hidden ${expanded ? '' : 'justify-center'}`}>
         <TravyonLogo size={40} showText={expanded} />
       </div>
 

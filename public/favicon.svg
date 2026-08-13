@@ -1,45 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <defs>
-    <!-- Turuncu radial gradient (logo ile aynı) -->
-    <radialGradient id="gg" cx="36%" cy="30%" r="70%">
-      <stop offset="0%"   stop-color="#FDE68A"/>
-      <stop offset="35%"  stop-color="#F8981D"/>
-      <stop offset="100%" stop-color="#B45309"/>
-    </radialGradient>
-    <!-- Grid clip -->
-    <clipPath id="gc">
-      <circle cx="50" cy="50" r="44"/>
-    </clipPath>
-  </defs>
-
-  <!-- Dış parlama halkası -->
-  <circle cx="50" cy="50" r="44" fill="#F8981D" opacity="0.18"/>
-
-  <!-- Gölge -->
-  <circle cx="52" cy="53" r="44" fill="rgba(0,0,0,0.10)"/>
-
-  <!-- Küre gövdesi -->
-  <circle cx="50" cy="50" r="44" fill="url(#gg)"/>
-
-  <!-- Grid çizgileri (enlem yayları) -->
-  <g clip-path="url(#gc)" opacity="0.30">
-    <ellipse cx="50" cy="50" rx="44" ry="14" fill="none" stroke="white" stroke-width="1.4"/>
-    <ellipse cx="50" cy="50" rx="44" ry="28" fill="none" stroke="white" stroke-width="1.0"/>
-    <!-- Boylam çizgileri -->
-    <ellipse cx="50" cy="50" rx="16" ry="44" fill="none" stroke="white" stroke-width="1.4"/>
-    <ellipse cx="50" cy="50" rx="35" ry="44" fill="none" stroke="white" stroke-width="1.0"/>
-  </g>
-
-  <!-- Parlak highlight -->
-  <ellipse cx="38" cy="36" rx="13" ry="7" fill="white" opacity="0.22" transform="rotate(-30 38 36)"/>
-
-  <!-- Küre kenarlığı -->
-  <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.40)" stroke-width="1.8"/>
-
-  <!-- Orbit halkası (eğik) -->
-  <g transform="rotate(-20 50 50)">
-    <ellipse cx="50" cy="50" rx="58" ry="20"
-      stroke="#F8981D" stroke-width="2" stroke-dasharray="6 4"
-      fill="none" opacity="0.55"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!-- Kağıt uçak — marka turuncusu (site genelindeki uçak işaretiyle aynı aile) -->
+  <path
+    d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+    fill="#F8981D"
+    stroke="#B45309"
+    stroke-width="1"
+    stroke-linejoin="round"
+  />
+  <!-- Katlanma çizgisi -->
+  <path d="m21.854 2.147-10.94 10.939" stroke="#B45309" stroke-width="1.3" stroke-linecap="round"/>
 </svg>

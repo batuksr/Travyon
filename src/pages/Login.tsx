@@ -88,7 +88,7 @@ const Login: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/50 via-[#1c140c]/28 to-[#1c140c]/78" />
         <div className="relative z-10 flex flex-col h-full p-10">
           <Link to="/">
-            <TravyonLogo size={64} dark />
+            <TravyonLogo size={64} />
           </Link>
           <div className="mt-auto">
             <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">

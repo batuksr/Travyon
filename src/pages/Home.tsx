@@ -13,6 +13,7 @@ import PreviewNudge from '../components/PreviewNudge';
 // three.js + @react-three/fiber ağır olduğu için sadece bölüm görünüme
 // yaklaşınca ve yalnızca masaüstünde yükleniyor — hero animasyonuyla çakışmasın.
 const GlobeAnimation = lazy(() => import('../components/GlobeAnimation'));
+const TravyonLogoOrbit = lazy(() => import('../components/TravyonLogoOrbit'));
 
 /* ── Destinasyon kartı — hover'da video oynar ── */
 interface DestData {
@@ -225,7 +226,7 @@ const Home: React.FC = () => {
       {/* ══ MOBİL NAVBAR — sadece sayfa başında, scroll ile birlikte kaybolur ══ */}
       <div className="sm:hidden absolute inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
         <nav className="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/15 h-14 px-4 rounded-2xl">
-          <TravyonLogo size={36} dark />
+          <TravyonLogo size={36} />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -256,10 +257,14 @@ const Home: React.FC = () => {
         </nav>
       </div>
 
-      {/* ══ DESKTOP NAVBAR — sadece sayfa başında, scroll ile birlikte kaybolur ══ */}
+      {/* ══ DESKTOP ÜST ÇUBUK — bar/pill kaplaması yok, sadece logo + butonlar ══ */}
       <div className="hidden sm:flex absolute inset-x-0 top-3 z-50 justify-center">
-        <nav className="flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/25 shadow-xl shadow-black/10 w-[97%] max-w-[1300px] px-6 h-[72px] rounded-3xl">
-          <TravyonLogo dark size={56} />
+        <nav className="flex items-center justify-between w-[97%] max-w-[1300px] px-6 h-[72px]">
+          <div className="w-[330px] h-[150px] shrink-0">
+            <Suspense fallback={null}>
+              <TravyonLogoOrbit />
+            </Suspense>
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
