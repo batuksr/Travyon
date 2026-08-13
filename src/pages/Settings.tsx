@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
+import { submitBugReport } from '../services/bugReportService';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore, CURRENCY_MAP } from '../store/useAppSettingsStore';
 import {
@@ -784,9 +785,7 @@ const Settings: React.FC = () => {
     setBugLoading(true); setBugStatus(null);
     try {
       if (user) {
-        await setDoc(doc(db, 'bug_reports', `${user.uid}_${Date.now()}`), {
-          uid: user.uid, email: user.email, title: bugTitle, desc: bugDesc, createdAt: new Date().toISOString(),
-        });
+        await submitBugReport(bugTitle, bugDesc);
       }
       setBugStatus({ type: 'success', message: t('settings.reportBug.success') });
       setBugTitle(''); setBugDesc('');

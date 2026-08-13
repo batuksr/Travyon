@@ -1,9 +1,10 @@
-import { db } from './firebase';
+import { db, functions } from './firebase';
 import {
-  collection, doc, setDoc, getDoc, getDocs, deleteDoc,
+  collection, doc, getDoc, getDocs, deleteDoc,
   query, orderBy, limit, where, serverTimestamp,
   runTransaction, Timestamp,
 } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import type { TravelPlanResponse } from './aiService';
 import type { OnboardingData } from '../store/useOnboardingStore';
 
@@ -40,39 +41,32 @@ export interface PublicPlan {
 
 /* ══════════════════════════════════════════════
    Plan Sharing
+   Not: userId/displayName/photoURL artık istemciden gönderilmiyor —
+   sharePublicPlan Cloud Function'ı kendi Auth kaydından (request.auth)
+   güvenilir şekilde türetiyor (sahte isim/foto engellenir).
 ═══════════════════════════════════════════════ */
+const callSharePublicPlan = async (
+  planId: string,
+  plan: TravelPlanResponse,
+  onboardingData: OnboardingData,
+  linkOnly?: boolean,
+): Promise<void> => {
+  const fn = httpsCallable<
+    { planId: string; plan: TravelPlanResponse; onboardingData: OnboardingData; linkOnly?: boolean },
+    { ok: true }
+  >(functions, 'sharePublicPlan');
+  await fn({ planId, plan, onboardingData, linkOnly });
+};
+
 export const shareplan = async (
   planId: string,
   plan: TravelPlanResponse,
   onboardingData: OnboardingData,
-  user: { uid: string; displayName: string | null; photoURL: string | null },
+  /** @deprecated sunucu artık kendi Auth kaydını kullanıyor, bu parametre yok sayılıyor */
+  _user?: { uid: string; displayName: string | null; photoURL: string | null },
 ): Promise<void> => {
-  await setDoc(doc(db, 'publicPlans', planId), {
-    userId:          user.uid,
-    userDisplayName: user.displayName ?? 'Gezgin',
-    userPhotoURL:    user.photoURL ?? null,
-    destination:     plan.destination,
-    dailyPlanCount:  plan.dailyPlans.length,
-    budget:          onboardingData.budget,
-    currencySymbol:  onboardingData.currencySymbol ?? '₺',
-    tripPurpose:     onboardingData.tripPurpose ?? '',
-    createdAt:       serverTimestamp(),
-    avgRating:       0,
-    ratingCount:     0,
-    // Onboarding seçimleri
-    travelType:          onboardingData.travelType          ?? '',
-    peopleCount:         onboardingData.peopleCount         ?? 1,
-    pace:                onboardingData.pace                ?? '',
-    purposes:            onboardingData.purposes            ?? [],
-    earlyBird:           onboardingData.earlyBird           ?? false,
-    dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
-    foodPhilosophy:      onboardingData.foodPhilosophy      ?? '',
-    accommodation:       onboardingData.accommodation       ?? '',
-    transport:           onboardingData.transport           ?? '',
-    startDate:           onboardingData.startDate           ?? '',
-    endDate:             onboardingData.endDate             ?? '',
-    planData:            plan,
-  });
+  void _user;
+  await callSharePublicPlan(planId, plan, onboardingData);
 };
 
 export const getPublicPlanDetails = async (planId: string): Promise<TravelPlanResponse | null> => {
@@ -91,34 +85,11 @@ export const sharePlanAsLink = async (
   planId: string,
   plan: TravelPlanResponse,
   onboardingData: OnboardingData,
-  user: { uid: string; displayName: string | null; photoURL: string | null },
+  /** @deprecated sunucu artık kendi Auth kaydını kullanıyor, bu parametre yok sayılıyor */
+  _user?: { uid: string; displayName: string | null; photoURL: string | null },
 ): Promise<void> => {
-  await setDoc(doc(db, 'publicPlans', planId), {
-    userId:          user.uid,
-    userDisplayName: user.displayName ?? 'Gezgin',
-    userPhotoURL:    user.photoURL ?? null,
-    destination:     plan.destination,
-    dailyPlanCount:  plan.dailyPlans.length,
-    budget:          onboardingData.budget,
-    currencySymbol:  onboardingData.currencySymbol ?? '₺',
-    tripPurpose:     onboardingData.tripPurpose ?? '',
-    createdAt:       serverTimestamp(),
-    avgRating:       0,
-    ratingCount:     0,
-    feedVisible:     false,  // community feed'den gizli
-    travelType:          onboardingData.travelType          ?? '',
-    peopleCount:         onboardingData.peopleCount         ?? 1,
-    pace:                onboardingData.pace                ?? '',
-    purposes:            onboardingData.purposes            ?? [],
-    earlyBird:           onboardingData.earlyBird           ?? false,
-    dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
-    foodPhilosophy:      onboardingData.foodPhilosophy      ?? '',
-    accommodation:       onboardingData.accommodation       ?? '',
-    transport:           onboardingData.transport           ?? '',
-    startDate:           onboardingData.startDate           ?? '',
-    endDate:             onboardingData.endDate             ?? '',
-    planData:            plan,
-  });
+  void _user;
+  await callSharePublicPlan(planId, plan, onboardingData, true);
 };
 
 /** Paylaşılmış plandaki fotoğrafı günceller (profil foto değiştiğinde) */
@@ -243,11 +214,17 @@ export const getUserRatings = async (
 
 /* ══════════════════════════════════════════════
    Follow System  (Twitter-style, one-way)
+   Not: myUid artık kullanılmıyor — followUserAction Cloud Function'ı
+   çağıranı request.auth üzerinden zaten biliyor, istek-sıklığı sınırı
+   uyguluyor. İmza geriye dönük uyumluluk için korunuyor.
 ═══════════════════════════════════════════════ */
-export const followUser = async (myUid: string, targetUid: string): Promise<void> => {
-  await setDoc(doc(db, 'userFollows', myUid, 'following', targetUid), {
-    followedAt: serverTimestamp(),
-  });
+export const followUser = async (
+  /** @deprecated sunucu artık request.auth üzerinden çağıranı biliyor, bu parametre yok sayılıyor */
+  _myUid: string,
+  targetUid: string,
+): Promise<void> => {
+  const fn = httpsCallable<{ targetUid: string }, { ok: true }>(functions, 'followUserAction');
+  await fn({ targetUid });
 };
 
 export const unfollowUser = async (myUid: string, targetUid: string): Promise<void> => {

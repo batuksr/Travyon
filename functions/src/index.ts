@@ -39,9 +39,17 @@ const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 dakika
 const RATE_LIMITS: Record<string, number> = {
   generateAIContent: 15,
   askTravelAssistant: 25,
+  submitBugReport: 5,
+  sharePublicPlan: 10,
+  followUserAction: 30,
 };
 
-const checkRateLimit = async (uid: string, fnName: string): Promise<void> => {
+// generateAIContent/askTravelAssistant için mesaj bilinçli olarak bu sabit
+// string — aiService.ts'teki getFriendlyError() '429' alt-dizgesini arıyor.
+// Diğer (AI olmayan) çağrılar kendi jenerik mesajını verir.
+const DEFAULT_RATE_LIMIT_MESSAGE = "AI service rate limit exceeded (429).";
+
+const checkRateLimit = async (uid: string, fnName: string, message = DEFAULT_RATE_LIMIT_MESSAGE): Promise<void> => {
   const max = RATE_LIMITS[fnName];
   const ref = db.collection("rateLimits").doc(`${uid}_${fnName}`);
 
@@ -56,7 +64,7 @@ const checkRateLimit = async (uid: string, fnName: string): Promise<void> => {
       return;
     }
     if ((data.count ?? 0) >= max) {
-      throw new HttpsError("resource-exhausted", "AI service rate limit exceeded (429).");
+      throw new HttpsError("resource-exhausted", message);
     }
     tx.update(ref, { count: FieldValue.increment(1) });
   });
@@ -521,3 +529,167 @@ export const submitContactMessage = onCall<ContactMessageRequest>(
     return { ok: true };
   }
 );
+
+/* ══════════════════════════════════════════════
+   HATA RAPORU / PLAN PAYLAŞIMI / TAKİP ETME
+   Bunlar önceden doğrudan client → Firestore yazımıydı; Firestore
+   Security Rules'ın istek-sıklığı hafızası olmadığı için (rate limit
+   uygulayamadığı için) buraya, checkRateLimit() korumasının arkasına
+   taşındı. firestore.rules'ta karşılık gelen create kuralları artık
+   `if false` — sadece bu fonksiyonlar (Admin SDK, rules'ı atlar) yazabilir.
+═══════════════════════════════════════════════ */
+
+interface SubmitBugReportRequest {
+  title: string;
+  desc: string;
+}
+
+export const submitBugReport = onCall<SubmitBugReportRequest>(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  if (request.auth.token.email_verified !== true) {
+    throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+  }
+
+  const { title, desc } = request.data ?? ({} as Partial<SubmitBugReportRequest>);
+  if (typeof title !== "string" || !title.trim() || title.length > 200) {
+    throw new HttpsError("invalid-argument", "invalid title");
+  }
+  if (typeof desc !== "string" || !desc.trim() || desc.length > 3000) {
+    throw new HttpsError("invalid-argument", "invalid desc");
+  }
+
+  await checkRateLimit(request.auth.uid, "submitBugReport", "Rate limit exceeded — try again later.");
+
+  await db.collection("bug_reports").doc(`${request.auth.uid}_${Date.now()}`).set({
+    uid: request.auth.uid,
+    email: request.auth.token.email ?? null,
+    title,
+    desc,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { ok: true };
+});
+
+interface SharePublicPlanRequest {
+  planId: string;
+  plan: {
+    destination: string;
+    dailyPlans: unknown[];
+    [key: string]: unknown;
+  };
+  onboardingData: {
+    budget?: number;
+    currencySymbol?: string;
+    tripPurpose?: string;
+    travelType?: string;
+    peopleCount?: number;
+    pace?: string;
+    purposes?: string[];
+    earlyBird?: boolean;
+    dietaryRestrictions?: string[];
+    foodPhilosophy?: string;
+    accommodation?: string;
+    transport?: string;
+    startDate?: string;
+    endDate?: string;
+    [key: string]: unknown;
+  };
+  linkOnly?: boolean;
+}
+
+/**
+ * socialService.ts'teki shareplan()/sharePlanAsLink()'in taşındığı yer —
+ * ikisi de aynı fonksiyon, sadece linkOnly=true iken feedVisible:false ekleniyor.
+ * userDisplayName/userPhotoURL istemciden GÜVENİLMİYOR — Admin SDK ile
+ * kullanıcının güncel Auth kaydından çekiliyor (sahte isim/foto engellenir).
+ */
+export const sharePublicPlan = onCall<SharePublicPlanRequest>(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  if (request.auth.token.email_verified !== true) {
+    throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+  }
+
+  const { planId, plan, onboardingData, linkOnly } = request.data ?? ({} as Partial<SharePublicPlanRequest>);
+  if (typeof planId !== "string" || !planId.trim() || planId.length > 200) {
+    throw new HttpsError("invalid-argument", "invalid planId");
+  }
+  if (!plan || typeof plan.destination !== "string" || !Array.isArray(plan.dailyPlans)) {
+    throw new HttpsError("invalid-argument", "invalid plan");
+  }
+  if (!onboardingData || typeof onboardingData !== "object") {
+    throw new HttpsError("invalid-argument", "invalid onboardingData");
+  }
+
+  await checkRateLimit(request.auth.uid, "sharePublicPlan", "Rate limit exceeded — try again later.");
+
+  const authUser = await getAuth().getUser(request.auth.uid);
+
+  const docData: Record<string, unknown> = {
+    userId: request.auth.uid,
+    userDisplayName: authUser.displayName ?? "Gezgin",
+    userPhotoURL: authUser.photoURL ?? null,
+    destination: plan.destination,
+    dailyPlanCount: plan.dailyPlans.length,
+    budget: onboardingData.budget ?? 0,
+    currencySymbol: onboardingData.currencySymbol ?? "₺",
+    tripPurpose: onboardingData.tripPurpose ?? "",
+    createdAt: FieldValue.serverTimestamp(),
+    avgRating: 0,
+    ratingCount: 0,
+    travelType: onboardingData.travelType ?? "",
+    peopleCount: onboardingData.peopleCount ?? 1,
+    pace: onboardingData.pace ?? "",
+    purposes: onboardingData.purposes ?? [],
+    earlyBird: onboardingData.earlyBird ?? false,
+    dietaryRestrictions: onboardingData.dietaryRestrictions ?? [],
+    foodPhilosophy: onboardingData.foodPhilosophy ?? "",
+    accommodation: onboardingData.accommodation ?? "",
+    transport: onboardingData.transport ?? "",
+    startDate: onboardingData.startDate ?? "",
+    endDate: onboardingData.endDate ?? "",
+    planData: plan,
+  };
+  if (linkOnly) docData.feedVisible = false;
+
+  try {
+    await db.collection("publicPlans").doc(planId).set(docData);
+  } catch (err) {
+    logger.error("[sharePublicPlan] Firestore yazım hatası", {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    throw new HttpsError("internal", "Plan paylaşılamadı.");
+  }
+
+  return { ok: true };
+});
+
+interface FollowUserActionRequest {
+  targetUid: string;
+}
+
+export const followUserAction = onCall<FollowUserActionRequest>(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  if (request.auth.token.email_verified !== true) {
+    throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+  }
+
+  const { targetUid } = request.data ?? ({} as Partial<FollowUserActionRequest>);
+  if (typeof targetUid !== "string" || !targetUid.trim()) {
+    throw new HttpsError("invalid-argument", "invalid targetUid");
+  }
+  if (targetUid === request.auth.uid) {
+    throw new HttpsError("invalid-argument", "cannot follow yourself");
+  }
+
+  await checkRateLimit(request.auth.uid, "followUserAction", "Rate limit exceeded — try again later.");
+
+  await db
+    .collection("userFollows")
+    .doc(request.auth.uid)
+    .collection("following")
+    .doc(targetUid)
+    .set({ followedAt: FieldValue.serverTimestamp() });
+
+  return { ok: true };
+});
