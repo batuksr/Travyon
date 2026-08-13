@@ -2,10 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Kullanıcı profil ve ayarları — sadece kendi belgesi
+    // Kullanıcı profil ve ayarları — sadece kendi belgesi.
+    // isPro alanı istisna: bu, ödeme durumunu belirlediği için kullanıcı
+    // kendi kendine yazamaz — sadece güvenilir bir sunucu (Admin SDK,
+    // Firestore rule'larını atlar) tarafından değiştirilebilir.
     match /users/{uid} {
-      allow read:  if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && (!('isPro' in request.resource.data) || request.resource.data.isPro == false);
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPro']);
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // Hata raporları — sadece giriş yapmış kullanıcı kendi raporunu yazabilir
@@ -27,16 +34,32 @@ service cloud.firestore {
                       // Plan sahibi her alanı güncelleyebilir
                       resource.data.userId == request.auth.uid
                       ||
-                      // Diğer kullanıcılar SADECE puan alanlarını yazabilir
-                      request.resource.data.diff(resource.data)
-                        .affectedKeys().hasOnly(['avgRating', 'ratingCount'])
+                      // Diğer kullanıcılar SADECE puan alanlarını, geçerli
+                      // sınırlar içinde yazabilir — keyfi/sahte skor engellenir.
+                      (
+                        request.resource.data.diff(resource.data)
+                          .affectedKeys().hasOnly(['avgRating', 'ratingCount'])
+                        && request.resource.data.avgRating is number
+                        && request.resource.data.avgRating >= 0
+                        && request.resource.data.avgRating <= 5
+                        && request.resource.data.ratingCount is int
+                        && request.resource.data.ratingCount >= 0
+                      )
                     );
     }
 
-    // Puan işlemleri
+    // Puan işlemleri — doküman ID'si zorunlu olarak {planId}_{kendi uid'in}
+    // kalıbında olmalı, böylece bir kullanıcı başkasının puanını üzerine
+    // yazamaz (belge yolu onun kendi uid'iyle eşleşmediği için reddedilir).
     match /planRatings/{ratingId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && ratingId == request.resource.data.planId + '_' + request.auth.uid
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+      allow delete: if false;
     }
 
     // Takip sistemi — sadece kendi verisine erişim
