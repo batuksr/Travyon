@@ -407,6 +407,10 @@
         {
           "title": "9. İletişim",
           "content": "Gizlilik ile ilgili soruların için:\n\nE-posta: iletisim@travyon.app\nAdres: İstanbul, Türkiye"
+        },
+        {
+          "title": "10. reCAPTCHA Koruması",
+          "content": "Bu site, kötüye kullanımı ve otomatik (bot) trafiği önlemek için Google reCAPTCHA ile korunmaktadır. reCAPTCHA'nın kullanımı Google Gizlilik Politikası (https://policies.google.com/privacy) ve Hizmet Şartları'na (https://policies.google.com/terms) tabidir."
         }
       ]
     },

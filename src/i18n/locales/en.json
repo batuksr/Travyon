@@ -407,6 +407,10 @@
         {
           "title": "9. Contact",
           "content": "For questions about privacy:\n\nEmail: iletisim@travyon.app\nAddress: Istanbul, Türkiye"
+        },
+        {
+          "title": "10. reCAPTCHA Protection",
+          "content": "This site is protected by Google reCAPTCHA to prevent abuse and automated (bot) traffic. Use of reCAPTCHA is subject to the Google Privacy Policy (https://policies.google.com/privacy) and Terms of Service (https://policies.google.com/terms)."
         }
       ]
     },

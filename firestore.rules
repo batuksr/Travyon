@@ -50,5 +50,10 @@ service cloud.firestore {
     match /emailVerificationCodes/{uid} {
       allow read, write: if false;
     }
+
+    // Rate-limit sayaçları — sadece Cloud Functions (Admin SDK) erişir.
+    match /rateLimits/{docId} {
+      allow read, write: if false;
+    }
   }
 }

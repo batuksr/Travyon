@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
 const firebaseConfig = {
@@ -21,7 +22,32 @@ try {
   app = initializeApp(firebaseConfig);
 } catch (error) {
   console.warn("Firebase başlatılamadı. Muhtemelen .env yapılandırması eksik.");
-} // Servisleri dışarı aktar
+}
+
+// App Check — istekleri gerçek uygulamanın kendi tarayıcı oturumundan
+// geldiğini doğrular. Site key yoksa (env boşsa) sessizce atlanır, uygulama
+// App Check'siz normal çalışmaya devam eder. Sunucu tarafında henüz
+// zorunlu kılınmıyor (enforceAppCheck) — bu ayrı, sonraki bir adım.
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+if (app && recaptchaSiteKey) {
+  if (import.meta.env.DEV) {
+    // Yerel geliştirmede gerçek reCAPTCHA doğrulaması yerine debug token kullanılır.
+    // Firebase Console > App Check > Apps > (⋮) > "Manage debug tokens" üzerinden
+    // konsolda basılan token'ı kaydetmen gerekir.
+    // @ts-expect-error - Firebase'in resmi debug-token mekanizması, tipte yok
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch {
+    console.warn("App Check başlatılamadı.");
+  }
+}
+
+// Servisleri dışarı aktar
 export const auth = app ? getAuth(app) : ({} as any);
 export const db = app ? getFirestore(app) : ({} as any);
 export const storage = app ? getStorage(app) : ({} as any);

@@ -26,6 +26,40 @@ const CODE_TTL_MS = 10 * 60 * 1000; // 10 dakika
 const RESEND_COOLDOWN_MS = 45 * 1000; // 45 saniye
 const MAX_ATTEMPTS = 5;
 
+/* ══════════════════════════════════════════════
+   RATE LIMITING — kullanıcı (uid) başına, fonksiyon başına
+   sabit-pencere sayaç. emailVerificationCodes'daki cooldown
+   deseniyle aynı fikir, ama transaction ile: AI uçları paralel/
+   sık istek alabilir, düz oku-sonra-yaz burada yarış durumuna açık olurdu.
+═══════════════════════════════════════════════ */
+
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 dakika
+const RATE_LIMITS: Record<string, number> = {
+  generateAIContent: 15,
+  askTravelAssistant: 25,
+};
+
+const checkRateLimit = async (uid: string, fnName: string): Promise<void> => {
+  const max = RATE_LIMITS[fnName];
+  const ref = db.collection("rateLimits").doc(`${uid}_${fnName}`);
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now = Date.now();
+    const data = snap.exists ? snap.data() : undefined;
+    const windowStart = data?.windowStart?.toMillis?.() ?? 0;
+
+    if (!data || now - windowStart > RATE_LIMIT_WINDOW_MS) {
+      tx.set(ref, { windowStart: FieldValue.serverTimestamp(), count: 1 });
+      return;
+    }
+    if ((data.count ?? 0) >= max) {
+      throw new HttpsError("resource-exhausted", "AI service rate limit exceeded (429).");
+    }
+    tx.update(ref, { count: FieldValue.increment(1) });
+  });
+};
+
 const generateCode = (): string => {
   const n = Math.floor(Math.random() * 10 ** CODE_LENGTH);
   return n.toString().padStart(CODE_LENGTH, "0");
@@ -285,6 +319,8 @@ export const generateAIContent = onCall<GenerateAIContentRequest>(
       throw new HttpsError("invalid-argument", "prompt too long.");
     }
 
+    await checkRateLimit(request.auth.uid, "generateAIContent");
+
     const apiKey = GEMINI_API_KEY.value();
     if (!apiKey) {
       logger.error("GEMINI_API_KEY secret not configured");
@@ -341,6 +377,8 @@ export const askTravelAssistant = onCall<AskAssistantRequest>(
     if (question.length > 4000 || (planContext && planContext.length > 8000)) {
       throw new HttpsError("invalid-argument", "input too long.");
     }
+
+    await checkRateLimit(request.auth.uid, "askTravelAssistant");
 
     const apiKey = GEMINI_API_KEY.value();
     if (!apiKey) {

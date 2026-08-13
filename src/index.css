@@ -185,3 +185,10 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* App Check'in reCAPTCHA v3 rozeti sağ-alt köşede yüzen AI asistan butonuyla
+   çakışıyor — Google'ın kurallarına göre gizlenmesi, karşılığında gizlilik
+   sayfasında metinsel bildirim bulunması yeterli (bkz. Gizlilik.tsx). */
+.grecaptcha-badge {
+  visibility: hidden;
+}
