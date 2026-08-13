@@ -96,12 +96,17 @@ const CommunityPlanView: React.FC = () => {
     const prevSavedId    = usePlanStore.getState().savedPlanId;
     const prevOnboarding = useOnboardingStore.getState().data;
 
+    // Kullanıcı hızlıca başka bir plana geçerse, eski isteğin cevabı yeni
+    // planın üzerine yazmasın diye iptal bayrağı.
+    let cancelled = false;
+
     setLoading(true);
     Promise.all([
       getPublicPlanDetails(planId),
       getPublicFeed(50),
     ])
       .then(([planData, feed]: [TravelPlanResponse | null, PublicPlan[]]) => {
+        if (cancelled) return;
         if (!planData) { setError(true); return; }
         const planMeta = feed.find(p => p.id === planId) ?? null;
         setMeta(planMeta);
@@ -123,11 +128,12 @@ const CommunityPlanView: React.FC = () => {
           accommodationAddress: '',
         });
       })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!cancelled) setError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
 
     // Unmount'ta orijinali geri yükle
     return () => {
+      cancelled = true;
       if (prevPlan) {
         setPlan(prevPlan);
         usePlanStore.setState({ savedPlanId: prevSavedId });

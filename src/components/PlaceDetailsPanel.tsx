@@ -30,12 +30,18 @@ const PlaceDetailsPanel: React.FC<Props> = ({ placeName, lat, lng, onClose }) =>
     setPhotoIndex(0);
     setImageError(false);
 
+    // Kullanıcı hızlıca başka bir yere geçerse, eski isteğin cevabı yeni
+    // state'in üzerine yazmasın diye iptal bayrağı.
+    let cancelled = false;
     fetchPlaceDetails(placeName, lat, lng)
       .then((data) => {
+        if (cancelled) return;
         setDetails(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [placeName, lat, lng]);
 
   useEffect(() => {

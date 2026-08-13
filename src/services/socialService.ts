@@ -92,12 +92,6 @@ export const sharePlanAsLink = async (
   await callSharePublicPlan(planId, plan, onboardingData, true);
 };
 
-/** Paylaşılmış plandaki fotoğrafı günceller (profil foto değiştiğinde) */
-export const updatePlanPhoto = async (planId: string, photoURL: string | null): Promise<void> => {
-  const { updateDoc } = await import('firebase/firestore');
-  await updateDoc(doc(db, 'publicPlans', planId), { userPhotoURL: photoURL ?? null });
-};
-
 /** Kullanıcının TÜM paylaşılmış planlarında isim/foto bilgisini günceller
  *  (profil adı veya fotoğrafı değiştiğinde toplulukta da yansısın) */
 export const syncSharedPlansIdentity = async (
