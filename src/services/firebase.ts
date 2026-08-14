@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getFunctions, type Functions } from "firebase/functions";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
 const firebaseConfig = {
@@ -38,8 +38,12 @@ if (app && recaptchaSiteKey) {
     self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
   try {
+    // ReCaptchaV3Provider yerine Enterprise — reCAPTCHA anahtarı klasik v3 değil,
+    // Google'ın 2022+ birleştirilmiş altyapısında Enterprise olarak oluşmuş
+    // görünüyor ("Cloud Console'da Görüntüle" butonu bunu işaret ediyordu),
+    // bu yüzden istemci tarafı da Enterprise akışını kullanmalı.
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
     });
   } catch {
