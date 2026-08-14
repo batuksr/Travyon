@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
 import { useTranslation } from 'react-i18next';
 import type { DailyActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { useThemeStore } from '../store/useThemeStore';
-
-// Stable reference — prevents SDK reload on every render
-const LIBRARIES: ('places')[] = ['places'];
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 interface MapViewProps {
   activities: DailyActivity[];
@@ -84,11 +82,7 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel })
   const { dark } = useThemeStore();
   const { t } = useTranslation();
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
 

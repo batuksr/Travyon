@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Loader2 } from 'lucide-react';
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 /* ─────────────────────────────────────────────
    Ülke kodu haritası
@@ -82,61 +83,6 @@ const getCountryCode = (destination: string): string | undefined => {
 };
 
 /* ─────────────────────────────────────────────
-   Script yükleme yardımcısı
-   — Hub.tsx zaten yüklüyse anında döner,
-     yoksa Places kütüphanesiyle yükler.
-───────────────────────────────────────────── */
-let scriptPromise: Promise<void> | null = null;
-
-const ensureGoogleMapsLoaded = (apiKey: string): Promise<void> => {
-  // Zaten yüklü
-  if (window.google?.maps?.places) return Promise.resolve();
-
-  // Yüklenme devam ediyorsa aynı promise'i bekle
-  if (scriptPromise) return scriptPromise;
-
-  // DOM'da script etiketi var mı?
-  const existing = document.querySelector('script[src*="maps.googleapis.com"]');
-  if (existing) {
-    // Başka bir yükleyici (Hub.tsx) başlattı, biz sadece bekleriz
-    scriptPromise = new Promise<void>((resolve, reject) => {
-      let attempts = 0;
-      const timer = setInterval(() => {
-        if (window.google?.maps?.places) {
-          clearInterval(timer);
-          resolve();
-        } else if (++attempts > 150) {        // ~15 saniye maksimum bekleme
-          clearInterval(timer);
-          reject(new Error('[PlacesAutocomplete] Google Maps yüklenemedi (timeout)'));
-        }
-      }, 100);
-    });
-    return scriptPromise;
-  }
-
-  // Script yok — kendimiz yükleriz
-  const callbackName = `__gm_places_cb_${Date.now()}`;
-  scriptPromise = new Promise<void>((resolve, reject) => {
-    (window as unknown as Record<string, unknown>)[callbackName] = () => {
-      delete (window as unknown as Record<string, unknown>)[callbackName];
-      resolve();
-    };
-    const script = document.createElement('script');
-    script.id   = 'gm-places-loader';
-    script.src  = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=${callbackName}`;
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      scriptPromise = null;
-      reject(new Error('[PlacesAutocomplete] Script yüklenemedi'));
-    };
-    document.head.appendChild(script);
-  });
-
-  return scriptPromise;
-};
-
-/* ─────────────────────────────────────────────
    Tipler
 ───────────────────────────────────────────── */
 export interface PlaceResult {
@@ -170,7 +116,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
   destination,
   hasError,
 }) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string || '';
+  const { isLoaded: apiReady } = useGoogleMapsLoader();
 
   /* State */
   const [inputValue, setInputValue]   = useState(value);
@@ -180,7 +126,6 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [flashIndex, setFlashIndex]   = useState<number | null>(null);
   const [noResults, setNoResults]     = useState(false);
-  const [apiReady, setApiReady]       = useState(false);
 
   /* Refs */
   const containerRef           = useRef<HTMLDivElement>(null);
@@ -195,17 +140,6 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
     isMountedRef.current = true;
     return () => { isMountedRef.current = false; };
   }, []);
-
-  /* Google Maps API'yi garantiye al (Hub zaten yüklediyse anında döner) */
-  useEffect(() => {
-    if (!apiKey) {
-      console.warn('[PlacesAutocomplete] VITE_GOOGLE_MAPS_API_KEY tanımlı değil.');
-      return;
-    }
-    ensureGoogleMapsLoaded(apiKey)
-      .then(() => { if (isMountedRef.current) setApiReady(true); })
-      .catch((err) => console.warn(err));
-  }, [apiKey]);
 
   /* Servisler: API hazır olunca başlat */
   useEffect(() => {

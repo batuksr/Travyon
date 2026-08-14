@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -18,8 +18,7 @@ import {
   shareplan, unshareplan,
 } from '../services/socialService';
 import { AiAssistantWidget } from '../components/AiAssistantWidget';
-
-const LIBRARIES: ('places')[] = ['places'];
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 /* ── Greeting ── */
 const getGreeting = (t: TFunction): { text: string; emoji: string } => {
@@ -171,11 +170,7 @@ const Hub: React.FC = () => {
   const plans      = useUserPlans();
   const { resetForm, updateData } = useOnboardingStore();
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const [weather, setWeather]               = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);

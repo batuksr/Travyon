@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useJsApiLoader } from '@react-google-maps/api';
 import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X, StickyNote } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -10,8 +9,7 @@ import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
 export type VibeType = 'rest' | 'indoor' | 'budget' | 'explore' | null;
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
-
-const LIBRARIES: ('places')[] = ['places'];
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 interface TravelSegment {
   walking:  number | null;
@@ -316,11 +314,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
   const [noteIndex, setNoteIndex]           = useState<number | null>(null);
   const [noteText, setNoteText]             = useState('');
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const currencySymbol = plan?.currencySymbol ?? '₺';
   const currencyCode   = plan?.dailyPlans[0]?.activities[0] ? 'TRY' : 'TRY'; // store'dan gelmesi idealdir
