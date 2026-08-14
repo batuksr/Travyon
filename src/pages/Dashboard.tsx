@@ -30,9 +30,13 @@ import WeatherView from '../components/WeatherView';
 import { sharePlanAsLink } from '../services/socialService';
 import { useAuthStore } from '../store/useAuthStore';
 import { isEmailVerified, resendVerification } from '../utils/authUtils';
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
+  // TEK yükleme noktası — MapView + DailyPlanView aynı anda mount olduğu için
+  // ikisinin ayrı ayrı useJsApiLoader çağırması yarış durumuna yol açıyordu.
+  const { isLoaded: mapsLoaded } = useGoogleMapsLoader();
   const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
   const { user } = useAuthStore();
@@ -354,7 +358,7 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <MapView activities={activeDayActivities} hotel={hotelMarker} />
+            <MapView activities={activeDayActivities} hotel={hotelMarker} isLoaded={mapsLoaded} />
           </div>
         </div>
       )}
@@ -624,7 +628,7 @@ const Dashboard: React.FC = () => {
             aria-label={activeDay ? t('dashboard.daySummary.panelAriaLabel', { number: activeDay.dayNumber }) : t('dashboard.topBar.tabPlan')}
             className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} /> : null}
+            {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} isLoaded={mapsLoaded} /> : null}
           </div>
         </div>
 
@@ -640,7 +644,7 @@ const Dashboard: React.FC = () => {
           aria-label={t('dashboard.map.regionAriaLabel')}
           className="hidden lg:flex flex-1 relative"
         >
-          <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} hotel={hotelMarker} />
+          <MapView activities={activeDayActivities} onActivityClick={setSelectedPlace} hotel={hotelMarker} isLoaded={mapsLoaded} />
 
           {/* Mini optimize badge */}
           <div className="absolute top-3 right-3 bg-surface border border-divider rounded-xl shadow-sm px-3.5 py-2 flex items-center gap-2 z-[5]">

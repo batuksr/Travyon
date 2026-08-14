@@ -4,12 +4,17 @@ import { useTranslation } from 'react-i18next';
 import type { DailyActivity } from '../services/aiService';
 import { usePlanStore } from '../store/usePlanStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 interface MapViewProps {
   activities: DailyActivity[];
   onActivityClick?: (place: { placeName: string; lat: number; lng: number }) => void;
   hotel?: { lat: number; lng: number; name: string } | null;
+  /* Script yükleme TEK bir üst bileşende (Dashboard/CommunityPlanView) yapılır
+     ve buraya prop olarak geçirilir — MapView + DailyPlanView aynı sayfada
+     birlikte mount olduğunda ikisinin AYRI AYRI useJsApiLoader çağırması
+     @react-google-maps/api'nin iç senkronizasyonunda yarış durumuna
+     (NotLoadingAPIFromGoogleMapsError) yol açıyordu. */
+  isLoaded: boolean;
 }
 
 const containerStyle = { width: '100%', height: '100%', borderRadius: '1rem' };
@@ -78,11 +83,9 @@ const baseMapOptions = {
   streetViewControl: false,
 };
 
-const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel }) => {
+const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel, isLoaded }) => {
   const { dark } = useThemeStore();
   const { t } = useTranslation();
-
-  const { isLoaded } = useGoogleMapsLoader();
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
 

@@ -9,7 +9,6 @@ import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
 export type VibeType = 'rest' | 'indoor' | 'budget' | 'explore' | null;
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
-import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 interface TravelSegment {
   walking:  number | null;
@@ -24,6 +23,9 @@ type TravelMode = keyof Omit<TravelSegment, 'loading'>;
 interface Props {
   day: DailyPlan;
   onActivityClick?: (place: { placeName: string; lat: number; lng: number }) => void;
+  /* Script yükleme TEK bir üst bileşende (Dashboard/CommunityPlanView) yapılır
+     ve buraya prop olarak geçirilir — bkz. MapView.tsx'teki aynı not. */
+  isLoaded: boolean;
 }
 
 const TRAVEL_MODES: TravelMode[] = ['driving', 'transit', 'walking', 'cycling'];
@@ -299,7 +301,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
 /* ════════════════════════════════════════
    Main Component
 ════════════════════════════════════════ */
-const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
+const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
   const { t, i18n } = useTranslation();
   const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity, updateActivityNote } = usePlanStore();
   const { data: tripData } = useOnboardingStore();
@@ -313,8 +315,6 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick }) => {
   const [showAddPanel, setShowAddPanel]     = useState(false);
   const [noteIndex, setNoteIndex]           = useState<number | null>(null);
   const [noteText, setNoteText]             = useState('');
-
-  const { isLoaded } = useGoogleMapsLoader();
 
   const currencySymbol = plan?.currencySymbol ?? '₺';
   const currencyCode   = plan?.dailyPlans[0]?.activities[0] ? 'TRY' : 'TRY'; // store'dan gelmesi idealdir

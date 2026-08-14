@@ -15,6 +15,7 @@ import type { TravelPlanResponse } from '../services/aiService';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
+import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
 const TRAVEL_TYPE_EMOJI: Record<string, string> = {
   solo_macera: '🧍', romantik: '❤️', balayi: '✨', aile: '👨‍👩‍👧',
@@ -38,6 +39,8 @@ const FOOD_EMOJI: Record<string, string> = {
 
 const CommunityPlanView: React.FC = () => {
   const { t, i18n } = useTranslation();
+  // TEK yükleme noktası — bkz. Dashboard.tsx'teki aynı not.
+  const { isLoaded: mapsLoaded } = useGoogleMapsLoader();
   const localeCode = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const { planId }  = useParams<{ planId: string }>();
   const navigate    = useNavigate();
@@ -346,7 +349,7 @@ const CommunityPlanView: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <MapView activities={activeDayActivities} hotel={null} />
+            <MapView activities={activeDayActivities} hotel={null} isLoaded={mapsLoaded} />
           </div>
         </div>
       )}
@@ -502,7 +505,7 @@ const CommunityPlanView: React.FC = () => {
 
           {/* DailyPlanView — Dashboard'la birebir aynı */}
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} /> : null}
+            {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} isLoaded={mapsLoaded} /> : null}
           </div>
         </div>
 
@@ -518,6 +521,7 @@ const CommunityPlanView: React.FC = () => {
             activities={activeDayActivities}
             onActivityClick={setSelectedPlace}
             hotel={null}
+            isLoaded={mapsLoaded}
           />
           <div className="absolute top-3 right-3 bg-surface border border-divider rounded-xl shadow-sm px-3.5 py-2 flex items-center gap-2 z-[5]">
             <div className="w-1.5 h-1.5 bg-sage rounded-full" />
