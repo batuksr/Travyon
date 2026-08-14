@@ -22,6 +22,14 @@ const RESEND_FROM = defineSecret("RESEND_FROM");
 // Gemini API anahtarı — istemciye ASLA gönderilmez, sadece burada okunur.
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
+// Geocoding/Directions REST API'leri için AYRI bir Maps anahtarı — Google,
+// "HTTP referrer" kısıtlamalı anahtarların bu REST servisleriyle
+// kullanılmasını YASAKLIYOR ("API keys with referer restrictions cannot be
+// used with this API"). Tarayıcıdaki VITE_GOOGLE_MAPS_API_KEY (Maps
+// JavaScript API için referrer-kısıtlı) burada KULLANILAMAZ — bu yüzden
+// kısıtlamasız/IP-kısıtlı, sadece sunucu tarafında okunan ayrı bir anahtar.
+const GOOGLE_MAPS_SERVER_KEY = defineSecret("GOOGLE_MAPS_SERVER_KEY");
+
 // iyzico abonelik ödemeleri — kimlik bilgileri Secret Manager'da, koda hiç yazılmaz.
 const IYZICO_API_KEY = defineSecret("IYZICO_API_KEY");
 const IYZICO_SECRET_KEY = defineSecret("IYZICO_SECRET_KEY");
@@ -63,6 +71,8 @@ const RATE_LIMITS: Record<string, number> = {
   followUserAction: 30,
   initiateSubscriptionCheckout: 3,
   cancelSubscription: 5,
+  geocodeAddress: 300, // plan başına onlarca aktivite × fallback araması olabilir
+  getDirections: 60,   // gün başına TEK toplu çağrı (bkz. getDirections)
 };
 
 // generateAIContent/askTravelAssistant için mesaj bilinçli olarak bu sabit
@@ -1174,5 +1184,161 @@ export const cancelSubscription = onCall(
     await db.collection("users").doc(uid).set({ subscriptionStatus: "cancelling" }, { merge: true });
 
     return { ok: true };
+  },
+);
+
+/* ══════════════════════════════════════════════
+   GOOGLE MAPS REST PROXY (Geocoding + Directions)
+   Google, "HTTP referrer" kısıtlamalı anahtarların bu REST servisleriyle
+   kullanılmasını yasaklıyor ("API keys with referer restrictions cannot be
+   used with this API") — tarayıcıdaki Maps JS anahtarı burada işe yaramaz.
+   Bu yüzden GOOGLE_MAPS_SERVER_KEY (kısıtlamasız/IP-kısıtlı, istemciye hiç
+   gönderilmez) ile sunucu tarafında proxy'liyoruz.
+═══════════════════════════════════════════════ */
+
+const GOOGLE_MAPS_REST_BASE = "https://maps.googleapis.com/maps/api";
+
+interface GeocodeAddressRequest {
+  address: string;
+  bias?: { lat: number; lng: number };
+}
+interface GeocodeAddressResult {
+  lat: number;
+  lng: number;
+}
+
+export const geocodeAddress = onCall<GeocodeAddressRequest>(
+  { secrets: [GOOGLE_MAPS_SERVER_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+
+    const { address, bias } = request.data ?? ({} as Partial<GeocodeAddressRequest>);
+    if (typeof address !== "string" || !address.trim() || address.length > 300) {
+      throw new HttpsError("invalid-argument", "invalid address");
+    }
+
+    await checkRateLimit(request.auth.uid, "geocodeAddress", "Rate limit exceeded — try again later.");
+
+    const url = new URL(`${GOOGLE_MAPS_REST_BASE}/geocode/json`);
+    url.searchParams.set("address", address);
+    url.searchParams.set("key", GOOGLE_MAPS_SERVER_KEY.value());
+    url.searchParams.set("language", "tr");
+    if (bias && typeof bias.lat === "number" && typeof bias.lng === "number") {
+      const d = 0.15; // ~15 km
+      url.searchParams.set("bounds", `${bias.lat - d},${bias.lng - d}|${bias.lat + d},${bias.lng + d}`);
+    }
+
+    try {
+      const res = await fetch(url.toString());
+      const data = await res.json() as {
+        status: string;
+        error_message?: string;
+        results: Array<{ geometry: { location: { lat: number; lng: number } } }>;
+      };
+
+      if (data.status !== "OK" || !data.results.length) {
+        if (data.status !== "ZERO_RESULTS") {
+          logger.error("[geocodeAddress] Google status not OK", { status: data.status, errorMessage: data.error_message });
+        }
+        return { result: null };
+      }
+
+      const { lat, lng } = data.results[0].geometry.location;
+      return { result: { lat, lng } as GeocodeAddressResult };
+    } catch (err) {
+      logger.error("[geocodeAddress] fetch failed", { err: err instanceof Error ? err.message : String(err) });
+      throw new HttpsError("internal", "Geocoding failed.");
+    }
+  },
+);
+
+type TravelModeKey = "driving" | "transit" | "walking" | "cycling";
+const REST_MODE_BY_KEY: Record<TravelModeKey, string> = {
+  driving: "driving", transit: "transit", walking: "walking", cycling: "bicycling",
+};
+
+interface DirectionsPair {
+  origin: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+}
+interface GetDirectionsRequest {
+  pairs: DirectionsPair[];
+}
+type DirectionsResultRow = Record<TravelModeKey, number | null>;
+
+const isLatLng = (v: unknown): v is { lat: number; lng: number } =>
+  !!v && typeof (v as { lat?: unknown }).lat === "number" && typeof (v as { lng?: unknown }).lng === "number";
+
+/** Tek bir mod için Directions REST çağrısı — süreyi dakika cinsinden döner. */
+const fetchDirectionDurationMin = async (
+  apiKey: string,
+  pair: DirectionsPair,
+  modeKey: TravelModeKey,
+): Promise<number | null> => {
+  const url = new URL(`${GOOGLE_MAPS_REST_BASE}/directions/json`);
+  url.searchParams.set("origin", `${pair.origin.lat},${pair.origin.lng}`);
+  url.searchParams.set("destination", `${pair.destination.lat},${pair.destination.lng}`);
+  url.searchParams.set("mode", REST_MODE_BY_KEY[modeKey]);
+  url.searchParams.set("key", apiKey);
+  if (modeKey === "driving") {
+    url.searchParams.set("departure_time", "now");
+    url.searchParams.set("traffic_model", "best_guess");
+  }
+
+  try {
+    const res = await fetch(url.toString());
+    const data = await res.json() as {
+      status: string;
+      routes: Array<{ legs: Array<{
+        duration?: { value: number };
+        duration_in_traffic?: { value: number };
+      }> }>;
+    };
+    if (data.status !== "OK" || !data.routes.length) return null;
+    const leg = data.routes[0].legs[0];
+    const durationSec = modeKey === "driving" ? (leg?.duration_in_traffic?.value ?? leg?.duration?.value) : leg?.duration?.value;
+    return durationSec ? Math.ceil(durationSec / 60) : null;
+  } catch (err) {
+    logger.error("[getDirections] fetch failed", { modeKey, err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+};
+
+/**
+ * Bir günün TÜM aktivite-çiftleri × TÜM ulaşım modları için seyahat
+ * sürelerini TEK çağrıda hesaplar (DailyPlanView'in eski istemci-taraflı
+ * DirectionsService döngüsünün yerine geçti) — sunucu tarafında paralel
+ * çalıştırılır, tek round-trip.
+ */
+export const getDirections = onCall<GetDirectionsRequest>(
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], timeoutSeconds: 60 },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+
+    const { pairs } = request.data ?? ({} as Partial<GetDirectionsRequest>);
+    if (!Array.isArray(pairs) || pairs.length === 0 || pairs.length > 30) {
+      throw new HttpsError("invalid-argument", "invalid pairs");
+    }
+    for (const p of pairs) {
+      if (!isLatLng(p?.origin) || !isLatLng(p?.destination)) {
+        throw new HttpsError("invalid-argument", "invalid pair coordinates");
+      }
+    }
+
+    await checkRateLimit(request.auth.uid, "getDirections", "Rate limit exceeded — try again later.");
+
+    const apiKey = GOOGLE_MAPS_SERVER_KEY.value();
+    const modeKeys = Object.keys(REST_MODE_BY_KEY) as TravelModeKey[];
+
+    const results: DirectionsResultRow[] = await Promise.all(
+      pairs.map(async (pair) => {
+        const durations = await Promise.all(modeKeys.map((m) => fetchDirectionDurationMin(apiKey, pair, m)));
+        const row = {} as DirectionsResultRow;
+        modeKeys.forEach((m, i) => { row[m] = durations[i]; });
+        return row;
+      }),
+    );
+
+    return { results };
   },
 );

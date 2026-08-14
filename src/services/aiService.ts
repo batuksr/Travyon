@@ -275,9 +275,11 @@ const optimizeActivitiesForDay = (
 /* ══════════════════════════════════════════════
    Google Geocoding API — Nominatim'den çok daha
    doğru koordinatlar (özellikle turistik mekanlar)
+   Not: Google, "HTTP referrer" kısıtlamalı anahtarların Geocoding gibi REST
+   servisleriyle kullanılmasını yasaklıyor, bu yüzden bu çağrı istemciden
+   doğrudan değil, geocodeAddress Cloud Function'ı (ayrı, kısıtlamasız bir
+   sunucu anahtarı kullanan) üzerinden yapılıyor — bkz. functions/src/index.ts.
 ═══════════════════════════════════════════════ */
-const GOOGLE_GEOCODING_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
 const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
   const R = 6371;
@@ -325,36 +327,14 @@ const fetchGoogleCoordinates = async (
 
   const doRequest = async (address: string): Promise<{ lat: number; lng: number } | null> => {
     try {
-      const url = new URL(GOOGLE_GEOCODING_URL);
-      url.searchParams.set('address', address);
-      url.searchParams.set('key', GOOGLE_MAPS_API_KEY);
-      url.searchParams.set('language', 'tr');
-      // Konum yanlılığı: AI koordinatının ~±15 km çevresine öncelik ver
-      if (bias) {
-        const d = 0.15; // ~15 km
-        url.searchParams.set('bounds', `${bias.lat - d},${bias.lng - d}|${bias.lat + d},${bias.lng + d}`);
-      }
-
-      const res = await fetch(url.toString());
-      if (!res.ok) {
-        warn(`[Geocoding] Google HTTP ${res.status} — "${address}"`);
-        return null;
-      }
-
-      const data = await res.json() as {
-        status: string;
-        results: Array<{ geometry: { location: { lat: number; lng: number } } }>;
-      };
-
-      if (data.status !== 'OK' || !data.results.length) {
-        warn(`[Geocoding] Google status=${data.status} — "${address}"`);
-        return null;
-      }
-
-      const { lat, lng } = data.results[0].geometry.location;
-      return { lat, lng };
+      const fn = httpsCallable<
+        { address: string; bias?: { lat: number; lng: number } },
+        { result: { lat: number; lng: number } | null }
+      >(functions, 'geocodeAddress');
+      const res = await fn({ address, bias });
+      return res.data.result;
     } catch (e) {
-      warn(`[Geocoding] Google fetch hatası — "${address}":`, e);
+      warn(`[Geocoding] Cloud Function hatası — "${address}":`, e);
       return null;
     }
   };

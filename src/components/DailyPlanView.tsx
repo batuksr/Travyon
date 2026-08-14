@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { httpsCallable } from 'firebase/functions';
 import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X, StickyNote } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -9,6 +10,7 @@ import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
 export type VibeType = 'rest' | 'indoor' | 'budget' | 'explore' | null;
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import { functions } from '../services/firebase';
 
 interface TravelSegment {
   walking:  number | null;
@@ -325,44 +327,62 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
   );
   const prevKeyRef = useRef<string>('');
 
+  /* Seyahat süreleri artık istemciden doğrudan DirectionsService (SDK) ile değil,
+     getDirections Cloud Function'ı üzerinden tek toplu çağrıda hesaplanıyor —
+     Google'ın "referrer kısıtlamalı anahtarlar REST servisleriyle kullanılamaz"
+     kısıtı yüzünden bu Directions çağrıları sunucu tarafında ayrı bir anahtarla
+     yapılmak zorunda (bkz. functions/src/index.ts getDirections). */
   useEffect(() => {
-    if (!isLoaded || !window.google?.maps?.DirectionsService) return;
+    if (!isLoaded) return;
     if (activitiesKey === prevKeyRef.current) return;
     prevKeyRef.current = activitiesKey;
-    setTravelTimes({});
 
-    const service = new window.google.maps.DirectionsService();
-    const gmModes: Array<{ key: TravelMode; mode: google.maps.TravelMode }> = [
-      { key: 'driving', mode: window.google.maps.TravelMode.DRIVING   },
-      { key: 'transit', mode: window.google.maps.TravelMode.TRANSIT   },
-      { key: 'walking', mode: window.google.maps.TravelMode.WALKING   },
-      { key: 'cycling', mode: window.google.maps.TravelMode.BICYCLING },
-    ];
+    const pairs = day.activities.slice(0, -1).map((activity, index) => ({
+      index,
+      origin: { lat: activity.coordinates.lat, lng: activity.coordinates.lng },
+      destination: {
+        lat: day.activities[index + 1].coordinates.lat,
+        lng: day.activities[index + 1].coordinates.lng,
+      },
+    }));
+    if (pairs.length === 0) {
+      // Tek aktivite → çift yok, önceki günden kalan seyahat sürelerini temizle.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTravelTimes({});
+      return;
+    }
 
-    day.activities.forEach((activity, index) => {
-      if (index === day.activities.length - 1) return;
-      const next = day.activities[index + 1];
-      const origin      = { lat: activity.coordinates.lat, lng: activity.coordinates.lng };
-      const destination = { lat: next.coordinates.lat,     lng: next.coordinates.lng };
-      const seg: TravelSegment = { driving: null, transit: null, walking: null, cycling: null, loading: true };
-      let remaining = gmModes.length;
-      gmModes.forEach(({ key, mode }) => {
-        service.route({
-          origin, destination, travelMode: mode,
-          ...(mode === window.google.maps.TravelMode.DRIVING && {
-            drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS },
-          }),
-        }, (result, status) => {
-          const leg = result?.routes?.[0]?.legs?.[0];
-          const durationSec = key === 'driving'
-            ? (leg?.duration_in_traffic?.value ?? leg?.duration?.value)
-            : leg?.duration?.value;
-          seg[key] = status === 'OK' && durationSec ? Math.ceil(durationSec / 60) : null;
-          remaining--;
-          if (remaining === 0) { seg.loading = false; setTravelTimes(prev => ({ ...prev, [index]: { ...seg } })); }
-        });
-      });
+    const loadingState: Record<number, TravelSegment> = {};
+    pairs.forEach(({ index }) => {
+      loadingState[index] = { driving: null, transit: null, walking: null, cycling: null, loading: true };
     });
+    setTravelTimes(loadingState);
+
+    let cancelled = false;
+    const fn = httpsCallable<
+      { pairs: Array<{ origin: { lat: number; lng: number }; destination: { lat: number; lng: number } }> },
+      { results: Array<Record<TravelMode, number | null>> }
+    >(functions, 'getDirections');
+
+    fn({ pairs: pairs.map(({ origin, destination }) => ({ origin, destination })) })
+      .then((res) => {
+        if (cancelled) return;
+        const next: Record<number, TravelSegment> = {};
+        pairs.forEach(({ index }, i) => {
+          next[index] = { ...res.data.results[i], loading: false };
+        });
+        setTravelTimes(next);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const next: Record<number, TravelSegment> = {};
+        pairs.forEach(({ index }) => {
+          next[index] = { driving: null, transit: null, walking: null, cycling: null, loading: false };
+        });
+        setTravelTimes(next);
+      });
+
+    return () => { cancelled = true; };
   }, [isLoaded, activitiesKey, day.activities]);
 
   const handleVibeSelect = async (vibe: VibeType) => {
