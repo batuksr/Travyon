@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(rm -rf dist)",
+      "Bash(npm run *)",
+      "Bash(firebase deploy *)",
+      "Bash(/c/Users/batuk/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0-full_build/bin/ffmpeg.exe -version)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/i18n/locales/tr.json','utf8'\\)\\); console.log\\('tr OK'\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/i18n/locales/en.json','utf8'\\)\\); console.log\\('en OK'\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const tr=fs.readFileSync\\('src/i18n/locales/tr.json','utf8'\\); console.log\\('TR length:', tr.length\\); console.log\\(tr.slice\\(-500\\)\\);\")",
+      "Bash(node gen-settings-i18n.js)",
+      "Bash(node -e \"const c=require\\('fs'\\).readFileSync\\('src/i18n/locales/en.json','utf8'\\); console.log\\(c.length\\); console.log\\(c.slice\\(-300\\)\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const en=fs.readFileSync\\('src/i18n/locales/en.json','utf8'\\); console.log\\('EN length:', en.length\\); console.log\\(en.slice\\(-500\\)\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/i18n/locales/tr.json','utf8'\\)\\); console.log\\('TR OK'\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/i18n/locales/en.json','utf8'\\)\\); console.log\\('EN OK'\\)\")",
+      "Bash(node insert-settings.js)",
+      "Bash(node -e \"const c=require\\('fs'\\).readFileSync\\('src/i18n/locales/tr.json','utf8'\\); console.log\\(c.slice\\(-400\\)\\)\")",
+      "Bash(node -e \"const c=require\\('fs'\\).readFileSync\\('src/i18n/locales/en.json','utf8'\\); const lines=c.split\\('\\\\n'\\); console.log\\('total lines:', lines.length\\); console.log\\(lines.slice\\(-25\\).join\\('\\\\n'\\)\\)\")"
+    ]
+  }
+}
