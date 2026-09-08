@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, updateProfile } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
+import { db } from '../services/firebase';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { sendVerificationCode, verifyEmailCode, VerifyCodeError } from '../services/emailVerificationService';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User, MailCheck, RefreshCw, Check } from 'lucide-react';
@@ -21,6 +24,23 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { setUser } = useAuthStore();
+
+  const ensureUserDocument = async (registeredUser: FirebaseUser) => {
+    const userRef = doc(db, 'users', registeredUser.uid);
+    const exists = (await getDoc(userRef)).exists();
+    await setDoc(userRef, {
+      displayName: registeredUser.displayName || name.trim(),
+      email: registeredUser.email,
+      profilePublic: false,
+      plansPublic: false,
+      followPublic: false,
+      locationEnabled: false,
+      locationHistory: false,
+      analyticsEnabled: false,
+      termsAcceptedAt: serverTimestamp(),
+      ...(!exists ? { createdAt: serverTimestamp() } : {}),
+    }, { merge: true });
+  };
 
   /* E-posta doğrulama popup durumu */
   const [showVerify, setShowVerify]           = useState(false);
@@ -41,7 +61,12 @@ const Register: React.FC = () => {
   // Redirect sonucu al (mobil Google kaydı sonrası)
   useEffect(() => {
     getRedirectResult(auth)
-      .then(result => { if (result?.user) navigate('/onboarding'); })
+      .then(async result => {
+        if (result?.user) {
+          await ensureUserDocument(result.user);
+          navigate('/onboarding');
+        }
+      })
       .catch(err => {
         const code = (err as { code?: string }).code;
         if (code && code !== 'auth/no-auth-event' && code !== 'auth/null-user') {
@@ -60,6 +85,7 @@ const Register: React.FC = () => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
+      await ensureUserDocument(cred.user);
       // Doğrulama kodu gönder — kod girilince uygulamaya geçilsin
       try {
         const { cooldownMs } = await sendVerificationCode(i18n.language === 'en' ? 'en' : 'tr');
@@ -82,7 +108,8 @@ const Register: React.FC = () => {
     if (!agreedToTerms) { setError(t('auth.register.errors.termsRequired')); return; }
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      await ensureUserDocument(result.user);
       navigate('/onboarding');
     } catch (err) {
       const code = (err as { code?: string }).code ?? '';

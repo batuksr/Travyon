@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../store/useAuthStore';
 import { CheckCircle2, Circle, ChevronDown, ArrowLeft, RefreshCw } from 'lucide-react';
 
 interface CheckItem {
@@ -72,10 +73,11 @@ const CHECKLIST: CheckGroup[] = [
 const TravelChecklist: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('planId') ?? 'default';
   const dest   = searchParams.get('dest') ?? '';
-  const storageKey = `travyon-checklist-${planId}`;
+  const storageKey = `travyon-checklist-${user?.uid ?? 'anonymous'}-${planId}`;
 
   const [checked, setChecked] = useState<Set<string>>(() => {
     try {

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
+import { db } from '../services/firebase';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
@@ -15,12 +18,36 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const ensureUserDocument = async (signedInUser: FirebaseUser, recordConsent = false) => {
+    const userRef = doc(db, 'users', signedInUser.uid);
+    if ((await getDoc(userRef)).exists()) return;
+    await setDoc(userRef, {
+      displayName: signedInUser.displayName,
+      email: signedInUser.email,
+      profilePublic: false,
+      plansPublic: false,
+      followPublic: false,
+      locationEnabled: false,
+      locationHistory: false,
+      analyticsEnabled: false,
+      createdAt: serverTimestamp(),
+      ...(recordConsent ? { termsAcceptedAt: serverTimestamp() } : {}),
+    });
+  };
 
   // Redirect sonucu al (mobil Google girişi sonrası)
   useEffect(() => {
     getRedirectResult(auth)
-      .then(result => { if (result?.user) navigate('/hub'); })
+      .then(async result => {
+        if (result?.user) {
+          await ensureUserDocument(result.user, true);
+          navigate('/hub');
+        }
+      })
       .catch(err => {
         const code = (err as { code?: string }).code;
         if (code && code !== 'auth/no-auth-event' && code !== 'auth/null-user') {
@@ -35,7 +62,8 @@ const Login: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      await ensureUserDocument(result.user);
       navigate('/hub');
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string };
@@ -52,7 +80,8 @@ const Login: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      await ensureUserDocument(result.user, true);
       navigate('/hub');
     } catch (err) {
       const code = (err as { code?: string }).code ?? '';
@@ -72,6 +101,21 @@ const Login: React.FC = () => {
         setLoading(false);
       }
     }
+  };
+
+  const handleForgotPassword = async () => {
+    setError(''); setNotice('');
+    if (!email.trim()) {
+      setError(t('auth.login.resetNeedsEmail'));
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setNotice(t('auth.login.resetSent'));
+    } catch {
+      setError(t('auth.login.errors.resetFailed'));
+    } finally { setResetLoading(false); }
   };
 
   return (
@@ -122,6 +166,11 @@ const Login: React.FC = () => {
               {error}
             </div>
           )}
+          {notice && (
+            <div className="mb-5 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700 text-sm" role="status">
+              {notice}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -142,8 +191,13 @@ const Login: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block font-heading text-[13px] text-text">{t('auth.common.passwordLabel')}</label>
-                <button type="button" className="text-xs text-accent font-heading transition-colors">
-                  {t('auth.login.forgotPassword')}
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-xs text-accent font-heading transition-colors disabled:opacity-50"
+                >
+                  {resetLoading ? t('auth.login.resetSending') : t('auth.login.forgotPassword')}
                 </button>
               </div>
               <div className="relative">
@@ -159,6 +213,7 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
+                  aria-label={showPassword ? t('auth.login.hidePassword') : t('auth.login.showPassword')}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                 >
                   {showPassword ? <EyeOff size={17} strokeWidth={2.5} /> : <Eye size={17} strokeWidth={2.5} />}

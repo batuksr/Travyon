@@ -9,12 +9,13 @@ export const askTravelAssistant = async (
   question:    string,
   onChunk:     (text: string) => void,
   planContext?: string,
+  language: 'tr' | 'en' = 'tr',
 ): Promise<string> => {
   try {
-    const fn = httpsCallable<{ question: string; planContext?: string }, string>(
+    const fn = httpsCallable<{ question: string; planContext?: string; language: 'tr' | 'en' }, string>(
       functions, 'askTravelAssistant', { timeout: 100_000 },
     );
-    const { stream, data } = await fn.stream({ question, planContext });
+    const { stream, data } = await fn.stream({ question, planContext, language });
     for await (const chunk of stream) {
       onChunk(chunk as string);
     }

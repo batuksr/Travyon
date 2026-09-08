@@ -1,9 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
-import { getFunctions, type Functions } from "firebase/functions";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
+import { connectAuthEmulator, getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from "firebase/storage";
+import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Vite'da çevre değişkenleri import.meta.env üzerinden çekilir
 const firebaseConfig = {
@@ -15,6 +15,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+const useFirebaseEmulators =
+  import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
+
 // Firebase'i Başlat
 // Eğer .env dosyası yoksa veya ayarlanmamışsa, uygulamanın çökmesini engellemek için mock bir obje döndürüyoruz.
 let app;
@@ -24,12 +27,10 @@ try {
   console.warn("Firebase başlatılamadı. Muhtemelen .env yapılandırması eksik.");
 }
 
-// App Check — istekleri gerçek uygulamanın kendi tarayıcı oturumundan
-// geldiğini doğrular. Site key yoksa (env boşsa) sessizce atlanır, uygulama
-// App Check'siz normal çalışmaya devam eder. Sunucu tarafında henüz
-// zorunlu kılınmıyor (enforceAppCheck) — bu ayrı, sonraki bir adım.
+// App Check — callable Cloud Functions tarafında zorunludur. Üretim ortamına
+// çıkmadan önce bu anahtar Firebase Console'daki reCAPTCHA v3 kaydıyla eşleşmelidir.
 const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-if (app && recaptchaSiteKey) {
+if (app && recaptchaSiteKey && !useFirebaseEmulators) {
   if (import.meta.env.DEV) {
     // Yerel geliştirmede gerçek reCAPTCHA doğrulaması yerine debug token kullanılır.
     // Firebase Console > App Check > Apps > (⋮) > "Manage debug tokens" üzerinden
@@ -38,17 +39,15 @@ if (app && recaptchaSiteKey) {
     self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
   try {
-    // ReCaptchaV3Provider yerine Enterprise — reCAPTCHA anahtarı klasik v3 değil,
-    // Google'ın 2022+ birleştirilmiş altyapısında Enterprise olarak oluşmuş
-    // görünüyor ("Cloud Console'da Görüntüle" butonu bunu işaret ediyordu),
-    // bu yüzden istemci tarafı da Enterprise akışını kullanmalı.
     initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
     });
   } catch {
     console.warn("App Check başlatılamadı.");
   }
+} else if (import.meta.env.PROD) {
+  console.error('VITE_RECAPTCHA_SITE_KEY eksik: güvenli sunucu çağrıları çalışmayacak.');
 }
 
 // Servisleri dışarı aktar
@@ -58,3 +57,16 @@ export const storage = app ? getStorage(app) : ({} as unknown as FirebaseStorage
 // Cloud Functions'daki setGlobalOptions region'ıyla eşleşmeli (functions/src/index.ts)
 export const functions = app ? getFunctions(app, "europe-west1") : ({} as unknown as Functions);
 export const googleProvider = new GoogleAuthProvider();
+
+const emulatorConnectionState = globalThis as typeof globalThis & {
+  __TRAVYON_FIREBASE_EMULATORS_CONNECTED__?: boolean;
+};
+
+if (app && useFirebaseEmulators && !emulatorConnectionState.__TRAVYON_FIREBASE_EMULATORS_CONNECTED__) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  emulatorConnectionState.__TRAVYON_FIREBASE_EMULATORS_CONNECTED__ = true;
+  console.info("Travyon Firebase Emulator Suite'e bağlandı.");
+}

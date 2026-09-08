@@ -11,6 +11,7 @@ import TravyonLogo from './TravyonLogo';
 import { useThemeStore } from '../store/useThemeStore';
 import { useSidebarStore } from '../store/useSidebarStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import { usePlanStore } from '../store/usePlanStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 
 const navBtn = 'w-full flex items-center gap-3.5 px-[15px] py-[11px] rounded-2xl font-heading text-sm text-left cursor-pointer transition-colors';
@@ -26,7 +27,8 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const { user } = useAuthStore();
   const { dark, toggle: toggleTheme } = useThemeStore();
-  const { photoURL: storePhotoURL, setSettings } = useAppSettingsStore();
+  const { photoURL: storePhotoURL, resetSettings } = useAppSettingsStore();
+  const clearPlan = usePlanStore((state) => state.clearPlan);
 
   const mainNavItems = [
     { icon: Home,     label: t('nav.home'),       path: '/hub' },
@@ -37,7 +39,8 @@ const Sidebar: React.FC = () => {
   ];
 
   const handleLogout = async () => {
-    setSettings({ photoURL: null }); // localStorage'daki fotoğrafı temizle
+    clearPlan();
+    resetSettings();
     await signOut(auth);
     navigate('/login');
   };

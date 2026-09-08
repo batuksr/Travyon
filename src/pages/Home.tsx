@@ -702,8 +702,8 @@ const Home: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/register')}
-                className="w-full py-3 rounded-full bg-white text-accent-700 font-heading text-sm hover:brightness-105 transition-all"
+                disabled
+                className="w-full py-3 rounded-full bg-white/85 text-accent-700 font-heading text-sm cursor-not-allowed"
               >
                 {t('home.pricing.pro.button')}
               </button>
@@ -735,8 +735,8 @@ const Home: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/register')}
-                className="w-full py-3 rounded-full border-[1.5px] border-divider bg-transparent text-text font-heading text-sm hover:bg-surface-2 transition-all"
+                disabled
+                className="w-full py-3 rounded-full border-[1.5px] border-divider bg-surface-2 text-muted font-heading text-sm cursor-not-allowed"
               >
                 {t('home.pricing.team.button')}
               </button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -144,34 +144,47 @@ const MAX_PEOPLE = 15;
 const Onboarding: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentStep, data, nextStep, prevStep, updateData, setStep, resetForm } = useOnboardingStore();
   const { setPlan } = usePlanStore();
   const { user } = useAuthStore();
+  const [showDesktopVideo, setShowDesktopVideo] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  );
 
-  // Sayfaya her girişte formu sıfırla — önceki planın seçimleri kalmasın
   useEffect(() => {
-    resetForm();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const media = window.matchMedia('(min-width: 1024px)');
+    const sync = () => setShowDesktopVideo(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
   }, []);
 
-  // Ayarlar'dan kaydedilen varsayılan değerleri yükle (sadece form boşsa uygula)
+  // Formu sıfırla, kullanıcı varsayılanlarını yükle ve Hub kısayolunun
+  // gönderdiği alanları en son uygulayarak onların kaybolmasını önle.
   useEffect(() => {
-    if (!user || data.destination !== '') return; // form zaten doldurulmuşsa dokunma
+    resetForm();
+    const initialData = (location.state as { initialData?: Partial<OnboardingData> } | null)?.initialData ?? {};
+    if (!user) {
+      updateData(initialData);
+      return;
+    }
     getDoc(doc(db, 'users', user.uid)).then((snap) => {
-      if (!snap.exists()) return;
-      const d = snap.data();
       const updates: Partial<OnboardingData> = {};
-      if (d.defaultBudget)      updates.budget      = Number(d.defaultBudget);
-      if (d.defaultPeopleCount) updates.peopleCount  = Number(d.defaultPeopleCount);
-      if (d.defaultPace)        updates.pace         = d.defaultPace as string;
-      if (d.defaultCurrency) {
-        const curr = CURRENCY_MAP[d.defaultCurrency as string];
-        if (curr) { updates.currencyCode = curr.code; updates.currencySymbol = curr.symbol; }
+      if (snap.exists()) {
+        const d = snap.data();
+        if (d.defaultBudget)      updates.budget      = Number(d.defaultBudget);
+        if (d.defaultPeopleCount) updates.peopleCount = Number(d.defaultPeopleCount);
+        if (d.defaultPace)        updates.pace        = d.defaultPace as string;
+        if (d.defaultCurrency) {
+          const curr = CURRENCY_MAP[d.defaultCurrency as string];
+          if (curr) { updates.currencyCode = curr.code; updates.currencySymbol = curr.symbol; }
+        }
       }
-      if (Object.keys(updates).length > 0) updateData(updates);
-    }).catch(() => {});
+      updateData({ ...updates, ...initialData });
+    }).catch(() => updateData(initialData));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
 
   const loadingMessages = t('onboarding.loadingMessages', { returnObjects: true }) as string[];
 
@@ -357,12 +370,14 @@ const Onboarding: React.FC = () => {
         {/* Fallback gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#2b241d] via-[#211c17] to-[#2b241d]" />
 
-        <video
-          autoPlay loop muted playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/videos/onboarding.mp4" type="video/mp4" />
-        </video>
+        {showDesktopVideo && (
+          <video
+            autoPlay loop muted playsInline preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/onboarding.mp4" type="video/mp4" />
+          </video>
+        )}
 
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/40 via-[#1c140c]/25 to-[#1c140c]/72" />
 

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserPlans } from '../store/useSavedPlansStore';
-import { useOnboardingStore } from '../store/useOnboardingStore';
+import type { OnboardingData } from '../store/useOnboardingStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import { CITIES } from '../data/cities';
@@ -168,7 +168,6 @@ const Hub: React.FC = () => {
   const navigate   = useNavigate();
   const { user }   = useAuthStore();
   const plans      = useUserPlans();
-  const { resetForm, updateData } = useOnboardingStore();
 
   const { isLoaded } = useGoogleMapsLoader();
 
@@ -273,10 +272,12 @@ const Hub: React.FC = () => {
   const fmtNumber = useCallback((n: number) => n.toLocaleString(localeCode), [localeCode]);
 
   /* ── Quick Action handlers ── */
+  const startPlanWith = (initialData: Partial<OnboardingData>) => {
+    navigate('/onboarding', { state: { initialData } });
+  };
+
   const handleWeekend = () => {
-    resetForm();
-    updateData({ startDate: nextWeekend.startDate, endDate: nextWeekend.endDate });
-    navigate('/onboarding');
+    startPlanWith({ startDate: nextWeekend.startDate, endDate: nextWeekend.endDate });
   };
 
   const handleRandomCity = () => {
@@ -298,22 +299,17 @@ const Hub: React.FC = () => {
 
   const handleGoRandom = () => {
     if (!randCity) return;
-    resetForm();
-    updateData({ destination: `${randCity.city}, ${randCity.country}` });
-    navigate('/onboarding');
+    startPlanWith({ destination: `${randCity.city}, ${randCity.country}` });
   };
 
   const handleBudget = () => {
-    resetForm();
-    updateData({ budget: avgBudget.amount, currencyCode: avgBudget.code, currencySymbol: avgBudget.symbol });
-    navigate('/onboarding');
+    startPlanWith({ budget: avgBudget.amount, currencyCode: avgBudget.code, currencySymbol: avgBudget.symbol });
   };
 
   const handleVibe = (vibe: string) => {
     const last = plans[0];
     if (!last) return;
-    resetForm();
-    updateData({
+    startPlanWith({
       destination:          last.plan.destination,
       startDate:            last.onboardingData.startDate,
       endDate:              last.onboardingData.endDate,
@@ -323,7 +319,6 @@ const Hub: React.FC = () => {
       peopleCount:          last.onboardingData.peopleCount,
       tripPurpose:          vibe,
     });
-    navigate('/onboarding');
   };
 
 
@@ -373,7 +368,7 @@ const Hub: React.FC = () => {
           id: p.id + '-done', type: 'completed', planId: p.id, destination: dest,
           text: t('hub.activity.completed.text', { dest }),
           sub: t('hub.activity.completed.sub', { nights, budget }),
-          timeLabel: relativeTime(endTs),
+          timeLabel: relativeTime(endTs, localeCode),
           sortKey: endTs,
         };
       }
@@ -383,13 +378,13 @@ const Hub: React.FC = () => {
         id: p.id + '-created', type: 'created', planId: p.id, destination: dest,
         text: t('hub.activity.created.text', { dest }),
         sub: t('hub.activity.created.sub', { nights, budget }),
-        timeLabel: relativeTime(p.createdAt),
+        timeLabel: relativeTime(p.createdAt, localeCode),
         sortKey: p.createdAt,
       };
     })
     .sort((a, b) => b.sortKey - a.sortKey)
     .slice(0, 5);
-  }, [plans, fmtNumber, t]);
+  }, [plans, fmtNumber, t, localeCode]);
 
   const firstName = user?.displayName?.split(' ')[0] ?? t('hub.greeting.defaultName');
   const greeting  = getGreeting(t);
@@ -1078,7 +1073,7 @@ const Hub: React.FC = () => {
                               <div className="flex items-center gap-3">
                                 {isCompleted && (
                                   <button
-                                    onClick={() => { resetForm(); updateData({ destination: item.destination }); navigate('/onboarding'); }}
+                                    onClick={() => startPlanWith({ destination: item.destination })}
                                     className="text-xs font-bold text-accent hover:text-accent-700 transition-colors"
                                   >
                                     {t('hub.activity.replan')}

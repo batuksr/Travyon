@@ -1004,12 +1004,26 @@ export const generateTravelPlan = async (
     const parsedData = extractAndParseJSON<TravelPlanResponse>(textResult);
 
     // --- Temel yapı doğrulaması (AI yanlış format dönerse erken hata ver) ---
+    if (!parsedData || typeof parsedData.destination !== 'string' || !parsedData.destination.trim()) {
+      throw new Error('Geçersiz plan formatı: destinasyon eksik');
+    }
     if (!Array.isArray(parsedData.dailyPlans) || parsedData.dailyPlans.length === 0) {
       throw new Error('Geçersiz plan formatı: günlük planlar eksik');
     }
+    const startMs = Date.parse(`${data.startDate}T00:00:00Z`);
+    const endMs = Date.parse(`${data.endDate}T00:00:00Z`);
+    const expectedDays = Math.round((endMs - startMs) / 86_400_000) + 1;
+    if (parsedData.dailyPlans.length !== expectedDays || parsedData.dailyPlans.length > 31) {
+      throw new Error('Geçersiz plan formatı: gün sayısı tarihlerle uyuşmuyor');
+    }
     for (let i = 0; i < parsedData.dailyPlans.length; i++) {
       const day = parsedData.dailyPlans[i];
-      if (!Array.isArray(day.activities)) {
+      if (!day || day.dayNumber !== i + 1 || typeof day.date !== 'string') {
+        throw new Error(`Gün ${i + 1} için temel alanlar geçersiz`);
+      }
+      const dayCost = Number(day.totalEstimatedCost);
+      day.totalEstimatedCost = Number.isFinite(dayCost) ? Math.max(0, dayCost) : 0;
+      if (!Array.isArray(day.activities) || day.activities.length > 15) {
         throw new Error(`Gün ${i + 1} için aktivite listesi geçersiz`);
       }
       for (let j = 0; j < day.activities.length; j++) {
@@ -1020,16 +1034,25 @@ export const generateTravelPlan = async (
         if (
           !act.coordinates ||
           typeof act.coordinates.lat !== 'number' ||
-          typeof act.coordinates.lng !== 'number'
+          typeof act.coordinates.lng !== 'number' ||
+          !Number.isFinite(act.coordinates.lat) ||
+          !Number.isFinite(act.coordinates.lng) ||
+          Math.abs(act.coordinates.lat) > 90 ||
+          Math.abs(act.coordinates.lng) > 180
         ) {
           throw new Error(`Gün ${i + 1}, aktivite ${j + 1} (${act.placeName}): koordinat eksik`);
         }
-        if (typeof act.estimatedCost !== 'number') {
-          // Zorlama yerine sıfırla — AI bazen string döndürebilir
-          act.estimatedCost = Number(act.estimatedCost) || 0;
+        // AI bazen maliyeti string ya da geçersiz sayı olarak döndürebilir.
+        const estimatedCost = Number(act.estimatedCost);
+        act.estimatedCost = Number.isFinite(estimatedCost) ? Math.max(0, estimatedCost) : 0;
+        if (act.actualCost !== undefined) {
+          const actualCost = Number(act.actualCost);
+          act.actualCost = Number.isFinite(actualCost) ? Math.max(0, actualCost) : undefined;
         }
       }
     }
+    const totalCost = Number(parsedData.totalEstimatedCost);
+    parsedData.totalEstimatedCost = Number.isFinite(totalCost) ? Math.max(0, totalCost) : 0;
 
     // --- Güvenli immutable yapı oluştur ---
     let finalTotalCost = 0;

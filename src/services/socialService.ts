@@ -1,8 +1,7 @@
 import { db, functions } from './firebase';
 import {
   collection, doc, getDoc, getDocs, deleteDoc,
-  query, orderBy, limit, where, serverTimestamp,
-  runTransaction, Timestamp,
+  query, orderBy, limit, where, Timestamp,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import type { TravelPlanResponse } from './aiService';
@@ -25,6 +24,7 @@ export interface PublicPlan {
   avgRating:       number;
   ratingCount:     number;
   feedVisible?:    boolean;  // false → sadece link ile görülebilir, community feed'de çıkmaz
+  profilePublic?:  boolean;
   // Onboarding seçimleri (opsiyonel — eski planlar yoksa undefined)
   travelType?:          string;
   peopleCount?:         number;
@@ -69,15 +69,9 @@ export const shareplan = async (
   await callSharePublicPlan(planId, plan, onboardingData);
 };
 
-export const getPublicPlanDetails = async (planId: string): Promise<TravelPlanResponse | null> => {
-  const snap = await getDoc(doc(db, 'publicPlans', planId));
-  if (!snap.exists()) return null;
-  const data = snap.data();
-  return (data?.planData as TravelPlanResponse) ?? null;
-};
-
 export const unshareplan = async (planId: string): Promise<void> => {
-  await deleteDoc(doc(db, 'publicPlans', planId));
+  const fn = httpsCallable<{ planId: string }, { ok: true }>(functions, 'unsharePublicPlan');
+  await fn({ planId });
 };
 
 /** Planı sadece link ile görülebilecek şekilde paylaşır — community feed'e çıkmaz */
@@ -95,21 +89,13 @@ export const sharePlanAsLink = async (
 /** Kullanıcının TÜM paylaşılmış planlarında isim/foto bilgisini günceller
  *  (profil adı veya fotoğrafı değiştiğinde toplulukta da yansısın) */
 export const syncSharedPlansIdentity = async (
-  userId: string,
-  displayName: string | null,
-  photoURL: string | null,
+  _userId: string,
+  _displayName: string | null,
+  _photoURL: string | null,
 ): Promise<void> => {
-  const { updateDoc } = await import('firebase/firestore');
-  const q = query(collection(db, 'publicPlans'), where('userId', '==', userId));
-  const snap = await getDocs(q);
-  await Promise.all(
-    snap.docs.map(d =>
-      updateDoc(doc(db, 'publicPlans', d.id), {
-        userDisplayName: displayName ?? 'Gezgin',
-        userPhotoURL:    photoURL ?? null,
-      }).catch(() => { /* tek tek hatayı yoksay */ })
-    )
-  );
+  void _userId; void _displayName; void _photoURL;
+  const fn = httpsCallable<Record<string, never>, { ok: true }>(functions, 'syncSharedPlansIdentity');
+  await fn({});
 };
 
 export const getMySharedPlanIds = async (userId: string): Promise<Set<string>> => {
@@ -134,6 +120,8 @@ const toPublicPlan = (id: string, data: Record<string, unknown>): PublicPlan => 
   createdAt:       data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now(),
   avgRating:       (data.avgRating      as number) ?? 0,
   ratingCount:     (data.ratingCount    as number) ?? 0,
+  feedVisible:     data.feedVisible !== false,
+  profilePublic:   data.profilePublic === true,
   travelType:          (data.travelType          as string)   || undefined,
   peopleCount:         (data.peopleCount          as number)  || undefined,
   pace:                (data.pace                as string)   || undefined,
@@ -147,16 +135,45 @@ const toPublicPlan = (id: string, data: Record<string, unknown>): PublicPlan => 
   endDate:             (data.endDate             as string)   || undefined,
 });
 
+export const getPublicPlanRecord = async (planId: string): Promise<{
+  meta: PublicPlan;
+  planData: TravelPlanResponse;
+} | null> => {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(planId)) return null;
+  const snap = await getDoc(doc(db, 'publicPlans', planId));
+  if (!snap.exists()) return null;
+  const data = snap.data() as Record<string, unknown>;
+  if (!data.planData) return null;
+  return { meta: toPublicPlan(snap.id, data), planData: data.planData as TravelPlanResponse };
+};
+
 export const getPublicFeed = async (limitCount = 10): Promise<PublicPlan[]> => {
+  const safeLimit = Math.min(Math.max(Math.trunc(limitCount) || 10, 1), 50);
   const q = query(
     collection(db, 'publicPlans'),
+    where('feedVisible', '==', true),
     orderBy('createdAt', 'desc'),
-    limit(limitCount),
+    limit(safeLimit),
   );
   const snap = await getDocs(q);
   return snap.docs
     .map(d => toPublicPlan(d.id, d.data() as Record<string, unknown>))
-    .filter(p => p.feedVisible !== false); // link-only planları feed'den gizle
+    .filter(p => p.feedVisible !== false)
+    .slice(0, safeLimit); // link-only planları feed'den gizle
+};
+
+export const getPublicPlansByUser = async (userId: string, limitCount = 50): Promise<PublicPlan[]> => {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(userId)) return [];
+  const safeLimit = Math.min(Math.max(Math.trunc(limitCount) || 50, 1), 100);
+  const q = query(
+    collection(db, 'publicPlans'),
+    where('userId', '==', userId),
+    where('feedVisible', '==', true),
+    orderBy('createdAt', 'desc'),
+    limit(safeLimit),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => toPublicPlan(d.id, d.data() as Record<string, unknown>));
 };
 
 /* ══════════════════════════════════════════════
@@ -164,32 +181,16 @@ export const getPublicFeed = async (limitCount = 10): Promise<PublicPlan[]> => {
 ═══════════════════════════════════════════════ */
 export const ratePlan = async (
   planId: string,
-  userId: string,
+  _userId: string,
   rating: number,
 ): Promise<{ newAvg: number; newCount: number }> => {
-  const ratingRef = doc(db, 'planRatings', `${planId}_${userId}`);
-  const planRef   = doc(db, 'publicPlans', planId);
-
-  return runTransaction(db, async (tx) => {
-    const [existingSnap, planSnap] = await Promise.all([tx.get(ratingRef), tx.get(planRef)]);
-    if (!planSnap.exists()) throw new Error('Plan bulunamadı');
-
-    const curr  = planSnap.data() as { avgRating?: number; ratingCount?: number };
-    let count   = curr.ratingCount ?? 0;
-    let sum     = (curr.avgRating ?? 0) * count;
-
-    if (existingSnap.exists()) {
-      sum = sum - (existingSnap.data().rating as number) + rating;   // replace old rating
-    } else {
-      sum  += rating;
-      count += 1;
-    }
-
-    const newAvg = count > 0 ? sum / count : 0;
-    tx.set(ratingRef, { planId, userId, rating, createdAt: serverTimestamp() });
-    tx.update(planRef, { avgRating: newAvg, ratingCount: count });
-    return { newAvg, newCount: count };
-  });
+  void _userId;
+  const fn = httpsCallable<
+    { planId: string; rating: number },
+    { newAvg: number; newCount: number }
+  >(functions, 'ratePublicPlan');
+  const result = await fn({ planId, rating });
+  return result.data;
 };
 
 export const getUserRatings = async (
@@ -237,45 +238,34 @@ export interface UserProfile {
   email?: string;
 }
 
+export const getPublicUserProfile = async (targetUid: string): Promise<{
+  exists: boolean;
+  isPublic: boolean;
+  displayName?: string;
+  photoURL?: string | null;
+}> => {
+  const fn = httpsCallable<
+    { targetUid: string },
+    { exists: boolean; isPublic: boolean; displayName?: string; photoURL?: string | null }
+  >(functions, 'getPublicProfile');
+  return (await fn({ targetUid })).data;
+};
+
 /** Birden fazla kullanıcının profilini Firestore'dan çeker.
  *  Önce users/ koleksiyonuna bakar; yoksa publicPlans'taki bilgileri kullanır. */
 export const getUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
   if (!uids.length) return [];
   const results = await Promise.all(
     uids.map(async (uid): Promise<UserProfile | null> => {
-      let displayName = '';
-      let photoURL: string | null = null;
-      let email: string | undefined;
-
-      // 1) users/ koleksiyonundan dene
       try {
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
-          const d = snap.data();
-          displayName = (d.displayName as string) || '';
-          photoURL    = (d.photoURL    as string | null) ?? null;
-          email       = (d.email       as string | undefined);
-        }
-      } catch { /* izin yok veya belge yok — fallback'e geç */ }
-
-      // 2) publicPlans'tan fallback — isim veya foto eksikse tamamla
-      if (!displayName || !photoURL) {
-        try {
-          const q = query(
-            collection(db, 'publicPlans'),
-            where('userId', '==', uid),
-            limit(1),
-          );
-          const plansSnap = await getDocs(q);
-          if (!plansSnap.empty) {
-            const d = plansSnap.docs[0].data();
-            if (!displayName) displayName = (d.userDisplayName as string) || '';
-            if (!photoURL)    photoURL    = (d.userPhotoURL    as string | null) ?? null;
-          }
-        } catch { /* hata */ }
-      }
-
-      return { uid, displayName: displayName || 'Gezgin', photoURL, email };
+        const profile = await getPublicUserProfile(uid);
+        if (!profile.exists || !profile.isPublic) return null;
+        return {
+          uid,
+          displayName: profile.displayName || 'Gezgin',
+          photoURL: profile.photoURL ?? null,
+        };
+      } catch { return null; }
     })
   );
   return results.filter(Boolean) as UserProfile[];

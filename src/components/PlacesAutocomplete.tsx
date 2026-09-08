@@ -150,7 +150,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
       placesServiceRef.current  = new window.google.maps.places.PlacesService(dummyDiv);
       sessionTokenRef.current   = new window.google.maps.places.AutocompleteSessionToken();
     } catch (err) {
-      console.warn('[PlacesAutocomplete] Servis başlatılamadı:', err);
+      if (import.meta.env.DEV) console.warn('[PlacesAutocomplete] Servis başlatılamadı:', err);
     }
   }, [apiReady]);
 
@@ -267,7 +267,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
       return;
     }
     if (!window.google?.maps?.places) {
-      console.warn('[PlacesAutocomplete] Google Maps places yüklü değil.');
+      if (import.meta.env.DEV) console.warn('[PlacesAutocomplete] Google Maps places yüklü değil.');
       return;
     }
 
@@ -293,7 +293,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
       if (isMountedRef.current) { setIsLoading(false); applyPredictions(preds); }
     } catch (err) {
       // yeni API hata verdiyse eski API'yi dene
-      console.warn('[PlacesAutocomplete] Yeni API hatası, legacy deneniyor:', err);
+      if (import.meta.env.DEV) console.warn('[PlacesAutocomplete] Yeni API hatası, legacy deneniyor:', err);
       try {
         const preds = await fetchLegacy(query, countryCode);
         settled = true;
@@ -358,7 +358,7 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({
         );
         return;
       } catch (err) {
-        console.warn('[PlacesAutocomplete] Yeni Place.fetchFields hatası, legacy deneniyor:', err);
+        if (import.meta.env.DEV) console.warn('[PlacesAutocomplete] Yeni Place.fetchFields hatası, legacy deneniyor:', err);
       }
     }
 

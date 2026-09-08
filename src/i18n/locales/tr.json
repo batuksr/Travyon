@@ -205,29 +205,29 @@
     "pricing": {
       "eyebrow": "Fiyatlandırma",
       "title": "Seyahatine uygun plan seç",
-      "subtitle": "Ücretsiz başla, ihtiyacın büyüdükçe yükselt.",
+      "subtitle": "Beta döneminde tüm temel planlama özelliklerini ücretsiz kullan.",
       "perMonth": "/ay",
       "free": {
         "name": "Free",
         "price": "₺0",
         "tagline": "Sonsuza kadar ücretsiz",
-        "features": ["3 plan hakkı", "Temel AI planlama", "İnteraktif harita", "Plan kaydetme"],
+        "features": ["Beta boyunca sınırsız plan", "AI planlama", "İnteraktif harita", "Plan kaydetme"],
         "button": "Ücretsiz Başla"
       },
       "pro": {
-        "badge": "En Popüler",
+        "badge": "Yakında",
         "name": "Pro",
-        "price": "₺99",
-        "tagline": "Yıllık ödemede %20 indirim",
+        "price": "Yakında",
+        "tagline": "Lansman öncesi kullanıma açılacak",
         "features": ["Sınırsız plan", "Reklamsız deneyim", "Gelişmiş AI modeli", "Seyahat süreleri", "Öncelikli destek"],
-        "button": "Pro'ya Geç →"
+        "button": "Çok Yakında"
       },
       "team": {
         "name": "Team",
-        "price": "₺299",
-        "tagline": "5 kullanıcıya kadar",
+        "price": "Yakında",
+        "tagline": "Ekip özellikleri geliştirme aşamasında",
         "features": ["5 kişiye kadar", "Sınırsız plan", "Ortak düzenleme", "Paylaşılabilir planlar", "Özel destek hattı"],
-        "button": "Team'e Başla"
+        "button": "Çok Yakında"
       }
     },
     "ctaRepeat": {
@@ -235,6 +235,11 @@
       "titleLine1": "Sıradaki durağın",
       "titleLine2": "sadece bir tık ötede."
     }
+  },
+  "notFound": {
+    "title": "Bu rota haritada yok",
+    "description": "Aradığın sayfa taşınmış veya hiç var olmamış olabilir.",
+    "back": "Ana sayfaya dön"
   },
   "footer": {
     "faq": "SSS",
@@ -262,6 +267,11 @@
       "title": "Tekrar hoş geldin 👋",
       "subtitle": "Hesabına giriş yap ve planlamaya devam et.",
       "forgotPassword": "Şifremi unuttum",
+      "resetSending": "Gönderiliyor...",
+      "resetNeedsEmail": "Önce e-posta adresini yaz.",
+      "resetSent": "Şifre sıfırlama bağlantısı e-posta adresine gönderildi.",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
       "submitLoading": "Giriş Yapılıyor...",
       "submit": "Giriş Yap",
       "noAccount": "Hesabın yok mu?",
@@ -273,7 +283,8 @@
         "wrongPassword": "Şifre hatalı.",
         "invalidCredential": "E-posta veya şifre hatalı.",
         "generic": "Giriş yapılamadı. Lütfen tekrar deneyin.",
-        "googleFailedWithCode": "Google ile giriş yapılamadı. ({{code}})"
+        "googleFailedWithCode": "Google ile giriş yapılamadı. ({{code}})",
+        "resetFailed": "Şifre sıfırlama e-postası gönderilemedi. Adresi kontrol edip tekrar dene."
       }
     },
     "register": {
@@ -317,6 +328,7 @@
           "expired": "Kodun süresi doldu, yeni kod iste.",
           "too_many_attempts": "Çok fazla deneme yapıldı, biraz sonra tekrar dene.",
           "wrong_code": "Kod hatalı, tekrar dene.",
+          "email_changed": "E-posta adresi değişti. Yeni adres için tekrar kod iste.",
           "unknown": "Bir şeyler ters gitti, tekrar dene.",
           "cooldown": "Az önce kod gönderildi, biraz bekle."
         }
@@ -341,7 +353,7 @@
           "category": "Genel",
           "items": [
             { "q": "Travyon nedir?", "a": "Travyon, yapay zeka destekli kişiselleştirilmiş seyahat planlama platformudur. Bütçen, tarih aralığın ve seyahat tarzına göre dakikalar içinde gün gün optimize edilmiş plan oluşturur." },
-            { "q": "Ücretsiz mi kullanabilir miyim?", "a": "Evet! Free planla sınırsız süre ücretsiz kullanabilirsin. 3 plan hakkı, temel AI planlama ve interaktif harita erişimi dahildir." },
+            { "q": "Ücretsiz mi kullanabilir miyim?", "a": "Evet. Beta döneminde plan oluşturma, interaktif harita ve plan kaydetme özelliklerini ücretsiz ve limitsiz kullanabilirsin." },
             { "q": "Hesap açmak zorunlu mu?", "a": "Plan oluşturmak ve kaydetmek için hesap gereklidir. Kayıt işlemi yalnızca birkaç saniye sürer ve tamamen ücretsizdir." }
           ]
         },
@@ -351,13 +363,13 @@
             { "q": "Plan oluşturmak ne kadar sürer?", "a": "Ortalama 15–30 saniye. Yapay zeka tercihlerini analiz ederek coğrafi olarak optimize edilmiş, gün gün planını anında hazırlar." },
             { "q": "Hangi şehirler destekleniyor?", "a": "Dünya genelinde 50+ popüler şehir destekleniyor ve liste sürekli büyüyor. İstanbul, Paris, Tokyo, Roma, Barcelona, New York gibi tüm popüler destinasyonları kapsıyoruz." },
             { "q": "Önerileri değiştirebilir miyim?", "a": "Tabii! Planı oluşturduktan sonra her aktiviteyi, saati ve güzergahı dilediğin gibi düzenleyebilirsin. Plan tamamen senin kontrolünde." },
-            { "q": "Birden fazla plan kaydedebilir miyim?", "a": "Free planla 3, Pro planla sınırsız plan kaydedebilirsin. Kayıtlı planlarına her zaman \"Kayıtlı Planlar\" bölümünden erişebilirsin." }
+            { "q": "Birden fazla plan kaydedebilir miyim?", "a": "Evet. Beta döneminde birden fazla planı limitsiz kaydedebilir ve \"Kayıtlı Planlar\" bölümünden erişebilirsin." }
           ]
         },
         {
           "category": "Güvenlik & Gizlilik",
           "items": [
-            { "q": "Verilerim güvende mi?", "a": "Tüm veriler Google Firebase altyapısıyla AES-256 şifreleme ile saklanır. Kişisel bilgilerin hiçbir koşulda üçüncü taraflarla paylaşılmaz." },
+            { "q": "Verilerim güvende mi?", "a": "Bağlantılar HTTPS/TLS ile korunur ve parolalar uygulama tarafından düz metin olarak saklanmaz. Planlama, harita ve e-posta gibi işlevler için gizlilik politikasında listelenen hizmet sağlayıcılar kullanılır." },
             { "q": "Hesabımı silebilir miyim?", "a": "Evet, Ayarlar > Hesap bölümünden hesabını ve tüm verilerini kalıcı olarak silebilirsin." }
           ]
         },
@@ -378,7 +390,7 @@
       "sections": [
         {
           "title": "1. Toplanan Veriler",
-          "content": "Travyon olarak hizmetlerimizi sunabilmek amacıyla aşağıdaki kişisel verileri işleyebiliriz:\n\n• Hesap bilgileri: Ad, e-posta adresi ve şifre (şifreli olarak saklanır).\n• Kullanım verileri: Oluşturduğun planlar, tercihler, seyahat tarihleri ve bütçe bilgileri.\n• Cihaz bilgileri: Tarayıcı türü, işletim sistemi ve IP adresi.\n• İletişim verileri: Destek talebi veya geri bildirim gönderdiğinde paylaştığın bilgiler.\n\nGoogle ile giriş yapman durumunda Google, adın ve e-posta adresin gibi temel profil bilgilerini bizimle paylaşır."
+          "content": "Travyon olarak hizmetlerimizi sunabilmek amacıyla aşağıdaki kişisel verileri işleyebiliriz:\n\n• Hesap bilgileri: Ad, e-posta adresi ve profil fotoğrafı. Parola Firebase Authentication tarafından işlenir; Travyon uygulaması parolayı göremez veya düz metin olarak saklamaz.\n• Kullanım verileri: Oluşturduğun planlar, tercihler, seyahat tarihleri ve bütçe bilgileri.\n• Güvenlik/teşhis verileri: IP adresi, tarayıcı bilgisi, App Check sinyalleri ve izin vermen halinde teknik hata verileri.\n• İletişim verileri: Destek talebi veya geri bildirim gönderdiğinde paylaştığın bilgiler.\n\nGoogle ile giriş yapman durumunda Google, adın ve e-posta adresin gibi temel profil bilgilerini bizimle paylaşır."
         },
         {
           "title": "2. Verilerin Kullanım Amacı",
@@ -386,15 +398,15 @@
         },
         {
           "title": "3. Veri Güvenliği",
-          "content": "Kişisel verilerinin güvenliğini sağlamak için sektör standardı güvenlik önlemlerini uygularız:\n\n• Tüm veriler Google Firebase altyapısında AES-256 şifreleme ile saklanır.\n• Bağlantılar HTTPS/TLS protokolü ile şifrelenir.\n• Şifreler hiçbir zaman düz metin olarak saklanmaz.\n• Sistemlerimiz düzenli güvenlik denetimine tabi tutulur.\n\nAncak internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını belirtiriz."
+          "content": "Kişisel verilerinin güvenliğini sağlamak için erişim kontrollü Firebase servisleri, App Check, sunucu tarafı doğrulama ve HTTPS/TLS kullanırız. Firebase'deki veriler altyapı sağlayıcının sunduğu aktarım ve depolama korumalarından yararlanır. Parolalar uygulama tarafından hiçbir zaman düz metin olarak saklanmaz.\n\nAncak internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını belirtiriz."
         },
         {
           "title": "4. Veri Paylaşımı",
-          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (depolama), Google Maps API (harita), Google Gemini AI (plan oluşturma), Resend (e-posta gönderimi — doğrulama kodları ve iletişim formu mesajları), Sentry (tarayıcıda oluşan teknik hataların izlenmesi — kişisel veri paylaşılmadan, sadece hata/teşhis bilgisi) gibi teknik altyapı sağlayıcıları.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
+          "content": "Kişisel verilerini üçüncü taraflarla satmıyor, kiralamıyor veya ticaretini yapmıyoruz. Verilerini yalnızca şu durumlarda paylaşabiliriz:\n\n• Hizmet sağlayıcılar: Google Firebase (kimlik, depolama ve sunucu işlevleri), Google Maps API (harita), Google Gemini AI (plan oluşturma), Resend (e-posta gönderimi) ve yalnızca onay verdiğinde Sentry (teknik hata/teşhis verileri). Bu sağlayıcılara yalnızca ilgili işlev için gereken veri aktarılır.\n• Yasal zorunluluk: Mahkeme kararı veya yasal bir yükümlülük doğrultusunda.\n• Şirket işlemleri: Birleşme veya devralma durumunda, verilerin korunacağı güvence altına alınarak."
         },
         {
           "title": "5. Çerezler",
-          "content": "Sitemiz oturum ve tercih bilgilerini saklamak amacıyla çerez/yerel depolama kullanır. Kullandığımız türler:\n\n• Zorunlu: Oturum yönetimi ve güvenlik için gereklidir.\n• Tercih: Dil ve tema tercihlerin gibi ayarlarını hatırlar.\n\nŞu an herhangi bir analiz veya reklam amaçlı takip çerezi kullanmıyoruz. İleride eklenirse bu politika güncellenip gerekli onay mekanizması eklenecektir.\n\nTarayıcı ayarlarından çerezleri devre dışı bırakabilirsin; ancak bu durum bazı işlevleri etkileyebilir."
+          "content": "Sitemiz oturum, yerel planlar ve tercih bilgilerini saklamak amacıyla çerez/yerel depolama kullanır. Kullandığımız türler:\n\n• Zorunlu: Oturum yönetimi ve güvenlik için gereklidir.\n• Tercih: Dil, tema ve uygulama ayarlarını hatırlar.\n• İsteğe bağlı teşhis: Ayarlardan izin verdiğinde teknik hataları izlemek için kullanılır.\n\nReklam amaçlı takip kullanmıyoruz. Tarayıcı ayarlarından depolamayı devre dışı bırakmak bazı işlevleri etkileyebilir."
         },
         {
           "title": "6. Haklarınız",
@@ -1137,7 +1149,7 @@
     "iosPrefix": "butonuna bas →",
     "addToHomeScreen": "Ana Ekrana Ekle",
     "iosSuffix": "seç",
-    "subtitle": "Offline çalışır · Uygulama gibi açılır · Hızlı erişim",
+    "subtitle": "Uygulama gibi açılır · Ana ekrandan hızlı erişim · Planlama için internet gerekir",
     "installButton": "Uygulamayı Yükle"
   },
   "settings": {
@@ -1197,7 +1209,7 @@
     },
     "errors": {
       "wrongPassword": "Mevcut şifre hatalı.",
-      "weakPassword": "Yeni şifre en az 6 karakter olmalı.",
+      "weakPassword": "Yeni şifre en az 8 karakter olmalı.",
       "emailInUse": "Bu e-posta zaten kullanılıyor.",
       "invalidEmail": "Geçersiz e-posta adresi.",
       "requiresRecentLogin": "Güvenlik için lütfen tekrar giriş yapın.",
@@ -1555,7 +1567,7 @@
       "publicFollow": {
         "title": "Herkes takip edebilir",
         "on": "✅ Onaysız takip — herkes takip edebilir",
-        "off": "🔒 Onaylı takip — takip istekleri onayınızı bekler"
+        "off": "🔒 Yeni takipler kapalı"
       }
     },
     "privacyLocation": {
@@ -1564,7 +1576,7 @@
       "geoStatus": {
         "supported": {
           "title": "Tarayıcı Konum API",
-          "desc": "Tarayıcınız konum desteğine sahip. Konum özellikleri bu uygulama için seçimlidir."
+          "desc": "Tarayıcınız konumu destekliyor; Travyon henüz konum istemiyor. Bu özellik daha sonra etkinleştirilecek."
         },
         "unsupported": {
           "title": "Konum desteklenmiyor",
@@ -1574,7 +1586,7 @@
       "suggestions": {
         "title": "Konum tabanlı öneriler",
         "on": "✅ Yakındaki mekanlar ve akıllı öneriler için konum kullanılır",
-        "off": "🔒 Konum özellikleri devre dışı — genel öneriler gösterilir"
+        "off": "🔒 Henüz kullanımda değil — genel öneriler gösterilir"
       },
       "history": {
         "title": "Konum geçmişi",
@@ -1609,7 +1621,7 @@
           "desc": "Seyahat ile ilgili kişisel bilgiler"
         }
       ],
-      "encryptedBadge": "Şifreli",
+      "encryptedBadge": "Erişim kontrollü",
       "kvkkPrefix": "Kişisel verileriniz 6698 sayılı KVKK kapsamında işlenmektedir. Verilerinizi indirmek veya hesabınızı silmek için",
       "kvkkDataSection": "Verilerim",
       "kvkkSuffix": "bölümünü kullanın."
@@ -1623,7 +1635,7 @@
       "proPlanName": "Pro Plan",
       "freePlanName": "Ücretsiz Plan",
       "proDesc": "Sınırsız plan + Gelişmiş AI + Reklamsız",
-      "freeDesc": "Ayda 3 plan oluşturma hakkı",
+      "freeDesc": "Beta boyunca sınırsız plan oluşturma",
       "proBadge": "Pro",
       "freeBadge": "Ücretsiz",
       "usageLabel": "Bu ay oluşturulan planlar",
@@ -1638,7 +1650,7 @@
         "rows": [
           {
             "label": "Plan oluşturma",
-            "free": "3 / ay",
+            "free": "Beta: Sınırsız",
             "pro": "Sınırsız"
           },
           {
@@ -1708,6 +1720,7 @@
     "billingDetails": {
       "title": "Fatura Bilgileri",
       "subtitle": "iyzico ödeme sağlayıcısının fatura için zorunlu kıldığı bilgiler.",
+      "comingSoon": "Pro ödeme akışı henüz kapalı olduğu için fatura bilgisi toplamıyoruz. Bu alan lansman öncesi ödeme testleri tamamlandığında açılacak.",
       "info": "Bu bilgiler yalnızca ödeme sağlayıcımız iyzico'ya fatura kesimi için iletilir. Telefon ve adres bilgileriniz Profil sekmesinden yönetilir.",
       "labels": {
         "identityNumber": "T.C. Kimlik Numarası",
@@ -1718,7 +1731,7 @@
         "city": "Örn. İstanbul"
       },
       "phoneAddressMissing": "Telefon ve adres bilgileriniz eksik — Profil sekmesinden ekleyin.",
-      "securityNote": "Bilgileriniz 256-bit SSL şifreleme ile korunur, kart bilgisi bu ekranda hiç toplanmaz.",
+      "securityNote": "Bilgileriniz güvenli TLS bağlantısı üzerinden iletilir; kart bilgisi bu ekranda toplanmaz.",
       "errors": {
         "invalidIdentity": "T.C. kimlik numarası 11 haneli olmalı.",
         "cityRequired": "Şehir bilgisi gerekli."
@@ -1768,7 +1781,7 @@
       "items": [
         {
           "q": "Plan oluşturma limiti nedir?",
-          "a": "Ücretsiz planda ayda 3 plan oluşturabilirsiniz. Pro planda sınırsızdır."
+          "a": "Beta döneminde ücretsiz planda sınırsız plan oluşturabilirsiniz. Pro özellikleri lansmandan önce duyurulacaktır."
         },
         {
           "q": "AI planımı nasıl hazırlıyor?",
@@ -1869,6 +1882,8 @@
     },
     "defaultName": "Gezgin",
     "notFound": "Kullanıcı bulunamadı.",
+    "privateTitle": "Bu profil gizli",
+    "privateDescription": "Kullanıcı profilini topluluğa kapatmış.",
     "backToPrevious": "Geri dön",
     "sharedPlansCount": "{{count}} paylaşılan plan",
     "unfollowConfirm": "Takibi bırak?",

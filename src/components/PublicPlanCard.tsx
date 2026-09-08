@@ -23,8 +23,10 @@ export const PublicPlanCard: React.FC<Props> = memo(({
   const { t, i18n } = useTranslation();
   const [hoverStar, setHoverStar] = useState(0);
   const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
+  const displayName = plan.profilePublic ? plan.userDisplayName : t('community.defaultDisplayName');
+  const photoURL = plan.profilePublic ? plan.userPhotoURL : null;
 
-  const initials = plan.userDisplayName
+  const initials = displayName
     .split(' ')
     .map(w => w[0] ?? '')
     .join('')
@@ -50,8 +52,8 @@ export const PublicPlanCard: React.FC<Props> = memo(({
 
           {/* Avatar */}
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-sage flex items-center justify-center overflow-hidden flex-shrink-0">
-            {plan.userPhotoURL ? (
-              <img src={plan.userPhotoURL} className="w-9 h-9 rounded-full object-cover" alt="" referrerPolicy="no-referrer" />
+            {photoURL ? (
+              <img src={photoURL} className="w-9 h-9 rounded-full object-cover" alt="" referrerPolicy="no-referrer" />
             ) : (
               <span className="text-white text-[11px] font-heading select-none">{initials}</span>
             )}
@@ -60,7 +62,7 @@ export const PublicPlanCard: React.FC<Props> = memo(({
           {/* Name + destination */}
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="font-heading text-sm text-text leading-tight">{plan.userDisplayName}</p>
+              <p className="font-heading text-sm text-text leading-tight">{displayName}</p>
               {isOwn && (
                 <span className="text-[9px] font-bold bg-accent-100 text-accent-700 px-1.5 py-0.5 rounded-full">{t('community.card.you')}</span>
               )}
@@ -85,7 +87,7 @@ export const PublicPlanCard: React.FC<Props> = memo(({
 
         {/* Time */}
         <span className="text-[10px] text-muted whitespace-nowrap flex-shrink-0 mt-0.5">
-          {relativeTime(plan.createdAt)}
+          {relativeTime(plan.createdAt, locale)}
         </span>
       </div>
 

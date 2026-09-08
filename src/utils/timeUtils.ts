@@ -1,13 +1,11 @@
-export const relativeTime = (ts: number): string => {
+export const relativeTime = (ts: number, locale = 'tr-TR'): string => {
   const diff = Date.now() - ts;
-  if (diff < 60_000)      return 'az önce';
-  if (diff < 3_600_000)   return `${Math.floor(diff / 60_000)} dk önce`;
-  if (diff < 86_400_000)  return `${Math.floor(diff / 3_600_000)} saat önce`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'long' });
+  if (diff < 60_000) return rtf.format(0, 'second');
+  if (diff < 3_600_000) return rtf.format(-Math.floor(diff / 60_000), 'minute');
+  if (diff < 86_400_000) return rtf.format(-Math.floor(diff / 3_600_000), 'hour');
   const days = Math.floor(diff / 86_400_000);
-  if (days === 1)  return 'dün';
-  if (days < 7)   return `${days} gün önce`;
-  if (days < 14)  return 'geçen hafta';
-  if (days < 30)  return `${Math.floor(days / 7)} hafta önce`;
-  if (days < 60)  return 'geçen ay';
-  return `${Math.floor(days / 30)} ay önce`;
+  if (days < 7) return rtf.format(-days, 'day');
+  if (days < 30) return rtf.format(-Math.floor(days / 7), 'week');
+  return rtf.format(-Math.floor(days / 30), 'month');
 };

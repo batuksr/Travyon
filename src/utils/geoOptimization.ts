@@ -140,7 +140,11 @@ export const optimizeRouteTSP = (
   startPos?: { lat: number; lng: number }
 ): DailyActivity[] => {
   if (!activities || activities.length <= 1) return activities;
-  if (activities.length === 2) return activities; // 2 nokta, zaten optimal
+  if (activities.length === 2) {
+    // İki noktanın kendi aralarındaki mesafe aynı olsa da dışarıdan gelen
+    // başlangıç konumuna en yakın olanın önce ziyaret edilmesi gerekir.
+    return startPos ? nearestNeighbor(activities, startPos) : activities;
+  }
 
   const nn      = nearestNeighbor(activities, startPos);
   const refined = twoOpt(nn);

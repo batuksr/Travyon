@@ -5,6 +5,7 @@ import { Bell, X, CheckCheck, Plane, AlertCircle, Info, ExternalLink } from 'luc
 import { useUserPlans } from '../store/useSavedPlansStore';
 import { buildNotifications, type AppNotification } from '../utils/notificationUtils';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface WeatherData { temp: number; code: number; windspeed: number }
 
@@ -52,6 +53,8 @@ const levelConfig = {
 const Notifications: React.FC = () => {
   const { t } = useTranslation();
   const plans = useUserPlans();
+  const user = useAuthStore((state) => state.user);
+  const dismissedStorageKey = `travyon-dismissed-notifs-${user?.uid ?? 'anonymous'}`;
   const {
     tempCelsius,
     appPlanNotif, appCommunityNotif, appUpdateNotif,
@@ -61,7 +64,7 @@ const Notifications: React.FC = () => {
   const [weather, setWeather]     = useState<WeatherData | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem('travyon-dismissed-notifs');
+      const saved = localStorage.getItem(dismissedStorageKey);
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch { return new Set(); }
   });
@@ -98,24 +101,13 @@ const Notifications: React.FC = () => {
   const dismiss = useCallback((id: string) => {
     setDismissed(prev => {
       const next = new Set([...prev, id]);
-      localStorage.setItem('travyon-dismissed-notifs', JSON.stringify([...next]));
+      localStorage.setItem(dismissedStorageKey, JSON.stringify([...next]));
       return next;
     });
-  }, []);
-
-  const dismissAll = useCallback(() => {
-    setDismissed(prev => {
-      const all = allNotifications.map(n => n.id);
-      const next = new Set([...prev, ...all]);
-      localStorage.setItem('travyon-dismissed-notifs', JSON.stringify([...next]));
-      return next;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dismissedStorageKey]);
 
   // React Compiler bu memo'yu kendi optimizasyonuyla yeniden üretemiyor (notifs'in
   // sırayla filtrelenmesi nedeniyle) — normal useMemo olarak çalışmaya devam ediyor.
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const allNotifications = useMemo(() => {
     let notifs = buildNotifications(plans, weather, todayStr, cityName, tempCelsius);
     if (!appPlanNotif)      notifs = notifs.filter(n => n.id.startsWith('weather-'));
@@ -123,6 +115,15 @@ const Notifications: React.FC = () => {
     if (!appUpdateNotif)    notifs = notifs.filter(n => !n.id.startsWith('update-'));
     return notifs;
   }, [plans, weather, todayStr, cityName, tempCelsius, appPlanNotif, appCommunityNotif, appUpdateNotif]);
+
+  const dismissAll = useCallback(() => {
+    setDismissed(prev => {
+      const all = allNotifications.map(n => n.id);
+      const next = new Set([...prev, ...all]);
+      localStorage.setItem(dismissedStorageKey, JSON.stringify([...next]));
+      return next;
+    });
+  }, [allNotifications, dismissedStorageKey]);
 
   const notifications: AppNotification[] = useMemo(() =>
     allNotifications.filter(n => !dismissed.has(n.id)),
@@ -138,7 +139,8 @@ const Notifications: React.FC = () => {
     if (urgentPlan) {
       const dest = urgentPlan.plan.destination.split(',')[0];
       const daysLeft = Math.ceil((new Date(urgentPlan.onboardingData.startDate).getTime() - Date.now()) / 86_400_000);
-      const sent = sessionStorage.getItem('push-sent-' + urgentPlan.id);
+      const sentKey = `push-sent-${user?.uid ?? 'anonymous'}-${urgentPlan.id}`;
+      const sent = sessionStorage.getItem(sentKey);
       if (!sent) {
         new Notification(
           daysLeft === 0 ? t('notifications.push.todayTitle', { dest }) : t('notifications.push.tomorrowTitle', { dest }),
@@ -147,11 +149,10 @@ const Notifications: React.FC = () => {
             icon: '/favicon.ico',
           }
         );
-        sessionStorage.setItem('push-sent-' + urgentPlan.id, '1');
+        sessionStorage.setItem(sentKey, '1');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pushEnabled, pushPermission]);
+  }, [pushEnabled, pushPermission, plans, t, user?.uid]);
 
   const urgentCount  = notifications.filter(n => n.level === 'urgent').length;
   const warningCount = notifications.filter(n => n.level === 'warning').length;

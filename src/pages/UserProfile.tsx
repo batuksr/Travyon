@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
-import { db } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import {
-  getPublicFeed, followUser, unfollowUser, getFollowingList,
+  getPublicPlansByUser, followUser, unfollowUser, getFollowingList,
+  getPublicUserProfile,
   type PublicPlan,
 } from '../services/socialService';
 import {
-  ArrowLeft, MapPin, Calendar, Globe, Users, Loader2,
+  ArrowLeft, MapPin, Calendar, Globe, Users, Loader2, EyeOff,
 } from 'lucide-react';
 import { relativeTime } from '../utils/timeUtils';
 
@@ -36,6 +35,7 @@ const UserProfile: React.FC = () => {
   const [isFollowing, setIsFollowing]   = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [unfollowConfirm, setUnfollowConfirm] = useState(false);
+  const [profilePrivate, setProfilePrivate]   = useState(false);
 
   const isOwnProfile = uid === user?.uid;
 
@@ -56,25 +56,24 @@ const UserProfile: React.FC = () => {
           email:       user?.email ?? undefined,
         };
       } else {
-        // 2) Başka kullanıcı: users/ koleksiyonunu dene
-        try {
-          const userSnap = await getDoc(doc(db, 'users', uid));
-          if (userSnap.exists()) {
-            const d = userSnap.data();
-            profileData = {
-              uid,
-              displayName: (d.displayName as string) || t('userProfile.defaultName'),
-              photoURL:    (d.photoURL    as string | null) ?? null,
-              email:       (d.email       as string | undefined),
-              createdAt:   (d.createdAt   as string | undefined),
-            };
-          }
-        } catch { /* Firestore rules izin vermeyebilir — publicPlans'tan alacağız */ }
+        const publicProfile = await getPublicUserProfile(uid);
+        if (!publicProfile.exists) { setProfile(null); return; }
+        if (!publicProfile.isPublic) {
+          setProfilePrivate(true);
+          setPlans([]);
+          setProfile({ uid, displayName: t('userProfile.defaultName'), photoURL: null });
+          return;
+        }
+        setProfilePrivate(false);
+        profileData = {
+          uid,
+          displayName: publicProfile.displayName || t('userProfile.defaultName'),
+          photoURL: publicProfile.photoURL ?? null,
+        };
       }
 
       // 3) Paylaşılan planlar
-      const allPlans = await getPublicFeed(100);
-      const userPlans = allPlans.filter(p => p.userId === uid);
+      const userPlans = await getPublicPlansByUser(uid, 100);
       setPlans(userPlans);
 
       // 4) publicPlans'tan profil bilgisini zenginleştir (isim/foto eksikse)
@@ -94,7 +93,7 @@ const UserProfile: React.FC = () => {
         setIsFollowing(following.includes(uid));
       }
     } catch (e) {
-      console.error(e);
+      if (import.meta.env.DEV) console.error(e);
       // Hata olsa bile minimal profili göster
       setProfile(profileData);
     } finally {
@@ -134,6 +133,17 @@ const UserProfile: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg gap-3">
         <p className="text-muted">{t('userProfile.notFound')}</p>
+        <button onClick={() => navigate(-1)} className="text-sm font-heading text-accent">← {t('userProfile.backToPrevious')}</button>
+      </div>
+    );
+  }
+
+  if (profilePrivate) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-bg gap-3 px-6 text-center">
+        <EyeOff size={32} className="text-muted" aria-hidden="true" />
+        <p className="font-heading text-xl text-text">{t('userProfile.privateTitle')}</p>
+        <p className="text-sm text-muted">{t('userProfile.privateDescription')}</p>
         <button onClick={() => navigate(-1)} className="text-sm font-heading text-accent">← {t('userProfile.backToPrevious')}</button>
       </div>
     );
@@ -301,7 +311,7 @@ const UserProfile: React.FC = () => {
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] text-muted">{relativeTime(plan.createdAt)}</p>
+                        <p className="text-[10px] text-muted">{relativeTime(plan.createdAt, localeCode)}</p>
                         {avgDisplay && (
                           <p className="text-xs font-bold text-amber-500 mt-0.5">★ {avgDisplay}</p>
                         )}

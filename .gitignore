@@ -23,15 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.local
+.env.*.local
 
-# Large video files (GitHub 100 MB limit)
-public/videos/*.mp4
-public/videos/*.webm
-public/videos/*.mov
-
-# Sıkıştırılmadan önceki orijinal video yedekleri (asla commit edilmesin)
+# Uygulamada kullanılan optimize videolar public/videos altında versionlanır.
+# Sıkıştırılmamış orijinal video yedekleri ise asla commit edilmez.
 public/videos_originals/
+source-media/
 
 # Firebase CLI local cache
 .firebase
-

@@ -35,6 +35,7 @@ export interface AppSettingsData {
 
 interface AppSettingsState extends AppSettingsData {
   setSettings: (s: Partial<AppSettingsData>) => void;
+  resetSettings: () => void;
 }
 
 const defaults: AppSettingsData = {
@@ -53,12 +54,12 @@ const defaults: AppSettingsData = {
   pushEnabled: false,
   pushSoundEnabled: true,
   pushPermission: 'default',
-  profilePublic: true,
-  plansPublic: true,
-  followPublic: true,
-  locationEnabled: true,
+  profilePublic: false,
+  plansPublic: false,
+  followPublic: false,
+  locationEnabled: false,
   locationHistory: false,
-  analyticsEnabled: true,
+  analyticsEnabled: false,
   photoURL: null,
 };
 
@@ -75,6 +76,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
     (set) => ({
       ...defaults,
       setSettings: (s) => set(s),
+      resetSettings: () => set(defaults),
     }),
     { name: 'travyon-app-settings' }
   )

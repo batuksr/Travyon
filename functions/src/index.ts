@@ -1,12 +1,12 @@
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
-import { defineSecret, defineString } from "firebase-functions/params";
+import { defineBoolean, defineSecret, defineString } from "firebase-functions/params";
 import { setGlobalOptions } from "firebase-functions/v2";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { getStorage } from "firebase-admin/storage";
+import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -53,7 +53,7 @@ const PLAN_MONTH_LIMIT = 3; // ücretsiz kullanıcı için aylık plan oluşturm
 // girilene kadar pasif — bu sınır da onunla birlikte pasif tutuluyor, aksi
 // halde kullanıcı sınıra takılır ama Pro'ya geçecek bir yol olmaz. İkisi
 // birlikte true yapılır.
-const PLAN_LIMIT_ENABLED = false;
+const PRO_FEATURES_ENABLED = defineBoolean("PRO_FEATURES_ENABLED", { default: false });
 
 /* ══════════════════════════════════════════════
    RATE LIMITING — kullanıcı (uid) başına, fonksiyon başına
@@ -68,11 +68,17 @@ const RATE_LIMITS: Record<string, number> = {
   askTravelAssistant: 25,
   submitBugReport: 5,
   sharePublicPlan: 10,
+  unsharePublicPlan: 10,
+  syncSharedPlansIdentity: 5,
+  ratePublicPlan: 30,
+  updatePrivacySettings: 10,
+  deleteMyAccount: 2,
+  getPublicProfile: 50,
   followUserAction: 30,
   initiateSubscriptionCheckout: 3,
   cancelSubscription: 5,
-  geocodeAddress: 300, // plan başına onlarca aktivite × fallback araması olabilir
-  getDirections: 60,   // gün başına TEK toplu çağrı (bkz. getDirections)
+  geocodeAddress: 80,
+  getDirections: 15,
 };
 
 // generateAIContent/askTravelAssistant için mesaj bilinçli olarak bu sabit
@@ -146,7 +152,7 @@ const checkAndIncrementPlanUsage = async (uid: string): Promise<void> => {
 };
 
 const generateCode = (): string => {
-  const n = Math.floor(Math.random() * 10 ** CODE_LENGTH);
+  const n = randomInt(0, 10 ** CODE_LENGTH);
   return n.toString().padStart(CODE_LENGTH, "0");
 };
 
@@ -177,7 +183,7 @@ const buildEmailHtml = (code: string, lang: string): string => {
  * 45 saniyede bir istek sınırı vardır.
  */
 export const sendVerificationCode = onCall(
-  { secrets: [RESEND_API_KEY, RESEND_FROM] },
+  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: true },
   async (request) => {
     const auth = request.auth;
     if (!auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
@@ -187,46 +193,37 @@ export const sendVerificationCode = onCall(
 
     const lang = (request.data?.lang === "en" ? "en" : "tr") as string;
 
-    const ref = codeDocRef(auth.uid);
-    const existing = await ref.get();
-    let dailyCount = 1;
-    let dailyWindowStart = Date.now();
-
-    if (existing.exists) {
-      const data = existing.data()!;
-      const lastSentAt = data.lastSentAt?.toMillis?.() ?? 0;
-      const sinceLast = Date.now() - lastSentAt;
-      if (sinceLast < RESEND_COOLDOWN_MS) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "cooldown",
-          { retryAfterMs: RESEND_COOLDOWN_MS - sinceLast }
-        );
-      }
-
-      // Günlük gönderim tavanı — cooldown'u tek başına aşan bir script'in
-      // günde binlerce e-posta tetiklemesini (Resend maliyeti) önler.
-      const existingDayStart = data.dailyWindowStart?.toMillis?.() ?? 0;
-      if (Date.now() - existingDayStart < DAY_MS) {
-        if ((data.dailyCount ?? 0) >= DAILY_SEND_LIMIT) {
-          throw new HttpsError("resource-exhausted", "daily_limit");
-        }
-        dailyCount = (data.dailyCount ?? 0) + 1;
-        dailyWindowStart = existingDayStart;
-      }
-    }
-
     const code = generateCode();
-    await ref.set({
-      code,
-      email,
-      uid: auth.uid,
-      attempts: 0,
-      createdAt: FieldValue.serverTimestamp(),
-      lastSentAt: FieldValue.serverTimestamp(),
-      expiresAt: new Date(Date.now() + CODE_TTL_MS),
-      dailyCount,
-      dailyWindowStart: new Date(dailyWindowStart),
+    const ref = codeDocRef(auth.uid);
+    await db.runTransaction(async (tx) => {
+      const existing = await tx.get(ref);
+      const now = Date.now();
+      const data = existing.data();
+      const lastSentAt = data?.lastSentAt?.toMillis?.() ?? 0;
+      const sinceLast = now - lastSentAt;
+      if (data && sinceLast < RESEND_COOLDOWN_MS) {
+        throw new HttpsError("resource-exhausted", "cooldown", {
+          retryAfterMs: RESEND_COOLDOWN_MS - sinceLast,
+        });
+      }
+
+      const existingDayStart = data?.dailyWindowStart?.toMillis?.() ?? 0;
+      const sameDayWindow = Boolean(existingDayStart && now - existingDayStart < DAY_MS);
+      const dailyCount = sameDayWindow ? (data?.dailyCount ?? 0) + 1 : 1;
+      if (dailyCount > DAILY_SEND_LIMIT) {
+        throw new HttpsError("resource-exhausted", "daily_limit");
+      }
+      tx.set(ref, {
+        code,
+        email,
+        uid: auth.uid,
+        attempts: 0,
+        createdAt: FieldValue.serverTimestamp(),
+        lastSentAt: FieldValue.serverTimestamp(),
+        expiresAt: new Date(now + CODE_TTL_MS),
+        dailyCount,
+        dailyWindowStart: new Date(sameDayWindow ? existingDayStart : now),
+      });
     });
 
     const fromAddress = RESEND_FROM.value() || "Travyon <onboarding@resend.dev>";
@@ -260,7 +257,7 @@ export const sendVerificationCode = onCall(
  * emailVerified=true olarak işaretler (native e-posta doğrulama akışıyla
  * aynı sonucu üretir — isEmailVerified() gibi mevcut kontroller değişmeden çalışır).
  */
-export const verifyEmailCode = onCall(async (request) => {
+export const verifyEmailCode = onCall({ enforceAppCheck: true }, async (request) => {
   const auth = request.auth;
   if (!auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
 
@@ -269,27 +266,37 @@ export const verifyEmailCode = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "invalid_format");
   }
 
+  const currentAuthUser = await getAuth().getUser(auth.uid);
   const ref = codeDocRef(auth.uid);
-  const snap = await ref.get();
-  if (!snap.exists) throw new HttpsError("not-found", "no_pending_code");
-
-  const data = snap.data()!;
-  const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
-  if (Date.now() > expiresAt) {
-    await ref.delete();
-    throw new HttpsError("deadline-exceeded", "expired");
-  }
-
-  if ((data.attempts ?? 0) >= MAX_ATTEMPTS) {
-    await ref.delete();
-    throw new HttpsError("resource-exhausted", "too_many_attempts");
-  }
-
-  if (data.code !== submittedCode) {
-    await ref.update({ attempts: FieldValue.increment(1) });
-    throw new HttpsError("invalid-argument", "wrong_code");
-  }
-
+  const result = await db.runTransaction(async (tx): Promise<"ok" | "missing" | "expired" | "locked" | "wrong" | "email_changed"> => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return "missing";
+    const data = snap.data()!;
+    if (!currentAuthUser.email || data.email?.toLowerCase() !== currentAuthUser.email.toLowerCase()) {
+      tx.delete(ref);
+      return "email_changed";
+    }
+    const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+    if (Date.now() > expiresAt) {
+      tx.delete(ref);
+      return "expired";
+    }
+    if ((data.attempts ?? 0) >= MAX_ATTEMPTS) {
+      tx.delete(ref);
+      return "locked";
+    }
+    if (data.code !== submittedCode) {
+      tx.update(ref, { attempts: FieldValue.increment(1) });
+      return "wrong";
+    }
+    if (!data.consumedAt) tx.update(ref, { consumedAt: FieldValue.serverTimestamp() });
+    return "ok";
+  });
+  if (result === "missing") throw new HttpsError("not-found", "no_pending_code");
+  if (result === "expired") throw new HttpsError("deadline-exceeded", "expired");
+  if (result === "locked") throw new HttpsError("resource-exhausted", "too_many_attempts");
+  if (result === "wrong") throw new HttpsError("invalid-argument", "wrong_code");
+  if (result === "email_changed") throw new HttpsError("failed-precondition", "email_changed");
   await getAuth().updateUser(auth.uid, { emailVerified: true });
   await ref.delete();
 
@@ -312,8 +319,8 @@ interface GenerateAIContentRequest {
 // Server hardcodes the model list per type — a tampered client cannot
 // request an arbitrary/expensive model for a cheap use-case.
 const MODELS_BY_TYPE: Record<AIContentType, string[]> = {
-  plan: ["gemini-2.5-flash", "gemini-1.5-flash"],
-  suggestion: ["gemini-2.5-pro"],
+  plan: ["gemini-3.6-flash", "gemini-2.5-flash"],
+  suggestion: ["gemini-3.6-flash", "gemini-2.5-flash"],
 };
 
 const sleep = (ms: number): Promise<void> =>
@@ -333,18 +340,20 @@ const generateWithFallback = async (
   prompt: string,
   models: string[]
 ): Promise<string> => {
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const { GoogleGenAI } = await import("@google/genai");
+  const genAI = new GoogleGenAI({ apiKey });
   let lastError: Error | undefined;
 
   for (const modelName of models) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const model = genAI.getGenerativeModel({
+        const result = await genAI.models.generateContent({
           model: modelName,
-          generationConfig: { responseMimeType: "application/json" },
+          contents: prompt,
+          config: { responseMimeType: "application/json" },
         });
-        const result = await model.generateContent(prompt);
-        return result.response.text();
+        if (!result.text) throw new Error("AI returned an empty response");
+        return result.text;
       } catch (err: unknown) {
         const error = err as Error;
         const msg = error.message.toLowerCase();
@@ -400,9 +409,12 @@ const toSafeClientMessage = (raw: string): string => {
  * across up to 2 models, plus real network latency for JSON-mode generation.
  */
 export const generateAIContent = onCall<GenerateAIContentRequest>(
-  { secrets: [GEMINI_API_KEY], timeoutSeconds: 180 },
+  { secrets: [GEMINI_API_KEY], timeoutSeconds: 180, enforceAppCheck: true },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
 
     const { prompt, type } = request.data ?? ({} as Partial<GenerateAIContentRequest>);
 
@@ -421,7 +433,7 @@ export const generateAIContent = onCall<GenerateAIContentRequest>(
     }
 
     await checkRateLimit(request.auth.uid, "generateAIContent");
-    if (type === "plan" && PLAN_LIMIT_ENABLED) {
+    if (type === "plan" && PRO_FEATURES_ENABLED.value()) {
       await checkAndIncrementPlanUsage(request.auth.uid);
     }
 
@@ -458,9 +470,20 @@ KURALLAR:
   "3. günümde...", "planımda...", "hangi gün..." gibi sorularda plan bağlamını kullan.
 - Seyahatle ilgili olmayan sorulara nazikçe "Bu konuda yardımcı olamam, ama seyahat sorularına bayılıyorum! 😊" de.`;
 
+const ASSISTANT_SYSTEM_PROMPT_EN = `You are Travyon's smart travel assistant, "Travyon AI".
+Give concise, practical travel advice.
+RULES:
+- Always answer in English.
+- Limit answers to 4-6 sentences; use no more than 4 bullets.
+- Add an emoji when recommending a city or country.
+- Give concrete figures for budget questions and clearly label estimates.
+- Use PLAN CONTEXT when the user refers to their itinerary or a particular day.
+- Politely decline unrelated questions and offer help with travel instead.`;
+
 interface AskAssistantRequest {
   question: string;
   planContext?: string;
+  language?: "tr" | "en";
 }
 
 /**
@@ -470,11 +493,14 @@ interface AskAssistantRequest {
  * davranışıyla birebir aynı.
  */
 export const askTravelAssistant = onCall<AskAssistantRequest>(
-  { secrets: [GEMINI_API_KEY], timeoutSeconds: 90 },
+  { secrets: [GEMINI_API_KEY], timeoutSeconds: 90, enforceAppCheck: true },
   async (request, response) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
 
-    const { question, planContext } = request.data ?? ({} as Partial<AskAssistantRequest>);
+    const { question, planContext, language } = request.data ?? ({} as Partial<AskAssistantRequest>);
     if (typeof question !== "string" || !question.trim()) {
       throw new HttpsError("invalid-argument", "question is required.");
     }
@@ -489,29 +515,33 @@ export const askTravelAssistant = onCall<AskAssistantRequest>(
       throw new HttpsError("failed-precondition", "AI service configuration error: invalid api key.");
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const fullPrompt = [
-      ASSISTANT_SYSTEM_PROMPT,
-      planContext ? `\n${planContext}` : "",
-      `\nKullanıcı sorusu: ${question}`,
+    const { GoogleGenAI } = await import("@google/genai");
+    const genAI = new GoogleGenAI({ apiKey });
+    const english = language === "en";
+    const userPrompt = [
+      planContext ? `${planContext}\n` : "",
+      `${english ? "User question" : "Kullanıcı sorusu"}: ${question}`,
     ].join("");
 
     const tryStream = async (modelName: string): Promise<string> => {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContentStream(fullPrompt);
+      const result = await genAI.models.generateContentStream({
+        model: modelName,
+        contents: userPrompt,
+        config: { systemInstruction: english ? ASSISTANT_SYSTEM_PROMPT_EN : ASSISTANT_SYSTEM_PROMPT },
+      });
       let full = "";
-      for await (const chunk of result.stream) {
-        full += chunk.text();
+      for await (const chunk of result) {
+        full += chunk.text ?? "";
         if (request.acceptsStreaming && response) response.sendChunk(full);
       }
       return full;
     };
 
     try {
-      return await tryStream("gemini-2.5-flash");
+      return await tryStream("gemini-3.6-flash");
     } catch {
       try {
-        return await tryStream("gemini-1.5-flash");
+        return await tryStream("gemini-2.5-flash");
       } catch (err2) {
         logger.error("[askTravelAssistant] Gemini call failed", {
           err: err2 instanceof Error ? err2.message : String(err2),
@@ -546,7 +576,7 @@ const escapeHtml = (s: string): string =>
  * bazlı değil, gönderilen e-posta adresine bağlı bir cooldown var.
  */
 export const submitContactMessage = onCall<ContactMessageRequest>(
-  { secrets: [RESEND_API_KEY, RESEND_FROM] },
+  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: true },
   async (request) => {
     const { name, email, subject, message } = request.data ?? ({} as Partial<ContactMessageRequest>);
 
@@ -563,17 +593,23 @@ export const submitContactMessage = onCall<ContactMessageRequest>(
       throw new HttpsError("invalid-argument", "invalid message");
     }
 
-    const cooldownRef = db
-      .collection("contactCooldowns")
-      .doc(Buffer.from(email.toLowerCase()).toString("base64url"));
-    const existing = await cooldownRef.get();
-    if (existing.exists) {
-      const lastSentAt = existing.data()?.lastSentAt?.toMillis?.() ?? 0;
-      if (Date.now() - lastSentAt < CONTACT_COOLDOWN_MS) {
+    const hashKey = (value: string) => createHash("sha256").update(value).digest("base64url");
+    const cooldownRef = db.collection("contactCooldowns").doc(`email_${hashKey(email.toLowerCase())}`);
+    const ipRef = db.collection("contactCooldowns").doc(`ip_${hashKey(request.rawRequest.ip || "unknown")}`);
+    await db.runTransaction(async (tx) => {
+      const [existingEmail, existingIp] = await Promise.all([tx.get(cooldownRef), tx.get(ipRef)]);
+      const now = Date.now();
+      const emailLastSent = existingEmail.data()?.lastSentAt?.toMillis?.() ?? 0;
+      const ipLastSent = existingIp.data()?.lastSentAt?.toMillis?.() ?? 0;
+      if (
+        (existingEmail.exists && now - emailLastSent < CONTACT_COOLDOWN_MS) ||
+        (existingIp.exists && now - ipLastSent < CONTACT_COOLDOWN_MS)
+      ) {
         throw new HttpsError("resource-exhausted", "cooldown");
       }
-    }
-    await cooldownRef.set({ lastSentAt: FieldValue.serverTimestamp() });
+      tx.set(cooldownRef, { lastSentAt: FieldValue.serverTimestamp() });
+      tx.set(ipRef, { lastSentAt: FieldValue.serverTimestamp() });
+    });
 
     const fromAddress = RESEND_FROM.value() || "Travyon <onboarding@resend.dev>";
     const res = await fetch("https://api.resend.com/emails", {
@@ -622,7 +658,7 @@ interface SubmitBugReportRequest {
   desc: string;
 }
 
-export const submitBugReport = onCall<SubmitBugReportRequest>(async (request) => {
+export const submitBugReport = onCall<SubmitBugReportRequest>({ enforceAppCheck: true }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -676,45 +712,122 @@ interface SharePublicPlanRequest {
   linkOnly?: boolean;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isBoundedString = (value: unknown, max: number, required = false): value is string =>
+  typeof value === "string" && value.length <= max && (!required || value.trim().length > 0);
+
+const isFiniteInRange = (value: unknown, min: number, max: number): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
+
+const isValidLatLng = (value: unknown): value is { lat: number; lng: number } =>
+  isRecord(value) && isFiniteInRange(value.lat, -90, 90) && isFiniteInRange(value.lng, -180, 180);
+
+const isShareablePlan = (value: unknown): value is SharePublicPlanRequest["plan"] => {
+  if (!isRecord(value) || !isBoundedString(value.destination, 200, true) || !Array.isArray(value.dailyPlans)) {
+    return false;
+  }
+  if (value.dailyPlans.length < 1 || value.dailyPlans.length > 31) return false;
+  if (!isBoundedString(value.overallSummary, 10_000)) return false;
+  if (!isFiniteInRange(value.totalEstimatedCost, 0, 1_000_000_000)) return false;
+  if (!isBoundedString(value.currencySymbol, 10)) return false;
+  if (value.cityGuide !== undefined) {
+    if (!isRecord(value.cityGuide)) return false;
+    if (![value.cityGuide.transportationTips, value.cityGuide.localCustoms, value.cityGuide.generalAdvice]
+      .every((text) => isBoundedString(text, 5_000))) return false;
+  }
+
+  return value.dailyPlans.every((day, dayIndex) => {
+    if (!isRecord(day) || day.dayNumber !== dayIndex + 1 || !isBoundedString(day.date, 32, true)) return false;
+    if (!isBoundedString(day.daySummary, 4_000) || !isFiniteInRange(day.totalEstimatedCost, 0, 1_000_000_000)) return false;
+    if (!Array.isArray(day.activities) || day.activities.length > 15) return false;
+    return day.activities.every((activity) => {
+      if (!isRecord(activity)) return false;
+      if (!isBoundedString(activity.period, 50, true) || !isBoundedString(activity.placeName, 200, true)) return false;
+      if (!isBoundedString(activity.description, 4_000) || !isValidLatLng(activity.coordinates)) return false;
+      if (!isFiniteInRange(activity.estimatedCost, 0, 1_000_000_000)) return false;
+      if (activity.actualCost !== undefined && !isFiniteInRange(activity.actualCost, 0, 1_000_000_000)) return false;
+      return activity.note === undefined || isBoundedString(activity.note, 2_000);
+    });
+  });
+};
+
+const isOptionalBoundedString = (value: unknown, max: number): boolean =>
+  value === undefined || isBoundedString(value, max);
+
+const isOptionalStringArray = (value: unknown, maxItems: number, maxItemLength: number): boolean =>
+  value === undefined || (
+    Array.isArray(value) && value.length <= maxItems && value.every((item) => isBoundedString(item, maxItemLength))
+  );
+
+const isValidOnboardingMetadata = (value: unknown): value is SharePublicPlanRequest["onboardingData"] => {
+  if (!isRecord(value)) return false;
+  if (value.budget !== undefined && !isFiniteInRange(value.budget, 0, 1_000_000_000)) return false;
+  if (value.peopleCount !== undefined && (!Number.isInteger(value.peopleCount) || !isFiniteInRange(value.peopleCount, 1, 100))) return false;
+  if (value.earlyBird !== undefined && typeof value.earlyBird !== "boolean") return false;
+  if (![value.currencySymbol, value.tripPurpose, value.travelType, value.pace, value.foodPhilosophy,
+    value.accommodation, value.transport].every((item) => isOptionalBoundedString(item, 100))) return false;
+  if (!isOptionalStringArray(value.purposes, 20, 100) || !isOptionalStringArray(value.dietaryRestrictions, 20, 100)) return false;
+  if (![value.startDate, value.endDate].every((item) => isOptionalBoundedString(item, 32))) return false;
+  return true;
+};
+
 /**
  * socialService.ts'teki shareplan()/sharePlanAsLink()'in taşındığı yer —
  * ikisi de aynı fonksiyon, sadece linkOnly=true iken feedVisible:false ekleniyor.
  * userDisplayName/userPhotoURL istemciden GÜVENİLMİYOR — Admin SDK ile
  * kullanıcının güncel Auth kaydından çekiliyor (sahte isim/foto engellenir).
  */
-export const sharePublicPlan = onCall<SharePublicPlanRequest>(async (request) => {
+export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
   }
 
   const { planId, plan, onboardingData, linkOnly } = request.data ?? ({} as Partial<SharePublicPlanRequest>);
-  if (typeof planId !== "string" || !planId.trim() || planId.length > 200) {
+  if (typeof planId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(planId)) {
     throw new HttpsError("invalid-argument", "invalid planId");
   }
-  if (!plan || typeof plan.destination !== "string" || !Array.isArray(plan.dailyPlans)) {
+  if (!isShareablePlan(plan)) {
     throw new HttpsError("invalid-argument", "invalid plan");
   }
-  if (!onboardingData || typeof onboardingData !== "object") {
+  if (!isValidOnboardingMetadata(onboardingData)) {
     throw new HttpsError("invalid-argument", "invalid onboardingData");
+  }
+  if (linkOnly !== undefined && typeof linkOnly !== "boolean") {
+    throw new HttpsError("invalid-argument", "invalid linkOnly");
+  }
+  if (Buffer.byteLength(JSON.stringify({ plan, onboardingData }), "utf8") > 750_000) {
+    throw new HttpsError("invalid-argument", "plan payload is too large");
   }
 
   await checkRateLimit(request.auth.uid, "sharePublicPlan", "Rate limit exceeded — try again later.");
 
-  const authUser = await getAuth().getUser(request.auth.uid);
+  const [authUser, userSnap] = await Promise.all([
+    getAuth().getUser(request.auth.uid),
+    db.collection("users").doc(request.auth.uid).get(),
+  ]);
+  const privacy = userSnap.data();
+  if (!linkOnly && privacy?.plansPublic !== true) {
+    throw new HttpsError("permission-denied", "Topluluk plan paylaşımı ayarlardan açılmalı.");
+  }
 
+  const exposeIdentity = privacy?.profilePublic === true;
+  const trustedPhotoURL = typeof privacy?.photoURL === "string" && privacy.photoURL.startsWith("https://")
+    ? privacy.photoURL
+    : (authUser.photoURL ?? null);
   const docData: Record<string, unknown> = {
     userId: request.auth.uid,
-    userDisplayName: authUser.displayName ?? "Gezgin",
-    userPhotoURL: authUser.photoURL ?? null,
+    userDisplayName: exposeIdentity ? (authUser.displayName ?? "Gezgin") : "Gezgin",
+    userPhotoURL: exposeIdentity ? trustedPhotoURL : null,
     destination: plan.destination,
     dailyPlanCount: plan.dailyPlans.length,
     budget: onboardingData.budget ?? 0,
     currencySymbol: onboardingData.currencySymbol ?? "₺",
     tripPurpose: onboardingData.tripPurpose ?? "",
-    createdAt: FieldValue.serverTimestamp(),
-    avgRating: 0,
-    ratingCount: 0,
+    feedVisible: linkOnly !== true,
+    profilePublic: exposeIdentity,
     travelType: onboardingData.travelType ?? "",
     peopleCount: onboardingData.peopleCount ?? 1,
     pace: onboardingData.pace ?? "",
@@ -728,10 +841,21 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>(async (request) =>
     endDate: onboardingData.endDate ?? "",
     planData: plan,
   };
-  if (linkOnly) docData.feedVisible = false;
-
   try {
-    await db.collection("publicPlans").doc(planId).set(docData);
+    const planRef = db.collection("publicPlans").doc(planId);
+    await db.runTransaction(async (tx) => {
+      const existing = await tx.get(planRef);
+      if (existing.exists && existing.data()?.userId !== request.auth?.uid) {
+        throw new HttpsError("permission-denied", "Bu plan kimliği başka bir kullanıcıya ait.");
+      }
+      const previous = existing.data();
+      tx.set(planRef, {
+        ...docData,
+        createdAt: previous?.createdAt ?? FieldValue.serverTimestamp(),
+        avgRating: previous?.avgRating ?? 0,
+        ratingCount: previous?.ratingCount ?? 0,
+      });
+    });
   } catch (err) {
     logger.error("[sharePublicPlan] Firestore yazım hatası", {
       err: err instanceof Error ? err.message : String(err),
@@ -742,11 +866,110 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>(async (request) =>
   return { ok: true };
 });
 
+interface UnsharePublicPlanRequest { planId: string }
+
+export const unsharePublicPlan = onCall<UnsharePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  const planId = request.data?.planId;
+  if (typeof planId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(planId)) {
+    throw new HttpsError("invalid-argument", "invalid planId");
+  }
+  await checkRateLimit(request.auth.uid, "unsharePublicPlan", "Rate limit exceeded.");
+  const planRef = db.collection("publicPlans").doc(planId);
+  const planSnap = await planRef.get();
+  if (!planSnap.exists) return { ok: true };
+  if (planSnap.data()?.userId !== request.auth.uid) {
+    throw new HttpsError("permission-denied", "Bu plan size ait değil.");
+  }
+  const ratings = await db.collection("planRatings").where("planId", "==", planId).get();
+  const writer = db.bulkWriter();
+  for (const rating of ratings.docs) writer.delete(rating.ref);
+  writer.delete(planRef);
+  await writer.close();
+  return { ok: true };
+});
+
+/** Profil adı/fotoğrafı istemciden kabul edilmez; Auth kaydından yayılır. */
+export const syncSharedPlansIdentity = onCall({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  await checkRateLimit(request.auth.uid, "syncSharedPlansIdentity", "Rate limit exceeded.");
+
+  const [authUser, userSnap, plansSnap] = await Promise.all([
+    getAuth().getUser(request.auth.uid),
+    db.collection("users").doc(request.auth.uid).get(),
+    db.collection("publicPlans").where("userId", "==", request.auth.uid).get(),
+  ]);
+  const writer = db.bulkWriter();
+  const exposeIdentity = userSnap.data()?.profilePublic === true;
+  const trustedPhotoURL = typeof userSnap.data()?.photoURL === "string" && userSnap.data()?.photoURL.startsWith("https://")
+    ? userSnap.data()?.photoURL
+    : (authUser.photoURL ?? null);
+  for (const planDoc of plansSnap.docs) {
+    const updates: Record<string, unknown> = {
+      userDisplayName: exposeIdentity ? (authUser.displayName ?? "Gezgin") : "Gezgin",
+      userPhotoURL: exposeIdentity ? trustedPhotoURL : null,
+      profilePublic: exposeIdentity,
+    };
+    // Eski sürümde feedVisible alanı yoktu. Kullanıcı plan paylaşımına izin
+    // verdiyse eski genel paylaşımı görünür, vermediyse bağlantıya özel yap.
+    if (planDoc.data().feedVisible === undefined) {
+      updates.feedVisible = userSnap.data()?.plansPublic === true;
+    }
+    writer.update(planDoc.ref, updates);
+  }
+  await writer.close();
+  return { ok: true };
+});
+
+interface RatePublicPlanRequest { planId: string; rating: number }
+
+export const ratePublicPlan = onCall<RatePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  if (request.auth.token.email_verified !== true) {
+    throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+  }
+  const { planId, rating } = request.data ?? ({} as Partial<RatePublicPlanRequest>);
+  if (typeof planId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(planId)) {
+    throw new HttpsError("invalid-argument", "invalid planId");
+  }
+  if (!Number.isInteger(rating) || rating! < 1 || rating! > 5) {
+    throw new HttpsError("invalid-argument", "rating must be an integer from 1 to 5");
+  }
+  await checkRateLimit(request.auth.uid, "ratePublicPlan", "Rate limit exceeded.");
+
+  const planRef = db.collection("publicPlans").doc(planId);
+  const ratingRef = db.collection("planRatings").doc(`${planId}_${request.auth.uid}`);
+  return db.runTransaction(async (tx) => {
+    const [planSnap, existingRating] = await Promise.all([tx.get(planRef), tx.get(ratingRef)]);
+    if (!planSnap.exists) throw new HttpsError("not-found", "Plan bulunamadı.");
+
+    const planData = planSnap.data() ?? {};
+    let count = Math.max(0, Number(planData.ratingCount) || 0);
+    let sum = Math.max(0, Number(planData.avgRating) || 0) * count;
+    if (existingRating.exists) {
+      sum = sum - (Number(existingRating.data()?.rating) || 0) + rating!;
+    } else {
+      sum += rating!;
+      count += 1;
+    }
+    const newAvg = count > 0 ? Math.min(5, Math.max(0, sum / count)) : 0;
+    tx.set(ratingRef, {
+      planId,
+      userId: request.auth!.uid,
+      rating,
+      createdAt: existingRating.data()?.createdAt ?? FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(planRef, { avgRating: newAvg, ratingCount: count });
+    return { newAvg, newCount: count };
+  });
+});
+
 interface FollowUserActionRequest {
   targetUid: string;
 }
 
-export const followUserAction = onCall<FollowUserActionRequest>(async (request) => {
+export const followUserAction = onCall<FollowUserActionRequest>({ enforceAppCheck: true }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -762,13 +985,178 @@ export const followUserAction = onCall<FollowUserActionRequest>(async (request) 
 
   await checkRateLimit(request.auth.uid, "followUserAction", "Rate limit exceeded — try again later.");
 
+  try {
+    await getAuth().getUser(targetUid);
+  } catch {
+    throw new HttpsError("not-found", "Kullanıcı bulunamadı.");
+  }
+  const targetSettings = await db.collection("users").doc(targetUid).get();
+  if (!targetSettings.exists || targetSettings.data()?.followPublic !== true) {
+    throw new HttpsError("permission-denied", "Bu kullanıcı takip isteklerini kapatmış.");
+  }
+
   await db
     .collection("userFollows")
     .doc(request.auth.uid)
     .collection("following")
     .doc(targetUid)
-    .set({ followedAt: FieldValue.serverTimestamp() });
+    .set({
+      followerUid: request.auth.uid,
+      targetUid,
+      followedAt: FieldValue.serverTimestamp(),
+    });
 
+  return { ok: true };
+});
+
+interface PublicProfileRequest { targetUid: string }
+
+export const getPublicProfile = onCall<PublicProfileRequest>({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  const targetUid = request.data?.targetUid;
+  if (typeof targetUid !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(targetUid)) {
+    throw new HttpsError("invalid-argument", "invalid targetUid");
+  }
+  await checkRateLimit(request.auth.uid, "getPublicProfile", "Rate limit exceeded.");
+
+  const settings = await db.collection("users").doc(targetUid).get();
+  if (targetUid !== request.auth.uid && settings.data()?.profilePublic !== true) {
+    return { exists: true, isPublic: false };
+  }
+  try {
+    const target = await getAuth().getUser(targetUid);
+    return {
+      exists: true,
+      isPublic: true,
+      displayName: target.displayName ?? "Gezgin",
+      photoURL: typeof settings.data()?.photoURL === "string" && settings.data()?.photoURL.startsWith("https://")
+        ? settings.data()?.photoURL
+        : (target.photoURL ?? null),
+    };
+  } catch {
+    return { exists: false, isPublic: false };
+  }
+});
+
+interface PrivacySettingsRequest {
+  profilePublic: boolean;
+  plansPublic: boolean;
+  followPublic: boolean;
+  locationEnabled: boolean;
+  locationHistory: boolean;
+  analyticsEnabled: boolean;
+}
+
+/** Gizlilik ayarlarını kaydeder ve profil görünürlüğünü mevcut paylaşımlara uygular. */
+export const updatePrivacySettings = onCall<PrivacySettingsRequest>({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  const data = request.data ?? ({} as Partial<PrivacySettingsRequest>);
+  const keys: (keyof PrivacySettingsRequest)[] = [
+    "profilePublic", "plansPublic", "followPublic", "locationEnabled",
+    "locationHistory", "analyticsEnabled",
+  ];
+  if (keys.some((key) => typeof data[key] !== "boolean")) {
+    throw new HttpsError("invalid-argument", "invalid privacy settings");
+  }
+  if (data.locationEnabled === false && data.locationHistory === true) {
+    throw new HttpsError("invalid-argument", "location history requires location access");
+  }
+  await checkRateLimit(request.auth.uid, "updatePrivacySettings", "Rate limit exceeded.");
+
+  await db.collection("users").doc(request.auth.uid).set(data, { merge: true });
+  const [plansSnap, authUser, userSnap] = await Promise.all([
+    db.collection("publicPlans").where("userId", "==", request.auth.uid).get(),
+    getAuth().getUser(request.auth.uid),
+    db.collection("users").doc(request.auth.uid).get(),
+  ]);
+  const userPhotoURL = userSnap.data()?.photoURL;
+  const storedPhoto = typeof userPhotoURL === "string" && userPhotoURL.startsWith("https://")
+    ? userPhotoURL
+    : (typeof authUser.photoURL === "string" && authUser.photoURL.startsWith("https://") ? authUser.photoURL : null);
+  const writer = db.bulkWriter();
+  for (const planDoc of plansSnap.docs) {
+    const update: Record<string, unknown> = {
+      profilePublic: data.profilePublic,
+      userDisplayName: data.profilePublic ? (authUser.displayName ?? "Gezgin") : "Gezgin",
+      userPhotoURL: data.profilePublic ? storedPhoto : null,
+    };
+    // Paylaşım kapatılınca mevcut topluluk kayıtları bağlantıya özel hale gelir.
+    if (data.plansPublic === false) update.feedVisible = false;
+    else if (planDoc.data().feedVisible === undefined) update.feedVisible = true;
+    writer.update(planDoc.ref, update);
+  }
+  await writer.close();
+  return { ok: true };
+});
+
+/** Hesaba bağlı uygulama verilerini temizler, ardından Firebase Auth hesabını siler. */
+export const deleteMyAccount = onCall({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  const authTimeSeconds = Number(request.auth.token.auth_time) || 0;
+  if (!authTimeSeconds || Date.now() / 1000 - authTimeSeconds > 5 * 60) {
+    throw new HttpsError("failed-precondition", "Hesabı silmeden önce yeniden giriş yapmalısınız.");
+  }
+  await checkRateLimit(request.auth.uid, "deleteMyAccount", "Rate limit exceeded.");
+
+  const uid = request.auth.uid;
+  const userRef = db.collection("users").doc(uid);
+  const userSnap = await userRef.get();
+  if (isProActive(userSnap.data())) {
+    throw new HttpsError("failed-precondition", "Aktif abonelik önce iptal edilmeli.");
+  }
+
+  const [plansSnap, ratingsSnap, incomingFollows, followRoots, bugReports, checkouts, subscriptions, payments] = await Promise.all([
+    db.collection("publicPlans").where("userId", "==", uid).get(),
+    db.collection("planRatings").where("userId", "==", uid).get(),
+    db.collectionGroup("following").where("targetUid", "==", uid).get(),
+    db.collection("userFollows").listDocuments(),
+    db.collection("bug_reports").where("uid", "==", uid).get(),
+    db.collection("subscriptionCheckouts").where("uid", "==", uid).get(),
+    db.collection("subscriptionsByRef").where("uid", "==", uid).get(),
+    db.collection("payments").where("uid", "==", uid).get(),
+  ]);
+
+  const writer = db.bulkWriter();
+  const deletedRatingIds = new Set<string>();
+  for (const planDoc of plansSnap.docs) {
+    const planRatings = await db.collection("planRatings").where("planId", "==", planDoc.id).get();
+    for (const ratingDoc of planRatings.docs) {
+      deletedRatingIds.add(ratingDoc.id);
+      writer.delete(ratingDoc.ref);
+    }
+    writer.delete(planDoc.ref);
+  }
+  for (const ratingDoc of ratingsSnap.docs) {
+    if (!deletedRatingIds.has(ratingDoc.id)) writer.delete(ratingDoc.ref);
+  }
+  for (const snap of [incomingFollows, bugReports, checkouts, subscriptions, payments]) {
+    for (const item of snap.docs) writer.delete(item.ref);
+  }
+  // targetUid alanı eklenmeden önce oluşmuş takip kayıtları collectionGroup
+  // sorgusuna girmez. Her takip kökündeki doğrudan hedef kaydını da silerek
+  // eski verilerin takipçi hesaplarında yetim kalmasını önleriz.
+  for (const followRoot of followRoots) {
+    if (followRoot.id !== uid) writer.delete(followRoot.collection("following").doc(uid));
+  }
+  for (const subscription of subscriptions.docs) {
+    writer.delete(db.collection("pendingWebhookEvents").doc(subscription.id));
+  }
+  writer.delete(codeDocRef(uid));
+  for (const fnName of Object.keys(RATE_LIMITS)) {
+    writer.delete(db.collection("rateLimits").doc(`${uid}_${fnName}`));
+  }
+  await writer.close();
+
+  // Kullanıcının takip alt koleksiyonu dahil tüm profil ağacı temizlenir.
+  await db.recursiveDelete(db.collection("userFollows").doc(uid));
+  await db.recursiveDelete(userRef);
+  await getStorage().bucket().deleteFiles({ prefix: `users/${uid}/` }).catch((error) => {
+    logger.warn("[deleteMyAccount] Storage cleanup failed", {
+      uid,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+  await getAuth().deleteUser(uid);
   return { ok: true };
 });
 
@@ -944,9 +1332,12 @@ interface IyzicoCheckoutInitializeResponse {
  * kaydından alınır (client'tan güvenilmez).
  */
 export const initiateSubscriptionCheckout = onCall<InitiateCheckoutRequest>(
-  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_PRICING_PLAN_REF] },
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_PRICING_PLAN_REF], enforceAppCheck: true },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (!PRO_FEATURES_ENABLED.value()) {
+      throw new HttpsError("failed-precondition", "Pro özellikleri henüz kullanıma açık değil.");
+    }
     if (request.auth.token.email_verified !== true) {
       throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
     }
@@ -1158,7 +1549,7 @@ export const subscriptionWebhook = onRequest(
  * currentPeriodEnd'e kadar sürer (bkz. isProActive()).
  */
 export const cancelSubscription = onCall(
-  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY] },
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY], enforceAppCheck: true },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     const uid = request.auth.uid;
@@ -1208,9 +1599,12 @@ interface GeocodeAddressResult {
 }
 
 export const geocodeAddress = onCall<GeocodeAddressRequest>(
-  { secrets: [GOOGLE_MAPS_SERVER_KEY] },
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: true },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
 
     const { address, bias } = request.data ?? ({} as Partial<GeocodeAddressRequest>);
     if (typeof address !== "string" || !address.trim() || address.length > 300) {
@@ -1223,7 +1617,10 @@ export const geocodeAddress = onCall<GeocodeAddressRequest>(
     url.searchParams.set("address", address);
     url.searchParams.set("key", GOOGLE_MAPS_SERVER_KEY.value());
     url.searchParams.set("language", "tr");
-    if (bias && typeof bias.lat === "number" && typeof bias.lng === "number") {
+    if (bias !== undefined && !isValidLatLng(bias)) {
+      throw new HttpsError("invalid-argument", "invalid bias coordinates");
+    }
+    if (bias) {
       const d = 0.15; // ~15 km
       url.searchParams.set("bounds", `${bias.lat - d},${bias.lng - d}|${bias.lat + d},${bias.lng + d}`);
     }
@@ -1265,9 +1662,6 @@ interface GetDirectionsRequest {
   pairs: DirectionsPair[];
 }
 type DirectionsResultRow = Record<TravelModeKey, number | null>;
-
-const isLatLng = (v: unknown): v is { lat: number; lng: number } =>
-  !!v && typeof (v as { lat?: unknown }).lat === "number" && typeof (v as { lng?: unknown }).lng === "number";
 
 /** Tek bir mod için Directions REST çağrısı — süreyi dakika cinsinden döner. */
 const fetchDirectionDurationMin = async (
@@ -1311,16 +1705,19 @@ const fetchDirectionDurationMin = async (
  * çalıştırılır, tek round-trip.
  */
 export const getDirections = onCall<GetDirectionsRequest>(
-  { secrets: [GOOGLE_MAPS_SERVER_KEY], timeoutSeconds: 60 },
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], timeoutSeconds: 60, enforceAppCheck: true },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
 
     const { pairs } = request.data ?? ({} as Partial<GetDirectionsRequest>);
-    if (!Array.isArray(pairs) || pairs.length === 0 || pairs.length > 30) {
+    if (!Array.isArray(pairs) || pairs.length === 0 || pairs.length > 15) {
       throw new HttpsError("invalid-argument", "invalid pairs");
     }
     for (const p of pairs) {
-      if (!isLatLng(p?.origin) || !isLatLng(p?.destination)) {
+      if (!isValidLatLng(p?.origin) || !isValidLatLng(p?.destination)) {
         throw new HttpsError("invalid-argument", "invalid pair coordinates");
       }
     }

@@ -205,29 +205,29 @@
     "pricing": {
       "eyebrow": "Pricing",
       "title": "Choose a plan that fits your trip",
-      "subtitle": "Start free, upgrade as your needs grow.",
+      "subtitle": "Use all core planning features free during beta.",
       "perMonth": "/mo",
       "free": {
         "name": "Free",
         "price": "₺0",
         "tagline": "Free forever",
-        "features": ["3 plans included", "Basic AI planning", "Interactive map", "Save plans"],
+        "features": ["Unlimited plans during beta", "AI planning", "Interactive map", "Save plans"],
         "button": "Start Free"
       },
       "pro": {
-        "badge": "Most Popular",
+        "badge": "Coming Soon",
         "name": "Pro",
-        "price": "₺99",
-        "tagline": "20% off with annual billing",
+        "price": "Soon",
+        "tagline": "Available before launch",
         "features": ["Unlimited plans", "Ad-free experience", "Advanced AI model", "Trip durations", "Priority support"],
-        "button": "Upgrade to Pro →"
+        "button": "Coming Soon"
       },
       "team": {
         "name": "Team",
-        "price": "₺299",
-        "tagline": "Up to 5 users",
+        "price": "Soon",
+        "tagline": "Team features are in development",
         "features": ["Up to 5 people", "Unlimited plans", "Collaborative editing", "Shareable plans", "Dedicated support line"],
-        "button": "Start with Team"
+        "button": "Coming Soon"
       }
     },
     "ctaRepeat": {
@@ -235,6 +235,11 @@
       "titleLine1": "Your next stop is",
       "titleLine2": "just one click away."
     }
+  },
+  "notFound": {
+    "title": "This route is not on the map",
+    "description": "The page may have moved or may never have existed.",
+    "back": "Back to home"
   },
   "footer": {
     "faq": "FAQ",
@@ -262,6 +267,11 @@
       "title": "Welcome back 👋",
       "subtitle": "Sign in to your account and keep planning.",
       "forgotPassword": "Forgot password?",
+      "resetSending": "Sending...",
+      "resetNeedsEmail": "Enter your email address first.",
+      "resetSent": "A password reset link has been sent to your email address.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "submitLoading": "Signing In...",
       "submit": "Log In",
       "noAccount": "Don't have an account?",
@@ -273,7 +283,8 @@
         "wrongPassword": "Incorrect password.",
         "invalidCredential": "Incorrect email or password.",
         "generic": "Couldn't sign in. Please try again.",
-        "googleFailedWithCode": "Couldn't sign in with Google. ({{code}})"
+        "googleFailedWithCode": "Couldn't sign in with Google. ({{code}})",
+        "resetFailed": "The reset email could not be sent. Check the address and try again."
       }
     },
     "register": {
@@ -317,6 +328,7 @@
           "expired": "Code expired, request a new one.",
           "too_many_attempts": "Too many attempts, try again later.",
           "wrong_code": "Incorrect code, try again.",
+          "email_changed": "The email address changed. Request a new code for the new address.",
           "unknown": "Something went wrong, try again.",
           "cooldown": "A code was just sent, please wait a moment."
         }
@@ -341,7 +353,7 @@
           "category": "General",
           "items": [
             { "q": "What is Travyon?", "a": "Travyon is an AI-powered, personalized travel planning platform. Based on your budget, date range and travel style, it creates a day-by-day optimized plan in minutes." },
-            { "q": "Can I use it for free?", "a": "Yes! You can use the Free plan for as long as you like. It includes 3 plans, basic AI planning, and interactive map access." },
+            { "q": "Can I use it for free?", "a": "Yes. During beta, plan creation, interactive maps, and saved plans are free with no plan limit." },
             { "q": "Do I have to create an account?", "a": "An account is required to create and save plans. Signing up takes only a few seconds and is completely free." }
           ]
         },
@@ -351,13 +363,13 @@
             { "q": "How long does it take to create a plan?", "a": "15–30 seconds on average. The AI analyzes your preferences and instantly prepares a geographically optimized, day-by-day plan." },
             { "q": "Which cities are supported?", "a": "50+ popular cities worldwide are supported, and the list keeps growing. We cover popular destinations like Istanbul, Paris, Tokyo, Rome, Barcelona and New York." },
             { "q": "Can I change the suggestions?", "a": "Of course! Once your plan is created you can edit every activity, time and route however you like. The plan is entirely under your control." },
-            { "q": "Can I save more than one plan?", "a": "You can save 3 plans on the Free plan and unlimited plans on Pro. Your saved plans are always available under \"My Plans\"." }
+            { "q": "Can I save more than one plan?", "a": "Yes. During beta you can save multiple plans without a limit and access them under \"My Plans\"." }
           ]
         },
         {
           "category": "Security & Privacy",
           "items": [
-            { "q": "Is my data safe?", "a": "All data is stored on Google Firebase infrastructure with AES-256 encryption. Your personal information is never shared with third parties under any circumstances." },
+            { "q": "Is my data safe?", "a": "Connections are protected with HTTPS/TLS, and the app never stores passwords in plain text. Providers listed in the privacy policy support planning, maps, email, and diagnostics." },
             { "q": "Can I delete my account?", "a": "Yes, you can permanently delete your account and all your data from Settings > Account." }
           ]
         },
@@ -378,7 +390,7 @@
       "sections": [
         {
           "title": "1. Data We Collect",
-          "content": "To provide our services, we may process the following personal data:\n\n• Account information: Name, email address and password (stored encrypted).\n• Usage data: The plans you create, preferences, travel dates and budget information.\n• Device information: Browser type, operating system and IP address.\n• Communication data: Information you share when submitting a support request or feedback.\n\nIf you sign in with Google, Google shares basic profile information such as your name and email address with us."
+          "content": "To provide our services, we may process the following personal data:\n\n• Account information: Name, email address, and profile photo. Passwords are handled by Firebase Authentication; the Travyon app cannot read or store them in plain text.\n• Usage data: The plans you create, preferences, travel dates, and budget information.\n• Security/diagnostic data: IP address, browser information, App Check signals, and technical error data when you consent.\n• Communication data: Information you share when submitting a support request or feedback.\n\nIf you sign in with Google, Google shares basic profile information such as your name and email address with us."
         },
         {
           "title": "2. Purpose of Data Use",
@@ -386,15 +398,15 @@
         },
         {
           "title": "3. Data Security",
-          "content": "We apply industry-standard security measures to protect your personal data:\n\n• All data is stored on Google Firebase infrastructure with AES-256 encryption.\n• Connections are encrypted using the HTTPS/TLS protocol.\n• Passwords are never stored in plain text.\n• Our systems undergo regular security audits.\n\nHowever, we note that no data transmission over the internet is ever 100% secure."
+          "content": "We protect personal data with access-controlled Firebase services, App Check, server-side validation, and HTTPS/TLS. Data in Firebase benefits from the infrastructure provider's protections in transit and at rest. Passwords are never stored in plain text by the app.\n\nHowever, no transmission over the internet can be guaranteed to be 100% secure."
         },
         {
           "title": "4. Data Sharing",
-          "content": "We do not sell, rent or trade your personal data to third parties. We may only share your data in the following cases:\n\n• Service providers: Technical infrastructure providers such as Google Firebase (storage), Google Maps API (maps), Google Gemini AI (plan generation), Resend (email delivery — verification codes and contact form messages), and Sentry (tracking technical errors that occur in your browser — diagnostic/error data only, no personal data is shared).\n• Legal requirement: Pursuant to a court order or a legal obligation.\n• Corporate transactions: In the event of a merger or acquisition, with assurances that your data will remain protected."
+          "content": "We do not sell, rent, or trade your personal data. We may share data only in these cases:\n\n• Service providers: Google Firebase (identity, storage, and server functions), Google Maps API (maps), Google Gemini AI (plan generation), Resend (email delivery), and—only when you consent—Sentry (technical error/diagnostic data). Only the data needed for the relevant function is transferred.\n• Legal requirement: Pursuant to a court order or legal obligation.\n• Corporate transactions: In a merger or acquisition, with assurances that the data remains protected."
         },
         {
           "title": "5. Cookies",
-          "content": "Our site uses cookies/local storage to store session and preference information. The types we use:\n\n• Essential: Required for session management and security.\n• Preference: Remember settings like your language and theme preferences.\n\nWe do not currently use any analytics or advertising tracking cookies. If we add any in the future, this policy will be updated along with the appropriate consent mechanism.\n\nYou can disable cookies from your browser settings; however, this may affect some functionality."
+          "content": "Our site uses cookies/local storage for sessions, local plans, and preferences. The types we use:\n\n• Essential: Required for session management and security.\n• Preference: Remembers language, theme, and app settings.\n• Optional diagnostics: Used to track technical errors only when you consent in Settings.\n\nWe do not use advertising tracking. Disabling browser storage may affect some features."
         },
         {
           "title": "6. Your Rights",
@@ -1137,7 +1149,7 @@
     "iosPrefix": "tap the button, then select",
     "addToHomeScreen": "Add to Home Screen",
     "iosSuffix": "to install",
-    "subtitle": "Works offline · Opens like an app · Quick access",
+    "subtitle": "Opens like an app · Quick home-screen access · Planning requires internet",
     "installButton": "Install App"
   },
   "settings": {
@@ -1197,7 +1209,7 @@
     },
     "errors": {
       "wrongPassword": "Current password is incorrect.",
-      "weakPassword": "New password must be at least 6 characters.",
+      "weakPassword": "New password must be at least 8 characters.",
       "emailInUse": "This email is already in use.",
       "invalidEmail": "Invalid email address.",
       "requiresRecentLogin": "Please sign in again for security.",
@@ -1555,7 +1567,7 @@
       "publicFollow": {
         "title": "Anyone can follow",
         "on": "✅ No approval needed — anyone can follow you",
-        "off": "🔒 Approval required — follow requests wait for your approval"
+        "off": "🔒 New follows are disabled"
       }
     },
     "privacyLocation": {
@@ -1564,7 +1576,7 @@
       "geoStatus": {
         "supported": {
           "title": "Browser Location API",
-          "desc": "Your browser supports location. Location features are optional in this app."
+          "desc": "Your browser supports location, but Travyon does not request it yet. This feature will be enabled later."
         },
         "unsupported": {
           "title": "Location not supported",
@@ -1574,7 +1586,7 @@
       "suggestions": {
         "title": "Location-based suggestions",
         "on": "✅ Location is used for nearby places and smart suggestions",
-        "off": "🔒 Location features disabled — general suggestions are shown"
+        "off": "🔒 Not active yet — general suggestions are shown"
       },
       "history": {
         "title": "Location history",
@@ -1609,7 +1621,7 @@
           "desc": "Personal information related to travel"
         }
       ],
-      "encryptedBadge": "Encrypted",
+      "encryptedBadge": "Access controlled",
       "kvkkPrefix": "Your personal data is processed under Turkish Law No. 6698 (KVKK). To download your data or delete your account, use the",
       "kvkkDataSection": "My Data",
       "kvkkSuffix": "section."
@@ -1623,7 +1635,7 @@
       "proPlanName": "Pro Plan",
       "freePlanName": "Free Plan",
       "proDesc": "Unlimited plans + Advanced AI + Ad-free",
-      "freeDesc": "3 plan creations per month",
+      "freeDesc": "Unlimited plan creation during beta",
       "proBadge": "Pro",
       "freeBadge": "Free",
       "usageLabel": "Plans created this month",
@@ -1638,7 +1650,7 @@
         "rows": [
           {
             "label": "Plan creation",
-            "free": "3 / mo",
+            "free": "Beta: Unlimited",
             "pro": "Unlimited"
           },
           {
@@ -1708,6 +1720,7 @@
     "billingDetails": {
       "title": "Billing Details",
       "subtitle": "Information our payment provider iyzico requires for billing.",
+      "comingSoon": "We are not collecting billing details while Pro checkout is disabled. This section will open after pre-launch payment testing is complete.",
       "info": "This information is only sent to our payment provider iyzico for invoicing. Your phone and address are managed in the Profile tab.",
       "labels": {
         "identityNumber": "Turkish National ID Number",
@@ -1718,7 +1731,7 @@
         "city": "e.g. Istanbul"
       },
       "phoneAddressMissing": "Your phone and address are missing — add them in the Profile tab.",
-      "securityNote": "Your data is protected with 256-bit SSL encryption; card details are never collected on this screen.",
+      "securityNote": "Your data is sent over a secure TLS connection; card details are not collected on this screen.",
       "errors": {
         "invalidIdentity": "The ID number must be 11 digits.",
         "cityRequired": "City is required."
@@ -1768,7 +1781,7 @@
       "items": [
         {
           "q": "What is the plan creation limit?",
-          "a": "On the Free plan you can create 3 plans per month. Pro plan is unlimited."
+          "a": "During beta, you can create unlimited plans on the Free tier. Pro features will be announced before launch."
         },
         {
           "q": "How does the AI prepare my plan?",
@@ -1869,6 +1882,8 @@
     },
     "defaultName": "Traveler",
     "notFound": "User not found.",
+    "privateTitle": "This profile is private",
+    "privateDescription": "This user has hidden their profile from the community.",
     "backToPrevious": "Back",
     "sharedPlansCount": "{{count}} shared plans",
     "unfollowConfirm": "Unfollow?",

@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TravelPlanResponse, DailyPlan, DailyActivity } from '../services/aiService';
+import { useAuthStore } from './useAuthStore';
 
 interface PlanState {
   plan: TravelPlanResponse | null;
   savedPlanId: string | null;
+  ownerUid: string | null;
   setPlan: (plan: TravelPlanResponse) => void;
   setSavedPlanId: (id: string | null) => void;
   updateDayPlan: (dayNumber: number, newDayPlan: DailyPlan) => void;
@@ -24,7 +26,12 @@ export const usePlanStore = create<PlanState>()(
     (set) => ({
       plan: null,
       savedPlanId: null,
-      setPlan: (plan) => set({ plan, savedPlanId: null }),
+      ownerUid: null,
+      setPlan: (plan) => set({
+        plan,
+        savedPlanId: null,
+        ownerUid: useAuthStore.getState().user?.uid ?? null,
+      }),
       setSavedPlanId: (id) => set({ savedPlanId: id }),
       updateDayPlan: (dayNumber, newDayPlan) => set((state) => {
         if (!state.plan) return state;
@@ -86,7 +93,7 @@ export const usePlanStore = create<PlanState>()(
         });
         return { plan: { ...state.plan, dailyPlans: updatedDailyPlans } };
       }),
-      clearPlan: () => set({ plan: null, savedPlanId: null }),
+      clearPlan: () => set({ plan: null, savedPlanId: null, ownerUid: null }),
     }),
     { name: 'travyon-plan' }
   )

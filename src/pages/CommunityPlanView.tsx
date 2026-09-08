@@ -9,9 +9,8 @@ import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import { usePlanStore } from '../store/usePlanStore';
 import { useOnboardingStore } from '../store/useOnboardingStore';
-import { getPublicPlanDetails, getPublicFeed } from '../services/socialService';
+import { getPublicPlanRecord } from '../services/socialService';
 import type { PublicPlan } from '../services/socialService';
-import type { TravelPlanResponse } from '../services/aiService';
 import DailyPlanView from '../components/DailyPlanView';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
@@ -104,14 +103,11 @@ const CommunityPlanView: React.FC = () => {
     let cancelled = false;
 
     setLoading(true);
-    Promise.all([
-      getPublicPlanDetails(planId),
-      getPublicFeed(50),
-    ])
-      .then(([planData, feed]: [TravelPlanResponse | null, PublicPlan[]]) => {
+    getPublicPlanRecord(planId)
+      .then((record) => {
         if (cancelled) return;
-        if (!planData) { setError(true); return; }
-        const planMeta = feed.find(p => p.id === planId) ?? null;
+        if (!record) { setError(true); return; }
+        const { planData, meta: planMeta } = record;
         setMeta(planMeta);
         setActiveDayIndex(0);
 
@@ -159,7 +155,9 @@ const CommunityPlanView: React.FC = () => {
   const activeDay = plan?.dailyPlans[activeDayIndex];
 
   /* ── Avatar ── */
-  const initials = (meta?.userDisplayName ?? t('communityPlanView.defaultName'))
+  const authorName = meta?.profilePublic ? meta.userDisplayName : t('communityPlanView.defaultName');
+  const authorPhotoURL = meta?.profilePublic ? meta.userPhotoURL : null;
+  const initials = authorName
     .split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase();
 
   /* ── Yükleniyor ── */
@@ -368,15 +366,15 @@ const CommunityPlanView: React.FC = () => {
 
           {/* Plan sahibi avatarı */}
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-sage flex items-center justify-center overflow-hidden flex-shrink-0">
-            {meta?.userPhotoURL ? (
-              <img src={meta.userPhotoURL} className="w-7 h-7 rounded-full object-cover" alt="" referrerPolicy="no-referrer" />
+            {authorPhotoURL ? (
+              <img src={authorPhotoURL} className="w-7 h-7 rounded-full object-cover" alt="" referrerPolicy="no-referrer" />
             ) : (
               <span className="text-white text-[9px] font-heading">{initials}</span>
             )}
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] text-muted leading-none truncate">{t('communityPlanView.byUser', { name: meta?.userDisplayName ?? t('communityPlanView.defaultName') })}</p>
+            <p className="text-[10px] text-muted leading-none truncate">{t('communityPlanView.byUser', { name: authorName })}</p>
             <div className="flex items-center gap-2">
               <h1 className="font-heading text-base text-text truncate">{plan.destination}</h1>
               <span className="text-xs text-muted font-medium shrink-0">• {t('communityPlanView.daysCount', { count: plan.dailyPlans.length })}</span>

@@ -333,9 +333,11 @@ const MapView: React.FC<MapViewProps> = ({ activities, onActivityClick, hotel, i
                   lng: act.coordinates.lng,
                 });
               } else {
-                console.log('[MapView] Tıklanan mekan:', act.placeName,
-                  usePlanStore.getState().plan?.currencySymbol,
-                  act.actualCost !== undefined ? act.actualCost : act.estimatedCost);
+                if (import.meta.env.DEV) {
+                  console.log('[MapView] Tıklanan mekan:', act.placeName,
+                    usePlanStore.getState().plan?.currencySymbol,
+                    act.actualCost !== undefined ? act.actualCost : act.estimatedCost);
+                }
               }
             }}
           />

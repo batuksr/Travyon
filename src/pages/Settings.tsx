@@ -5,18 +5,23 @@ import {
   updateProfile,
   updatePassword,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   verifyBeforeUpdateEmail,
-  deleteUser,
   signOut,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
-import { auth, db } from '../services/firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteField, collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { auth, db, storage } from '../services/firebase';
 import { submitBugReport } from '../services/bugReportService';
+import { deleteMyAccount, savePrivacySettings, submitContactMessage } from '../services/accountService';
 import { initiateSubscriptionCheckout, cancelSubscription as cancelSubscriptionCall } from '../services/subscriptionService';
 import IyzicoCheckoutModal from '../components/IyzicoCheckoutModal';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore, CURRENCY_MAP } from '../store/useAppSettingsStore';
+import { usePlanStore } from '../store/usePlanStore';
+import { useSavedPlansStore } from '../store/useSavedPlansStore';
 import {
   User, Mail, Lock, ChevronRight, Check, AlertCircle, Loader2, Camera,
   Settings2, BookOpen, MapPin, Globe, Ruler,
@@ -201,10 +206,7 @@ const SettingRow: React.FC<{ title: string; desc: string; children: React.ReactN
 // olursa: secret'lar girilip sandbox'ta test edildikten sonra bu tek satır
 // true yapılır, başka hiçbir kod değişikliği gerekmez.
 const PRO_CHECKOUT_ENABLED = false;
-
-const ComingSoonBadge: React.FC<{ label: string }> = ({ label }) => (
-  <span className="text-[10px] font-bold bg-surface-2 text-muted px-2 py-0.5 rounded-full uppercase tracking-widest">{label}</span>
-);
+const FREE_PLAN_LIMIT_ENABLED = false;
 
 /* Profil sayfası satır bileşeni — Airbnb tarzı inline edit */
 const ProfileRow: React.FC<{
@@ -330,7 +332,9 @@ const CardWrap: React.FC<{ title: string; subtitle?: string; children: React.Rea
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { setSettings } = useAppSettingsStore();
+  const { setSettings, resetSettings } = useAppSettingsStore();
+  const clearPlan = usePlanStore((state) => state.clearPlan);
+  const clearSavedPlans = useSavedPlansStore((state) => state.clearAll);
   const { t, i18n } = useTranslation();
 
   const countryLabels = t('settings.countries', { returnObjects: true }) as string[];
@@ -345,6 +349,7 @@ const Settings: React.FC = () => {
     { value: 'Belirtmek istemiyorum', key: 'preferNotToSay' },
   ];
   const deleteConfirmPhrase = t('settings.deleteAccount.confirmPhrase');
+  const usesPasswordProvider = user?.providerData.some(provider => provider.providerId === 'password') ?? false;
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
 
@@ -388,7 +393,6 @@ const Settings: React.FC = () => {
   const [travelDefaultsLoading, setTravelDefaultsLoading] = useState(false);
 
   const [passportCountry, setPassportCountry] = useState('Türkiye');
-  const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiry, setPassportExpiry] = useState('');
   const [passportStatus, setPassportStatus] = useState<Status>(null);
   const [passportLoading, setPassportLoading] = useState(false);
@@ -417,11 +421,11 @@ const Settings: React.FC = () => {
   const [notifLoading, setNotifLoading] = useState(false);
 
   /* ── GİZLİLİK ── */
-  const [profilePublic, setProfilePublic] = useState(true);
+  const [profilePublic, setProfilePublic] = useState(false);
   const [plansPublic, setPlansPublic] = useState(false);
-  const [followPublic, setFollowPublic] = useState(true);
-  const [locationEnabled, setLocationEnabled] = useState(true);
-  const [locationHistory, setLocationHistory] = useState(false);
+  const [followPublic, setFollowPublic] = useState(false);
+  const [locationEnabled] = useState(false);
+  const [locationHistory] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [privacyStatus, setPrivacyStatus] = useState<Status>(null);
   const [privacyLoading, setPrivacyLoading] = useState(false);
@@ -448,6 +452,8 @@ const Settings: React.FC = () => {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteStatus, setDeleteStatus] = useState<Status>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [exportStatus, setExportStatus] = useState<Status>(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   /* ── DESTEK ── */
   const [bugTitle, setBugTitle] = useState('');
@@ -455,7 +461,9 @@ const Settings: React.FC = () => {
   const [bugStatus, setBugStatus] = useState<Status>(null);
   const [bugLoading, setBugLoading] = useState(false);
   const [contactMsg, setContactMsg] = useState('');
+  const [contactSubject, setContactSubject] = useState('');
   const [contactStatus, setContactStatus] = useState<Status>(null);
+  const [contactLoading, setContactLoading] = useState(false);
 
   /* ── Load Firestore ── */
   const loadUserData = useCallback(async () => {
@@ -475,8 +483,8 @@ const Settings: React.FC = () => {
         setLanguage(d.language ?? 'Türkçe');
         setDistanceKm(d.distanceKm ?? true);
         setTempCelsius(d.tempCelsius ?? true);
-        setFollowPublic(d.followPublic ?? true);
-        setProfilePublic(d.profilePublic ?? true);
+        setFollowPublic(d.followPublic ?? false);
+        setProfilePublic(d.profilePublic ?? false);
         setPlansPublic(d.plansPublic ?? false);
         setAppPlanNotif(d.appPlanNotif ?? true);
         setAppCommunityNotif(d.appCommunityNotif ?? true);
@@ -486,14 +494,11 @@ const Settings: React.FC = () => {
         setEmailPromoNotif(d.emailPromoNotif ?? false);
         setPushEnabled(d.pushEnabled ?? false);
         setPushSoundEnabled(d.pushSoundEnabled ?? true);
-        setAnalyticsEnabled(d.analyticsEnabled ?? true);
+        setAnalyticsEnabled(d.analyticsEnabled ?? false);
         setDefaultBudget(d.defaultBudget ?? '15000');
         setDefaultCurrency(d.defaultCurrency ?? 'TRY — ₺');
         setDefaultPace(d.defaultPace ?? 'normal');
         setDefaultPeopleCount(d.defaultPeopleCount ?? '2');
-        setPassportCountry(d.passportCountry ?? 'Türkiye');
-        setPassportNumber(d.passportNumber ?? '');
-        setPassportExpiry(d.passportExpiry ?? '');
         setTimezone(d.timezone ?? detectTimezone());
         setIsPro(d.isPro ?? false);
         setSubscriptionStatus(d.subscriptionStatus ?? null);
@@ -501,6 +506,16 @@ const Settings: React.FC = () => {
         setPlansUsedThisMonth(d.plansUsedThisMonth ?? 0);
         setIdentityNumber(d.identityNumber ?? '');
         setBillingCity(d.billingCity ?? '');
+      }
+      try {
+        const localPassport = JSON.parse(localStorage.getItem(`travyon-passport-${user.uid}`) ?? '{}') as {
+          country?: string; expiry?: string;
+        };
+        setPassportCountry(localPassport.country ?? 'Türkiye');
+        setPassportExpiry(localPassport.expiry ?? '');
+      } catch {
+        setPassportCountry('Türkiye');
+        setPassportExpiry('');
       }
     } catch { /* Auth verisi yüklü */ }
   }, [user]);
@@ -587,15 +602,23 @@ const Settings: React.FC = () => {
     setPhotoLoading(true); setProfileStatus(null);
     try {
       const dataUrl = await resizeToBase64(file, 256);
-      // Firestore'a kaydet (Firebase Auth base64 data URL kabul etmiyor)
-      await setDoc(doc(db, 'users', user.uid), { photoURL: dataUrl }, { merge: true });
+      const blob = await (await fetch(dataUrl)).blob();
+      const avatarRef = storageRef(storage, `users/${user.uid}/avatar.jpg`);
+      await uploadBytes(avatarRef, blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=86400' });
+      const photoURL = await getDownloadURL(avatarRef);
+      await Promise.all([
+        updateProfile(auth.currentUser, { photoURL }),
+        setDoc(doc(db, 'users', user.uid), { photoURL }, { merge: true }),
+      ]);
       // Local state + global store güncelle — Sidebar dahil her yer anında görsün
-      setLocalPhotoURL(dataUrl);
-      setSettings({ photoURL: dataUrl });
+      setLocalPhotoURL(photoURL);
+      setSettings({ photoURL });
+      const { syncSharedPlansIdentity } = await import('../services/socialService');
+      await syncSharedPlansIdentity(user.uid, auth.currentUser.displayName, photoURL).catch(() => undefined);
       setProfileStatus({ type: 'success', message: t('settings.profile.success.photoUpdated') });
       setTimeout(() => setProfileStatus(null), 3000);
     } catch (err) {
-      console.error('Photo upload error:', err);
+      if (import.meta.env.DEV) console.error('Photo upload error:', err);
       setProfileStatus({ type: 'error', message: t('settings.profile.errors.uploadFailed') });
     } finally {
       setPhotoLoading(false);
@@ -674,7 +697,7 @@ const Settings: React.FC = () => {
   const handlePasswordSave = async () => {
     if (!auth.currentUser || !user?.email) return;
     if (!currentPassword) { setPasswordStatus({ type: 'error', message: t('settings.common.currentPasswordRequired') }); return; }
-    if (newPassword.length < 6) { setPasswordStatus({ type: 'error', message: t('settings.errors.weakPassword') }); return; }
+    if (newPassword.length < 8) { setPasswordStatus({ type: 'error', message: t('settings.errors.weakPassword') }); return; }
     if (newPassword === currentPassword) { setPasswordStatus({ type: 'error', message: t('settings.password.errors.sameAsCurrent') }); return; }
     if (newPassword !== confirmPassword) { setPasswordStatus({ type: 'error', message: t('settings.password.errors.mismatch') }); return; }
     setPasswordLoading(true); setPasswordStatus(null);
@@ -715,7 +738,19 @@ const Settings: React.FC = () => {
     }
     setPassportLoading(true); setPassportStatus(null);
     try {
-      await setDoc(doc(db, 'users', user.uid), { passportCountry, passportNumber, passportExpiry }, { merge: true });
+      localStorage.setItem(`travyon-passport-${user.uid}`, JSON.stringify({
+        country: passportCountry,
+        expiry: passportExpiry,
+      }));
+      // Eski sürümlerin buluta yazdığı pasaport alanlarını da temizle.
+      const userRef = doc(db, 'users', user.uid);
+      if ((await getDoc(userRef)).exists()) {
+        await updateDoc(userRef, {
+          passportCountry: deleteField(),
+          passportNumber: deleteField(),
+          passportExpiry: deleteField(),
+        });
+      }
       setPassportStatus({ type: 'success', message: t('settings.passport.success') });
     } catch {
       setPassportStatus({ type: 'error', message: t('settings.common.saveFailed') });
@@ -771,7 +806,7 @@ const Settings: React.FC = () => {
     if (!user) return;
     setPrivacyLoading(true); setPrivacyStatus(null);
     try {
-      await setDoc(doc(db, 'users', user.uid), { profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled }, { merge: true });
+      await savePrivacySettings({ profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled });
       // Store'u güncelle — Community, Hub anında tepki verir
       setSettings({ profilePublic, plansPublic, followPublic, locationEnabled, locationHistory, analyticsEnabled });
       setPrivacyStatus({ type: 'success', message: t('settings.privacy.success') });
@@ -842,14 +877,77 @@ const Settings: React.FC = () => {
     if (deleteConfirm !== deleteConfirmPhrase) { setDeleteStatus({ type: 'error', message: t('settings.deleteAccount.errors.wrongConfirm') }); return; }
     setDeleteLoading(true); setDeleteStatus(null);
     try {
-      const cred = EmailAuthProvider.credential(user.email, deletePassword);
-      await reauthenticateWithCredential(auth.currentUser, cred);
-      await deleteDoc(doc(db, 'users', user.uid));
-      await deleteUser(auth.currentUser);
+      const usesPassword = user.providerData.some(provider => provider.providerId === 'password');
+      if (usesPassword) {
+        if (!deletePassword) throw new Error('password-required');
+        const cred = EmailAuthProvider.credential(user.email, deletePassword);
+        await reauthenticateWithCredential(auth.currentUser, cred);
+      } else if (user.providerData.some(provider => provider.providerId === 'google.com')) {
+        await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider());
+      }
+      await auth.currentUser.getIdToken(true);
+      await deleteMyAccount();
+      clearSavedPlans();
+      clearPlan();
+      resetSettings();
+      localStorage.removeItem(`travyon-passport-${user.uid}`);
+      localStorage.removeItem(`travyon-dismissed-notifs-${user.uid}`);
+      Object.keys(localStorage)
+        .filter(key => key.startsWith(`travyon-checklist-${user.uid}-`))
+        .forEach(key => localStorage.removeItem(key));
       navigate('/login');
     } catch (err: unknown) {
       setDeleteStatus({ type: 'error', message: firebaseErrorMsg(getErrCode(err), t) });
     } finally { setDeleteLoading(false); }
+  };
+
+  const handleDataExport = async () => {
+    if (!user) return;
+    setExportLoading(true); setExportStatus(null);
+    try {
+      const profileSnap = await getDoc(doc(db, 'users', user.uid));
+      const checklistEntries = Object.keys(localStorage)
+        .filter(key => key.startsWith(`travyon-checklist-${user.uid}-`))
+        .reduce<Record<string, unknown>>((result, key) => {
+          try { result[key] = JSON.parse(localStorage.getItem(key) ?? 'null'); } catch { result[key] = null; }
+          return result;
+        }, {});
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        account: { uid: user.uid, email: user.email, displayName: user.displayName },
+        profile: profileSnap.exists() ? profileSnap.data() : null,
+        savedPlans: useSavedPlansStore.getState().plansByUser[user.uid] ?? [],
+        passport: JSON.parse(localStorage.getItem(`travyon-passport-${user.uid}`) ?? 'null'),
+        checklists: checklistEntries,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `travyon-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setExportStatus({ type: 'success', message: t('settings.common.saved') });
+    } catch {
+      setExportStatus({ type: 'error', message: t('settings.common.saveFailed') });
+    } finally { setExportLoading(false); }
+  };
+
+  const handleContactSubmit = async () => {
+    if (!user?.email || !contactSubject.trim() || !contactMsg.trim()) return;
+    setContactLoading(true); setContactStatus(null);
+    try {
+      await submitContactMessage({
+        name: user.displayName ?? displayName ?? 'Travyon kullanıcısı',
+        email: user.email,
+        subject: contactSubject.trim(),
+        message: contactMsg.trim(),
+      });
+      setContactStatus({ type: 'success', message: t('settings.contact.success') });
+      setContactSubject(''); setContactMsg('');
+    } catch {
+      setContactStatus({ type: 'error', message: t('settings.common.saveFailed') });
+    } finally { setContactLoading(false); }
   };
 
   const handleBugReport = async () => {
@@ -867,7 +965,8 @@ const Settings: React.FC = () => {
   };
 
   const handleMobileLogout = async () => {
-    setSettings({ photoURL: null });
+    clearPlan();
+    resetSettings();
     await signOut(auth);
     navigate('/login');
   };
@@ -1363,7 +1462,7 @@ const Settings: React.FC = () => {
                     onClick={handlePasswordSave}
                     loading={passwordLoading}
                     label={t('settings.password.updateBtn')}
-                    disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 6}
+                    disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 8}
                   />
                 </div>
               </CardWrap>
@@ -1489,20 +1588,6 @@ const Settings: React.FC = () => {
                     <select value={passportCountry} onChange={e => setPassportCountry(e.target.value)} className={inputCls()}>
                       {PASSPORT_COUNTRIES.map(c => <option key={c} value={c}>{countryLabel(c)}</option>)}
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5">
-                      {t('settings.passport.labels.number')} <span className="text-muted font-normal">{t('settings.passport.labels.optional')}</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={passportNumber}
-                      onChange={e => setPassportNumber(e.target.value.toUpperCase())}
-                      className={inputCls()}
-                      placeholder={t('settings.passport.numberPlaceholder')}
-                      maxLength={20}
-                    />
-                    <p className="text-[11px] text-muted mt-1">{t('settings.passport.numberHelper')}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.passport.labels.expiry')}</label>
@@ -1869,7 +1954,9 @@ const Settings: React.FC = () => {
                           : t('settings.privacyLocation.suggestions.off')}
                       </p>
                     </div>
-                    <Toggle value={locationEnabled} onChange={setLocationEnabled} />
+                    <div className="opacity-50 pointer-events-none" aria-disabled="true">
+                      <Toggle value={false} onChange={() => undefined} />
+                    </div>
                   </div>
                 </div>
 
@@ -1883,7 +1970,9 @@ const Settings: React.FC = () => {
                           : t('settings.privacyLocation.history.off')}
                       </p>
                     </div>
-                    <Toggle value={locationHistory} onChange={setLocationHistory} />
+                    <div className="opacity-50 pointer-events-none" aria-disabled="true">
+                      <Toggle value={false} onChange={() => undefined} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1979,7 +2068,7 @@ const Settings: React.FC = () => {
                   </div>
 
                   {/* Aylık kullanım metresi — sadece Free'de */}
-                  {!currentlyPro && (
+                  {!currentlyPro && FREE_PLAN_LIMIT_ENABLED && (
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <p className="text-xs font-semibold text-muted">{t('settings.subscription.usageLabel')}</p>
@@ -2120,63 +2209,51 @@ const Settings: React.FC = () => {
           {/* ══ FATURALAMA — Fatura Bilgileri ══ */}
           {activeSection === 'payment' && (
             <CardWrap title={t('settings.billingDetails.title')} subtitle={t('settings.billingDetails.subtitle')}>
-              <StatusBanner status={billingStatus} />
-
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-4">
-                <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  {t('settings.billingDetails.info')}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.identityNumber')}</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={identityNumber}
-                    onChange={e => setIdentityNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                    className={inputCls()}
-                    placeholder={t('settings.billingDetails.placeholders.identityNumber')}
-                    maxLength={11}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.city')}</label>
-                  <input
-                    type="text"
-                    value={billingCity}
-                    onChange={e => setBillingCity(e.target.value)}
-                    className={inputCls()}
-                    placeholder={t('settings.billingDetails.placeholders.city')}
-                  />
-                </div>
-
-                {(!phone.trim() || !address.trim()) && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-xl flex items-start gap-2">
-                    <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                      {t('settings.billingDetails.phoneAddressMissing')}
-                    </p>
+              {PRO_CHECKOUT_ENABLED ? (
+                <>
+                  <StatusBanner status={billingStatus} />
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-4">
+                    <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">{t('settings.billingDetails.info')}</p>
                   </div>
-                )}
-
-                <div className="flex justify-end pt-3 border-t border-divider">
-                  <SaveBtn onClick={handleBillingSave} loading={billingLoading} label={t('settings.common.save')} />
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.identityNumber')}</label>
+                      <input type="text" inputMode="numeric" value={identityNumber}
+                        onChange={e => setIdentityNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                        className={inputCls()} placeholder={t('settings.billingDetails.placeholders.identityNumber')} maxLength={11} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.billingDetails.labels.city')}</label>
+                      <input type="text" value={billingCity} onChange={e => setBillingCity(e.target.value)}
+                        className={inputCls()} placeholder={t('settings.billingDetails.placeholders.city')} />
+                    </div>
+                    {(!phone.trim() || !address.trim()) && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 rounded-xl flex items-start gap-2">
+                        <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">{t('settings.billingDetails.phoneAddressMissing')}</p>
+                      </div>
+                    )}
+                    <div className="flex justify-end pt-3 border-t border-divider">
+                      <SaveBtn onClick={handleBillingSave} loading={billingLoading} label={t('settings.common.save')} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-4 text-[11px] text-muted">
+                    <span>🔐</span><span>{t('settings.billingDetails.securityNote')}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-xl border border-divider bg-surface-2 text-sm text-muted">
+                  {t('settings.billingDetails.comingSoon')}
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2 mt-4 text-[11px] text-muted">
-                <span>🔐</span>
-                <span>{t('settings.billingDetails.securityNote')}</span>
-              </div>
+              )}
             </CardWrap>
           )}
 
           {/* ══ VERİLERİM — Veri İndir ══ */}
           {activeSection === 'data_export' && (
             <CardWrap title={t('settings.dataExport.title')} subtitle={t('settings.dataExport.subtitle')}>
+              <StatusBanner status={exportStatus} />
               <div className="space-y-3">
                 {(t('settings.dataExport.items', { returnObjects: true }) as { label: string; desc: string }[]).map(({ label, desc }) => (
                   <div key={label} className="flex items-center justify-between p-3.5 rounded-xl border border-divider">
@@ -2184,7 +2261,7 @@ const Settings: React.FC = () => {
                       <p className="text-sm font-medium text-text">{label}</p>
                       <p className="text-xs text-muted mt-0.5">{desc}</p>
                     </div>
-                    <ComingSoonBadge label={t('settings.common.comingSoon')} />
+                    <Check size={15} className="text-emerald-500" aria-hidden="true" />
                   </div>
                 ))}
               </div>
@@ -2194,8 +2271,14 @@ const Settings: React.FC = () => {
                 </p>
               </div>
               <div className="flex justify-end mt-4">
-                <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity">
-                  <Download size={14} /> {t('settings.dataExport.downloadAllBtn')}
+                <button
+                  type="button"
+                  onClick={handleDataExport}
+                  disabled={exportLoading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-heading bg-accent text-white hover:brightness-105 transition-opacity disabled:opacity-50"
+                >
+                  {exportLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  {t('settings.dataExport.downloadAllBtn')}
                 </button>
               </div>
             </CardWrap>
@@ -2221,16 +2304,18 @@ const Settings: React.FC = () => {
                     className={inputCls()} placeholder={deleteConfirmPhrase}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.deleteAccount.passwordLabel')}</label>
-                  <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className={inputCls()} placeholder={t('settings.common.passwordPlaceholder')} />
-                </div>
+                {usesPasswordProvider && (
+                  <div>
+                    <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.deleteAccount.passwordLabel')}</label>
+                    <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} className={inputCls()} placeholder={t('settings.common.passwordPlaceholder')} />
+                  </div>
+                )}
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
                 <button
                   type="button"
                   onClick={handleDeleteAccount}
-                  disabled={deleteLoading || deleteConfirm !== deleteConfirmPhrase || !deletePassword}
+                  disabled={deleteLoading || deleteConfirm !== deleteConfirmPhrase || (usesPasswordProvider && !deletePassword)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {deleteLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -2266,12 +2351,20 @@ const Settings: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.contact.labels.subject')}</label>
-                  <input type="text" className={inputCls()} placeholder={t('settings.contact.placeholders.subject')} />
+                  <input
+                    type="text"
+                    value={contactSubject}
+                    onChange={e => setContactSubject(e.target.value)}
+                    maxLength={200}
+                    className={inputCls()}
+                    placeholder={t('settings.contact.placeholders.subject')}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5">{t('settings.contact.labels.message')}</label>
                   <textarea
                     value={contactMsg} onChange={e => setContactMsg(e.target.value)}
+                    maxLength={5000}
                     rows={5} className={`${inputCls()} resize-none`}
                     placeholder={t('settings.contact.placeholders.message')}
                   />
@@ -2281,10 +2374,11 @@ const Settings: React.FC = () => {
                 <p className="text-xs text-muted">{t('settings.contact.footerNote')}</p>
                 <button
                   type="button"
-                  onClick={() => { setContactStatus({ type: 'success', message: t('settings.contact.success') }); setContactMsg(''); }}
-                  disabled={!contactMsg.trim()}
+                  onClick={handleContactSubmit}
+                  disabled={contactLoading || !contactSubject.trim() || !contactMsg.trim()}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-accent hover:brightness-105 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
+                  {contactLoading && <Loader2 size={14} className="animate-spin" />}
                   {t('settings.contact.sendBtn')}
                 </button>
               </div>

@@ -10,14 +10,20 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid
-                    && (!('isPro' in request.resource.data) || request.resource.data.isPro == false);
-      allow update: if request.auth != null && request.auth.uid == uid
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                    && !request.resource.data.keys().hasAny([
                       'isPro', 'subscriptionReferenceCode', 'subscriptionStatus',
                       'proSince', 'lastPaymentAt', 'currentPeriodEnd',
                       'plansUsedThisMonth', 'plansMonthWindowStart'
                     ]);
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                      'isPro', 'subscriptionReferenceCode', 'subscriptionStatus',
+                      'proSince', 'lastPaymentAt', 'currentPeriodEnd',
+                      'plansUsedThisMonth', 'plansMonthWindowStart',
+                      'profilePublic', 'plansPublic', 'followPublic',
+                      'locationEnabled', 'locationHistory', 'analyticsEnabled'
+                    ]);
+      allow delete: if false;
     }
 
     // Hata raporları — istek-sıklığı sınırı gerektiği için artık sadece
@@ -30,42 +36,24 @@ service cloud.firestore {
     // Herkese açık planlar — yeni paylaşım (create) istek-sıklığı sınırı
     // gerektiği için artık sadece sharePublicPlan Cloud Function'ı yazabilir.
     match /publicPlans/{planId} {
-      allow read: if true;
+      // Tekil bağlantılar linke özel planları açabilir; koleksiyon sorguları
+      // yalnızca feedVisible=true belgeleri (ve sahibinin kendi sorgusunu) görür.
+      allow get: if true;
+      allow list: if resource.data.feedVisible == true
+                  || (request.auth != null && resource.data.userId == request.auth.uid);
       allow create: if false;
-      // Plan sahibi her şeyi güncelleyebilir/silebilir
-      allow delete: if request.auth != null
-                    && resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && (
-                      // Plan sahibi her alanı güncelleyebilir
-                      resource.data.userId == request.auth.uid
-                      ||
-                      // Diğer kullanıcılar SADECE puan alanlarını, geçerli
-                      // sınırlar içinde yazabilir — keyfi/sahte skor engellenir.
-                      (
-                        request.resource.data.diff(resource.data)
-                          .affectedKeys().hasOnly(['avgRating', 'ratingCount'])
-                        && request.resource.data.avgRating is number
-                        && request.resource.data.avgRating >= 0
-                        && request.resource.data.avgRating <= 5
-                        && request.resource.data.ratingCount is int
-                        && request.resource.data.ratingCount >= 0
-                      )
-                    );
+      allow delete: if false;
+      // İçerik, kimlik ve puan değişiklikleri yalnızca doğrulayan Cloud
+      // Functions tarafından yapılır (Admin SDK kuralları atlar).
+      allow update: if false;
     }
 
-    // Puan işlemleri — doküman ID'si zorunlu olarak {planId}_{kendi uid'in}
-    // kalıbında olmalı, böylece bir kullanıcı başkasının puanını üzerine
-    // yazamaz (belge yolu onun kendi uid'iyle eşleşmediği için reddedilir).
+    // Puan işlemleri Cloud Function üzerinden yapılır. Kullanıcı arayüzü yalnızca
+    // oturum sahibinin kendi puan belgesini doğrudan okuyabilir.
     match /planRatings/{ratingId} {
-      allow read: if true;
-      allow create, update: if request.auth != null
-                    && request.auth.token.email_verified == true
-                    && request.resource.data.userId == request.auth.uid
-                    && ratingId == request.resource.data.planId + '_' + request.auth.uid
-                    && request.resource.data.rating is int
-                    && request.resource.data.rating >= 1
-                    && request.resource.data.rating <= 5;
-      allow delete: if false;
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow list: if false;
+      allow create, update, delete: if false;
     }
 
     // Takip sistemi — sadece kendi verisine erişim. Takip ETME (create) istek-

@@ -7,6 +7,7 @@ export type VerifyCodeErrorReason =
   | 'expired'
   | 'too_many_attempts'
   | 'wrong_code'
+  | 'email_changed'
   | 'unknown';
 
 export class VerifyCodeError extends Error {
@@ -20,7 +21,7 @@ export class VerifyCodeError extends Error {
 const toReason = (err: unknown): VerifyCodeErrorReason => {
   if (err instanceof FunctionsError && typeof err.message === 'string') {
     const known: VerifyCodeErrorReason[] = [
-      'invalid_format', 'no_pending_code', 'expired', 'too_many_attempts', 'wrong_code',
+      'invalid_format', 'no_pending_code', 'expired', 'too_many_attempts', 'wrong_code', 'email_changed',
     ];
     if (known.includes(err.message as VerifyCodeErrorReason)) {
       return err.message as VerifyCodeErrorReason;

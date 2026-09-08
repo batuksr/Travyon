@@ -1,12 +1,14 @@
 ﻿import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useAppSettingsStore, CURRENCY_MAP } from "./store/useAppSettingsStore";
+import { usePlanStore } from "./store/usePlanStore";
 import i18n, { LANGUAGE_TO_CODE } from "./i18n";
 import Sidebar from "./components/Sidebar";
 import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
@@ -34,6 +36,7 @@ const CommunityPlanView     = lazy(() => import("./pages/CommunityPlanView"));
 const Gizlilik             = lazy(() => import("./pages/Gizlilik"));
 const KullanimKosullari     = lazy(() => import("./pages/KullanimKosullari"));
 const Iletisim             = lazy(() => import("./pages/Iletisim"));
+const NotFound             = lazy(() => import("./pages/NotFound"));
 
 /* Rota geçişlerinde kısa süreliğine gösterilen, tema tokenlarına uygun yükleme ekranı */
 const RouteFallback: React.FC = () => (
@@ -129,6 +132,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
             <Route path="/gizlilik"             element={<Gizlilik />} />
             <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
             <Route path="/iletisim"             element={<Iletisim />} />
+            <Route path="*"                      element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>
@@ -140,17 +144,28 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
 function App() {
   const { user, setUser, setLoading } = useAuthStore();
   const { dark } = useThemeStore();
-  const { language, setSettings } = useAppSettingsStore();
+  const { language, analyticsEnabled, setSettings, resetSettings } = useAppSettingsStore();
+  const clearPlan = usePlanStore((state) => state.clearPlan);
 
   /* Apply / remove dark class on <html> */
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
 
+  // Hata telemetrisi yalnızca oturum sahibi açıkça izin verdiyse başlatılır.
+  useEffect(() => {
+    if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN && user && analyticsEnabled) {
+      Sentry.init({ dsn: import.meta.env.VITE_SENTRY_DSN });
+      return () => { void Sentry.close(1000); };
+    }
+    return undefined;
+  }, [user, analyticsEnabled]);
+
   /* Ayarlar'daki dil seçimini i18next'e uygula — değişince tüm uygulama anında güncellenir */
   useEffect(() => {
     const code = LANGUAGE_TO_CODE[language] ?? 'tr';
     if (i18n.language !== code) i18n.changeLanguage(code);
+    document.documentElement.lang = code;
   }, [language]);
 
   useEffect(() => {
@@ -160,18 +175,25 @@ function App() {
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // Önceki hesabın izinleri yeni hesaba bir render bile taşınmasın.
+      resetSettings();
       setUser(currentUser);
       setLoading(false);
 
       // Kullanıcı çıkış yaptığında store'u temizle
       if (!currentUser) {
-        setSettings({ photoURL: null });
+        clearPlan();
         return;
       }
 
+      const activePlanOwner = usePlanStore.getState().ownerUid;
+      if (activePlanOwner !== currentUser.uid) clearPlan();
+
       // Kullanıcı giriş yaptığında uygulama ayarlarını Firestore'dan yükle
       if (currentUser) {
-        getDoc(doc(db, 'users', currentUser.uid)).then((snap) => {
+        const settingsOwnerUid = currentUser.uid;
+        getDoc(doc(db, 'users', settingsOwnerUid)).then((snap) => {
+          if (auth.currentUser?.uid !== settingsOwnerUid) return;
           if (!snap.exists()) return;
           const d = snap.data();
           // Para birimi → Varsayılan Tercihler'deki defaultCurrency'den alınır
@@ -199,19 +221,19 @@ function App() {
             pushEnabled:        d.pushEnabled          ?? false,
             pushSoundEnabled:   d.pushSoundEnabled     ?? true,
             pushPermission:     pushPerm,
-            profilePublic:      d.profilePublic        ?? true,
-            plansPublic:        d.plansPublic          ?? true,
-            followPublic:       d.followPublic         ?? true,
-            locationEnabled:    d.locationEnabled      ?? true,
-            locationHistory:    d.locationHistory      ?? false,
-            analyticsEnabled:   d.analyticsEnabled     ?? true,
+            profilePublic:      d.profilePublic        ?? false,
+            plansPublic:        d.plansPublic          ?? false,
+            followPublic:       d.followPublic         ?? false,
+            locationEnabled:    false,
+            locationHistory:    false,
+            analyticsEnabled:   d.analyticsEnabled     ?? false,
             photoURL:           d.photoURL             ?? null,
           });
         }).catch(() => {});
       }
     });
     return () => unsubscribe();
-  }, [setUser, setLoading, setSettings]);
+  }, [setUser, setLoading, setSettings, resetSettings, clearPlan]);
 
   // Not: burada global bir "loading" bekletmesi yok — herkese açık sayfalar
   // (Home, Login, Register...) auth kontrolü bitmeden hemen render edilir.

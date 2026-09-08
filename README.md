@@ -9,13 +9,14 @@ Google Maps, TripAdvisor veya Wanderlog gibi araçlar yalnızca destinasyon ve t
 ## ✨ Öne Çıkan Özellikler
 
 - **Kişiselleştirilmiş Onboarding** — 4 kategoride (temel bilgiler, tatil amacı/tempo, yeme-içme profili, konfor/ulaşım) sorularla kullanıcı profili çıkarılır.
-- **Uzlaşı Modu (Multiplayer Onboarding)** — Grup/aile seyahatlerinde her katılımcı kendi tercihlerini girer, plan tüm grubun ortak noktasına göre optimize edilir.
 - **Coğrafi Rota Optimizasyonu** — Haversine formülü ile ön filtreleme, ardından greedy nearest-neighbor + 2-opt yaklaşımıyla günlük aktiviteler mantıklı bir sırada dizilir.
 - **Dinamik Vibe Sistemi** — 😴 Dinlenme, 🌧️ Hava (anlık hava durumuna göre), 💰 Tasarruf ve 🎉 Keşif modlarıyla plan tek tıkla yeniden şekillenir.
 - **Bütçe Takip Sistemi** — Toplam bütçe kategorilere (yemek, konaklama, aktivite, ulaşım) bölünür ve gerçek harcamalarla karşılaştırılır.
 - **Topluluk & Paylaşım** — Kullanıcılar planlarını topluluğa açabilir, başka planları inceleyebilir.
-- **Seyahat Kontrol Listesi, PWA desteği** — Uygulama internet bağlantısı olmadan da kullanılabilir.
-- **AI Asistan Widget'ı** — Plan üzerinde AI ile aktivite ekleme/düzenleme.
+- **Seyahat Kontrol Listesi ve PWA desteği** — Uygulama ana ekrana kurulabilir; AI ve harita işlevleri internet bağlantısı gerektirir.
+- **AI Asistan Widget'ı** — Aktif plan bağlamını kullanarak Türkçe ve İngilizce seyahat sorularını yanıtlar.
+
+> Pro ve Team paketleri beta süresince devre dışıdır. Temel plan oluşturma beta boyunca limitsizdir; ücretli paketler lansmandan önce ayrıca tamamlanıp test edilecektir.
 
 ## 🛠️ Teknoloji Yığını
 
@@ -23,8 +24,8 @@ Google Maps, TripAdvisor veya Wanderlog gibi araçlar yalnızca destinasyon ve t
 | --- | --- |
 | Frontend | React 19 + TypeScript, Vite, Tailwind CSS, Framer Motion |
 | State Yönetimi | Zustand |
-| Backend / BaaS | Firebase (Auth + Firestore) |
-| Yapay Zeka | Google Gemini API |
+| Backend / BaaS | Firebase (Auth, Firestore, Storage, App Check, Cloud Functions) |
+| Yapay Zeka | Google Gemini API (`@google/genai`, yalnızca sunucu tarafında) |
 | Harita & Konum | Google Maps JavaScript API, `@react-google-maps/api` |
 | Hava Durumu | Weather API entegrasyonu |
 | 3D / Görsel | Three.js, `@react-three/fiber`, `@react-three/drei` |
@@ -44,11 +45,13 @@ src/
 └── assets/       # Görseller ve statik varlıklar
 ```
 
+Optimize production videoları `public/videos/` altında sürüm kontrolüne ve derlemeye dahildir. Sıkıştırılmamış ve kullanılmayan kaynaklar `source-media/` altında yerel olarak tutulur; Git'e ve production derlemesine dahil edilmez.
+
 ## 🚀 Kurulum
 
 ### Gereksinimler
 
-- Node.js 20+
+- Node.js 22 (Cloud Functions çalışma zamanıyla eşleşmesi önerilir)
 - npm
 
 ### Adımlar
@@ -60,6 +63,7 @@ cd Travyon
 
 # Bağımlılıkları yükle
 npm install
+npm --prefix functions install
 ```
 
 Proje kök dizininde bir `.env` dosyası oluşturup aşağıdaki değişkenleri kendi anahtarlarınla doldur:
@@ -82,12 +86,49 @@ Ardından geliştirme sunucusunu başlat:
 npm run dev
 ```
 
+### Tamamen yerel geliştirme
+
+`.env.local` içinde `VITE_USE_FIREBASE_EMULATORS=true` olduğunda istemci Auth,
+Firestore, Storage ve Functions için production servislerine bağlanmaz. İki ayrı
+terminal açın:
+
+```bash
+# Terminal 1 — Firebase Emulator Suite (UI: http://127.0.0.1:4000)
+npm run emulators
+
+# Terminal 2 — Vite uygulaması (http://localhost:5173)
+npm run dev
+```
+
+Emülatör verileri bellekte/geçici yerel dosyalarda tutulur ve production Firebase
+verilerini değiştirmez. Gerçek Firebase servisleriyle geliştirme yapmak gerekirse
+`.env.local` içindeki bayrağı geçici olarak `false` yapın.
+
+Windows başlangıç betiği, güncel Java gereksinimi için Android Studio ile gelen
+JBR'yi otomatik olarak kullanır. AI, harita REST ve e-posta fonksiyonları yerelde
+çalışırken ilgili üçüncü taraf servislerine ağ isteği göndermeye devam eder.
+
+Callable fonksiyonlar production'da App Check doğrulaması ister. Firebase Console'da web uygulaması için reCAPTCHA v3 kaydı oluşturulmalı ve `VITE_RECAPTCHA_SITE_KEY` bu kayıtla eşleşmelidir. Yerel geliştirmede tarayıcı konsolunda üretilen App Check debug token'ını Firebase Console'a ekleyin.
+
+Sunucu anahtarları istemci `.env` dosyasına yazılmaz; Secret Manager üzerinden ayarlanır:
+
+```bash
+firebase functions:secrets:set GEMINI_API_KEY
+firebase functions:secrets:set GOOGLE_MAPS_SERVER_KEY
+firebase functions:secrets:set RESEND_API_KEY
+firebase functions:secrets:set RESEND_FROM
+```
+
+Pro ödeme akışı şimdilik `PRO_FEATURES_ENABLED=false` ile kapalıdır. Lansman öncesinde iyzico secret'ları, webhook/callback ve sandbox uçtan uca testi tamamlanmadan bu parametre açılmamalıdır.
+
 ### Diğer komutlar
 
 ```bash
 npm run build     # Production build (tsc -b && vite build)
 npm run lint      # ESLint kontrolü
+npm test          # Vitest regresyon testleri
 npm run preview   # Production build'i yerelde önizle
+npm --prefix functions run build
 ```
 
 ## 🔥 Firebase Kuralları
@@ -95,7 +136,7 @@ npm run preview   # Production build'i yerelde önizle
 Firestore ve Storage güvenlik kuralları `firestore.rules` ve `storage.rules` dosyalarında tanımlıdır; `firebase.json` üzerinden deploy edilebilir:
 
 ```bash
-firebase deploy --only firestore:rules,storage:rules
+firebase deploy --only firestore:rules,firestore:indexes,storage
 ```
 
 ## 🔒 Gizlilik

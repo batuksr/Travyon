@@ -71,8 +71,11 @@ const Community: React.FC = () => {
       // Eski paylaşımlardaki isim/fotoğrafı arka planda güncelle
       const latestPhoto = useAppSettingsStore.getState().photoURL || user.photoURL || null;
       const latestName  = user.displayName ?? t('community.defaultDisplayName');
+      const exposeProfile = useAppSettingsStore.getState().profilePublic;
+      const expectedPhoto = exposeProfile ? latestPhoto : null;
+      const expectedName = exposeProfile ? latestName : 'Gezgin';
       const needsSync = feed.some(p =>
-        p.userId === user.uid && (p.userPhotoURL !== latestPhoto || p.userDisplayName !== latestName)
+        p.userId === user.uid && (p.userPhotoURL !== expectedPhoto || p.userDisplayName !== expectedName)
       );
       if (needsSync) {
         import('../services/socialService').then(({ syncSharedPlansIdentity }) =>

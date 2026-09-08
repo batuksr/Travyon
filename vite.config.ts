@@ -4,6 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  build: {
+    // Vite 8/Rolldown ile ardışık build'lerde eski hash'li chunk'ların kalıp
+    // PWA precache listesine yeniden girmesini kesin olarak engelle.
+    emptyOutDir: true,
+  },
   plugins: [
     tailwindcss(),
     react(),
@@ -48,16 +53,6 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Google Maps tiles — 7 gün cache (offline harita için)
-          {
-            urlPattern: /^https:\/\/maps\.(googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-maps',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
           // Unsplash & Pexels görseller — 30 gün cache
           {
             urlPattern: /^https:\/\/(images\.unsplash|videos\.pexels)\.com\/.*/i,
@@ -67,17 +62,6 @@ export default defineConfig({
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
-          },
-          // Firebase Firestore & Auth — NetworkFirst (veri her zaman güncel olsun)
-          {
-            urlPattern: /^https:\/\/.*\.firebaseio\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'firebase-data', networkTimeoutSeconds: 5 },
-          },
-          // Gemini AI — NetworkOnly (API çağrıları cache'lenmez)
-          {
-            urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
-            handler: 'NetworkOnly',
           },
         ],
       },

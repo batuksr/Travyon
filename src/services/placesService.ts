@@ -28,7 +28,7 @@ const findPlaceId = async (
   lng: number
 ): Promise<string | null> => {
   if (!window.google?.maps?.places) {
-    console.warn('[Places] Google Maps Places API yüklenmemiş');
+    if (import.meta.env.DEV) console.warn('[Places] Google Maps Places API yüklenmemiş');
     return null;
   }
 
@@ -50,7 +50,7 @@ const findPlaceId = async (
         ) {
           resolve(results[0].place_id || null);
         } else {
-          console.warn(`[Places] place_id bulunamadı: ${placeName}`);
+          if (import.meta.env.DEV) console.warn(`[Places] place_id bulunamadı: ${placeName}`);
           resolve(null);
         }
       }
@@ -66,7 +66,7 @@ export const fetchPlaceDetails = async (
   const cacheKey = `${placeName}_${lat}_${lng}`;
 
   if (placeCache.has(cacheKey)) {
-    console.log(`[Places] Cache hit: ${placeName}`);
+    if (import.meta.env.DEV) console.log(`[Places] Cache hit: ${placeName}`);
     return placeCache.get(cacheKey)!;
   }
 
@@ -103,7 +103,7 @@ export const fetchPlaceDetails = async (
             status !== window.google.maps.places.PlacesServiceStatus.OK ||
             !place
           ) {
-            console.warn(`[Places] Detay çekilemedi: ${placeName}`);
+            if (import.meta.env.DEV) console.warn(`[Places] Detay çekilemedi: ${placeName}`);
             resolve(null);
             return;
           }
@@ -131,13 +131,13 @@ export const fetchPlaceDetails = async (
           };
 
           placeCache.set(cacheKey, details);
-          console.log(`[Places] ✅ Detay çekildi: ${placeName}`);
+          if (import.meta.env.DEV) console.log(`[Places] ✅ Detay çekildi: ${placeName}`);
           resolve(details);
         }
       );
     });
   } catch (error) {
-    console.error('[Places] Hata:', error);
+    if (import.meta.env.DEV) console.error('[Places] Hata:', error);
     return null;
   }
 };

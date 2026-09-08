@@ -119,7 +119,7 @@ const WelcomeScreen: React.FC<{
    Main Widget
 ════════════════════════════════════════ */
 export const AiAssistantWidget: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [open, setOpen]           = useState(false);
   const [messages, setMessages]   = useState<Message[]>([]);
   const [input, setInput]         = useState('');
@@ -168,7 +168,7 @@ export const AiAssistantWidget: React.FC = () => {
         setMessages(prev => prev.map(m =>
           m.id === aiMsgId ? { ...m, text: chunk, loading: false } : m
         ));
-      }, planContext);
+      }, planContext, i18n.language === 'en' ? 'en' : 'tr');
     } catch {
       setMessages(prev => prev.map(m =>
         m.id === aiMsgId
@@ -178,7 +178,7 @@ export const AiAssistantWidget: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, planContext, t]);
+  }, [isLoading, planContext, t, i18n.language]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
