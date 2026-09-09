@@ -104,6 +104,29 @@ Emülatör verileri bellekte/geçici yerel dosyalarda tutulur ve production Fire
 verilerini değiştirmez. Gerçek Firebase servisleriyle geliştirme yapmak gerekirse
 `.env.local` içindeki bayrağı geçici olarak `false` yapın.
 
+### Gerçek Google girişi + yerel backend
+
+Gerçek Google hesabıyla oturum açıp Firestore, Storage ve Functions servislerini
+yerelde çalıştırmak için `.env.local` içinde servis bazlı bayrakları kullanın:
+
+```env
+VITE_USE_FIREBASE_EMULATORS=false
+VITE_USE_FIREBASE_AUTH_EMULATOR=false
+VITE_USE_FIREBASE_FIRESTORE_EMULATOR=true
+VITE_USE_FIREBASE_STORAGE_EMULATOR=true
+VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true
+```
+
+Ardından iki ayrı terminal açın:
+
+```bash
+npm run emulators:hybrid
+npm run dev
+```
+
+Bu modda Google Authentication canlı Firebase üzerinden, uygulama verileri ve
+sunucu fonksiyonları ise yerel emulatorlar üzerinden çalışır.
+
 Windows başlangıç betiği, güncel Java gereksinimi için Android Studio ile gelen
 JBR'yi otomatik olarak kullanır. AI, harita REST ve e-posta fonksiyonları yerelde
 çalışırken ilgili üçüncü taraf servislerine ağ isteği göndermeye devam eder.

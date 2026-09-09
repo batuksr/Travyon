@@ -10,6 +10,7 @@ import {
   Users,
   Lightbulb,
   Map,
+  BookOpen,
   ArrowLeft,
   X,
   Bookmark,
@@ -53,6 +54,7 @@ const Dashboard: React.FC = () => {
   const { dark, toggle: toggleTheme } = useThemeStore();
 
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [daySummaryExpanded, setDaySummaryExpanded] = useState(false);
   const [guideOpen, setGuideOpen]     = useState(false);
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
@@ -72,26 +74,41 @@ const Dashboard: React.FC = () => {
   const containerRef   = useRef<HTMLDivElement>(null);
   const dragStartX     = useRef(0);
   const dragStartWidth = useRef(42);
+  const isResizing     = useRef(false);
 
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleResizePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    isResizing.current = true;
     dragStartX.current     = e.clientX;
     dragStartWidth.current = leftWidthPct;
-
-    const onMove = (ev: MouseEvent) => {
-      if (!containerRef.current) return;
-      const totalW = containerRef.current.offsetWidth;
-      const delta  = ev.clientX - dragStartX.current;
-      const newPct = Math.min(78, Math.max(22, dragStartWidth.current + (delta / totalW) * 100));
-      setLeftWidthPct(newPct);
-    };
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    document.documentElement.style.cursor = 'col-resize';
+    document.documentElement.style.userSelect = 'none';
   }, [leftWidthPct]);
+
+  const handleResizePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizing.current || !containerRef.current) return;
+    const totalW = containerRef.current.getBoundingClientRect().width;
+    if (totalW <= 0) return;
+    const delta = e.clientX - dragStartX.current;
+    const newPct = Math.min(78, Math.max(22, dragStartWidth.current + (delta / totalW) * 100));
+    setLeftWidthPct(newPct);
+  }, []);
+
+  const handleResizePointerEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    isResizing.current = false;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    document.documentElement.style.cursor = '';
+    document.documentElement.style.userSelect = '';
+  }, []);
+
+  useEffect(() => () => {
+    document.documentElement.style.cursor = '';
+    document.documentElement.style.userSelect = '';
+  }, []);
 
   // Sadece gerçekten farklı bir plan yüklenince gün 0'a sıfırla
   // plan referansı değil, içeriği değişince (destination + gün sayısı)
@@ -100,6 +117,7 @@ const Dashboard: React.FC = () => {
     // planKey değişince (yeni plan) bilinçli senkron reset.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveDayIndex(0);
+    setDaySummaryExpanded(false);
   }, [planKey]);
 
   /* ── Browser back button → intercept ── */
@@ -358,7 +376,12 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <MapView activities={activeDayActivities} hotel={hotelMarker} isLoaded={mapsLoaded} />
+            <MapView
+              activities={activeDayActivities}
+              onActivityClick={setSelectedPlace}
+              hotel={hotelMarker}
+              isLoaded={mapsLoaded}
+            />
           </div>
         </div>
       )}
@@ -428,7 +451,7 @@ const Dashboard: React.FC = () => {
             className="md:hidden w-8 h-8 rounded-xl border border-divider bg-surface flex items-center justify-center text-text hover:bg-surface-2 transition-colors"
             title={t('dashboard.cityGuide.drawerTitle')}
           >
-            <Map size={14} strokeWidth={2.5} />
+            <BookOpen size={14} strokeWidth={2.5} />
           </button>
           <button
             type="button"
@@ -491,24 +514,35 @@ const Dashboard: React.FC = () => {
 
         {/* SOL PANEL — Plan listesi */}
         <div
-          className="flex flex-col w-full lg:w-auto border-r border-divider bg-bg transition-[width] duration-200"
-          style={window.innerWidth >= 1024 ? { width: `${leftWidthPct}%` } : undefined}
+          className="flex flex-col w-full lg:w-auto border-r border-divider bg-bg"
+          style={window.innerWidth >= 1024
+            ? {
+                width: `${leftWidthPct}%`,
+                flexBasis: `${leftWidthPct}%`,
+                flexGrow: 0,
+                flexShrink: 0,
+              }
+            : undefined}
         >
 
           {/* Gün sekmeleri */}
           <div className="shrink-0 border-b border-divider px-5 py-2.5 bg-bg">
-            <div
-              role="tablist"
-              aria-label={t('dashboard.dayTabs.ariaLabel')}
-              className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-            >
+            <div className="flex items-center gap-2">
+              <div
+                role="tablist"
+                aria-label={t('dashboard.dayTabs.ariaLabel')}
+                className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              >
               {plan.dailyPlans.map((day, index) => (
                 <button
                   key={day.dayNumber}
                   type="button"
                   role="tab"
                   aria-selected={activeDayIndex === index}
-                  onClick={() => setActiveDayIndex(index)}
+                  onClick={() => {
+                    setActiveDayIndex(index);
+                    setDaySummaryExpanded(false);
+                  }}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading transition-all shrink-0 whitespace-nowrap border-[1.5px] ${
                     activeDayIndex === index
                       ? 'bg-accent text-white border-accent'
@@ -530,6 +564,16 @@ const Dashboard: React.FC = () => {
                   </span>
                 </button>
               ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileMap(true)}
+                aria-label={t('dashboard.mobileMap.openAriaLabel')}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 font-heading text-[11px] text-white shadow-[0_5px_14px_rgba(198,113,57,0.22)] transition-colors hover:brightness-105 lg:hidden"
+              >
+                <Map size={13} strokeWidth={2.4} />
+                {t('dashboard.mobileMap.buttonLabel')}
+              </button>
             </div>
           </div>
 
@@ -582,14 +626,9 @@ const Dashboard: React.FC = () => {
           {/* Gün özeti şeridi */}
           {activeDay && (
             <div className="shrink-0 px-5 py-3 border-b border-divider bg-surface">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] text-muted mb-0.5">{activeDay.date}</p>
-                  <p className="text-sm font-semibold text-text truncate">
-                    {activeDay.daySummary}
-                  </p>
-                </div>
-                <div className="text-right shrink-0 ml-3 space-y-0.5">
+              <div className="flex items-start justify-between gap-3">
+                <p className="pt-0.5 text-[10px] text-muted">{activeDay.date}</p>
+                <div className="shrink-0 space-y-0.5 text-right">
                   {dayBudgetStats.enteredCount > 0 ? (
                     <>
                       <div className="flex items-center justify-end gap-1.5">
@@ -619,6 +658,23 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
               </div>
+              <div className={`mt-1 ${daySummaryExpanded ? '' : 'flex items-baseline gap-1.5'}`}>
+                <p className={`text-sm font-semibold leading-snug text-text ${daySummaryExpanded ? '' : 'min-w-0 flex-1 truncate'}`}>
+                  {activeDay.daySummary}
+                </p>
+                {activeDay.daySummary.length > 40 && (
+                  <button
+                    type="button"
+                    onClick={() => setDaySummaryExpanded(expanded => !expanded)}
+                    className={`shrink-0 text-[11px] font-semibold text-accent hover:underline ${daySummaryExpanded ? 'mt-1' : ''}`}
+                    aria-expanded={daySummaryExpanded}
+                  >
+                    {daySummaryExpanded
+                      ? t('dashboard.daySummary.readLess')
+                      : t('dashboard.daySummary.readMore')}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -634,8 +690,28 @@ const Dashboard: React.FC = () => {
 
         {/* ── RESIZE HANDLE ── */}
         <div
-          className="hidden lg:flex w-[5px] relative cursor-col-resize flex-shrink-0 bg-divider hover:bg-accent/40 transition-colors"
-          onMouseDown={handleResizeMouseDown}
+          role="separator"
+          aria-label={t('dashboard.map.resizePanels')}
+          aria-orientation="vertical"
+          aria-valuemin={22}
+          aria-valuemax={78}
+          aria-valuenow={Math.round(leftWidthPct)}
+          tabIndex={0}
+          className="hidden lg:flex w-2 relative z-20 cursor-col-resize flex-shrink-0 bg-divider hover:bg-accent/50 focus:bg-accent/50 focus:outline-none transition-colors touch-none"
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerEnd}
+          onPointerCancel={handleResizePointerEnd}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              setLeftWidthPct((value) => Math.max(22, value - 2));
+            }
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              setLeftWidthPct((value) => Math.min(78, value + 2));
+            }
+          }}
         />
 
         {/* SAĞ PANEL — Harita */}
@@ -655,16 +731,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Mobil harita FAB */}
-      <button
-        type="button"
-        onClick={() => setShowMobileMap(true)}
-        aria-label={t('dashboard.mobileMap.openAriaLabel')}
-        className="lg:hidden fixed bottom-4 right-4 z-30 w-12 h-12 bg-accent text-white rounded-full shadow-[0_10px_22px_rgba(198,113,57,0.3)] flex items-center justify-center hover:brightness-105 transition-colors"
-      >
-        <Map size={18} strokeWidth={2.5} />
-      </button>
 
     </div>
 

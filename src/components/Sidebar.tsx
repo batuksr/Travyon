@@ -5,7 +5,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useAuthStore } from '../store/useAuthStore';
 import {
-  Home, Sparkles, Bookmark, LogOut, Settings, Sun, Moon, Users, Bell,
+  Home, Sparkles, Bookmark, LogOut, Settings, Sun, Moon, Users, Bell, WalletCards,
 } from 'lucide-react';
 import TravyonLogo from './TravyonLogo';
 import { useThemeStore } from '../store/useThemeStore';
@@ -18,6 +18,25 @@ const navBtn = 'w-full flex items-center gap-3.5 px-[15px] py-[11px] rounded-2xl
 const navIdle = 'text-muted hover:bg-[color-mix(in_srgb,var(--color-text)_6%,transparent)] hover:text-text';
 const navActive = 'bg-accent-100 text-accent-700';
 
+const SidebarAvatar: React.FC<{ src: string | null; fallback: string }> = ({ src, fallback }) => {
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  return (
+    <div className="relative w-[34px] h-[34px] rounded-full shrink-0 bg-gradient-to-br from-accent to-sage flex items-center justify-center text-white font-heading text-[15px] overflow-hidden">
+      <span aria-hidden="true">{fallback}</span>
+      {src && !imageFailed && (
+        <img
+          src={src}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      )}
+    </div>
+  );
+};
+
 const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const { expanded, setExpanded } = useSidebarStore();
@@ -29,11 +48,16 @@ const Sidebar: React.FC = () => {
   const { dark, toggle: toggleTheme } = useThemeStore();
   const { photoURL: storePhotoURL, resetSettings } = useAppSettingsStore();
   const clearPlan = usePlanStore((state) => state.clearPlan);
+  const avatarURL = storePhotoURL || user?.photoURL || null;
+  const avatarFallback = user?.displayName?.charAt(0).toUpperCase()
+    ?? user?.email?.charAt(0).toUpperCase()
+    ?? 'U';
 
   const mainNavItems = [
     { icon: Home,     label: t('nav.home'),       path: '/hub' },
     { icon: Sparkles, label: t('nav.createPlan'), path: '/onboarding' },
     { icon: Bookmark, label: t('nav.myPlans'),    path: '/saved-plans' },
+    { icon: WalletCards, label: t('nav.travelWallet'), path: '/travel-wallet' },
     { icon: Users,    label: t('nav.community'),  path: '/community' },
     { icon: Bell,     label: t('nav.notifications'), path: '/notifications' },
   ];
@@ -122,12 +146,7 @@ const Sidebar: React.FC = () => {
         {/* Kullanıcı avatarı */}
         {user && (
           <div className="w-full flex items-center gap-3 px-[13px] py-2">
-            <div className="w-[34px] h-[34px] rounded-full shrink-0 bg-gradient-to-br from-accent to-sage flex items-center justify-center text-white font-heading text-[15px] overflow-hidden">
-              {(storePhotoURL || user.photoURL)
-                ? <img src={storePhotoURL || user.photoURL!} alt="avatar" className="w-full h-full object-cover" />
-                : (user.displayName?.charAt(0).toUpperCase() ?? user.email?.charAt(0).toUpperCase() ?? 'U')
-              }
-            </div>
+            <SidebarAvatar key={avatarURL ?? 'fallback'} src={avatarURL} fallback={avatarFallback} />
             <div className={`text-left min-w-0 whitespace-nowrap overflow-hidden transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0'}`}>
               <p className="font-heading text-[13.5px] text-text truncate m-0">
                 {user.displayName || t('nav.user')}

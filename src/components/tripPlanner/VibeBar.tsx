@@ -1,10 +1,11 @@
+import AppIcon from '../AppIcon';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react';
 
 const VIBE_KEYS = ['rest', 'indoor', 'budget', 'explore'] as const;
 type VibeKey = typeof VIBE_KEYS[number];
-const VIBE_EMOJIS: Record<VibeKey, string> = { rest: '😴', indoor: '🌧️', budget: '💰', explore: '🎉' };
+const VIBE_ICONS: Record<VibeKey, string> = { rest: 'armchair', indoor: 'rain', budget: 'wallet', explore: 'party' };
 
 interface VibeBarProps {
   active: Record<string, boolean>;
@@ -32,7 +33,7 @@ const VibeBar: React.FC<VibeBarProps> = ({ active, onToggle, onToggleMobileView,
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap shrink-0 transition-colors
                 ${on ? 'bg-accent text-white' : 'bg-surface-2 text-muted hover:text-text'}`}
             >
-              <span className="text-[13px]">{VIBE_EMOJIS[key]}</span>
+              <AppIcon name={VIBE_ICONS[key]} size={16} />
               {t(`dashboard.dailyPlanView.vibes.${key}`)}
             </button>
           );

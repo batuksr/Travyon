@@ -1,3 +1,5 @@
+import IconBadge from '../components/IconBadge';
+import AppIcon from '../components/AppIcon';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { GoogleMap, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +10,9 @@ import { useUserPlans } from '../store/useSavedPlansStore';
 import type { OnboardingData } from '../store/useOnboardingStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import { usePlanStore } from '../store/usePlanStore';
 import { CITIES } from '../data/cities';
-import { Plane, MapPin, Wind, LayoutGrid, Wallet, Globe, Trophy,
+import { Plane, MapPin, Wind, Wallet, Globe,
          Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
          Clock, CheckCheck, FileText, Loader2 } from 'lucide-react';
 import { relativeTime } from '../utils/timeUtils';
@@ -19,27 +22,28 @@ import {
 } from '../services/socialService';
 import { AiAssistantWidget } from '../components/AiAssistantWidget';
 import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
+import HubTravelControlCenter from '../components/HubTravelControlCenter';
 
 /* ── Greeting ── */
-const getGreeting = (t: TFunction): { text: string; emoji: string } => {
+const getGreeting = (t: TFunction): { text: string; icon: string } => {
   const h = new Date().getHours();
-  if (h >= 5  && h < 12) return { text: t('hub.greeting.morning'),   emoji: '☀️' };
-  if (h >= 12 && h < 18) return { text: t('hub.greeting.afternoon'), emoji: '🌤️' };
-  if (h >= 18 && h < 22) return { text: t('hub.greeting.evening'),   emoji: '🌆' };
-  return                         { text: t('hub.greeting.night'),     emoji: '🌙' };
+  if (h >= 5  && h < 12) return { text: t('hub.greeting.morning'),   icon: 'sun' };
+  if (h >= 12 && h < 18) return { text: t('hub.greeting.afternoon'), icon: 'cloud-sun' };
+  if (h >= 18 && h < 22) return { text: t('hub.greeting.evening'),   icon: 'sunset' };
+  return                         { text: t('hub.greeting.night'),     icon: 'moon' };
 };
 
 /* ── Weather helpers (open-meteo WMO codes) ── */
 const weatherIcon = (code: number) => {
-  if (code === 0) return '☀️';
-  if (code === 1 || code === 2) return '🌤️';
-  if (code === 3) return '☁️';
-  if ([45, 48].includes(code)) return '🌫️';
-  if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
-  if ([95, 96, 99].includes(code)) return '⛈️';
-  return '🌡️';
+  if (code === 0) return 'sun';
+  if (code === 1 || code === 2) return 'cloud-sun';
+  if (code === 3) return 'cloud';
+  if ([45, 48].includes(code)) return 'fog';
+  if ([51, 53, 55, 56, 57].includes(code)) return 'drizzle';
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'rain';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snowflake';
+  if ([95, 96, 99].includes(code)) return 'storm';
+  return 'thermometer';
 };
 const weatherLabel = (code: number, t: TFunction) => {
   if (code === 0) return t('hub.weather.conditions.clear');
@@ -54,47 +58,6 @@ const weatherLabel = (code: number, t: TFunction) => {
   if ([95, 96, 99].includes(code)) return t('hub.weather.conditions.storm');
   return t('hub.weather.conditions.variable');
 };
-
-/* ── Country flag ── */
-const getCountryFlag = (country: string): string => {
-  const map: Record<string, string> = {
-    'türkiye': '🇹🇷', 'italya': '🇮🇹', 'fransa': '🇫🇷', 'ispanya': '🇪🇸',
-    'ingiltere': '🇬🇧', 'hollanda': '🇳🇱', 'almanya': '🇩🇪', 'japonya': '🇯🇵',
-    'abd': '🇺🇸', 'yunanistan': '🇬🇷', 'portekiz': '🇵🇹', 'isveç': '🇸🇪',
-    'norveç': '🇳🇴', 'danimarka': '🇩🇰', 'finlandiya': '🇫🇮', 'avustralya': '🇦🇺',
-    'çin': '🇨🇳', 'hindistan': '🇮🇳', 'bae': '🇦🇪', 'mısır': '🇪🇬',
-    'brezilya': '🇧🇷', 'arjantin': '🇦🇷', 'meksika': '🇲🇽', 'kanada': '🇨🇦',
-    'avusturya': '🇦🇹', 'isviçre': '🇨🇭', 'belçika': '🇧🇪', 'polonya': '🇵🇱',
-    'çekya': '🇨🇿', 'macaristan': '🇭🇺', 'hırvatistan': '🇭🇷', 'güney kore': '🇰🇷',
-    'tayland': '🇹🇭', 'endonezya': '🇮🇩', 'malezya': '🇲🇾', 'vietnam': '🇻🇳',
-    'singapur': '🇸🇬', 'hong kong': '🇭🇰', 'tayvan': '🇹🇼', 'fas': '🇲🇦',
-    'güney afrika': '🇿🇦', 'kenya': '🇰🇪', 'peru': '🇵🇪', 'kolombiya': '🇨🇴',
-    'şili': '🇨🇱', 'küba': '🇨🇺', 'ürdün': '🇯🇴', 'suudi arabistan': '🇸🇦',
-    'katar': '🇶🇦', 'umman': '🇴🇲', 'lübnan': '🇱🇧', 'gürcistan': '🇬🇪',
-    'azerbaycan': '🇦🇿', 'ermenistan': '🇦🇲', 'kazakistan': '🇰🇿', 'özbekistan': '🇺🇿',
-    'sırbistan': '🇷🇸', 'romanya': '🇷🇴', 'bulgaristan': '🇧🇬', 'slovakya': '🇸🇰',
-    'slovenya': '🇸🇮', 'estonya': '🇪🇪', 'letonya': '🇱🇻', 'litvanya': '🇱🇹',
-    'irlanda': '🇮🇪', 'izlanda': '🇮🇸', 'yeni zelanda': '🇳🇿', 'maldivler': '🇲🇻',
-  };
-  return map[country.toLowerCase().trim()] ?? '🌍';
-};
-
-/* ── Gamification ── */
-type GamificationLevel = {
-  label: string; icon: string; color: string;
-  bg: string; border: string; minCities: number; maxCities: number;
-};
-const LEVELS: GamificationLevel[] = [
-  { label: 'Yeni Gezgin', icon: '🌱', color: 'text-slate-500',   bg: 'bg-slate-50',   border: 'border-slate-200', minCities: 0,  maxCities: 1  },
-  { label: 'Kaşif',       icon: '🗺️', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', minCities: 1,  maxCities: 3  },
-  { label: 'Gezgin',      icon: '✈️', color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-200',   minCities: 3,  maxCities: 6  },
-  { label: 'Seyyah',      icon: '⭐', color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',  minCities: 6,  maxCities: 11 },
-  { label: 'Dünya Gezgini', icon: '🏆', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', minCities: 11, maxCities: 20 },
-  { label: 'Efsane',      icon: '👑', color: 'text-accent',  bg: 'bg-accent-100', border: 'border-accent/30', minCities: 20, maxCities: 999 },
-];
-
-const getLevel = (cityCount: number): GamificationLevel =>
-  [...LEVELS].reverse().find(l => cityCount >= l.minCities) ?? LEVELS[0];
 
 /* ── Map styles — Light ── */
 const WORLD_MAP_STYLES_LIGHT = [
@@ -153,10 +116,10 @@ interface ActivityItem {
 
 /* ── Vibe options ── */
 const VIBE_OPTIONS = [
-  { val: 'culture',   emoji: '🏛️', labelKey: 'culture'   },
-  { val: 'relax',     emoji: '😴', labelKey: 'relax'     },
-  { val: 'nightlife', emoji: '🌙', labelKey: 'nightlife' },
-  { val: 'nature',    emoji: '🏔️', labelKey: 'nature'    },
+  { val: 'culture',   icon: 'landmark', labelKey: 'culture'   },
+  { val: 'relax',     icon: 'armchair', labelKey: 'relax'     },
+  { val: 'nightlife', icon: 'moon', labelKey: 'nightlife' },
+  { val: 'nature',    icon: 'mountain', labelKey: 'nature'    },
 ] as const;
 
 /* ══════════════════════════════════════════════
@@ -168,6 +131,7 @@ const Hub: React.FC = () => {
   const navigate   = useNavigate();
   const { user }   = useAuthStore();
   const plans      = useUserPlans();
+  const { setPlan, setSavedPlanId } = usePlanStore();
 
   const { isLoaded } = useGoogleMapsLoader();
 
@@ -396,9 +360,10 @@ const Hub: React.FC = () => {
   const onMapUnmount = useCallback(() => { setMapInstance(null); hasFitRef.current = false; }, []);
 
   /* ── Next trip ── */
-  const nextTrip = plans
-    .filter(p => p.onboardingData.startDate > todayStr)
-    .sort((a, b) => a.onboardingData.startDate.localeCompare(b.onboardingData.startDate))[0]
+  const nextTrip = plans.find(p => p.onboardingData.startDate <= todayStr && p.onboardingData.endDate >= todayStr)
+    ?? plans
+      .filter(p => p.onboardingData.startDate > todayStr)
+      .sort((a, b) => a.onboardingData.startDate.localeCompare(b.onboardingData.startDate))[0]
     ?? plans[0];
   // Gün seviyesinde geri sayım — Date.now() render sırasında bilinçli okunuyor.
   const daysUntil = nextTrip
@@ -407,6 +372,29 @@ const Hub: React.FC = () => {
     : null;
   const isFuture  = daysUntil !== null && daysUntil > 0;
   const cityName  = nextTrip?.plan.destination.split(',')[0].trim() ?? '';
+
+  const openSavedPlan = () => {
+    if (!nextTrip) return;
+    setPlan(nextTrip.plan);
+    setSavedPlanId(nextTrip.id);
+    navigate('/dashboard');
+  };
+
+  const openTripChecklist = () => {
+    if (!nextTrip) return;
+    const params = new URLSearchParams({ planId: nextTrip.id, dest: cityName });
+    navigate(`/travel-checklist?${params.toString()}`);
+  };
+
+  const openTripWallet = () => {
+    if (!nextTrip) return;
+    navigate(`/travel-wallet?${new URLSearchParams({ planId: nextTrip.id }).toString()}`);
+  };
+
+  const replanTrip = () => {
+    if (!nextTrip) return;
+    startPlanWith(nextTrip.onboardingData);
+  };
 
   /* ── Countdown progress ── */
   const tripDuration = nextTrip
@@ -429,12 +417,6 @@ const Hub: React.FC = () => {
   const { stats, destPins } = useMemo(() => {
     const now        = new Date();
     const today      = now.toISOString().split('T')[0];
-    const thisMonth  = now.getMonth();
-    const thisYear   = now.getFullYear();
-    const thisMonthCount = plans.filter(p => {
-      const d = new Date(p.createdAt);
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-    }).length;
 
     const getCountry = (dest: string) =>
       dest.includes(',') ? dest.split(',').slice(1).join(',').trim() : '';
@@ -446,18 +428,6 @@ const Hub: React.FC = () => {
     const uniqueCities    = new Set(visitedPlans.map(p => getCityRaw(p.plan.destination))).size;
     const allCountries    = visitedPlans.map(p => getCountry(p.plan.destination)).filter(Boolean);
     const uniqueCountries = new Set(allCountries).size;
-    const countryCounts: Record<string, number> = {};
-    allCountries.forEach(c => { countryCounts[c] = (countryCounts[c] ?? 0) + 1; });
-    const topCountries = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const uniqueFlags  = [...new Set(allCountries)].slice(0, 8).map(c => ({ name: c, flag: getCountryFlag(c) }));
-    const budgetMap: Record<string, { symbol: string; total: number }> = {};
-    visitedPlans.forEach(p => {
-      const code = p.onboardingData.currencyCode ?? 'TRY';
-      const sym  = p.onboardingData.currencySymbol ?? '₺';
-      if (!budgetMap[code]) budgetMap[code] = { symbol: sym, total: 0 };
-      budgetMap[code].total += p.onboardingData.budget;
-    });
-    const budgets = Object.entries(budgetMap).sort((a, b) => b[1].total - a[1].total).slice(0, 3);
 
     /* Destination pins — sadece tamamlanmış seyahatler (centroid, deduplicated) */
     const seen = new Set<string>();
@@ -475,17 +445,10 @@ const Hub: React.FC = () => {
     });
 
     return {
-      stats: { thisMonthCount, uniqueCities, uniqueCountries, topCountries, uniqueFlags, budgets },
+      stats: { uniqueCities, uniqueCountries },
       destPins: pins,
     };
   }, [plans]);
-
-  const currentLevel = getLevel(stats.uniqueCities);
-  const nextLevel    = LEVELS[LEVELS.indexOf(currentLevel) + 1];
-  // progress: level ilerlemesi (UI'da şimdilik kullanılmıyor)
-  void (nextLevel
-    ? Math.min(100, ((stats.uniqueCities - currentLevel.minCities) / (nextLevel.minCities - currentLevel.minCities)) * 100)
-    : 100);
 
   /* ── Weather ── */
 
@@ -614,8 +577,6 @@ const Hub: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapInstance]);
 
-  const maxCount = stats.topCountries[0]?.[1] ?? 1;
-
   /* Harita pin rengi — terracotta accent (dark/light için sabit ton) */
   const pinColor      = dark ? '#e08a4f' : '#c67139';
   const pinColorActive = dark ? '#f0b184' : '#8c491a';
@@ -633,7 +594,7 @@ const Hub: React.FC = () => {
                 {new Date().toLocaleDateString(localeCode, { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
               <div className="flex items-center gap-2.5">
-                <span className="text-3xl leading-none">{greeting.emoji}</span>
+                <IconBadge icon={greeting.icon} variant="prominent" />
                 <h1 className="font-heading text-2xl md:text-3xl text-text leading-tight">
                   {greeting.text}, <span className="text-accent">{firstName}!</span>
                 </h1>
@@ -686,7 +647,7 @@ const Hub: React.FC = () => {
 
                     {/* Checklist linki */}
                     <button
-                      onClick={() => navigate('/travel-checklist')}
+                      onClick={openTripChecklist}
                       className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl px-4 py-2.5 flex items-center justify-between text-sm font-semibold transition-all duration-200"
                     >
                       <span>{t('hub.nextTrip.checklist')}</span>
@@ -731,7 +692,7 @@ const Hub: React.FC = () => {
                   </div>
                 ) : weather ? (
                   <div className="flex items-end gap-5 mt-auto">
-                    <span className="text-7xl leading-none select-none">{weatherIcon(weather.code)}</span>
+                    <AppIcon name={weatherIcon(weather.code)} size={64} className="text-sage-700" />
                     <div>
                       <p className="font-heading text-5xl text-text leading-none">{displayTemp(weather.temp)}</p>
                       <p className="text-muted text-sm font-medium mt-1">{weatherLabel(weather.code, t)}</p>
@@ -789,7 +750,7 @@ const Hub: React.FC = () => {
         </div>
 
         {/* ── Hızlı Eylemler ── */}
-        <div className="mb-8">
+        {plans.length === 0 && <div className="mb-8">
           <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <Zap size={12} /> {t('hub.quickActions.title')}
           </p>
@@ -892,7 +853,7 @@ const Hub: React.FC = () => {
                       onClick={(e) => { e.stopPropagation(); handleVibe(v.val); }}
                       className="flex items-center gap-1 bg-surface-2 hover:bg-violet-50 border border-divider hover:border-violet-200 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-text transition-colors"
                     >
-                      <span>{v.emoji}</span><span>{t(`hub.vibeOptions.${v.labelKey}`)}</span>
+                      <AppIcon name={v.icon} size={16} /><span>{t(`hub.vibeOptions.${v.labelKey}`)}</span>
                     </button>
                   ))}
                 </div>
@@ -900,100 +861,29 @@ const Hub: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </div>}
 
 
-        {/* ── İstatistikler ── */}
+        {/* ── Seyahat Kontrol Merkezi ── */}
         {plans.length > 0 && (
           <>
-            <p className="text-xs font-heading text-muted uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <LayoutGrid size={12} /> {t('hub.stats.title')}
-            </p>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-              {/* Toplam Plan */}
-              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-9 h-9 bg-accent-100 rounded-xl flex items-center justify-center">
-                    <LayoutGrid size={16} className="text-accent" />
-                  </div>
-                  {stats.thisMonthCount > 0 && (
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                      {t('hub.stats.thisMonth', { count: stats.thisMonthCount })}
-                    </span>
-                  )}
-                </div>
-                <p className="font-heading text-2xl text-text leading-none">{plans.length}</p>
-                <p className="text-muted text-xs mt-1">{t('hub.stats.totalPlans')}</p>
-              </div>
-
-              {/* Şehir & Ülke */}
-              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
-                <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
-                  <Globe size={16} className="text-blue-500" />
-                </div>
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  <p className="font-heading text-2xl text-text leading-none">{stats.uniqueCities}</p>
-                  <span className="text-muted text-xs">{t('hub.stats.city')}</span>
-                </div>
-                <p className="text-muted text-xs mb-3">{t('hub.stats.differentCountries', { count: stats.uniqueCountries })}</p>
-                {stats.uniqueFlags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {stats.uniqueFlags.map(f => (
-                      <span key={f.name} title={f.name} className="text-base leading-none">{f.flag}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Toplam Bütçe */}
-              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
-                <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center mb-3">
-                  <Wallet size={16} className="text-violet-500" />
-                </div>
-                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-2">{t('hub.stats.totalBudget')}</p>
-                <div className="space-y-1.5">
-                  {stats.budgets.map(([code, { symbol, total }]) => (
-                    <div key={code} className="flex items-baseline gap-1">
-                      <span className="font-heading text-base text-text leading-none">{symbol}{fmtNumber(total)}</span>
-                      <span className="text-muted text-[10px]">{code}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* En Çok Gezilen */}
-              <div className="bg-surface border border-divider rounded-3xl p-5 hover:shadow-md transition-shadow">
-                <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center mb-3">
-                  <Trophy size={16} className="text-amber-500" />
-                </div>
-                <p className="text-[10px] font-heading text-muted uppercase tracking-widest mb-3">{t('hub.stats.mostVisited')}</p>
-                {stats.topCountries.length > 0 ? (
-                  <div className="space-y-2">
-                    {stats.topCountries.map(([country, count], i) => (
-                      <div key={country}>
-                        <div className="flex items-center justify-between mb-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm leading-none">{getCountryFlag(country)}</span>
-                            <span className={`text-xs font-semibold truncate max-w-[80px] ${i === 0 ? 'text-text' : 'text-muted'}`}>{country}</span>
-                          </div>
-                          <span className="text-[10px] text-muted font-bold">{count}</span>
-                        </div>
-                        <div className="h-1 bg-surface-2 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${i === 0 ? 'bg-accent' : i === 1 ? 'bg-accent/50' : 'bg-accent/25'}`}
-                            style={{ width: `${(count / maxCount) * 100}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-muted text-sm">{t('hub.stats.noData')}</p>}
-              </div>
-            </div>
+            {nextTrip && (
+              <HubTravelControlCenter
+                plan={nextTrip}
+                userId={user?.uid ?? ''}
+                daysUntil={daysUntil}
+                weather={weather}
+                onOpenPlan={openSavedPlan}
+                onOpenChecklist={openTripChecklist}
+                onOpenWallet={openTripWallet}
+                onReplan={replanTrip}
+              />
+            )}
 
             {/* Share error toast */}
             {shareError && (
               <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-2xl">
-                <span>⚠️</span>
+                <span><AppIcon name="warning" /></span>
                 <span>{shareError}</span>
               </div>
             )}
@@ -1207,7 +1097,7 @@ const Hub: React.FC = () => {
                       padding: '5px 10px', borderRadius: '20px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
                     }}>
-                      <span style={{ color: pinColor, fontSize: '13px' }}>📍</span>
+                      <span style={{ color: pinColor, fontSize: '13px' }}><AppIcon name="map-pin" /></span>
                       {selectedPin.name}
                     </div>
                   </InfoWindowF>

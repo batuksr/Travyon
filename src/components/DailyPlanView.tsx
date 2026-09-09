@@ -1,3 +1,4 @@
+import AppIcon from './AppIcon';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { Loader2, Edit2, Check, Trash2, ChevronUp, ChevronDown, Plus, Sparkles, X, StickyNote } from 'lucide-react';
@@ -31,7 +32,7 @@ interface Props {
 }
 
 const TRAVEL_MODES: TravelMode[] = ['driving', 'transit', 'walking', 'cycling'];
-const TRAVEL_ICONS: Record<TravelMode, string> = { driving: '🚗', transit: '🚌', walking: '🚶', cycling: '🚲' };
+const TRAVEL_ICONS: Record<TravelMode, string> = { driving: 'car', transit: 'transit', walking: 'walk', cycling: 'bike' };
 const GMAPS_MODE: Record<TravelMode, string> = { driving: 'driving', transit: 'transit', walking: 'walking', cycling: 'bicycling' };
 
 /* Period değerleri backend/AI tarafından üretilen sabit Türkçe etiketlerdir (bkz. aiService.ts);
@@ -116,7 +117,7 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
                 isSelected ? 'bg-accent text-white border-accent'
                   : isFastest ? 'bg-accent-100 text-accent-700 border-accent/25 hover:bg-accent-200'
                   : 'bg-surface-2 text-muted border-divider hover:bg-surface-2/70'}`}>
-              <span className="text-[11px] leading-none">{TRAVEL_ICONS[mode]}</span>
+              <AppIcon name={TRAVEL_ICONS[mode]} size={13} />
               {fmtMin(mins, t)}
             </button>
           );
@@ -124,7 +125,7 @@ const TravelStrip: React.FC<TravelStripProps> = ({ origin, destination, seg, dis
       </div>
       {pending && (
         <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-divider rounded-2xl shadow-sm">
-          <span className="text-base leading-none">{TRAVEL_ICONS[pending]}</span>
+          <AppIcon name={TRAVEL_ICONS[pending]} size={18} />
           <p className="flex-1 text-[11px] text-muted leading-tight">
             <Trans
               i18nKey="dashboard.dailyPlanView.openInGoogleMaps"
@@ -152,11 +153,11 @@ const getPeriodColor = (period: string) => {
 
 /* Vibe anahtarları (rest/indoor/budget/explore) nötr, dile bağımlı değil — sadece etiket i18n'den okunur */
 const VIBE_KEYS: Array<'rest' | 'indoor' | 'budget' | 'explore'> = ['rest', 'indoor', 'budget', 'explore'];
-const VIBE_EMOJIS: Record<'rest' | 'indoor' | 'budget' | 'explore', string> = {
-  rest:    '😴',
-  indoor:  '🌧️',
-  budget:  '💰',
-  explore: '🎉',
+const VIBE_ICONS: Record<'rest' | 'indoor' | 'budget' | 'explore', string> = {
+  rest:    'armchair',
+  indoor:  'rain',
+  budget:  'wallet',
+  explore: 'party',
 };
 
 /* ════════════════════════════════════════
@@ -285,7 +286,7 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
               onClick={handleAdd}
               className="flex-1 py-1.5 bg-accent hover:brightness-105 text-white text-xs font-heading rounded-lg transition-all"
             >
-              ✓ {t('dashboard.dailyPlanView.addActivity.addToPlan')}
+              <AppIcon name="check" /> {t('dashboard.dailyPlanView.addActivity.addToPlan')}
             </button>
             <button
               onClick={() => setPreview(null)}
@@ -724,7 +725,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
                   isActive ? 'bg-accent text-white border-accent' : 'bg-surface text-text border-divider hover:border-accent/40'
                 }`}
               >
-                <span>{VIBE_EMOJIS[key]}</span>
+                <AppIcon name={VIBE_ICONS[key]} size={16} />
                 {t(`dashboard.dailyPlanView.vibes.${key}`)}
               </button>
             );

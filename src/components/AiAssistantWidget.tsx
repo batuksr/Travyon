@@ -1,5 +1,7 @@
+import IconBadge from './IconBadge';
+import AppIcon from './AppIcon';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Bot, X, Send, Loader2, RotateCcw, MapPin } from 'lucide-react';
+import { X, Send, Loader2, RotateCcw, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { askTravelAssistant } from '../services/assistantService';
 import { usePlanStore } from '../store/usePlanStore';
@@ -56,7 +58,7 @@ const MessageBubble: React.FC<{ msg: Message }> = ({ msg }) => {
     <div className={`flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#f8981d] to-[#e08518] flex items-center justify-center flex-shrink-0 mb-0.5 shadow-sm">
-          <Bot size={12} className="text-white" />
+          <Send size={13} strokeWidth={2.2} className="text-white" />
         </div>
       )}
       <div className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
@@ -77,8 +79,8 @@ const WelcomeScreen: React.FC<{
   destination?: string;
 }> = ({ onQuestion, hasPlan, destination }) => {
   const { t } = useTranslation();
-  const quickQuestions = t('aiAssistant.quickQuestions', { returnObjects: true }) as { emoji: string; text: string }[];
-  const planQuestions = (t('aiAssistant.planQuestions', { returnObjects: true }) as { emoji: string; text: string }[])
+  const quickQuestions = t('aiAssistant.quickQuestions', { returnObjects: true }) as { icon: string; text: string }[];
+  const planQuestions = (t('aiAssistant.planQuestions', { returnObjects: true }) as { icon: string; text: string }[])
     .map(q => ({ ...q, text: q.text.replace('{{destination}}', destination ?? '') }));
   const questions = hasPlan && destination
     ? planQuestions
@@ -87,7 +89,7 @@ const WelcomeScreen: React.FC<{
   return (
     <div className="h-full flex flex-col justify-center px-4 py-6 gap-5">
       <div className="text-center">
-        <div className="text-5xl mb-3">{hasPlan ? '✈️' : '🌐'}</div>
+        <div className="mb-3"><IconBadge icon={hasPlan ? 'plane' : 'globe'} variant="prominent" /></div>
         <p className="text-sm font-bold text-slate-800">
           {hasPlan && destination ? t('aiAssistant.welcome.planReady', { destination }) : t('aiAssistant.welcome.greeting')}
         </p>
@@ -102,9 +104,9 @@ const WelcomeScreen: React.FC<{
           <button
             key={q.text}
             onClick={() => onQuestion(q.text)}
-            className="flex items-start gap-2 text-left bg-slate-50 hover:bg-[#f8981d]/8 border border-slate-200 hover:border-[#f8981d]/30 rounded-xl p-3 transition-all group"
+            className="flex items-start gap-2 text-left bg-surface hover:bg-sage/5 border border-divider hover:border-sage/30 rounded-xl p-3 transition-all group"
           >
-            <span className="text-base leading-none flex-shrink-0 mt-0.5">{q.emoji}</span>
+            <AppIcon name={q.icon} size={18} className="text-sage-700 mt-0.5" />
             <span className="text-[11px] font-medium text-slate-700 group-hover:text-slate-900 leading-tight">
               {q.text}
             </span>
@@ -200,7 +202,7 @@ export const AiAssistantWidget: React.FC = () => {
           <div className="bg-gradient-to-r from-[#f8981d] to-[#e08518] px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-                <Bot size={14} className="text-white" />
+                <Send size={15} strokeWidth={2.2} className="text-white" />
               </div>
               <div className="min-w-0">
                 <p className="text-white text-sm font-bold leading-tight">Travyon AI</p>
@@ -281,7 +283,7 @@ export const AiAssistantWidget: React.FC = () => {
         className="relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-gradient-to-br from-[#f8981d] to-[#e08518] text-white"
         aria-label={t('aiAssistant.ariaLabel')}
       >
-        {open ? <X size={22} /> : <Bot size={22} />}
+        {open ? <X size={22} /> : <Send size={24} strokeWidth={2.2} />}
         {!open && !hasMessages && (
           <span className="absolute inset-0 rounded-full bg-[#f8981d] opacity-30 animate-ping pointer-events-none" />
         )}

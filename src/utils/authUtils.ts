@@ -6,7 +6,17 @@ import { useAuthStore } from '../store/useAuthStore';
 export const isEmailVerified = async (): Promise<boolean> => {
   const current = auth.currentUser;
   if (!current) return false;
-  if (current.emailVerified) return true;
+  if (current.emailVerified) {
+    try {
+      // User nesnesi doğrulanmış görünse bile önbellekteki ID token eski olabilir.
+      // Callable Functions, email_verified bilgisini User nesnesinden değil bu
+      // token'dan okuduğu için paylaşmadan önce belirteci mutlaka tazele.
+      await current.getIdToken(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }
   try {
     await current.reload();
     if (auth.currentUser?.emailVerified) {

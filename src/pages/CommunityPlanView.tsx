@@ -1,3 +1,4 @@
+import AppIcon from '../components/AppIcon';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,24 +17,24 @@ import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 
-const TRAVEL_TYPE_EMOJI: Record<string, string> = {
-  solo_macera: '🧍', romantik: '❤️', balayi: '✨', aile: '👨‍👩‍👧',
-  arkadas_grubu: '👯', is_seyahati: '💼', sehir_kacamagi: '☕', klasik_tatil: '🗺️',
+const TRAVEL_TYPE_ICONS: Record<string, string> = {
+  solo_macera: 'backpack', romantik: 'heart', balayi: 'sparkles', aile: 'users',
+  arkadas_grubu: 'handshake', is_seyahati: 'briefcase', sehir_kacamagi: 'coffee', klasik_tatil: 'map',
 };
-const PACE_EMOJI: Record<string, string> = {
-  rahat: '🛋️', normal: '🚶', aktif: '⚡', esnek: '🧭',
+const PACE_ICONS: Record<string, string> = {
+  rahat: 'armchair', normal: 'walk', aktif: 'zap', esnek: 'compass',
 };
-const PURPOSE_DETAILED_EMOJI: Record<string, string> = {
-  culture: '🏛️', relax: '😴', nightlife: '🌙', nature: '🏔️',
+const PURPOSE_DETAILED_ICONS: Record<string, string> = {
+  culture: 'landmark', relax: 'armchair', nightlife: 'moon', nature: 'mountain',
 };
-const TRANSPORT_EMOJI: Record<string, string> = {
-  public: '🚇', walk: '🚶', taxi: '🚕', car: '🚗',
+const TRANSPORT_ICONS: Record<string, string> = {
+  public: 'transit', walk: 'walk', taxi: 'taxi', car: 'car',
 };
-const ACCOMMODATION_EMOJI: Record<string, string> = {
-  hotel: '🏨', airbnb: '🏠', hostel: '🛏️', resort: '🌴',
+const ACCOMMODATION_ICONS: Record<string, string> = {
+  hotel: 'hotel', airbnb: 'house', hostel: 'bed', resort: 'palm',
 };
-const FOOD_EMOJI: Record<string, string> = {
-  iconic: '⭐', hidden_gems: '🗺️', fine_dining: '🍷', street_food: '🌮', mixed: '🎲',
+const FOOD_ICONS: Record<string, string> = {
+  iconic: 'star', hidden_gems: 'map', fine_dining: 'wine', street_food: 'store', mixed: 'shuffle',
 };
 
 const CommunityPlanView: React.FC = () => {
@@ -52,6 +53,7 @@ const CommunityPlanView: React.FC = () => {
 
   /* ── Dashboard ile aynı UI state'leri ── */
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [daySummaryExpanded, setDaySummaryExpanded] = useState(false);
   const [guideOpen, setGuideOpen]             = useState(false);
   const [selectionsOpen, setSelectionsOpen]   = useState(false);
   const [showMobileMap, setShowMobileMap]   = useState(false);
@@ -110,6 +112,7 @@ const CommunityPlanView: React.FC = () => {
         const { planData, meta: planMeta } = record;
         setMeta(planMeta);
         setActiveDayIndex(0);
+        setDaySummaryExpanded(false);
 
         // Planı store'a enjekte et — DailyPlanView bunu okur
         setPlan(planData);
@@ -177,7 +180,7 @@ const CommunityPlanView: React.FC = () => {
     return (
       <div className="h-screen flex items-center justify-center bg-bg">
         <div className="text-center space-y-3 p-8">
-          <p className="text-4xl">😕</p>
+          <p className="mb-3 text-sage-700"><AppIcon name="help" size={36} /></p>
           <p className="font-heading text-base text-text">{t('communityPlanView.notFoundTitle')}</p>
           <p className="text-sm text-muted">{t('communityPlanView.notFoundBody')}</p>
           <button
@@ -250,38 +253,38 @@ const CommunityPlanView: React.FC = () => {
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {meta ? (() => {
                 const travelTypeLabel = (key: string) => {
-                  const emoji = TRAVEL_TYPE_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.travelTypes.${key}`)}` : key;
+                  const icon = TRAVEL_TYPE_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.travelTypes.${key}`)}</span> : key;
                 };
                 const paceLabel = (key: string) => {
-                  const emoji = PACE_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.paceOptions.${key}`)}` : key;
+                  const icon = PACE_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.paceOptions.${key}`)}</span> : key;
                 };
                 const purposeDetailedLabel = (key: string) => {
-                  const emoji = PURPOSE_DETAILED_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.purposesDetailed.${key}`)}` : key;
+                  const icon = PURPOSE_DETAILED_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.purposesDetailed.${key}`)}</span> : key;
                 };
                 const transportLabel = (key: string) => {
-                  const emoji = TRANSPORT_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.transportOptions.${key}`)}` : key;
+                  const icon = TRANSPORT_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.transportOptions.${key}`)}</span> : key;
                 };
                 const accommodationLabel = (key: string) => {
-                  const emoji = ACCOMMODATION_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.accommodationOptions.${key}`)}` : key;
+                  const icon = ACCOMMODATION_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.accommodationOptions.${key}`)}</span> : key;
                 };
                 const foodLabel = (key: string) => {
-                  const emoji = FOOD_EMOJI[key];
-                  return emoji ? `${emoji} ${t(`communityPlanView.foodOptions.${key}`)}` : key;
+                  const icon = FOOD_ICONS[key];
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{t(`communityPlanView.foodOptions.${key}`)}</span> : key;
                 };
                 // Yeni planlar diyet tercihlerini neutral key olarak saklar (örn. 'vegan');
                 // eski planlar doğrudan görüntülenebilir Türkçe metin saklar (örn. 'Vegan') —
                 // defaultValue sayesinde eşleşme yoksa ham değer aynen gösterilir.
                 const dietLabel = (key: string) => {
-                  const emoji = t(`onboarding.step3.diets.${key}.emoji`, { defaultValue: '' });
+                  const icon = t(`onboarding.step3.diets.${key}.icon`, { defaultValue: '' });
                   const label = t(`onboarding.step3.diets.${key}.label`, { defaultValue: key });
-                  return emoji ? `${emoji} ${label}` : label;
+                  return icon ? <span className="inline-flex items-center gap-1.5"><AppIcon name={icon} size={14} className="text-sage-700" />{label}</span> : label;
                 };
-                const rows: { label: string; value: string }[] = [];
+                const rows: { label: string; value: React.ReactNode }[] = [];
 
                 // Süre: gün sayısı (tarihleri değil)
                 const dayCount = plan?.dailyPlans.length ?? meta.dailyPlanCount;
@@ -294,9 +297,9 @@ const CommunityPlanView: React.FC = () => {
                 if (meta.pace)
                   rows.push({ label: t('communityPlanView.selections.pace'), value: paceLabel(meta.pace) });
                 if (meta.earlyBird != null)
-                  rows.push({ label: t('communityPlanView.selections.earlyBird'), value: meta.earlyBird ? `✅ ${t('communityPlanView.selections.yes')}` : `❌ ${t('communityPlanView.selections.no')}` });
+                  rows.push({ label: t('communityPlanView.selections.earlyBird'), value: <span className="inline-flex items-center gap-1.5"><AppIcon name={meta.earlyBird ? 'check' : 'x'} size={14} />{t(meta.earlyBird ? 'communityPlanView.selections.yes' : 'communityPlanView.selections.no')}</span> });
                 if (meta.purposes?.length)
-                  rows.push({ label: t('communityPlanView.selections.interests'), value: meta.purposes.map(p => purposeDetailedLabel(p)).join(', ') });
+                  rows.push({ label: t('communityPlanView.selections.interests'), value: <span className="inline-flex flex-wrap justify-end gap-2">{meta.purposes.map(p => <span key={p}>{purposeDetailedLabel(p)}</span>)}</span> });
                 if (meta.accommodation)
                   rows.push({ label: t('communityPlanView.selections.accommodation'), value: accommodationLabel(meta.accommodation) });
                 if (meta.transport)
@@ -304,11 +307,11 @@ const CommunityPlanView: React.FC = () => {
                 if (meta.foodPhilosophy)
                   rows.push({ label: t('communityPlanView.selections.food'), value: foodLabel(meta.foodPhilosophy) });
                 if (meta.dietaryRestrictions?.length)
-                  rows.push({ label: t('communityPlanView.selections.diet'), value: meta.dietaryRestrictions.map(dietLabel).join(', ') });
+                  rows.push({ label: t('communityPlanView.selections.diet'), value: <span className="inline-flex flex-wrap justify-end gap-2">{meta.dietaryRestrictions.map(d => <span key={d}>{dietLabel(d)}</span>)}</span> });
 
                 if (rows.length === 0) return (
                   <div className="text-center py-8">
-                    <p className="text-3xl mb-2">🔍</p>
+                    <p className="mb-2 text-sage-700"><AppIcon name="search" size={32} /></p>
                     <p className="text-sm text-muted">{t('communityPlanView.selections.noData')}</p>
                     <p className="text-xs text-muted mt-1">{t('communityPlanView.selections.noDataHint')}</p>
                   </div>
@@ -347,7 +350,12 @@ const CommunityPlanView: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            <MapView activities={activeDayActivities} hotel={null} isLoaded={mapsLoaded} />
+            <MapView
+              activities={activeDayActivities}
+              onActivityClick={setSelectedPlace}
+              hotel={null}
+              isLoaded={mapsLoaded}
+            />
           </div>
         </div>
       )}
@@ -458,45 +466,74 @@ const CommunityPlanView: React.FC = () => {
         >
           {/* Gün sekmeleri */}
           <div className="shrink-0 border-b border-divider px-5 py-2.5 bg-bg">
-            <div className="flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {plan.dailyPlans.map((day, index) => (
-                <button
-                  key={day.dayNumber}
-                  onClick={() => { setActiveDayIndex(index); setSelectedPlace(null); }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading transition-all shrink-0 whitespace-nowrap border-[1.5px] ${
-                    activeDayIndex === index
-                      ? 'bg-accent text-white border-accent'
-                      : 'bg-surface border-divider text-text hover:border-accent/40'
-                  }`}
-                >
-                  <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
-                    activeDayIndex === index ? 'bg-white/20 text-white' : 'bg-surface-2 text-muted'
-                  }`}>
-                    {day.dayNumber}
-                  </span>
-                  {day.date?.slice(5) ?? t('communityPlanView.dayFallback', { number: day.dayNumber })}
-                  <span className={`text-[10px] font-normal ${activeDayIndex === index ? 'text-white/80' : 'text-muted'}`}>
-                    ({day.activities.length})
-                  </span>
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {plan.dailyPlans.map((day, index) => (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => {
+                      setActiveDayIndex(index);
+                      setDaySummaryExpanded(false);
+                      setSelectedPlace(null);
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading transition-all shrink-0 whitespace-nowrap border-[1.5px] ${
+                      activeDayIndex === index
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-surface border-divider text-text hover:border-accent/40'
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold ${
+                      activeDayIndex === index ? 'bg-white/20 text-white' : 'bg-surface-2 text-muted'
+                    }`}>
+                      {day.dayNumber}
+                    </span>
+                    {day.date?.slice(5) ?? t('communityPlanView.dayFallback', { number: day.dayNumber })}
+                    <span className={`text-[10px] font-normal ${activeDayIndex === index ? 'text-white/80' : 'text-muted'}`}>
+                      ({day.activities.length})
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileMap(true)}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 font-heading text-[11px] text-white shadow-[0_5px_14px_rgba(198,113,57,0.22)] transition-colors hover:brightness-105 lg:hidden"
+                aria-label={t('communityPlanView.mobileMapOpen')}
+              >
+                <Map size={13} strokeWidth={2.4} />
+                {t('communityPlanView.mobileMapButton')}
+              </button>
             </div>
           </div>
 
           {/* Gün özeti şeridi */}
           {activeDay && (
             <div className="shrink-0 px-5 py-3 border-b border-divider bg-surface">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] text-muted mb-0.5">{activeDay.date}</p>
-                  <p className="text-sm font-semibold text-text truncate">{activeDay.daySummary}</p>
-                </div>
-                <div className="text-right shrink-0 ml-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="pt-0.5 text-[10px] text-muted">{activeDay.date}</p>
+                <div className="shrink-0 text-right">
                   <p className="text-[10px] text-muted">{t('communityPlanView.estimated')}</p>
                   <p className="font-heading text-sm text-text">
                     {meta?.currencySymbol ?? '₺'}{activeDay.totalEstimatedCost.toLocaleString(localeCode)}
                   </p>
                 </div>
+              </div>
+              <div className={`mt-1 ${daySummaryExpanded ? '' : 'flex items-baseline gap-1.5'}`}>
+                <p className={`text-sm font-semibold leading-snug text-text ${daySummaryExpanded ? '' : 'min-w-0 flex-1 truncate'}`}>
+                  {activeDay.daySummary}
+                </p>
+                {activeDay.daySummary.length > 40 && (
+                  <button
+                    type="button"
+                    onClick={() => setDaySummaryExpanded(expanded => !expanded)}
+                    className={`shrink-0 text-[11px] font-semibold text-accent hover:underline ${daySummaryExpanded ? 'mt-1' : ''}`}
+                    aria-expanded={daySummaryExpanded}
+                  >
+                    {daySummaryExpanded
+                      ? t('communityPlanView.readLess')
+                      : t('communityPlanView.readMore')}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -529,14 +566,6 @@ const CommunityPlanView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Mobil harita FAB */}
-      <button
-        onClick={() => setShowMobileMap(true)}
-        className="lg:hidden fixed bottom-4 right-4 z-30 w-12 h-12 bg-accent text-white rounded-full shadow-[0_10px_22px_rgba(198,113,57,0.3)] flex items-center justify-center hover:brightness-105 transition-colors"
-      >
-        <Map size={18} strokeWidth={2.5} />
-      </button>
 
     </div>
 

@@ -1,3 +1,4 @@
+import AppIcon from '../components/AppIcon';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -148,11 +149,18 @@ const Community: React.FC = () => {
         }, ...prev]);
       }
     } catch (err) {
-      const msg = err instanceof Error && err.message === 'timeout'
+      const errorDetail = err instanceof Error ? err.message : '';
+      const isTimeout = errorDetail === 'timeout';
+      const baseMessage = isTimeout
         ? t('community.errors.timeout')
         : t('community.errors.shareFailed');
+      // Yerel geliştirmede Firebase'in güvenli hata mesajını da göster. Böylece
+      // tüm farklı sunucu hataları tek bir "Paylaşım başarısız" mesajında kaybolmaz.
+      const msg = import.meta.env.DEV && errorDetail && !isTimeout
+        ? `${baseMessage}: ${errorDetail}`
+        : baseMessage;
       setShareError(msg);
-      setTimeout(() => setShareError(null), 4000);
+      setTimeout(() => setShareError(null), 7000);
     } finally {
       setSavingShare(null);
     }
@@ -231,7 +239,7 @@ const Community: React.FC = () => {
           <div className="mb-5 space-y-2">
             {!profilePublic && (
               <div className="flex items-center gap-2.5 px-4 py-3 bg-surface-2 border border-divider rounded-2xl">
-                <span className="text-base">🔒</span>
+                <span className="text-base"><AppIcon name="lock" /></span>
                 <p className="text-xs text-muted">
                   <strong className="text-text">{t('community.privacyBanners.privateProfile.label')}</strong> {t('community.privacyBanners.privateProfile.message')}
                   <a href="/settings" className="ml-1.5 text-accent font-semibold hover:underline">{t('community.privacyBanners.privateProfile.cta')}</a>
@@ -240,7 +248,7 @@ const Community: React.FC = () => {
             )}
             {!plansPublic && (
               <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
-                <span className="text-base">🔕</span>
+                <span className="text-base"><AppIcon name="bell-off" /></span>
                 <p className="text-xs text-amber-800">
                   <strong>{t('community.privacyBanners.sharingOff.label')}</strong> {t('community.privacyBanners.sharingOff.message')}
                   <a href="/settings" className="ml-1.5 font-semibold hover:underline">{t('community.privacyBanners.sharingOff.cta')}</a>
@@ -248,9 +256,9 @@ const Community: React.FC = () => {
               </div>
             )}
             {!followPublic && (
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-2xl">
-                <span className="text-base">👤</span>
-                <p className="text-xs text-blue-700">
+              <div className="flex items-center gap-2.5 px-4 py-3 bg-sage/5 text-sage-700 border border-sage/20 rounded-2xl">
+                <span className="text-base"><AppIcon name="user" /></span>
+                <p className="text-xs text-sage-700">
                   <strong>{t('community.privacyBanners.approvedFollow.label')}</strong> {t('community.privacyBanners.approvedFollow.message')}
                 </p>
               </div>
@@ -318,7 +326,7 @@ const Community: React.FC = () => {
         {/* Share error toast */}
         {shareError && (
           <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2.5 rounded-2xl">
-            <span>⚠️</span><span>{shareError}</span>
+            <span><AppIcon name="warning" /></span><span>{shareError}</span>
           </div>
         )}
 
@@ -326,15 +334,14 @@ const Community: React.FC = () => {
         {feedTab === 'top' ? (
           topPlans.length === 0 ? (
             <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
-              <p className="text-3xl mb-3">🏆</p>
+              <p className="mb-3 text-sage-700"><AppIcon name="trophy" size={32} /></p>
               <p className="text-sm font-heading text-text">{t('community.top.emptyTitle')}</p>
               <p className="text-xs text-muted mt-1">{t('community.top.emptyDescription')}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {topPlans.map((plan, idx) => {
-                const medals  = ['🥇', '🥈', '🥉'];
-                const medal   = medals[idx] ?? `${idx + 1}.`;
+                const medal = idx < 3;
                 const leftBorder = idx === 0
                   ? 'border-l-4 border-amber-400'
                   : idx === 1
@@ -346,7 +353,7 @@ const Community: React.FC = () => {
                   <div key={plan.id} className={`bg-surface rounded-3xl border border-divider overflow-hidden ${leftBorder} hover:shadow-md transition-all`}>
                     <div className="flex items-center gap-4 px-4 py-4">
                       {/* Sıra rozeti */}
-                      <span className="text-2xl flex-shrink-0 w-8 text-center">{medal}</span>
+                      <span className="inline-flex shrink-0 w-8 flex-col items-center gap-1 text-sage-700">{medal && <AppIcon name="medal" size={24} />}<span className="text-xs font-semibold tabular-nums">{idx + 1}</span></span>
 
                       {/* Plan kartı (aynı PublicPlanCard) */}
                       <div className="flex-1 min-w-0">
@@ -456,7 +463,7 @@ const Community: React.FC = () => {
             );
           })() : (
             <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
-              <p className="text-3xl mb-3">👥</p>
+              <p className="mb-3 text-sage-700"><AppIcon name="users" size={32} /></p>
               <p className="text-sm font-heading text-text">{t('community.following.emptyTitle')}</p>
               <p className="text-xs text-muted mt-1">{t('community.following.emptyDescription')}</p>
               <button
@@ -485,7 +492,7 @@ const Community: React.FC = () => {
           </div>
         ) : feedError ? (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3">
-            <span className="text-xl mt-0.5">⚠️</span>
+            <span className="text-xl mt-0.5"><AppIcon name="warning" /></span>
             <div>
               <p className="text-sm font-bold text-red-700">{t('community.feedError.title')}</p>
               <p className="text-xs text-red-500 mt-0.5 leading-relaxed">
@@ -537,7 +544,7 @@ const Community: React.FC = () => {
           <div className="bg-surface border border-dashed border-divider rounded-3xl p-12 text-center">
             {feedSearch ? (
               <>
-                <p className="text-3xl mb-3">🔍</p>
+                <p className="mb-3 text-sage-700"><AppIcon name="search" size={32} /></p>
                 <p className="text-sm font-heading text-text">{t('community.feedEmpty.searchTitle')}</p>
                 <p className="text-xs text-muted mt-1">{t('community.feedEmpty.searchDescription', { term: feedSearch })}</p>
                 <button
@@ -549,7 +556,7 @@ const Community: React.FC = () => {
               </>
             ) : (
               <>
-                <p className="text-3xl mb-3">🌍</p>
+                <p className="mb-3 text-sage-700"><AppIcon name="globe" size={32} /></p>
                 <p className="text-sm font-heading text-text">{t('community.feedEmpty.title')}</p>
                 <p className="text-xs text-muted mt-1">{t('community.feedEmpty.description')}</p>
               </>

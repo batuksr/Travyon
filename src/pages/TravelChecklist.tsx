@@ -1,74 +1,15 @@
+import IconBadge from '../components/IconBadge';
+import AppIcon from '../components/AppIcon';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { CheckCircle2, Circle, ChevronDown, ArrowLeft, RefreshCw } from 'lucide-react';
-
-interface CheckItem {
-  id: string;
-}
-
-interface CheckGroup {
-  id: string;
-  emoji: string;
-  items: CheckItem[];
-}
-
-const CHECKLIST: CheckGroup[] = [
-  {
-    id: 'documents',
-    emoji: '📄',
-    items: [
-      { id: 'passport' },
-      { id: 'visa' },
-      { id: 'ticket' },
-      { id: 'hotel' },
-      { id: 'insurance' },
-      { id: 'emergency' },
-    ],
-  },
-  {
-    id: 'money',
-    emoji: '💳',
-    items: [
-      { id: 'cash' },
-      { id: 'card' },
-      { id: 'backup' },
-    ],
-  },
-  {
-    id: 'health',
-    emoji: '🏥',
-    items: [
-      { id: 'medicine' },
-      { id: 'firstaid' },
-      { id: 'sunscreen' },
-      { id: 'vaccine' },
-    ],
-  },
-  {
-    id: 'tech',
-    emoji: '🔌',
-    items: [
-      { id: 'charger' },
-      { id: 'powerbank' },
-      { id: 'simcard' },
-      { id: 'offline' },
-      { id: 'transport' },
-    ],
-  },
-  {
-    id: 'luggage',
-    emoji: '🧳',
-    items: [
-      { id: 'clothes' },
-      { id: 'shoes' },
-      { id: 'lock' },
-      { id: 'copies' },
-      { id: 'notify' },
-    ],
-  },
-];
+import {
+  TRAVEL_CHECKLIST as CHECKLIST,
+  TRAVEL_CHECKLIST_TOTAL,
+  getTravelChecklistStorageKey,
+} from '../data/travelChecklist';
 
 const TravelChecklist: React.FC = () => {
   const { t } = useTranslation();
@@ -77,7 +18,7 @@ const TravelChecklist: React.FC = () => {
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('planId') ?? 'default';
   const dest   = searchParams.get('dest') ?? '';
-  const storageKey = `travyon-checklist-${user?.uid ?? 'anonymous'}-${planId}`;
+  const storageKey = getTravelChecklistStorageKey(user?.uid ?? '', planId);
 
   const [checked, setChecked] = useState<Set<string>>(() => {
     try {
@@ -89,7 +30,7 @@ const TravelChecklist: React.FC = () => {
     () => new Set(CHECKLIST.map(g => g.id))
   );
 
-  const totalItems = CHECKLIST.flatMap(g => g.items).length;
+  const totalItems = TRAVEL_CHECKLIST_TOTAL;
   const checkedCount = checked.size;
   const progress = Math.round((checkedCount / totalItems) * 100);
 
@@ -169,7 +110,7 @@ const TravelChecklist: React.FC = () => {
             <div className="flex items-center gap-2">
               {progress === 100 && (
                 <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                  🎉 {t('travelChecklist.ready')}
+                  <AppIcon name="party" /> {t('travelChecklist.ready')}
                 </span>
               )}
               <button
@@ -213,7 +154,7 @@ const TravelChecklist: React.FC = () => {
                   className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-2 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">{group.emoji}</span>
+                    <IconBadge icon={group.icon} variant="inline" />
                     <span className="font-heading text-text text-sm">{t(`travelChecklist.groups.${group.id}`)}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       allDone
@@ -269,7 +210,7 @@ const TravelChecklist: React.FC = () => {
         </div>
 
         <p className="text-center text-xs text-muted mt-8">
-          {t('travelChecklist.autoSaved')} ✓
+          {t('travelChecklist.autoSaved')} <AppIcon name="check" />
         </p>
 
       </div>

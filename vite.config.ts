@@ -4,6 +4,18 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    headers: {
+      // Firebase Google sign-in popup'ının opener penceresiyle güvenli biçimde
+      // haberleşmesine izin verir; Chrome'daki window.closed COOP uyarısını önler.
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
   build: {
     // Vite 8/Rolldown ile ardışık build'lerde eski hash'li chunk'ların kalıp
     // PWA precache listesine yeniden girmesini kesin olarak engelle.
@@ -38,6 +50,9 @@ export default defineConfig({
       workbox: {
         // 5 MB limitine çıkar (Three.js gibi büyük kütüphaneler için)
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Firebase Authentication'ın OAuth dönüş yollarını SPA/PWA fallback'i
+        // yakalamamalı; aksi halde Google hesap seçici yerine uygulama açılır.
+        navigateFallbackDenylist: [/^\/__\//],
         // Precache: tüm statik dosyalar
         globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}'],
         // Büyük video dosyalarını precache'den çıkar

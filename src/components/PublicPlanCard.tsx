@@ -1,3 +1,4 @@
+import AppIcon from './AppIcon';
 import React, { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
@@ -118,7 +119,7 @@ export const PublicPlanCard: React.FC<Props> = memo(({
                         : 'text-divider hover:text-amber-200 hover:scale-110'
                   }`}
                 >
-                  ★
+                  <AppIcon name="star" size={20} className={s <= activeStar ? 'fill-current' : ''} />
                 </button>
               ))}
               {isSavingRating && <Loader2 size={12} className="animate-spin text-muted ml-1" />}
@@ -128,7 +129,7 @@ export const PublicPlanCard: React.FC<Props> = memo(({
           {/* Ortalama badge — hem kendi planında hem başkasının planında göster */}
           {avgDisplay ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 tabular-nums">
-              <span className="text-amber-400 text-xs leading-none">★</span>
+              <span className="text-amber-400 text-xs leading-none"><AppIcon name="star" /></span>
               <span className="text-xs font-bold text-amber-600">{avgDisplay}</span>
               <span className="text-[10px] text-muted font-medium">{t('community.card.outOf')}</span>
               <span className="text-[10px] text-muted mx-0.5">·</span>

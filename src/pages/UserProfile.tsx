@@ -1,3 +1,4 @@
+import AppIcon from '../components/AppIcon';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -280,7 +281,7 @@ const UserProfile: React.FC = () => {
 
           {plans.length === 0 ? (
             <div className="bg-surface border border-dashed border-divider rounded-3xl p-10 text-center">
-              <p className="text-2xl mb-2">🗺️</p>
+              <p className="mb-2 text-sage-700"><AppIcon name="map" size={32} /></p>
               <p className="text-sm font-heading text-text">{t('userProfile.noSharedPlans')}</p>
             </div>
           ) : (
@@ -313,7 +314,7 @@ const UserProfile: React.FC = () => {
                       <div className="text-right shrink-0">
                         <p className="text-[10px] text-muted">{relativeTime(plan.createdAt, localeCode)}</p>
                         {avgDisplay && (
-                          <p className="text-xs font-bold text-amber-500 mt-0.5">★ {avgDisplay}</p>
+                          <p className="text-xs font-bold text-amber-500 mt-0.5"><AppIcon name="star" /> {avgDisplay}</p>
                         )}
                       </div>
                     </div>

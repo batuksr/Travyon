@@ -73,16 +73,16 @@ export const buildNotifications = (
     if (isUpcoming && daysUntil <= 7) {
       if (daysUntil <= 0) {
         notifs.push({
-          id: `${p.id}-today`, icon: '✈️', level: 'urgent',
+          id: `${p.id}-today`, icon: 'plane', level: 'urgent',
           title: 'Bugün yola çıkıyorsun!',
-          body: `${dest} seyahatin bugün başlıyor. İyi yolculuklar! 🎉`,
+          body: `${dest} seyahatin bugün başlıyor. İyi yolculuklar!`,
           planId: p.id,
           actionRoute: `/travel-checklist?planId=${p.id}&dest=${encodeURIComponent(dest)}`,
           actionLabel: 'Hazırlık Listesi',
         });
       } else if (daysUntil === 1) {
         notifs.push({
-          id: `${p.id}-tomorrow`, icon: '✈️', level: 'urgent',
+          id: `${p.id}-tomorrow`, icon: 'plane', level: 'urgent',
           title: 'Yarın yola çıkıyorsun!',
           body: `${dest} seyahatin yarın başlıyor. Son hazırlıklarını yaptın mı?`,
           planId: p.id,
@@ -91,7 +91,7 @@ export const buildNotifications = (
         });
       } else if (daysUntil <= 3) {
         notifs.push({
-          id: `${p.id}-soon`, icon: '🧳', level: 'warning',
+          id: `${p.id}-soon`, icon: 'luggage', level: 'warning',
           title: `${daysUntil} günde ${dest}!`,
           body: 'Bilet, pasaport ve rezervasyonlarını kontrol etme vakti.',
           planId: p.id,
@@ -100,7 +100,7 @@ export const buildNotifications = (
         });
       } else {
         notifs.push({
-          id: `${p.id}-week`, icon: '📅', level: 'info',
+          id: `${p.id}-week`, icon: 'calendar', level: 'info',
           title: `${dest} seyahatin ${daysUntil} gün sonra`,
           body: 'Hazırlıklarını tamamlamaya başlamak için iyi bir an.',
           planId: p.id,
@@ -118,7 +118,7 @@ export const buildNotifications = (
       if (bookable) {
         notifs.push({
           id: `${p.id}-ticket-${bookable.placeName.replace(/\s+/g, '').slice(0, 12)}`,
-          icon: '🎟️', level: 'warning',
+          icon: 'ticket', level: 'warning',
           title: 'Bilet rezervasyonu gerekebilir',
           body: `${dest} planındaki ${bookable.placeName} için önceden bilet almayı unutma.`,
           planId: p.id,
@@ -143,7 +143,7 @@ export const buildNotifications = (
 
       if (pct >= 80) {
         notifs.push({
-          id: `${p.id}-budget-high`, icon: '💸', level: 'urgent',
+          id: `${p.id}-budget-high`, icon: 'wallet', level: 'urgent',
           title: `Bütçe uyarısı — %${pct} harcandı!`,
           body: `${dest}: ${spentFmt} / ${totalFmt}. Harcamaları gözden geçir.`,
           planId: p.id,
@@ -152,7 +152,7 @@ export const buildNotifications = (
         });
       } else if (pct >= 50) {
         notifs.push({
-          id: `${p.id}-budget-mid`, icon: '💰', level: 'warning',
+          id: `${p.id}-budget-mid`, icon: 'wallet', level: 'warning',
           title: `Bütçenin yarısı harcandı — %${pct}`,
           body: `${dest} planında ${spentFmt} harcama kaydedildi.`,
           planId: p.id,
@@ -161,7 +161,7 @@ export const buildNotifications = (
         });
       } else if (pct >= 20) {
         notifs.push({
-          id: `${p.id}-budget-low`, icon: '💰', level: 'info',
+          id: `${p.id}-budget-low`, icon: 'wallet', level: 'info',
           title: `Bütçenin %${pct}'i harcandı`,
           body: `${dest} planında ${spentFmt} harcama kaydedildi.`,
           planId: p.id,
@@ -179,19 +179,19 @@ export const buildNotifications = (
     // Yağış
     if (code >= 80) {
       notifs.push({
-        id: 'weather-storm', icon: '⛈️', level: 'urgent',
+        id: 'weather-storm', icon: 'storm', level: 'urgent',
         title: 'Şiddetli hava uyarısı',
         body: `${nextTripCity}'da fırtına/sağanak var. Açık hava planlarını gözden geçir.`,
       });
     } else if (code >= 61 && code <= 79) {
       notifs.push({
-        id: 'weather-rain', icon: '☂️', level: 'warning',
+        id: 'weather-rain', icon: 'umbrella', level: 'warning',
         title: 'Yağmur bekleniyor',
         body: `${nextTripCity}'da yağış var. Yağmurluk ve su geçirmez ayakkabı götür.`,
       });
     } else if (code >= 71 && code <= 77) {
       notifs.push({
-        id: 'weather-snow', icon: '❄️', level: 'warning',
+        id: 'weather-snow', icon: 'snowflake', level: 'warning',
         title: 'Kar bekleniyor',
         body: `${nextTripCity}'da kar var. Transferlerde gecikme olabilir.`,
       });
@@ -200,19 +200,19 @@ export const buildNotifications = (
     // Sıcaklık — karşılaştırmalar hep °C, gösterim tercih biriminde
     if (temp <= 2) {
       notifs.push({
-        id: 'weather-freezing', icon: '🥶', level: 'urgent',
+        id: 'weather-freezing', icon: 'snowflake', level: 'urgent',
         title: `Hava ${fmtTemp(temp, tempCelsius)} — Dondurucu`,
         body: `${nextTripCity}'da çok soğuk. Kalın mont, eldiven ve bere şart.`,
       });
     } else if (temp < 10) {
       notifs.push({
-        id: 'weather-cold', icon: '🧥', level: 'warning',
+        id: 'weather-cold', icon: 'shirt', level: 'warning',
         title: `Hava ${fmtTemp(temp, tempCelsius)} — Soğuk`,
         body: `${nextTripCity}'da soğuk hava. Yağmurluk ve kalın giysi planla.`,
       });
     } else if (temp >= 35) {
       notifs.push({
-        id: 'weather-hot', icon: '🌡️', level: 'warning',
+        id: 'weather-hot', icon: 'thermometer', level: 'warning',
         title: `Hava ${fmtTemp(temp, tempCelsius)} — Çok Sıcak`,
         body: `${nextTripCity}'da sıcak hava. Bol su ve güneş kremi unutma.`,
       });

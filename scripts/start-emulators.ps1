@@ -1,3 +1,8 @@
+param(
+  [ValidateSet("full", "hybrid")]
+  [string]$Mode = "full"
+)
+
 $ErrorActionPreference = "Stop"
 
 $androidStudioJbr = "C:\Program Files\Android\Android Studio\jbr"
@@ -17,5 +22,15 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-& firebase.cmd emulators:start --only auth,functions,firestore,storage
+# Firebase CLI, ozellikle Windows'ta fonksiyon tanimlarini ilk acilista
+# varsayilan 10 saniyeden daha gec kesfedebiliyor.
+$env:FUNCTIONS_DISCOVERY_TIMEOUT = "60"
+
+$services = if ($Mode -eq "hybrid") {
+  "functions,firestore,storage"
+} else {
+  "auth,functions,firestore,storage"
+}
+
+& firebase.cmd emulators:start --only $services
 exit $LASTEXITCODE

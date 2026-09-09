@@ -63,28 +63,42 @@ const TripPlannerDemo: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(45);
+  const isResizing = useRef(false);
 
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleResizePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    isResizing.current = true;
     dragStartX.current = e.clientX;
     dragStartWidth.current = leftWidthPct;
-
-    const onMove = (ev: MouseEvent) => {
-      if (!containerRef.current) return;
-      const totalW = containerRef.current.offsetWidth;
-      const delta = ev.clientX - dragStartX.current;
-      const newPct = Math.min(72, Math.max(28, dragStartWidth.current + (delta / totalW) * 100));
-      setLeftWidthPct(newPct);
-    };
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    document.documentElement.style.cursor = 'col-resize';
+    document.documentElement.style.userSelect = 'none';
   }, [leftWidthPct]);
 
-  useEffect(() => () => { if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current); }, []);
+  const handleResizePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizing.current || !containerRef.current) return;
+    const totalW = containerRef.current.getBoundingClientRect().width;
+    if (totalW <= 0) return;
+    const delta = e.clientX - dragStartX.current;
+    const newPct = Math.min(72, Math.max(28, dragStartWidth.current + (delta / totalW) * 100));
+    setLeftWidthPct(newPct);
+  }, []);
+
+  const handleResizePointerEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    isResizing.current = false;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    document.documentElement.style.cursor = '';
+    document.documentElement.style.userSelect = '';
+  }, []);
+
+  useEffect(() => () => {
+    if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
+    document.documentElement.style.cursor = '';
+    document.documentElement.style.userSelect = '';
+  }, []);
 
   const mutateActiveDay = (fn: (items: RuntimeActivity[]) => RuntimeActivity[]) => {
     setDaysState((prev) => prev.map((items, i) => (i === activeDayIdx ? fn(items) : items)));
@@ -160,8 +174,16 @@ const TripPlannerDemo: React.FC = () => {
         {/* SOL SÜTUN — mobilde yalnızca "list" görünümündeyken gösterilir, tam yükseklik alır */}
         <div
           className={`relative min-h-0 w-full flex-col md:h-auto border-b md:border-b-0 md:border-r border-divider bg-surface
-            ${mobileView === 'list' ? 'flex flex-1' : 'hidden'} md:flex`}
-          style={typeof window !== 'undefined' && window.innerWidth >= 768 ? { width: `${leftWidthPct}%`, minWidth: 320 } : undefined}
+            ${mobileView === 'list' ? 'flex flex-1' : 'hidden'} md:flex md:flex-none`}
+          style={typeof window !== 'undefined' && window.innerWidth >= 768
+            ? {
+                width: `${leftWidthPct}%`,
+                flexBasis: `${leftWidthPct}%`,
+                flexGrow: 0,
+                flexShrink: 0,
+                minWidth: 280,
+              }
+            : undefined}
         >
           <DayTabs
             labels={DEMO_DAYS.map((d) => d.tab)}
@@ -195,8 +217,28 @@ const TripPlannerDemo: React.FC = () => {
 
         {/* SÜRÜKLENEBİLİR AYRAÇ */}
         <div
-          className="hidden md:flex w-[5px] relative cursor-col-resize shrink-0 bg-divider hover:bg-accent/40 transition-colors"
-          onMouseDown={handleResizeMouseDown}
+          role="separator"
+          aria-label={t('home.product.demo.resizePanels')}
+          aria-orientation="vertical"
+          aria-valuemin={28}
+          aria-valuemax={72}
+          aria-valuenow={Math.round(leftWidthPct)}
+          tabIndex={0}
+          className="hidden md:flex w-2 relative z-20 cursor-col-resize shrink-0 bg-divider hover:bg-accent/50 focus:bg-accent/50 focus:outline-none transition-colors touch-none"
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerEnd}
+          onPointerCancel={handleResizePointerEnd}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              setLeftWidthPct((value) => Math.max(28, value - 2));
+            }
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              setLeftWidthPct((value) => Math.min(72, value + 2));
+            }
+          }}
         />
 
         {/* HARİTA — mobilde yalnızca "map" görünümündeyken gösterilir. isolate: Leaflet'in

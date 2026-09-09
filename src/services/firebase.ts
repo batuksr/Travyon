@@ -15,8 +15,20 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const useFirebaseEmulators =
+const useAllFirebaseEmulators =
   import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
+
+const resolveEmulatorFlag = (override: string | undefined): boolean =>
+  import.meta.env.DEV && (override === undefined || override === ''
+    ? useAllFirebaseEmulators
+    : override === 'true');
+
+// Servis bazlı bayraklar gerçek Google Auth kullanırken diğer Firebase
+// servislerini yerelde çalıştırmaya izin verir.
+const useAuthEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_AUTH_EMULATOR);
+const useFirestoreEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FIRESTORE_EMULATOR);
+const useStorageEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_STORAGE_EMULATOR);
+const useFunctionsEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR);
 
 // Firebase'i Başlat
 // Eğer .env dosyası yoksa veya ayarlanmamışsa, uygulamanın çökmesini engellemek için mock bir obje döndürüyoruz.
@@ -30,7 +42,7 @@ try {
 // App Check — callable Cloud Functions tarafında zorunludur. Üretim ortamına
 // çıkmadan önce bu anahtar Firebase Console'daki reCAPTCHA v3 kaydıyla eşleşmelidir.
 const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-if (app && recaptchaSiteKey && !useFirebaseEmulators) {
+if (app && recaptchaSiteKey && !useFunctionsEmulator) {
   if (import.meta.env.DEV) {
     // Yerel geliştirmede gerçek reCAPTCHA doğrulaması yerine debug token kullanılır.
     // Firebase Console > App Check > Apps > (⋮) > "Manage debug tokens" üzerinden
@@ -59,14 +71,33 @@ export const functions = app ? getFunctions(app, "europe-west1") : ({} as unknow
 export const googleProvider = new GoogleAuthProvider();
 
 const emulatorConnectionState = globalThis as typeof globalThis & {
-  __TRAVYON_FIREBASE_EMULATORS_CONNECTED__?: boolean;
+  __TRAVYON_FIREBASE_EMULATORS_CONNECTED__?: {
+    auth?: boolean;
+    firestore?: boolean;
+    storage?: boolean;
+    functions?: boolean;
+  };
 };
 
-if (app && useFirebaseEmulators && !emulatorConnectionState.__TRAVYON_FIREBASE_EMULATORS_CONNECTED__) {
-  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-  connectFirestoreEmulator(db, "127.0.0.1", 8080);
-  connectStorageEmulator(storage, "127.0.0.1", 9199);
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-  emulatorConnectionState.__TRAVYON_FIREBASE_EMULATORS_CONNECTED__ = true;
-  console.info("Travyon Firebase Emulator Suite'e bağlandı.");
+if (app) {
+  const connected = emulatorConnectionState.__TRAVYON_FIREBASE_EMULATORS_CONNECTED__ ??= {};
+  if (useAuthEmulator && !connected.auth) {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connected.auth = true;
+  }
+  if (useFirestoreEmulator && !connected.firestore) {
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    connected.firestore = true;
+  }
+  if (useStorageEmulator && !connected.storage) {
+    connectStorageEmulator(storage, "127.0.0.1", 9199);
+    connected.storage = true;
+  }
+  if (useFunctionsEmulator && !connected.functions) {
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    connected.functions = true;
+  }
+  if (Object.keys(connected).length > 0) {
+    console.info("Travyon seçili Firebase emulator servislerine bağlandı.");
+  }
 }

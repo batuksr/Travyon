@@ -39,12 +39,18 @@ const Login: React.FC = () => {
     });
   };
 
+  const syncUserDocument = (signedInUser: FirebaseUser, recordConsent = false) => {
+    void ensureUserDocument(signedInUser, recordConsent).catch((err) => {
+      console.warn('Kullanıcı profili şu anda senkronize edilemedi.', (err as { code?: string }).code ?? 'unknown');
+    });
+  };
+
   // Redirect sonucu al (mobil Google girişi sonrası)
   useEffect(() => {
     getRedirectResult(auth)
-      .then(async result => {
+      .then(result => {
         if (result?.user) {
-          await ensureUserDocument(result.user, true);
+          syncUserDocument(result.user, true);
           navigate('/hub');
         }
       })
@@ -63,7 +69,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await ensureUserDocument(result.user);
+      syncUserDocument(result.user);
       navigate('/hub');
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string };
@@ -81,7 +87,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await ensureUserDocument(result.user, true);
+      syncUserDocument(result.user, true);
       navigate('/hub');
     } catch (err) {
       const code = (err as { code?: string }).code ?? '';
@@ -132,7 +138,7 @@ const Login: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/50 via-[#1c140c]/28 to-[#1c140c]/78" />
         <div className="relative z-10 flex flex-col h-full p-10">
           <Link to="/">
-            <TravyonLogo size={64} />
+            <TravyonLogo size={64} light />
           </Link>
           <div className="mt-auto">
             <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">

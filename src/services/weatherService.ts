@@ -8,37 +8,37 @@ export interface DayWeather {
   windSpeedMax: number;
 }
 
-interface WMOEntry { label: string; emoji: string }
+interface WMOEntry { label: string; icon: string }
 
 const WMO: Record<number, WMOEntry> = {
-  0:  { label: 'Açık',               emoji: '☀️'  },
-  1:  { label: 'Az Bulutlu',         emoji: '🌤️' },
-  2:  { label: 'Parçalı Bulut',      emoji: '⛅'  },
-  3:  { label: 'Kapalı',             emoji: '☁️'  },
-  45: { label: 'Sisli',              emoji: '🌫️' },
-  48: { label: 'Yoğun Sis',          emoji: '🌫️' },
-  51: { label: 'Hafif Çiseleme',     emoji: '🌦️' },
-  53: { label: 'Çiseleme',           emoji: '🌦️' },
-  55: { label: 'Yoğun Çiseleme',     emoji: '🌧️' },
-  61: { label: 'Hafif Yağmur',       emoji: '🌧️' },
-  63: { label: 'Yağmur',             emoji: '🌧️' },
-  65: { label: 'Şiddetli Yağmur',    emoji: '🌧️' },
-  71: { label: 'Hafif Kar',          emoji: '🌨️' },
-  73: { label: 'Kar',                emoji: '❄️'  },
-  75: { label: 'Yoğun Kar',          emoji: '❄️'  },
-  77: { label: 'Dolu',               emoji: '🌨️' },
-  80: { label: 'Sağanak',            emoji: '🌦️' },
-  81: { label: 'Kuvvetli Sağanak',   emoji: '⛈️'  },
-  82: { label: 'Şiddetli Sağanak',   emoji: '⛈️'  },
-  85: { label: 'Kar Sağanağı',       emoji: '🌨️' },
-  86: { label: 'Yoğun Kar Sağanağı', emoji: '❄️'  },
-  95: { label: 'Fırtınalı',          emoji: '⛈️'  },
-  96: { label: 'Dolu Fırtınası',     emoji: '⛈️'  },
-  99: { label: 'Şiddetli Fırtına',   emoji: '⛈️'  },
+  0:  { label: 'Açık',               icon: 'sun'  },
+  1:  { label: 'Az Bulutlu',         icon: 'cloud-sun' },
+  2:  { label: 'Parçalı Bulut',      icon: 'cloud-sun'  },
+  3:  { label: 'Kapalı',             icon: 'cloud'  },
+  45: { label: 'Sisli',              icon: 'fog' },
+  48: { label: 'Yoğun Sis',          icon: 'fog' },
+  51: { label: 'Hafif Çiseleme',     icon: 'drizzle' },
+  53: { label: 'Çiseleme',           icon: 'drizzle' },
+  55: { label: 'Yoğun Çiseleme',     icon: 'rain' },
+  61: { label: 'Hafif Yağmur',       icon: 'rain' },
+  63: { label: 'Yağmur',             icon: 'rain' },
+  65: { label: 'Şiddetli Yağmur',    icon: 'rain' },
+  71: { label: 'Hafif Kar',          icon: 'snow' },
+  73: { label: 'Kar',                icon: 'snowflake'  },
+  75: { label: 'Yoğun Kar',          icon: 'snowflake'  },
+  77: { label: 'Dolu',               icon: 'snow' },
+  80: { label: 'Sağanak',            icon: 'drizzle' },
+  81: { label: 'Kuvvetli Sağanak',   icon: 'storm'  },
+  82: { label: 'Şiddetli Sağanak',   icon: 'storm'  },
+  85: { label: 'Kar Sağanağı',       icon: 'snow' },
+  86: { label: 'Yoğun Kar Sağanağı', icon: 'snowflake'  },
+  95: { label: 'Fırtınalı',          icon: 'storm'  },
+  96: { label: 'Dolu Fırtınası',     icon: 'storm'  },
+  99: { label: 'Şiddetli Fırtına',   icon: 'storm'  },
 };
 
 export const getWeatherInfo = (code: number): WMOEntry =>
-  WMO[code] ?? WMO[Math.floor(code / 10) * 10] ?? { label: 'Bilinmiyor', emoji: '🌡️' };
+  WMO[code] ?? WMO[Math.floor(code / 10) * 10] ?? { label: 'Bilinmiyor', icon: 'thermometer' };
 
 export const getPackingTips = (weatherList: DayWeather[]): string[] => {
   const tips: string[] = [];
@@ -49,12 +49,12 @@ export const getPackingTips = (weatherList: DayWeather[]): string[] => {
   const windy  = weatherList.some(w => w.windSpeedMax > 30);
   const stormy = weatherList.some(w => w.weatherCode >= 80);
 
-  if (hot)    tips.push('🧴 Güneş kremi ve güneş gözlüğü');
-  if (rainy)  tips.push('☂️ Şemsiye veya yağmurluk');
-  if (cold)   tips.push('🧥 Kalın mont / katmanlı giysi');
-  if (snowy)  tips.push('🥾 Su geçirmez bot');
-  if (windy)  tips.push('🧣 Rüzgarlık ve atkı');
-  if (stormy) tips.push('⚡ Fırtınalı günlerde kapalı mekânları tercih et');
+  if (hot)    tips.push('Güneş kremi ve güneş gözlüğü');
+  if (rainy)  tips.push('Şemsiye veya yağmurluk');
+  if (cold)   tips.push('Kalın mont / katmanlı giysi');
+  if (snowy)  tips.push('Su geçirmez bot');
+  if (windy)  tips.push('Rüzgarlık ve atkı');
+  if (stormy) tips.push('Fırtınalı günlerde kapalı mekânları tercih et');
 
   return tips;
 };

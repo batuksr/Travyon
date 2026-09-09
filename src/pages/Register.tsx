@@ -42,6 +42,12 @@ const Register: React.FC = () => {
     }, { merge: true });
   };
 
+  const syncUserDocument = (registeredUser: FirebaseUser) => {
+    void ensureUserDocument(registeredUser).catch((err) => {
+      console.warn('Kullanıcı profili şu anda senkronize edilemedi.', (err as { code?: string }).code ?? 'unknown');
+    });
+  };
+
   /* E-posta doğrulama popup durumu */
   const [showVerify, setShowVerify]           = useState(false);
   const [code, setCode]                       = useState('');
@@ -61,9 +67,9 @@ const Register: React.FC = () => {
   // Redirect sonucu al (mobil Google kaydı sonrası)
   useEffect(() => {
     getRedirectResult(auth)
-      .then(async result => {
+      .then(result => {
         if (result?.user) {
-          await ensureUserDocument(result.user);
+          syncUserDocument(result.user);
           navigate('/onboarding');
         }
       })
@@ -85,7 +91,7 @@ const Register: React.FC = () => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
-      await ensureUserDocument(cred.user);
+      syncUserDocument(cred.user);
       // Doğrulama kodu gönder — kod girilince uygulamaya geçilsin
       try {
         const { cooldownMs } = await sendVerificationCode(i18n.language === 'en' ? 'en' : 'tr');
@@ -109,7 +115,7 @@ const Register: React.FC = () => {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await ensureUserDocument(result.user);
+      syncUserDocument(result.user);
       navigate('/onboarding');
     } catch (err) {
       const code = (err as { code?: string }).code ?? '';
@@ -250,7 +256,7 @@ const Register: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/50 via-[#1c140c]/28 to-[#1c140c]/78" />
         <div className="relative z-10 flex flex-col h-full p-10">
           <Link to="/">
-            <TravyonLogo size={64} />
+            <TravyonLogo size={64} light />
           </Link>
           <div className="mt-auto">
             <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">

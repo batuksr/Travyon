@@ -18,29 +18,29 @@ const EarthSphere: React.FC<{ radius: number }> = ({ radius }) => {
       <meshStandardMaterial
         map={earthTexture}
         bumpMap={bumpTexture}
-        bumpScale={0.65}
+        bumpScale={0.12}
         roughness={0.8}
         metalness={0.05}
-        emissive="#1a5fa8"
-        emissiveIntensity={0.20}
+        emissive="#526c67"
+        emissiveIntensity={0.12}
       />
     </mesh>
   );
 };
 
 /* ── Dönen dünya grubu ── */
-const RotatingGlobe: React.FC = () => {
+const RotatingGlobe: React.FC<{ animate: boolean }> = ({ animate }) => {
   const groupRef = useRef<THREE.Group>(null);
   const radius = 2.5;
 
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = clock.getElapsedTime() * 0.40;
+  useFrame((_, delta) => {
+    if (animate && groupRef.current) {
+      groupRef.current.rotation.y += Math.min(delta, 0.1) * 0.08;
     }
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} rotation={[0.08, 3.7, -0.12]}>
       {/* Doku yüklenene kadar hiçbir şey gösterme (yanlış görünen bir
           yer tutucu yerine boşluk — hazır olunca dünya direkt belirir) */}
       <Suspense fallback={null}>
@@ -51,10 +51,13 @@ const RotatingGlobe: React.FC = () => {
 };
 
 /* ── Ana sahne ── */
-const GlobeAnimation: React.FC = () => {
+const GlobeAnimation: React.FC<{ animate?: boolean }> = ({ animate = true }) => {
   return (
     <Canvas
       camera={{ position: [0, 0, 6], fov: 50 }}
+      dpr={[1, 1.5]}
+      frameloop={animate ? 'always' : 'demand'}
+      fallback={<div className="journey-earth-placeholder" />}
       gl={{ antialias: true, alpha: true }}
       style={{ background: 'transparent' }}
     >
@@ -64,7 +67,7 @@ const GlobeAnimation: React.FC = () => {
       <directionalLight position={[6, 4, 5]} intensity={1.8} />
       {/* Arka dolgu ışığı — tamamen kararmayı önler */}
       <directionalLight position={[-4, -2, -3]} intensity={0.6} />
-      <RotatingGlobe />
+      <RotatingGlobe animate={animate} />
     </Canvas>
   );
 };

@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 /* ── Tailwind v4: class-based dark mode ─────────── */
 @custom-variant dark (&:is(.dark, .dark *));
 
@@ -8,7 +16,7 @@
    Çalışma zamanı değişkenleri: tema burada değişir
 ═══════════════════════════════════════════════ */
 :root {
-  --bg:        #f5ead8;  --surface:  #fffaf2;  --surface-2: #ebddc5;
+  --bg:        #f5ead8;  --surface:  #fffaf2;  --surface-2: #ffffff;
   --text:      #201e1d;  --muted:    rgba(32,30,29,.58);
   --divider:   rgba(32,30,29,.16);
   --accent:    #c67139;  --accent-100:#fff2eb; --accent-200:#ffe1d0;
@@ -41,8 +49,8 @@
   --color-sage:       var(--sage);
   --color-sage-200:   var(--sage-200);
   --color-sage-700:   var(--sage-700);
-  --font-heading: "Caprasimo", system-ui, serif;
-  --font-body:    "Figtree", system-ui, sans-serif;
+  --font-heading: "Caprasimo", Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  --font-body:    "Inter", system-ui, sans-serif;
   --radius-2xl: 24px;
   --radius-3xl: 28px;
 }

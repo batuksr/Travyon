@@ -1,3 +1,4 @@
+import AppIcon from './AppIcon';
 import React, { useEffect, useState } from 'react';
 import { X, Droplets, Wind, Cloud, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -45,11 +46,11 @@ const weatherLabel = (code: number, t: TFunction): string => {
 };
 
 /* ── Bavul önerileri — weatherService'teki getPackingTips ile aynı mantık, çevrilebilir ── */
-const PACKING_TIP_EMOJIS: Record<string, string> = {
-  hot: '🧴', rainy: '☂️', cold: '🧥', snowy: '🥾', windy: '🧣', stormy: '⚡',
+const PACKING_TIP_ICONS: Record<string, string> = {
+  hot: 'sun', rainy: 'umbrella', cold: 'shirt', snowy: 'walk', windy: 'wind', stormy: 'zap',
 };
 
-const getPackingTipsLocalized = (weatherList: DayWeather[], t: TFunction): string[] => {
+const getPackingTipsLocalized = (weatherList: DayWeather[], t: TFunction): { icon: string; text: string }[] => {
   const hot    = weatherList.some(w => w.tempMax > 28);
   const cold   = weatherList.some(w => w.tempMin < 12);
   const rainy  = weatherList.some(w => w.precipitationSum > 3 || (w.precipitationProbabilityMax ?? 0) > 50);
@@ -57,13 +58,13 @@ const getPackingTipsLocalized = (weatherList: DayWeather[], t: TFunction): strin
   const windy  = weatherList.some(w => w.windSpeedMax > 30);
   const stormy = weatherList.some(w => w.weatherCode >= 80);
 
-  const tips: string[] = [];
-  if (hot)    tips.push(`${PACKING_TIP_EMOJIS.hot} ${t('weatherView.packingTips.hot')}`);
-  if (rainy)  tips.push(`${PACKING_TIP_EMOJIS.rainy} ${t('weatherView.packingTips.rainy')}`);
-  if (cold)   tips.push(`${PACKING_TIP_EMOJIS.cold} ${t('weatherView.packingTips.cold')}`);
-  if (snowy)  tips.push(`${PACKING_TIP_EMOJIS.snowy} ${t('weatherView.packingTips.snowy')}`);
-  if (windy)  tips.push(`${PACKING_TIP_EMOJIS.windy} ${t('weatherView.packingTips.windy')}`);
-  if (stormy) tips.push(`${PACKING_TIP_EMOJIS.stormy} ${t('weatherView.packingTips.stormy')}`);
+  const tips: { icon: string; text: string }[] = [];
+  if (hot)    tips.push({ icon: PACKING_TIP_ICONS.hot, text: t('weatherView.packingTips.hot') });
+  if (rainy)  tips.push({ icon: PACKING_TIP_ICONS.rainy, text: t('weatherView.packingTips.rainy') });
+  if (cold)   tips.push({ icon: PACKING_TIP_ICONS.cold, text: t('weatherView.packingTips.cold') });
+  if (snowy)  tips.push({ icon: PACKING_TIP_ICONS.snowy, text: t('weatherView.packingTips.snowy') });
+  if (windy)  tips.push({ icon: PACKING_TIP_ICONS.windy, text: t('weatherView.packingTips.windy') });
+  if (stormy) tips.push({ icon: PACKING_TIP_ICONS.stormy, text: t('weatherView.packingTips.stormy') });
   return tips;
 };
 
@@ -177,7 +178,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                           </p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{weatherLabel(w.weatherCode, t)}</p>
                         </div>
-                        <span className="text-3xl leading-none select-none">{info.emoji}</span>
+                        <AppIcon name={info.icon} size={32} className="text-sage-700" />
                       </div>
 
                       {/* Sıcaklık */}
@@ -222,7 +223,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                   </p>
                   <ul className="space-y-1.5">
                     {packingTips.map((tip, i) => (
-                      <li key={i} className="text-xs text-amber-800 dark:text-amber-300">{tip}</li>
+                      <li key={i} className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300"><AppIcon name={tip.icon} size={16} /><span>{tip.text}</span></li>
                     ))}
                   </ul>
                 </div>

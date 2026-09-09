@@ -1,4 +1,6 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import IconBadge from '../components/IconBadge';
+import AppIcon from '../components/AppIcon';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -1013,7 +1015,7 @@ const Settings: React.FC = () => {
                         ? 'bg-accent-100 text-accent-700 font-semibold'
                         : 'text-muted hover:bg-surface-2 font-medium'}`}
                   >
-                    <Icon size={15} className="shrink-0" />
+                    <Icon size={17} strokeWidth={1.65} className={`shrink-0 ${activeSection === id ? 'text-accent-700' : 'text-sage-700'}`} />
                     <span className="truncate">{t(labelKey)}</span>
                   </button>
                 ))}
@@ -1156,7 +1158,7 @@ const Settings: React.FC = () => {
                   {/* Telefon */}
                   <ProfileRow label={t('settings.profile.fields.phone')}
                     display={phone
-                      ? <span className="font-medium text-text">🇹🇷 +90 {phone}</span>
+                      ? <span className="font-medium text-text">TR +90 {phone}</span>
                       : <span className="text-muted">{t('settings.profile.placeholders.phone')}</span>}
                     isEditing={editingField === 'phone'}
                     actionLabel={phone ? t('settings.common.edit') : t('settings.common.add')}
@@ -1164,7 +1166,7 @@ const Settings: React.FC = () => {
                     <div className="max-w-sm space-y-1">
                       <div className="flex gap-2">
                         <span className="flex items-center px-3.5 rounded-lg border border-divider bg-surface-2 text-sm text-muted shrink-0 whitespace-nowrap">
-                          🇹🇷 +90
+                          TR +90
                         </span>
                         <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                           className={inputCls()} placeholder={t('settings.profile.inputPlaceholders.phone')} />
@@ -1253,20 +1255,18 @@ const Settings: React.FC = () => {
               <StatusBanner status={emailStatus} />
 
               {/* Mevcut e-posta kartı */}
-              <div className="flex items-center gap-3 p-4 bg-surface-2 rounded-xl border border-divider mb-5">
-                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
-                  <Mail size={15} className="text-blue-600 dark:text-blue-400" />
-                </div>
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 p-4 bg-surface-2 rounded-xl border border-divider mb-5">
+                <IconBadge icon="mail" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-0.5">{t('settings.email.current')}</p>
-                  <p className="font-semibold text-sm text-text truncate">{user?.email}</p>
+                  <p className="font-semibold text-sm text-text break-all">{user?.email}</p>
                 </div>
                 {user?.emailVerified ? (
-                  <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full shrink-0">
+                  <span className="col-start-2 sm:col-start-auto justify-self-start flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full shrink-0">
                     <Check size={10} strokeWidth={3} /> {t('settings.email.verified')}
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full shrink-0">
+                  <span className="col-start-2 sm:col-start-auto justify-self-start text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full shrink-0">
                     {t('settings.email.notVerified')}
                   </span>
                 )}
@@ -1318,9 +1318,9 @@ const Settings: React.FC = () => {
                     autoComplete="current-password"
                   />
                 </div>
-                <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                  <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                <div className="flex gap-2 p-3 bg-sage/5 border border-sage/20 rounded-xl">
+                  <AlertCircle size={14} className="text-sage-700 shrink-0 mt-0.5" />
+                  <p className="text-xs text-sage-700 leading-relaxed">
                     {t('settings.email.infoNote')}
                   </p>
                 </div>
@@ -1517,27 +1517,27 @@ const Settings: React.FC = () => {
                   <label className="block text-xs font-medium text-muted mb-2">{t('settings.travelDefaults.labels.pace')}</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
-                      { label: '🛋️', subKey: 'rahat', val: 'rahat' },
-                      { label: '🚶', subKey: 'normal', val: 'normal' },
-                      { label: '🏃', subKey: 'aktif', val: 'aktif' },
-                      { label: '🧭', subKey: 'esnek', val: 'esnek' },
+                      { label: 'armchair', subKey: 'rahat', val: 'rahat' },
+                      { label: 'walk', subKey: 'normal', val: 'normal' },
+                      { label: 'walk', subKey: 'aktif', val: 'aktif' },
+                      { label: 'compass', subKey: 'esnek', val: 'esnek' },
                     ].map(({ label, subKey, val }) => (
-                      <button key={val} type="button" onClick={() => setDefaultPace(val)}
+                      <button key={val} type="button" onClick={() => setDefaultPace(val)} aria-pressed={defaultPace === val}
                         className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-center transition-all
                           ${defaultPace === val
                             ? 'border-accent bg-accent-100'
                             : 'border-divider bg-surface-2 hover:border-accent/40'}`}
                       >
-                        <span className="text-xl">{label}</span>
+                        <IconBadge icon={label} selected={defaultPace === val} />
                         <span className={`text-[11px] font-semibold ${defaultPace === val ? 'text-accent' : 'text-muted'}`}>{t(`settings.travelDefaults.pace.${subKey}`)}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                  <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                <div className="flex gap-2 p-3 bg-sage/5 border border-sage/20 rounded-xl">
+                  <AlertCircle size={14} className="text-sage-700 shrink-0 mt-0.5" />
+                  <p className="text-xs text-sage-700 leading-relaxed">
                     {t('settings.travelDefaults.infoNote')}
                   </p>
                 </div>
@@ -1710,8 +1710,8 @@ const Settings: React.FC = () => {
                 <div className="p-3.5 bg-surface-2 rounded-xl border border-divider">
                   <p className="text-[11px] font-semibold text-muted mb-2">{t('settings.units.previewTitle')}</p>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-text font-medium">📍 {t('settings.units.previewDistance')} <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
-                    <span className="text-text font-medium">🌡️ {t('settings.units.previewWeather')} <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
+                    <span className="text-text font-medium"><AppIcon name="map-pin" /> {t('settings.units.previewDistance')} <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
+                    <span className="text-text font-medium"><AppIcon name="thermometer" /> {t('settings.units.previewWeather')} <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
                   </div>
                 </div>
               </div>
@@ -1781,7 +1781,7 @@ const Settings: React.FC = () => {
                   : !browserSupported ? 'bg-surface-2 border-divider'
                   : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
                   <div className={`mt-0.5 text-lg shrink-0`}>
-                    {isGranted ? '🔔' : isDenied ? '🔕' : !browserSupported ? '🚫' : '⏳'}
+                    <AppIcon name={isGranted ? 'bell' : isDenied ? 'bell-off' : !browserSupported ? 'circle-off' : 'hourglass'} size={22} />
                   </div>
                   <div className="flex-1">
                     <p className={`text-sm font-semibold
@@ -1926,9 +1926,9 @@ const Settings: React.FC = () => {
                 const geoSupported = 'geolocation' in navigator;
                 return (
                   <div className={`flex items-start gap-3 p-4 rounded-xl border mb-5
-                    ${geoSupported ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900'
+                    ${geoSupported ? 'bg-sage/5 border-sage/20'
                                    : 'bg-surface-2 border-divider'}`}>
-                    <span className="text-lg shrink-0 mt-0.5">{geoSupported ? '📍' : '🚫'}</span>
+                    <AppIcon name={geoSupported ? 'map-pin' : 'circle-off'} size={22} className="mt-0.5" />
                     <div>
                       <p className="text-sm font-semibold text-text">
                         {geoSupported ? t('settings.privacyLocation.geoStatus.supported.title') : t('settings.privacyLocation.geoStatus.unsupported.title')}
@@ -2008,10 +2008,10 @@ const Settings: React.FC = () => {
                   <p className="text-xs font-bold text-muted uppercase tracking-widest">{t('settings.privacyData.storedDataHeader')}</p>
                 </div>
                 {(t('settings.privacyData.items', { returnObjects: true }) as { label: string; desc: string }[]).map((item, i) => {
-                  const icon = ['👤', '✈️', '⚙️', '📍'][i];
+                  const icon = ['user', 'plane', 'settings', 'map-pin'][i];
                   return (
                     <div key={item.label} className="flex items-center gap-3 px-4 py-3 border-b border-divider last:border-0">
-                      <span className="text-base w-7 shrink-0">{icon}</span>
+                      <IconBadge icon={icon} variant="inline" />
                       <div>
                         <p className="text-sm font-medium text-text">{item.label}</p>
                         <p className="text-[11px] text-muted">{item.desc}</p>
@@ -2022,9 +2022,9 @@ const Settings: React.FC = () => {
                 })}
               </div>
 
-              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  🔐 {t('settings.privacyData.kvkkPrefix')} <strong>{t('settings.privacyData.kvkkDataSection')}</strong> {t('settings.privacyData.kvkkSuffix')}
+              <div className="p-4 rounded-xl bg-sage/5 border border-sage/20">
+                <p className="text-xs text-sage-700 leading-relaxed">
+                  <AppIcon name="shield" /> {t('settings.privacyData.kvkkPrefix')} <strong>{t('settings.privacyData.kvkkDataSection')}</strong> {t('settings.privacyData.kvkkSuffix')}
                 </p>
               </div>
               <div className="flex justify-end mt-6 pt-5 border-t border-divider">
@@ -2049,7 +2049,7 @@ const Settings: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="font-bold text-text text-base">
-                        {currentlyPro ? `✨ ${t('settings.subscription.proPlanName')}` : t('settings.subscription.freePlanName')}
+                        {currentlyPro ? <><AppIcon name="sparkles" className="mr-1" />{t('settings.subscription.proPlanName')}</> : t('settings.subscription.freePlanName')}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
                         {currentlyPro ? t('settings.subscription.proDesc') : t('settings.subscription.freeDesc')}
@@ -2106,8 +2106,8 @@ const Settings: React.FC = () => {
                   {(t('settings.subscription.compare.rows', { returnObjects: true }) as { label: string; free: string; pro: string }[]).map(({ label, free, pro }) => (
                     <div key={label} className="grid grid-cols-3 border-b border-divider last:border-0">
                       <div className="px-4 py-3 text-xs font-medium text-muted">{label}</div>
-                      <div className="px-4 py-3 text-xs text-muted text-center">{free}</div>
-                      <div className="px-4 py-3 text-xs font-semibold text-sage-700 text-center">{pro}</div>
+                      <div className="px-4 py-3 text-xs text-muted text-center">{free === 'check' ? <AppIcon name="check" label={t('settings.subscription.compare.included')} /> : free}</div>
+                      <div className="px-4 py-3 text-xs font-semibold text-sage-700 text-center">{pro === 'check' ? <AppIcon name="check" label={t('settings.subscription.compare.included')} /> : pro}</div>
                     </div>
                   ))}
                 </div>
@@ -2120,7 +2120,7 @@ const Settings: React.FC = () => {
                       <div>
                         <span className="inline-block px-2 py-0.5 bg-accent text-white text-[9px] font-black uppercase tracking-widest rounded-full mb-2">{t('settings.subscription.cta.badge')}</span>
                         <p className="text-white font-bold text-sm mb-0.5">{t('settings.subscription.cta.title')}</p>
-                        <p className="text-blue-100 text-xs">{t('settings.subscription.cta.desc')}</p>
+                        <p className="text-white/80 text-xs">{t('settings.subscription.cta.desc')}</p>
                       </div>
                       <button
                         type="button"
@@ -2212,9 +2212,9 @@ const Settings: React.FC = () => {
               {PRO_CHECKOUT_ENABLED ? (
                 <>
                   <StatusBanner status={billingStatus} />
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl flex items-start gap-2 mb-4">
-                    <AlertCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">{t('settings.billingDetails.info')}</p>
+                  <div className="p-3 bg-sage/5 border border-sage/20 rounded-xl flex items-start gap-2 mb-4">
+                    <AlertCircle size={14} className="text-sage-700 shrink-0 mt-0.5" />
+                    <p className="text-xs text-sage-700 leading-relaxed">{t('settings.billingDetails.info')}</p>
                   </div>
                   <div className="space-y-4">
                     <div>
@@ -2239,7 +2239,7 @@ const Settings: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 text-[11px] text-muted">
-                    <span>🔐</span><span>{t('settings.billingDetails.securityNote')}</span>
+                    <span><AppIcon name="shield" /></span><span>{t('settings.billingDetails.securityNote')}</span>
                   </div>
                 </>
               ) : (

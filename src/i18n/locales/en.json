@@ -3,6 +3,7 @@
     "home": "Home",
     "createPlan": "Create Plan",
     "myPlans": "My Plans",
+    "travelWallet": "Travel Wallet",
     "community": "Community",
     "notifications": "Notifications",
     "notificationsShort": "Alerts",
@@ -40,11 +41,67 @@
     "product": {
       "eyebrow": "Live Preview",
       "title": "Bring your plan to life in seconds",
-      "subtitle": "Try the app without signing up by exploring the sample Rome plan below — switch days, add activities, open the guide and the weather.",
+      "subtitle": "Explore personalized plans, smart routing, budget tracking, and local guidance through the example below.",
       "nudge": {
         "title": "This is just a live preview!",
         "body": "In the real app you can build much more detailed plans and unlock every feature. Start exploring the sample plan however you like.",
         "ok": "Got it"
+      },
+      "mobileTour": {
+        "title": "How does Travyon work?",
+        "swipeHint": "Swipe to explore the features",
+        "ariaLabel": "Travyon feature tour",
+        "pagination": "Feature tour pages",
+        "goToCard": "Go to card {{card}}",
+        "plan": {
+          "eyebrow": "Personal plan",
+          "title": "A day-by-day itinerary",
+          "day": "Day {{day}}",
+          "date": "Thursday, August 20",
+          "estimate": "Estimated €30",
+          "summary": "A balanced, personal start in the heart of Ancient Rome.",
+          "places": {
+            "colosseum": "Colosseum and Arch of Constantine",
+            "park": "Oppian Hill Park",
+            "food": "Pasta Chef — Monti"
+          },
+          "times": {
+            "colosseum": "10:00 · History and culture",
+            "park": "12:30 · Views and walking",
+            "food": "14:00 · Local flavor"
+          }
+        },
+        "map": {
+          "eyebrow": "Smart route",
+          "title": "Optimized on the map",
+          "routeReady": "Your most efficient route is ready",
+          "description": "Nearby stops are grouped into the same day to reduce backtracking and wasted time."
+        },
+        "budget": {
+          "eyebrow": "Budget tracking",
+          "title": "Keep spending under control",
+          "total": "Total trip budget",
+          "spent": "{{amount}} spent",
+          "left": "{{amount}} left",
+          "items": {
+            "museum": "Museums and activities",
+            "food": "Food and drink",
+            "transport": "Transportation"
+          }
+        },
+        "guide": {
+          "eyebrow": "Travel companion",
+          "title": "Weather and local tips",
+          "days": {
+            "1": "Today",
+            "2": "Tomorrow",
+            "3": "Friday"
+          },
+          "tipTitle": "A local tip for Rome",
+          "tip": "Choose a morning slot for the Colosseum and visit Trevi Fountain early before the crowds arrive.",
+          "ctaText": "Create a plan tailored to your budget, dates, and travel style in seconds.",
+          "cta": "Create my plan"
+        }
       },
       "demo": {
         "destination": "Rome, Italy",
@@ -55,6 +112,7 @@
         "moveUp": "Move up",
         "moveDown": "Move down",
         "delete": "Delete",
+        "resizePanels": "Resize the plan and map panels",
         "summaries": {
           "day1": "Step into the heart of the city with a start that will leave you in awe of Ancient Rome's grandeur.",
           "day2": "A day full of the Vatican's sacred art treasures and the majesty of St. Peter's awaits you.",
@@ -176,15 +234,47 @@
         }
       }
     },
+    "whyTravyon": {
+      "eyebrow": "WHY TRAVYON?",
+      "title": "Spend time traveling, not researching",
+      "subtitle": "Turn scattered research into one personal, practical travel plan.",
+      "before": {
+        "label": "Traditional planning",
+        "title": "The planning load before a trip",
+        "items": {
+          "research": "Endless research across multiple tabs",
+          "route": "Ordering every stop on the map by hand",
+          "budget": "Calculating every expense separately"
+        },
+        "caption": "Three separate processes"
+      },
+      "transition": "Unified in one flow",
+      "after": {
+        "label": "With Travyon",
+        "title": "A ready journey in one flow",
+        "planLabel": "Personal plan summary",
+        "items": {
+          "personal": "One plan tailored to your budget and style",
+          "optimized": "A smart, geographically optimized route",
+          "controlled": "Budget tracking that follows your plan"
+        }
+      }
+    },
     "howItWorks": {
       "eyebrow": "PROCESS",
-      "title": "How It Works?",
-      "subtitle": "Go from creating an account to the perfect travel plan in four steps.",
+      "title": "How It Works",
+      "subtitle": "Turn your travel idea into a personal itinerary in four simple steps.",
+      "stepLabel": "Step {{number}}",
+      "stepsAriaLabel": "Travel planning steps",
+      "previous": "Previous step",
+      "next": "Next step",
+      "pause": "Pause automatic steps",
+      "play": "Start automatic steps",
       "steps": [
-        { "title": "Create your account", "desc": "Open a free account in minutes. No credit card needed, no technical knowledge required." },
-        { "title": "Enter your preferences", "desc": "Set your destination, dates, budget and travel style. Just a few clicks." },
-        { "title": "AI builds the plan", "desc": "Gemini AI prepares a day-by-day, geographically optimized plan tailored to your preferences." },
-        { "title": "Explore your route", "desc": "See your route on an interactive map, track your spending, and change the vibe anytime." }
+        { "label": "Create your account", "title": "Create your account", "desc": "Open your free account and start planning your first trip." },
+        { "label": "Set your preferences", "title": "Set your preferences", "desc": "Choose your city, dates, budget, and travel style." },
+        { "label": "Build your plan", "title": "Watch your plan take shape", "desc": "Let AI build your day-by-day itinerary and arrange the stops around your preferences." },
+        { "label": "Explore your route", "title": "Explore your route", "desc": "See your route on the map, track your spending, and make the plan your own." }
       ]
     },
     "destinations": {
@@ -193,6 +283,9 @@
       "subtitle": "AI is an expert in these cities — it generates optimized plans in seconds.",
       "planShort": "Plan",
       "planFull": "Plan Now",
+      "guideBadge": "City guide",
+      "guideShort": "Guide",
+      "openGuide": "open city guide",
       "cities": {
         "roma": "Rome",
         "istanbul": "Istanbul",
@@ -264,7 +357,7 @@
       "photoAlt": "Istanbul Galata Tower",
       "quoteLine1": "The world's most beautiful corners",
       "quoteLine2": "are still waiting for you.",
-      "title": "Welcome back 👋",
+      "title": "Welcome back",
       "subtitle": "Sign in to your account and keep planning.",
       "forgotPassword": "Forgot password?",
       "resetSending": "Sending...",
@@ -291,7 +384,7 @@
       "photoAlt": "Anıtkabir, Ankara",
       "quoteLine1": "Planning your dream trip",
       "quoteLine2": "now takes just minutes.",
-      "title": "Create an account 🚀",
+      "title": "Create an account",
       "subtitle": "Join the AI-powered planner.",
       "nameLabel": "Full Name",
       "namePlaceholder": "Your Full Name",
@@ -315,7 +408,7 @@
       "verify": {
         "title": "Verify Your Email",
         "sentToCode": "We sent a 6-digit verification code to <b>{{email}}</b>.",
-        "spamHint": "📥 Didn't get the email? Check your Spam / Junk folder.",
+        "spamHint": "Didn't get the email? Check your Spam / Junk folder.",
         "codeLabel": "Verification Code",
         "codePlaceholder": "000000",
         "verifyButton": "Verify",
@@ -489,7 +582,7 @@
         "address": { "title": "Address", "value": "Istanbul, Türkiye" },
         "hours": { "title": "Working Hours", "value": "Monday – Friday, 9:00 AM – 6:00 PM" }
       },
-      "quickReplyTitle": "Fast reply guarantee 🚀",
+      "quickReplyTitle": "Fast reply guarantee",
       "quickReplyDesc": "We usually reply within 2 hours to messages sent during working hours.",
       "form": {
         "nameLabel": "Full Name",
@@ -543,9 +636,9 @@
     "nextTrip": {
       "next": "Next Trip",
       "last": "Last Trip",
-      "daysLeft": "days left ✈️",
+      "daysLeft": "days left",
       "durationDays": "{{count}}-day trip",
-      "checklist": "📋 Travel Checklist",
+      "checklist": "Travel Checklist",
       "lastSaved": "Last saved plan",
       "noPlanTitle": "No plans yet",
       "noPlanSubtitle": "Start creating a new plan"
@@ -573,6 +666,57 @@
       "mostVisited": "Most Visited",
       "noData": "No data yet"
     },
+    "controlCenter": {
+      "title": "Travel Control Center",
+      "subtitle": "The important details of your {{city}} plan at a glance.",
+      "openPlan": "Open plan",
+      "preparation": "Preparation status",
+      "preparationCount": "{{done}} of {{total}} tasks completed",
+      "openChecklist": "Complete checklist",
+      "completed": "Completed",
+      "tripCompleted": "This trip is complete. You can rediscover the same city.",
+      "remainingBudget": "Remaining budget",
+      "budgetExceeded": "Over budget",
+      "plannedSpend": "{{amount}} planned · {{percent}}% of budget",
+      "reviewBudget": "Review spending",
+      "routeDensity": "Route density",
+      "routeDensityDesc": "Spread over {{days}} days, averaging {{average}} stops per day.",
+      "stopCount": "{{count}} stops",
+      "openRoute": "Open route",
+      "travelWallet": "Travel wallet",
+      "walletCount": "{{count}} records",
+      "walletEmpty": "Keep tickets, reservations, and important links in one place.",
+      "walletReady": "{{count}} travel records are ready for this plan.",
+      "openWallet": "Open wallet",
+      "completeNow": "Complete now",
+      "reviewPlan": "Review plan",
+      "planAgain": "Plan again",
+      "nextAction": {
+        "eyebrow": "Your next best action",
+        "timing": {
+          "active": "Right now",
+          "past": "Trip completed",
+          "today": "Today",
+          "tomorrow": "Tomorrow",
+          "days": "In {{count}} days"
+        },
+        "activeTitle": "Your next stop is ready",
+        "activeDesc": "{{place}} is next on today's route.",
+        "overBudgetTitle": "Balance your budget",
+        "overBudgetDesc": "Planned spending is {{amount}} over your budget.",
+        "weatherTitle": "Prepare for the weather",
+        "weatherDesc": "Check alternatives suitable for possible rain in {{city}}.",
+        "stayTitle": "Confirm your accommodation",
+        "stayDesc": "Your {{city}} plan does not have a confirmed accommodation choice yet.",
+        "completeStay": "Edit accommodation",
+        "preparationTitle": "Continue preparing",
+        "preparationDesc": "You have {{count}} items to complete before departure.",
+        "readyTitle": "Your plan looks ready",
+        "readyDesc": "You can give your {{city}} itinerary one final review.",
+        "pastTitle": "Time for a new route",
+        "pastDesc": "Use your {{city}} experience to create a new plan."
+      }
+    },
     "activity": {
       "title": "Recent Activity",
       "planCount": "{{count}} plans",
@@ -585,7 +729,7 @@
       "showMore": "Show More ({{count}} more plans)",
       "active": {
         "text": "You're in {{dest}} right now!",
-        "sub": "Until {{endDate}} — have a great trip ✈️",
+        "sub": "Until {{endDate}} — have a great trip",
         "timeLabel": "in progress"
       },
       "upcoming": {
@@ -614,11 +758,35 @@
       "exploredSuffix": "so far!",
       "citiesCount": "{{count}} cities",
       "spread": "{{destinations}} destinations across {{countries}} countries",
-      "empty": "Cities will start appearing on the map as you complete trips 🗺️"
+      "empty": "Cities will start appearing on the map as you complete trips"
     }
   },
   "onboarding": {
     "badge": "AI-Powered Plan",
+    "postcard": {
+      "label": "Your travel postcard",
+      "newStory": "The beginning of a new story",
+      "emptyTitle": "Where will your\nnext story begin?",
+      "nextStop": "Your next stop",
+      "photoAlt": "City view of {{city}}",
+      "notesTitle": "Your travel notes",
+      "datesPlaceholder": "Pick your dates. Let the countdown begin.",
+      "budgetPlaceholder": "A budget that suits you",
+      "travelers_one": "{{count}} traveler",
+      "travelers_other": "{{count}} travelers",
+      "stylePlaceholder": "Your pace, your discoveries.",
+      "foodPlaceholder": "A little flavor for your journey.",
+      "stayPlaceholder": "The little details will bring it together.",
+      "madeForYou": "A journey of your own.",
+      "generating": "Your choices are in. Let's bring your route to life.",
+      "paces": { "relaxed": "Relaxed pace", "normal": "Balanced pace", "active": "Active pace", "flexible": "Flexible pace" },
+      "hints": {
+        "step1": "Pick a city. Watch your postcard take shape.",
+        "step2": "The things you love make this journey yours.",
+        "step3": "The flavors of a great trip stay with you.",
+        "step4": "The finishing touches… Your personal route is almost here."
+      }
+    },
     "sidebar": {
       "step1": { "title": "Your Dream\nDestination", "desc": "Tell us where you're going and for how long, and we'll handle the rest." },
       "step2": { "title": "Your Travel\nStyle", "desc": "Fast or slow? Culture or adventure? Let's set your personal pace." },
@@ -646,10 +814,10 @@
       "destinationLabel": "Destination",
       "destinationPlaceholder": "E.g. Rome, Italy",
       "travelDates": "Travel Dates",
-      "departure": "✈️ Departure",
-      "return": "🏠 Return",
-      "arrival": "🛬 Arrival",
-      "departureTime": "🛫 Departure Time",
+      "departure": "Departure",
+      "return": "Return",
+      "arrival": "Arrival",
+      "departureTime": "Departure Time",
       "peopleCount": "Number of People",
       "person": "people",
       "totalBudget": "Total Budget",
@@ -687,12 +855,12 @@
     "step3": {
       "dietaryTitle": "Dietary Preferences",
       "diets": {
-        "vegan":         { "label": "Vegan",         "emoji": "🌱" },
-        "vegetarian":    { "label": "Vegetarian",    "emoji": "🥗" },
-        "halal":         { "label": "Halal",         "emoji": "☪️" },
-        "glutenFree":    { "label": "Gluten-Free",   "emoji": "🌾" },
-        "pescatarian":   { "label": "Pescatarian",   "emoji": "🐟" },
-        "noRestriction": { "label": "No Restrictions", "emoji": "🍽️" }
+        "vegan":         { "label": "Vegan",         "icon": "sprout" },
+        "vegetarian":    { "label": "Vegetarian",    "icon": "leaf" },
+        "halal":         { "label": "Halal",         "icon": "moon" },
+        "glutenFree":    { "label": "Gluten-Free",   "icon": "wheat-off" },
+        "pescatarian":   { "label": "Pescatarian",   "icon": "fish" },
+        "noRestriction": { "label": "No Restrictions", "icon": "food" }
       },
       "foodPhilosophy": "Food Philosophy",
       "foodPhilosophyHint": "What kind of places should the AI recommend?",
@@ -856,7 +1024,7 @@
       "unfollowConfirm": "Unfollow?",
       "unfollowYes": "Yes",
       "cancel": "Cancel",
-      "followingBadge": "✓ Following",
+      "followingBadge": "Following",
       "emptyTitle": "You're not following anyone yet",
       "emptyDescription": "Discover and follow travelers from the \"Everyone\" tab",
       "browseAll": "Browse everyone →"
@@ -896,7 +1064,7 @@
       "outOf": "/ 5",
       "votes": "{{count}} votes",
       "noVotes": "No votes yet",
-      "following": "✓ Following",
+      "following": "Following",
       "follow": "+ Follow"
     }
   },
@@ -921,8 +1089,8 @@
     },
     "close": "Close",
     "push": {
-      "todayTitle": "Trip to {{dest}} today! ✈️",
-      "tomorrowTitle": "Trip to {{dest}} tomorrow! 🧳",
+      "todayTitle": "Trip to {{dest}} today!",
+      "tomorrowTitle": "Trip to {{dest}} tomorrow!",
       "todayBody": "Don't forget to check your plan one last time.",
       "tomorrowBody": "Have you finished getting ready?"
     }
@@ -943,7 +1111,8 @@
     },
     "mobileMap": {
       "title": "Route Map",
-      "openAriaLabel": "Open map"
+      "openAriaLabel": "Open map",
+      "buttonLabel": "Map"
     },
     "weather": {
       "title": "Weather"
@@ -970,7 +1139,7 @@
     "budget": {
       "label": "Budget Tracking",
       "spent": "{{amount}} spent",
-      "exceeded": "{{amount}} over budget ⚠️",
+      "exceeded": "{{amount}} over budget",
       "remaining": "{{amount}} left",
       "activitiesEntered": "{{count}} activities entered · {{pct}}%",
       "totalBudget": "Total budget: {{amount}}"
@@ -978,12 +1147,15 @@
     "daySummary": {
       "estimated": "Estimated",
       "spent": "Spent",
-      "panelAriaLabel": "Day {{number}} plan"
+      "panelAriaLabel": "Day {{number}} plan",
+      "readMore": "More",
+      "readLess": "Show less"
     },
     "map": {
       "regionAriaLabel": "Route map",
       "placesOptimized": "{{count}} places optimized",
-      "accommodationFallback": "Accommodation"
+      "accommodationFallback": "Accommodation",
+      "resizePanels": "Resize the plan and map panels"
     },
     "dailyPlanView": {
       "periods": {
@@ -1109,20 +1281,20 @@
   },
   "aiAssistant": {
     "quickQuestions": [
-      { "emoji": "🌍", "text": "Best 3 cities in Europe?" },
-      { "emoji": "💶", "text": "Where can I go with €1,000?" },
-      { "emoji": "☀️", "text": "Warm destinations in January?" },
-      { "emoji": "🎒", "text": "Best places for solo travel?" },
-      { "emoji": "🛂", "text": "Visa-free countries for a Turkish passport?" },
-      { "emoji": "💑", "text": "Most romantic honeymoon destinations?" }
+      { "icon": "globe", "text": "Best 3 cities in Europe?" },
+      { "icon": "banknote", "text": "Where can I go with €1,000?" },
+      { "icon": "sun", "text": "Warm destinations in January?" },
+      { "icon": "backpack", "text": "Best places for solo travel?" },
+      { "icon": "book", "text": "Visa-free countries for a Turkish passport?" },
+      { "icon": "heart", "text": "Most romantic honeymoon destinations?" }
     ],
     "planQuestions": [
-      { "emoji": "📅", "text": "Which of my days is busiest?" },
-      { "emoji": "💡", "text": "What can I add to my plan?" },
-      { "emoji": "💰", "text": "Is my budget reasonable for this destination?" },
-      { "emoji": "🍽️", "text": "How are the food choices in my plan?" },
-      { "emoji": "🚌", "text": "What's the most practical way to get around {{destination}}?" },
-      { "emoji": "⚠️", "text": "Anything I should know before I go?" }
+      { "icon": "calendar", "text": "Which of my days is busiest?" },
+      { "icon": "lightbulb", "text": "What can I add to my plan?" },
+      { "icon": "wallet", "text": "Is my budget reasonable for this destination?" },
+      { "icon": "food", "text": "How are the food choices in my plan?" },
+      { "icon": "transit", "text": "What's the most practical way to get around {{destination}}?" },
+      { "icon": "warning", "text": "Anything I should know before I go?" }
     ],
     "followUpChips": [
       "Tell me more",
@@ -1140,7 +1312,7 @@
     },
     "planConnected": "{{destination}} plan connected",
     "genericAssistant": "Travel assistant",
-    "errorMessage": "Sorry, something went wrong. Please try again. 🙏",
+    "errorMessage": "Sorry, something went wrong. Please try again.",
     "inputPlaceholderPlan": "Ask about your {{destination}} plan…",
     "inputPlaceholderGeneral": "Ask something…"
   },
@@ -1501,7 +1673,7 @@
     "pushNotif": {
       "title": "Push Notifications",
       "subtitle": "Manage browser push notifications.",
-      "testNotifTitle": "Travyon Notifications Active 🎉",
+      "testNotifTitle": "Travyon Notifications Active",
       "testNotifBody": "You'll now receive travel alerts instantly.",
       "status": {
         "granted": {
@@ -1555,19 +1727,19 @@
       },
       "publicProfile": {
         "title": "Public profile",
-        "on": "✅ Visible in the community — other users can find you",
-        "off": "🔒 Private mode — no one can see your profile"
+        "on": "Visible in the community — other users can find you",
+        "off": "Private mode — no one can see your profile"
       },
       "publicPlans": {
         "title": "My plans are public",
-        "on": "✅ You can share in the community",
-        "off": "🔒 Sharing off — the share button is locked on the Community page",
-        "warning": "⚠️ While this setting is off, you cannot share your plans from the Community page."
+        "on": "You can share in the community",
+        "off": "Sharing off — the share button is locked on the Community page",
+        "warning": "While this setting is off, you cannot share your plans from the Community page."
       },
       "publicFollow": {
         "title": "Anyone can follow",
-        "on": "✅ No approval needed — anyone can follow you",
-        "off": "🔒 New follows are disabled"
+        "on": "No approval needed — anyone can follow you",
+        "off": "New follows are disabled"
       }
     },
     "privacyLocation": {
@@ -1585,13 +1757,13 @@
       },
       "suggestions": {
         "title": "Location-based suggestions",
-        "on": "✅ Location is used for nearby places and smart suggestions",
-        "off": "🔒 Not active yet — general suggestions are shown"
+        "on": "Location is used for nearby places and smart suggestions",
+        "off": "Not active yet — general suggestions are shown"
       },
       "history": {
         "title": "Location history",
-        "on": "✅ Visit history is saved — for better suggestions on future plans",
-        "off": "🔒 Location history is not stored"
+        "on": "Visit history is saved — for better suggestions on future plans",
+        "off": "Location history is not stored"
       }
     },
     "privacyData": {
@@ -1599,8 +1771,8 @@
       "subtitle": "Control how your data is processed.",
       "analytics": {
         "title": "Share analytics data",
-        "on": "✅ Anonymous usage data is sent to help improve the service",
-        "off": "🔒 No usage data is sent"
+        "on": "Anonymous usage data is sent to help improve the service",
+        "off": "No usage data is sent"
       },
       "storedDataHeader": "Data stored in your account",
       "items": [
@@ -1639,9 +1811,10 @@
       "proBadge": "Pro",
       "freeBadge": "Free",
       "usageLabel": "Plans created this month",
-      "limitReached": "⚠️ You've reached your monthly limit. Upgrade to Pro for unlimited plans.",
+      "limitReached": "You've reached your monthly limit. Upgrade to Pro for unlimited plans.",
       "remainingPlans": "You have {{count}} plan(s) left this month.",
       "compare": {
+        "included": "Included",
         "headers": {
           "feature": "Feature",
           "free": "Free",
@@ -1660,23 +1833,23 @@
           },
           {
             "label": "Ads",
-            "free": "✅",
+            "free": "check",
             "pro": "-"
           },
           {
             "label": "Community sharing",
-            "free": "✅",
-            "pro": "✅"
+            "free": "check",
+            "pro": "check"
           },
           {
             "label": "Priority support",
             "free": "—",
-            "pro": "✅"
+            "pro": "check"
           },
           {
             "label": "Early access",
             "free": "—",
-            "pro": "✅"
+            "pro": "check"
           }
         ]
       },
@@ -1764,7 +1937,7 @@
     "deleteAccount": {
       "title": "Delete Account",
       "warning": {
-        "title": "⚠️ This action cannot be undone",
+        "title": "This action cannot be undone",
         "desc": "Your account, all your travel plans, and personal data will be permanently deleted."
       },
       "confirmPhrase": "DELETE MY ACCOUNT",
@@ -1871,6 +2044,64 @@
       "lock": { "label": "Luggage lock", "tip": "A TSA-approved lock is required in some countries." },
       "copies": { "label": "Document copies (photo/email)", "tip": "Save your passport and ticket to the cloud or email." },
       "notify": { "label": "Notify home / workplace", "tip": "Share your travel plan with someone you trust." }
+    }
+  },
+  "travelWallet": {
+    "back": "Back to Hub",
+    "eyebrow": "Travel documents",
+    "title": "Travel Wallet",
+    "subtitle": "Keep flight, accommodation, ticket, and reservation details together with your trip plan.",
+    "addEntry": "Add new record",
+    "currentTrip": "Active plan",
+    "general": "General travel",
+    "localOnly": "No files are uploaded to protect your privacy. Details are stored only in this browser; do not save sensitive ID or card information.",
+    "recordsTitle": "Your records",
+    "recordCount": "{{count}} records",
+    "reference": "Booking / reference code",
+    "stats": {
+      "records": "Records",
+      "categories": "Categories",
+      "upcoming": "Upcoming"
+    },
+    "categories": {
+      "flight": "Flight",
+      "stay": "Stay",
+      "ticket": "Ticket",
+      "insurance": "Insurance",
+      "document": "Document",
+      "other": "Other"
+    },
+    "empty": {
+      "title": "Your wallet is empty",
+      "description": "Add the first flight, hotel, or ticket record for your {{city}} trip and find it in seconds when you need it.",
+      "cta": "Add first record"
+    },
+    "form": {
+      "addTitle": "Add travel record",
+      "editTitle": "Edit record",
+      "category": "Record type",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Istanbul – Rome flight",
+      "referenceLabel": "Booking code",
+      "referencePlaceholder": "e.g. TRV123",
+      "dateLabel": "Date",
+      "urlLabel": "Secure link",
+      "urlPlaceholder": "airline.com/my-booking",
+      "noteLabel": "Short note",
+      "notePlaceholder": "Terminal, baggage allowance, or an important reminder…",
+      "titleRequired": "Add a title so you can recognize this record.",
+      "urlInvalid": "Enter a valid web address."
+    },
+    "actions": {
+      "edit": "Edit record",
+      "copy": "Copy code",
+      "openLink": "Open link",
+      "delete": "Delete",
+      "confirmDelete": "Yes, delete",
+      "cancel": "Cancel",
+      "close": "Close",
+      "save": "Save record",
+      "update": "Save changes"
     }
   },
   "userProfile": {
@@ -1983,6 +2214,8 @@
       "mixed": "Mixed / Surprise"
     },
     "mobileMapTitle": "Route Map",
+    "mobileMapOpen": "Open map",
+    "mobileMapButton": "Map",
     "byUser": "by {{name}}",
     "daysCount": "{{count}} days",
     "tabs": {
@@ -1997,6 +2230,8 @@
     },
     "dayFallback": "Day {{number}}",
     "estimated": "Estimated",
+    "readMore": "More",
+    "readLess": "Show less",
     "placesCount": "{{count}} places"
   }
 }

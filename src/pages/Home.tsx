@@ -1,28 +1,23 @@
-import React, { useRef, useState, useEffect, Suspense, lazy } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sun, Moon, Plane } from 'lucide-react';
+import { ArrowRight, BookOpen, Sun, Moon, Plane } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import TravyonLogo from '../components/TravyonLogo';
 import TripPlannerDemo from '../components/tripPlanner/TripPlannerDemo';
+import MobileProductTour from '../components/tripPlanner/MobileProductTour';
+import MobileWhyTravyon from '../components/MobileWhyTravyon';
+import DesktopHowItWorks from '../components/DesktopHowItWorks';
 import PreviewNudge from '../components/PreviewNudge';
-
-// three.js + @react-three/fiber ağır olduğu için sadece bölüm görünüme
-// yaklaşınca ve yalnızca masaüstünde yükleniyor — hero animasyonuyla çakışmasın.
-const GlobeAnimation = lazy(() => import('../components/GlobeAnimation'));
-const TravyonLogoOrbit = lazy(() => import('../components/TravyonLogoOrbit'));
+import { CITY_GUIDES, type CityGuideData } from '../data/cityGuides';
 
 /* ── Destinasyon kartı — hover'da video oynar ── */
-interface DestData {
-  cityKey: string; planCount: number; img: string; video: string;
-}
-
 const DestinationCard: React.FC<{
-  dest: DestData; index: number; onNavigate: () => void;
-}> = ({ dest, index, onNavigate }) => {
+  dest: CityGuideData; index: number;
+}> = ({ dest, index }) => {
   const { t } = useTranslation();
   const cityName = t(`home.destinations.cities.${dest.cityKey}`);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,15 +52,20 @@ const DestinationCard: React.FC<{
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.06, duration: 0.35 }}
-      onClick={onNavigate}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
       className="group relative rounded-3xl overflow-hidden cursor-pointer shadow-[0_10px_26px_rgba(46,43,37,0.16)]"
       style={{ aspectRatio: '5/3' }}
     >
+      <Link
+        to={`/rehber/${dest.slug}`}
+        className="absolute inset-0 z-10"
+        aria-label={`${cityName} ${t('home.destinations.openGuide')}`}
+      />
+
       {/* Statik fotoğraf */}
       <img
-        src={dest.img}
+        src={dest.image}
         alt={cityName}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
           hovered ? 'opacity-0' : 'opacity-100'
@@ -91,18 +91,18 @@ const DestinationCard: React.FC<{
       <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
 
       {/* İçerik */}
-      <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-5 flex items-end justify-between gap-1.5 sm:gap-2">
-        <h3 className="font-heading text-sm sm:text-2xl text-white leading-tight">
-          {cityName}
-        </h3>
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-          className="shrink-0 bg-accent hover:brightness-105 text-white font-heading text-[9px] sm:text-xs px-2 py-1 sm:px-4 sm:py-2.5 rounded-full transition-all duration-200 whitespace-nowrap group-hover:scale-105 active:scale-95"
-        >
-          <span className="sm:hidden">{t('home.destinations.planShort')}</span>
-          <span className="hidden sm:inline">{t('home.destinations.planFull')}</span>
-        </button>
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 p-2.5 sm:p-5 flex items-end justify-between gap-1.5 sm:gap-2">
+        <div className="min-w-0">
+          <h3 className="font-heading text-sm sm:text-2xl text-white leading-tight">
+            {cityName}
+          </h3>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-white/25 bg-black/35 px-2 py-1 font-heading text-[8px] text-white backdrop-blur-md transition-all duration-200 group-hover:scale-105 sm:gap-1.5 sm:border-0 sm:bg-accent sm:px-4 sm:py-2.5 sm:text-xs sm:backdrop-blur-none">
+          <BookOpen size={10} className="sm:hidden" />
+          <BookOpen size={12} className="hidden sm:block" />
+          <span className="sm:hidden">{t('home.destinations.guideShort')}</span>
+          <span className="hidden sm:inline">{t('home.destinations.guideBadge')}</span>
+        </span>
       </div>
     </motion.div>
   );
@@ -117,41 +117,6 @@ const HERO_PHOTOS_META = [
 
 const HERO_ROTATE_MS = 6000;
 
-const STEP_NUMS = ['01', '02', '03', '04'];
-
-const DESTINATIONS: DestData[] = [
-  {
-    cityKey: 'roma',      planCount: 2400,
-    img:   'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/roma.mp4',
-  },
-  {
-    cityKey: 'paris',     planCount: 3100,
-    img:   'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/paris.mp4',
-  },
-  {
-    cityKey: 'tokyo',     planCount: 1800,
-    img:   'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/tokyo.mp4',
-  },
-  {
-    cityKey: 'istanbul',  planCount: 4200,
-    img:   'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/istanbul.mp4',
-  },
-  {
-    cityKey: 'barcelona', planCount: 1500,
-    img:   'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/barselona.mp4',
-  },
-  {
-    cityKey: 'newyork',   planCount: 2000,
-    img:   'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800&auto=format&fit=crop',
-    video: '/videos/newyork.mp4',
-  },
-];
-
 const Home: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -160,14 +125,37 @@ const Home: React.FC = () => {
 
   const HERO_PHOTOS = HERO_PHOTOS_META.map(p => ({ ...p, city: t(`home.destinations.cities.${p.cityKey}`) }));
 
-  const stepsData = t('home.howItWorks.steps', { returnObjects: true }) as { title: string; desc: string }[];
-  const STEPS = stepsData.map((s, i) => ({ num: STEP_NUMS[i], ...s }));
-
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showPreviewNudge, setShowPreviewNudge] = useState(false);
   const nudgeTimerRef = useRef<number | undefined>(undefined);
+  // Ziyaret başına bir kez: sayfa yeniden açıldığında ref sıfırlanır, aynı
+  // ziyarette aşağı/yukarı kaydırmak ise pencereyi tekrar göstermez.
+  const previewNudgeShownRef = useRef(false);
 
   useEffect(() => () => { if (nudgeTimerRef.current) window.clearTimeout(nudgeTimerRef.current); }, []);
+
+  const schedulePreviewNudge = () => {
+    if (previewNudgeShownRef.current || nudgeTimerRef.current !== undefined) return;
+
+    nudgeTimerRef.current = window.setTimeout(() => {
+      nudgeTimerRef.current = undefined;
+      if (previewNudgeShownRef.current) return;
+      previewNudgeShownRef.current = true;
+      setShowPreviewNudge(true);
+    }, 900);
+  };
+
+  const cancelScheduledPreviewNudge = () => {
+    if (nudgeTimerRef.current === undefined) return;
+    window.clearTimeout(nudgeTimerRef.current);
+    nudgeTimerRef.current = undefined;
+  };
+
+  const closePreviewNudge = () => {
+    previewNudgeShownRef.current = true;
+    cancelScheduledPreviewNudge();
+    setShowPreviewNudge(false);
+  };
 
   /* Hero fotoğrafları belirli aralıklarla otomatik döner */
   useEffect(() => {
@@ -177,45 +165,6 @@ const Home: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  /* 3D glob — yalnızca "Nasıl Çalışır" bölümü görünüme yaklaşınca ve
-     yalnızca masaüstünde (lg+) yüklensin; hero ilk açılışta onunla
-     yarışmasın ve mobilde boşa WebGL render loop'u çalışmasın. */
-  const globeSectionRef = useRef<HTMLElement>(null);
-  const [loadGlobe, setLoadGlobe] = useState(false);
-
-  /* GlobeAnimation'ın kendi JS parçasını (three.js, ~880KB) tarayıcı boşta
-     kalır kalmaz arka planda önceden indir — kullanıcı bölüme scroll
-     edince sadece küçük doku dosyalarını (138KB) beklesin, koca JS
-     parçasının inmesini değil. Hero animasyonuyla yarışmaması için
-     idle callback ile geciktiriliyor. */
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) return;
-    const prefetch = () => { import('../components/GlobeAnimation'); };
-    if ('requestIdleCallback' in window) {
-      const id = window.requestIdleCallback(prefetch, { timeout: 4000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const t = setTimeout(prefetch, 1500);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia('(min-width: 1024px)').matches) return;
-    const el = globeSectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setLoadGlobe(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '800px' }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   const handleCTA = () => {
     navigate(user ? '/onboarding' : '/register');
   };
@@ -223,10 +172,10 @@ const Home: React.FC = () => {
   return (
     <div className="bg-bg text-text overflow-x-hidden">
 
-      {/* ══ MOBİL NAVBAR — sadece sayfa başında, scroll ile birlikte kaybolur ══ */}
-      <div className="sm:hidden absolute inset-x-0 top-0 z-50 px-3 pt-2 pb-1">
-        <nav className="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/15 h-14 px-4 rounded-2xl">
-          <TravyonLogo size={36} />
+      {/* ══ MOBİL NAVBAR — hero üzerinde kaplamasız ══ */}
+      <div className="sm:hidden absolute inset-x-0 top-0 z-50 px-4 pt-3">
+        <nav className="flex h-14 items-center justify-between">
+          <TravyonLogo size={36} light />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -260,10 +209,8 @@ const Home: React.FC = () => {
       {/* ══ DESKTOP ÜST ÇUBUK — bar/pill kaplaması yok, sadece logo + butonlar ══ */}
       <div className="hidden sm:flex absolute inset-x-0 top-3 z-50 justify-center">
         <nav className="flex items-center justify-between w-[97%] max-w-[1300px] px-6 h-[72px]">
-          <div className="w-[330px] h-[150px] shrink-0">
-            <Suspense fallback={null}>
-              <TravyonLogoOrbit />
-            </Suspense>
+          <div className="w-[330px] shrink-0 flex items-center">
+            <TravyonLogo size={80} light />
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -404,7 +351,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════════
           SCROLL İNDİKATÖRÜ
          ══════════════════════════════════════════ */}
-      <div className="bg-bg flex flex-col items-center justify-center pt-25 pb-0 gap-1.5">
+      <div className="bg-bg flex flex-col items-center justify-center pt-29 pb-0 gap-1.5">
         <span className="text-[11px] font-heading tracking-[0.25em] text-text uppercase select-none">
           {t('home.scroll')}
         </span>
@@ -417,6 +364,28 @@ const Home: React.FC = () => {
             <path d="M1 1L10 10L19 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </motion.div>
+      </div>
+
+      {/* ══════════════════════════════════════════
+          BÖLÜM 1.5 — NASIL ÇALIŞIR / NEDEN TRAVYON
+         ══════════════════════════════════════════ */}
+      <section
+        id="nasil-calisir"
+        className="relative bg-bg overflow-x-hidden lg:mt-20"
+      >
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8">
+          <MobileWhyTravyon />
+          <DesktopHowItWorks />
+        </div>
+      </section>
+
+      {/* ── PLANE DIVIDER ── */}
+      <div className="bg-bg px-4 sm:px-12 py-2">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="flex-1 h-px bg-divider" />
+          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
+          <div className="flex-1 h-px bg-divider" />
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════
@@ -446,13 +415,12 @@ const Home: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            onViewportEnter={() => {
-              nudgeTimerRef.current = window.setTimeout(() => setShowPreviewNudge(true), 900);
-            }}
+            onViewportEnter={schedulePreviewNudge}
+            onViewportLeave={cancelScheduledPreviewNudge}
             className="relative rounded-3xl overflow-hidden border border-divider shadow-[0_20px_50px_rgba(46,43,37,0.18)]"
           >
             {/* Browser şerit */}
-            <div className="bg-surface-2 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-2.5 border-b border-divider">
+            <div className="hidden lg:flex bg-surface-2 px-4 py-2.5 items-center gap-2.5 border-b border-divider">
               <div className="flex gap-1 sm:gap-1.5 shrink-0">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-400" />
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400" />
@@ -465,102 +433,19 @@ const Home: React.FC = () => {
               </div>
             </div>
 
-            <TripPlannerDemo />
-
-            {showPreviewNudge && <PreviewNudge onClose={() => setShowPreviewNudge(false)} />}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── PLANE DIVIDER ── */}
-      <div className="bg-bg px-4 sm:px-12 py-2">
-        <div className="flex items-center gap-4 max-w-6xl mx-auto">
-          <div className="flex-1 h-px bg-divider" />
-          <Plane size={15} className="text-muted -rotate-45 shrink-0" />
-          <div className="flex-1 h-px bg-divider" />
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════
-          BÖLÜM 3 — NASIL ÇALIŞIR (Globe arka plan)
-         ══════════════════════════════════════════ */}
-      <section
-        id="nasil-calisir"
-        ref={globeSectionRef}
-        className="relative bg-bg overflow-x-hidden"
-      >
-
-        {/* Globe — sadece lg+ ekranlarda, görünüme yaklaşınca yüklenir */}
-        {loadGlobe && (
-          <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
-            <div style={{ width: 500, height: 500 }}>
-              <Suspense fallback={null}>
-                <GlobeAnimation />
-              </Suspense>
+            <div className="lg:hidden">
+              <MobileProductTour />
             </div>
-          </div>
-        )}
+            <div className="hidden lg:block">
+              <TripPlannerDemo />
+            </div>
 
-        {/* İçerik */}
-        <div
-          className="relative z-10 w-full mx-auto px-4 sm:px-8 flex flex-col lg:min-h-[800px]"
-          style={{ maxWidth: 1280 }}
-        >
-
-          {/* Başlık */}
-          <div className="pt-14 sm:pt-20 lg:pt-22 pb-2">
-            <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.howItWorks.eyebrow')}</span>
-            <h2 className="font-heading text-2xl md:text-3xl text-text mt-1">
-              {t('home.howItWorks.title')}
-            </h2>
-            <p className="text-sm text-muted mt-1.5 max-w-xs leading-relaxed">
-              {t('home.howItWorks.subtitle')}
-            </p>
-          </div>
-
-          {/* Mobil / tablet: 2 sütun grid */}
-          <div className="lg:hidden grid grid-cols-2 gap-6 sm:gap-8 pt-8 pb-14">
-            {STEPS.map((step) => (
-              <div key={step.num}>
-                <div className="font-heading text-accent text-3xl sm:text-4xl mb-2 leading-none">{step.num}</div>
-                <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
-                <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
+            {showPreviewNudge && (
+              <div className="hidden lg:block absolute inset-0 z-40">
+                <PreviewNudge onClose={closePreviewNudge} />
               </div>
-            ))}
-          </div>
-
-          {/* Desktop (lg+): 3-sütun globe layout */}
-          <div
-            className="hidden lg:grid flex-1 pb-10"
-            style={{ gridTemplateColumns: '1fr 520px 1fr' }}
-          >
-
-            {/* Sol — 01 ve 02 */}
-            <div className="flex flex-col justify-start pt-20 gap-10 pr-7">
-              {STEPS.slice(0, 2).map((step) => (
-                <div key={step.num}>
-                  <div className="font-heading text-accent text-4xl mb-2 leading-none">{step.num}</div>
-                  <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
-                  <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Merkez — boş, sadece dünya görünür */}
-            <div />
-
-            {/* Sağ — 03 ve 04 */}
-            <div className="flex flex-col justify-start pt-20 gap-10 pl-15">
-              {STEPS.slice(2, 4).map((step) => (
-                <div key={step.num}>
-                  <div className="font-heading text-accent text-4xl mb-2 leading-none">{step.num}</div>
-                  <h3 className="font-heading text-sm text-text mb-1">{step.title}</h3>
-                  <p className="text-xs text-muted leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-
-          </div>
+            )}
+          </motion.div>
         </div>
       </section>
 
@@ -576,7 +461,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════════
           BÖLÜM 3.5 — POPÜLER DESTİNASYONLAR
          ══════════════════════════════════════════ */}
-      <section className="bg-bg py-20 lg:py-24">
+      <section id="destinasyonlar" className="bg-bg py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <motion.div
@@ -594,12 +479,11 @@ const Home: React.FC = () => {
           </motion.div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DESTINATIONS.map((dest, i) => (
+            {CITY_GUIDES.map((dest, i) => (
               <DestinationCard
                 key={dest.cityKey}
                 dest={dest}
                 index={i}
-                onNavigate={() => navigate('/register')}
               />
             ))}
           </div>

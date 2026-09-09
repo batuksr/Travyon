@@ -32,10 +32,12 @@ const Notifications         = lazy(() => import("./pages/Notifications"));
 const UserProfile           = lazy(() => import("./pages/UserProfile"));
 const SSS                 = lazy(() => import("./pages/SSS"));
 const TravelChecklist       = lazy(() => import("./pages/TravelChecklist"));
+const TravelWallet          = lazy(() => import("./pages/TravelWallet"));
 const CommunityPlanView     = lazy(() => import("./pages/CommunityPlanView"));
 const Gizlilik             = lazy(() => import("./pages/Gizlilik"));
 const KullanimKosullari     = lazy(() => import("./pages/KullanimKosullari"));
 const Iletisim             = lazy(() => import("./pages/Iletisim"));
+const CityGuide            = lazy(() => import("./pages/CityGuide"));
 const NotFound             = lazy(() => import("./pages/NotFound"));
 
 /* Rota geçişlerinde kısa süreliğine gösterilen, tema tokenlarına uygun yükleme ekranı */
@@ -104,7 +106,7 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
 
   /* Sidebar/alt nav gösterilmeyecek sayfalar — Dashboard, auth ve genel sayfalar */
   const noChromePaths = ['/login', '/register', '/', '/sss', '/gizlilik', '/kullanim-kosullari', '/iletisim'];
-  const hideChrome = isDashboard || noChromePaths.includes(location.pathname);
+  const hideChrome = isDashboard || noChromePaths.includes(location.pathname) || location.pathname.startsWith('/rehber/');
 
   const showSidebar   = isAuthenticated && !hideChrome;
   const showBottomNav = isAuthenticated && !hideChrome;
@@ -128,10 +130,12 @@ const AppLayout: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) 
             <Route path="/profile/:uid" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/sss"                  element={<SSS />} />
             <Route path="/travel-checklist"     element={<ProtectedRoute><TravelChecklist /></ProtectedRoute>} />
+            <Route path="/travel-wallet"        element={<ProtectedRoute><TravelWallet /></ProtectedRoute>} />
             <Route path="/plan/:planId"         element={<ProtectedRoute><CommunityPlanView /></ProtectedRoute>} />
             <Route path="/gizlilik"             element={<Gizlilik />} />
             <Route path="/kullanim-kosullari"   element={<KullanimKosullari />} />
             <Route path="/iletisim"             element={<Iletisim />} />
+            <Route path="/rehber/:slug"         element={<CityGuide />} />
             <Route path="*"                      element={<NotFound />} />
           </Routes>
         </Suspense>

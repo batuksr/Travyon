@@ -1,3 +1,4 @@
+import AppIcon from '../AppIcon';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -8,10 +9,10 @@ interface WeatherPanelProps {
   onClose: () => void;
 }
 
-const COND_EMOJI: Record<DemoWeatherCond, string> = {
-  clear: '☀️',
-  mostlyClear: '🌤️',
-  partlyCloudy: '⛅',
+const COND_ICONS: Record<DemoWeatherCond, string> = {
+  clear: 'sun',
+  mostlyClear: 'cloud-sun',
+  partlyCloudy: 'cloud-sun',
 };
 
 const fmtDate = (dateStr: string, locale: string): string =>
@@ -63,7 +64,7 @@ const WeatherPanel: React.FC<WeatherPanelProps> = ({ onClose }) => {
                 <p className="font-semibold text-[14.5px] text-text my-0.5">{fmtDate(day.date, locale)}</p>
                 <p className="text-[12px] text-muted">{t(`weatherView.conditions.${day.weather.cond}`)}</p>
               </div>
-              <span className="text-3xl leading-none">{COND_EMOJI[day.weather.cond]}</span>
+              <AppIcon name={COND_ICONS[day.weather.cond]} size={32} className="text-sage-700" />
             </div>
             <div className="px-4 pb-3.5">
               <p className="font-semibold text-[24px] text-text">
@@ -81,7 +82,7 @@ const WeatherPanel: React.FC<WeatherPanelProps> = ({ onClose }) => {
           <p className="font-heading font-bold text-[10.5px] uppercase tracking-[0.12em] text-accent-700 mb-1.5">
             {t('weatherView.packingTipsTitle')}
           </p>
-          <p className="text-[13px] text-text">🧴 {t('weatherView.packingTips.hot')}</p>
+          <p className="text-[13px] text-text"><AppIcon name="sun" /> {t('weatherView.packingTips.hot')}</p>
         </div>
         <p className="text-center text-[11px] text-muted py-1">{t('weatherView.footer')}</p>
       </div>

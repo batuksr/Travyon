@@ -1,3 +1,4 @@
+import IconBadge from '../components/IconBadge';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -216,7 +217,7 @@ const Notifications: React.FC = () => {
                   className="bg-surface border border-divider rounded-2xl px-5 py-4 flex gap-3.5 group"
                 >
                   {/* Renk noktası */}
-                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${cfg.dot}`} />
+                  <span className="relative shrink-0"><IconBadge icon={n.icon} variant="inline" /><span className={`absolute -right-0.5 -top-0.5 w-2 h-2 rounded-full ${cfg.dot}`} /></span>
 
                   {/* İçerik */}
                   <div className="flex-1 min-w-0">

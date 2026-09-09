@@ -7,6 +7,100 @@ import { httpsCallable } from 'firebase/functions';
 import type { TravelPlanResponse } from './aiService';
 import type { OnboardingData } from '../store/useOnboardingStore';
 
+/*
+ * Kayıtlı planlar localStorage'da tutulduğu için eski sürümlerde oluşturulan
+ * planlar, güncel paylaşım şemasındaki bazı alanları taşımayabilir. Ekranda
+ * gösterilebilen bu planları Cloud Function'a göndermeden önce güncel ve
+ * sınırlandırılmış şekle getiriyoruz. Sunucudaki doğrulama yine son güvenlik
+ * katmanı olarak çalışmaya devam eder.
+ */
+const boundedText = (value: unknown, maxLength: number, fallback = ''): string => {
+  const text = typeof value === 'string' ? value : fallback;
+  return text.slice(0, maxLength);
+};
+
+const boundedAmount = (value: unknown): number => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.min(Math.max(amount, 0), 1_000_000_000);
+};
+
+const fallbackDate = (startDate: string, dayIndex: number): string => {
+  const parsed = Date.parse(`${startDate}T00:00:00Z`);
+  if (!Number.isFinite(parsed)) return '1970-01-01';
+  return new Date(parsed + dayIndex * 86_400_000).toISOString().slice(0, 10);
+};
+
+const normalizePlanForSharing = (
+  plan: TravelPlanResponse,
+  onboardingData: OnboardingData,
+): TravelPlanResponse => ({
+  ...plan,
+  destination: boundedText(plan.destination, 200, onboardingData.destination || 'Gezi planı').trim()
+    || 'Gezi planı',
+  overallSummary: boundedText(plan.overallSummary, 10_000),
+  totalEstimatedCost: boundedAmount(plan.totalEstimatedCost),
+  currencySymbol: boundedText(plan.currencySymbol, 10, onboardingData.currencySymbol || '₺'),
+  cityGuide: {
+    transportationTips: boundedText(plan.cityGuide?.transportationTips, 5_000),
+    localCustoms: boundedText(plan.cityGuide?.localCustoms, 5_000),
+    generalAdvice: boundedText(plan.cityGuide?.generalAdvice, 5_000),
+  },
+  dailyPlans: (Array.isArray(plan.dailyPlans) ? plan.dailyPlans : []).slice(0, 31).map((day, dayIndex) => ({
+    ...day,
+    dayNumber: dayIndex + 1,
+    date: boundedText(day?.date, 32, fallbackDate(onboardingData.startDate, dayIndex)).trim()
+      || fallbackDate(onboardingData.startDate, dayIndex),
+    daySummary: boundedText(day?.daySummary, 4_000),
+    totalEstimatedCost: boundedAmount(day?.totalEstimatedCost),
+    activities: (Array.isArray(day?.activities) ? day.activities : []).slice(0, 15).map((activity) => {
+      const rawLat = Number(activity?.coordinates?.lat);
+      const rawLng = Number(activity?.coordinates?.lng);
+      const normalized = {
+        period: boundedText(activity?.period, 50, 'Gün').trim() || 'Gün',
+        placeName: boundedText(activity?.placeName, 200, 'İsimsiz durak').trim() || 'İsimsiz durak',
+        description: boundedText(activity?.description, 4_000),
+        coordinates: {
+          lat: Number.isFinite(rawLat) ? Math.min(Math.max(rawLat, -90), 90) : 0,
+          lng: Number.isFinite(rawLng) ? Math.min(Math.max(rawLng, -180), 180) : 0,
+        },
+        estimatedCost: boundedAmount(activity?.estimatedCost),
+      };
+
+      if (activity?.actualCost !== undefined) {
+        return {
+          ...normalized,
+          actualCost: boundedAmount(activity.actualCost),
+          ...(typeof activity.note === 'string' ? { note: boundedText(activity.note, 2_000) } : {}),
+        };
+      }
+      return {
+        ...normalized,
+        ...(typeof activity?.note === 'string' ? { note: boundedText(activity.note, 2_000) } : {}),
+      };
+    }),
+  })),
+});
+
+const normalizeOnboardingForSharing = (data: OnboardingData) => ({
+  budget: boundedAmount(data.budget),
+  currencySymbol: boundedText(data.currencySymbol, 100, '₺'),
+  tripPurpose: boundedText(data.tripPurpose, 100),
+  travelType: boundedText(data.travelType, 100),
+  peopleCount: Math.min(Math.max(Math.trunc(Number(data.peopleCount)) || 1, 1), 100),
+  pace: boundedText(data.pace, 100),
+  purposes: (Array.isArray(data.purposes) ? data.purposes : [])
+    .slice(0, 20).map((item) => boundedText(item, 100)),
+  earlyBird: data.earlyBird === true,
+  dietaryRestrictions: (Array.isArray(data.dietaryRestrictions) ? data.dietaryRestrictions : [])
+    .slice(0, 20).map((item) => boundedText(item, 100)),
+  foodPhilosophy: boundedText(data.foodPhilosophy, 100),
+  accommodation: boundedText(data.accommodation, 100),
+  transport: boundedText(data.transport, 100),
+  startDate: boundedText(data.startDate, 32),
+  endDate: boundedText(data.endDate, 32),
+});
+
 /* ══════════════════════════════════════════════
    Types
 ═══════════════════════════════════════════════ */
@@ -51,11 +145,26 @@ const callSharePublicPlan = async (
   onboardingData: OnboardingData,
   linkOnly?: boolean,
 ): Promise<void> => {
+  const normalizedPlan = normalizePlanForSharing(plan, onboardingData);
+  if (normalizedPlan.dailyPlans.length === 0) {
+    throw new Error('invalid-plan');
+  }
+  const normalizedOnboardingData = normalizeOnboardingForSharing(onboardingData);
   const fn = httpsCallable<
-    { planId: string; plan: TravelPlanResponse; onboardingData: OnboardingData; linkOnly?: boolean },
+    {
+      planId: string;
+      plan: TravelPlanResponse;
+      onboardingData: ReturnType<typeof normalizeOnboardingForSharing>;
+      linkOnly?: boolean;
+    },
     { ok: true }
   >(functions, 'sharePublicPlan');
-  await fn({ planId, plan, onboardingData, linkOnly });
+  await fn({
+    planId,
+    plan: normalizedPlan,
+    onboardingData: normalizedOnboardingData,
+    ...(typeof linkOnly === 'boolean' ? { linkOnly } : {}),
+  });
 };
 
 export const shareplan = async (

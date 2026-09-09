@@ -1,3 +1,4 @@
+import AppIcon from '../AppIcon';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronUp, ChevronDown, Trash2, Pencil, Plus } from 'lucide-react';
@@ -6,7 +7,7 @@ import type { DemoTravelTimes } from '../../data/tripPlannerDemo';
 
 const TRAVEL_MODES = ['car', 'bus', 'walk', 'bike'] as const;
 type TravelMode = typeof TRAVEL_MODES[number];
-const TRAVEL_ICONS: Record<TravelMode, string> = { car: '🚗', bus: '🚌', walk: '🚶', bike: '🚲' };
+const TRAVEL_ICONS: Record<TravelMode, string> = { car: 'car', bus: 'transit', walk: 'walk', bike: 'bike' };
 
 interface ActivityListProps {
   items: RuntimeActivity[];
@@ -32,7 +33,7 @@ const TravelStrip: React.FC<{ times: DemoTravelTimes }> = ({ times }) => {
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold
               ${isFastest ? 'bg-accent-100 text-accent-700' : 'bg-surface-2 text-muted'}`}
           >
-            <span className="text-[12px] leading-none">{TRAVEL_ICONS[mode]}</span>
+            <AppIcon name={TRAVEL_ICONS[mode]} size={14} />
             {t('dashboard.dailyPlanView.minutesShort', { mins: times[mode] })}
           </span>
         );

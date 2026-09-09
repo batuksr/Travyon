@@ -12,6 +12,9 @@ initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
 
 const db = getFirestore();
+// App Check production'da zorunlu kalır. Yerel Functions emulator'ında ise
+// gerçek reCAPTCHA/debug-token kurulumu gerektirmeden geliştirme yapılabilir.
+const SHOULD_ENFORCE_APP_CHECK = process.env.FUNCTIONS_EMULATOR !== "true";
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Resend'de doğrulanmış bir gönderim domaini olmadan sadece hesap sahibinin
@@ -183,7 +186,7 @@ const buildEmailHtml = (code: string, lang: string): string => {
  * 45 saniyede bir istek sınırı vardır.
  */
 export const sendVerificationCode = onCall(
-  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: true },
+  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     const auth = request.auth;
     if (!auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
@@ -257,7 +260,7 @@ export const sendVerificationCode = onCall(
  * emailVerified=true olarak işaretler (native e-posta doğrulama akışıyla
  * aynı sonucu üretir — isEmailVerified() gibi mevcut kontroller değişmeden çalışır).
  */
-export const verifyEmailCode = onCall({ enforceAppCheck: true }, async (request) => {
+export const verifyEmailCode = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   const auth = request.auth;
   if (!auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
 
@@ -409,7 +412,7 @@ const toSafeClientMessage = (raw: string): string => {
  * across up to 2 models, plus real network latency for JSON-mode generation.
  */
 export const generateAIContent = onCall<GenerateAIContentRequest>(
-  { secrets: [GEMINI_API_KEY], timeoutSeconds: 180, enforceAppCheck: true },
+  { secrets: [GEMINI_API_KEY], timeoutSeconds: 180, enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     if (request.auth.token.email_verified !== true) {
@@ -493,7 +496,7 @@ interface AskAssistantRequest {
  * davranışıyla birebir aynı.
  */
 export const askTravelAssistant = onCall<AskAssistantRequest>(
-  { secrets: [GEMINI_API_KEY], timeoutSeconds: 90, enforceAppCheck: true },
+  { secrets: [GEMINI_API_KEY], timeoutSeconds: 90, enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request, response) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     if (request.auth.token.email_verified !== true) {
@@ -576,7 +579,7 @@ const escapeHtml = (s: string): string =>
  * bazlı değil, gönderilen e-posta adresine bağlı bir cooldown var.
  */
 export const submitContactMessage = onCall<ContactMessageRequest>(
-  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: true },
+  { secrets: [RESEND_API_KEY, RESEND_FROM], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     const { name, email, subject, message } = request.data ?? ({} as Partial<ContactMessageRequest>);
 
@@ -658,7 +661,7 @@ interface SubmitBugReportRequest {
   desc: string;
 }
 
-export const submitBugReport = onCall<SubmitBugReportRequest>({ enforceAppCheck: true }, async (request) => {
+export const submitBugReport = onCall<SubmitBugReportRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -779,7 +782,7 @@ const isValidOnboardingMetadata = (value: unknown): value is SharePublicPlanRequ
  * userDisplayName/userPhotoURL istemciden GÜVENİLMİYOR — Admin SDK ile
  * kullanıcının güncel Auth kaydından çekiliyor (sahte isim/foto engellenir).
  */
-export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
+export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -868,7 +871,7 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck:
 
 interface UnsharePublicPlanRequest { planId: string }
 
-export const unsharePublicPlan = onCall<UnsharePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
+export const unsharePublicPlan = onCall<UnsharePublicPlanRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   const planId = request.data?.planId;
   if (typeof planId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(planId)) {
@@ -890,7 +893,7 @@ export const unsharePublicPlan = onCall<UnsharePublicPlanRequest>({ enforceAppCh
 });
 
 /** Profil adı/fotoğrafı istemciden kabul edilmez; Auth kaydından yayılır. */
-export const syncSharedPlansIdentity = onCall({ enforceAppCheck: true }, async (request) => {
+export const syncSharedPlansIdentity = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   await checkRateLimit(request.auth.uid, "syncSharedPlansIdentity", "Rate limit exceeded.");
 
@@ -923,7 +926,7 @@ export const syncSharedPlansIdentity = onCall({ enforceAppCheck: true }, async (
 
 interface RatePublicPlanRequest { planId: string; rating: number }
 
-export const ratePublicPlan = onCall<RatePublicPlanRequest>({ enforceAppCheck: true }, async (request) => {
+export const ratePublicPlan = onCall<RatePublicPlanRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -969,7 +972,7 @@ interface FollowUserActionRequest {
   targetUid: string;
 }
 
-export const followUserAction = onCall<FollowUserActionRequest>({ enforceAppCheck: true }, async (request) => {
+export const followUserAction = onCall<FollowUserActionRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   if (request.auth.token.email_verified !== true) {
     throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
@@ -1011,7 +1014,7 @@ export const followUserAction = onCall<FollowUserActionRequest>({ enforceAppChec
 
 interface PublicProfileRequest { targetUid: string }
 
-export const getPublicProfile = onCall<PublicProfileRequest>({ enforceAppCheck: true }, async (request) => {
+export const getPublicProfile = onCall<PublicProfileRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   const targetUid = request.data?.targetUid;
   if (typeof targetUid !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(targetUid)) {
@@ -1048,7 +1051,7 @@ interface PrivacySettingsRequest {
 }
 
 /** Gizlilik ayarlarını kaydeder ve profil görünürlüğünü mevcut paylaşımlara uygular. */
-export const updatePrivacySettings = onCall<PrivacySettingsRequest>({ enforceAppCheck: true }, async (request) => {
+export const updatePrivacySettings = onCall<PrivacySettingsRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   const data = request.data ?? ({} as Partial<PrivacySettingsRequest>);
   const keys: (keyof PrivacySettingsRequest)[] = [
@@ -1090,7 +1093,7 @@ export const updatePrivacySettings = onCall<PrivacySettingsRequest>({ enforceApp
 });
 
 /** Hesaba bağlı uygulama verilerini temizler, ardından Firebase Auth hesabını siler. */
-export const deleteMyAccount = onCall({ enforceAppCheck: true }, async (request) => {
+export const deleteMyAccount = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   const authTimeSeconds = Number(request.auth.token.auth_time) || 0;
   if (!authTimeSeconds || Date.now() / 1000 - authTimeSeconds > 5 * 60) {
@@ -1332,7 +1335,7 @@ interface IyzicoCheckoutInitializeResponse {
  * kaydından alınır (client'tan güvenilmez).
  */
 export const initiateSubscriptionCheckout = onCall<InitiateCheckoutRequest>(
-  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_PRICING_PLAN_REF], enforceAppCheck: true },
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_PRICING_PLAN_REF], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     if (!PRO_FEATURES_ENABLED.value()) {
@@ -1549,7 +1552,7 @@ export const subscriptionWebhook = onRequest(
  * currentPeriodEnd'e kadar sürer (bkz. isProActive()).
  */
 export const cancelSubscription = onCall(
-  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY], enforceAppCheck: true },
+  { secrets: [IYZICO_API_KEY, IYZICO_SECRET_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     const uid = request.auth.uid;
@@ -1599,7 +1602,7 @@ interface GeocodeAddressResult {
 }
 
 export const geocodeAddress = onCall<GeocodeAddressRequest>(
-  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: true },
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     if (request.auth.token.email_verified !== true) {
@@ -1705,7 +1708,7 @@ const fetchDirectionDurationMin = async (
  * çalıştırılır, tek round-trip.
  */
 export const getDirections = onCall<GetDirectionsRequest>(
-  { secrets: [GOOGLE_MAPS_SERVER_KEY], timeoutSeconds: 60, enforceAppCheck: true },
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], timeoutSeconds: 60, enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
     if (request.auth.token.email_verified !== true) {

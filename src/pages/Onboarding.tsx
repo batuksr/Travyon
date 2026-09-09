@@ -6,14 +6,20 @@ import type { TFunction } from 'i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Calendar, Heart, Utensils, Bed,
-  ArrowRight, ArrowLeft, Check, Sparkles,
+  ArrowRight, ArrowLeft, Check,
   Loader2, Plus, Minus, Plane, Search,
-  Backpack, Users, PartyPopper, Briefcase, Coffee, Map,
+  Backpack, Users, Gem, Handshake, BriefcaseBusiness, TicketsPlane, Map,
   Footprints, Sunrise,
-  Sofa, Mountain, Compass,
+  Armchair, Mountain, Compass, Landmark, Waves, Music2, Trees,
+  Sprout, Leaf, MoonStar, WheatOff, Fish, UtensilsCrossed,
+  Star, MapPinned, Wine, Store, Shuffle, Wallet, Banknote, Coins,
+  CalendarCheck2, Hotel, House, BedSingle, TreePalm,
+  TramFront, CarTaxiFront, CarFront, PlaneTakeoff, PlaneLanding,
 } from 'lucide-react';
 import { useOnboardingStore, type OnboardingData } from '../store/useOnboardingStore';
 import TravyonLogo from '../components/TravyonLogo';
+import OnboardingPostcard from '../components/OnboardingPostcard';
+import IconBadge from '../components/IconBadge';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import DateRangeCalendar from '../components/DateRangeCalendar';
 import TimePicker from '../components/TimePicker';
@@ -32,6 +38,10 @@ const getToday = () => {
 const today = getToday();
 const ALL_EATER_OPTION = 'noRestriction';
 const DIET_KEYS = ['vegan', 'vegetarian', 'halal', 'glutenFree', 'pescatarian', ALL_EATER_OPTION] as const;
+const DIET_ICONS = {
+  vegan: Sprout, vegetarian: Leaf, halal: MoonStar,
+  glutenFree: WheatOff, pescatarian: Fish, noRestriction: UtensilsCrossed,
+} as const;
 
 const STEPS = [
   { id: 1, labelKey: 'destination', icon: MapPin },
@@ -148,13 +158,13 @@ const Onboarding: React.FC = () => {
   const { currentStep, data, nextStep, prevStep, updateData, setStep, resetForm } = useOnboardingStore();
   const { setPlan } = usePlanStore();
   const { user } = useAuthStore();
-  const [showDesktopVideo, setShowDesktopVideo] = useState(() =>
+  const [showDesktopPostcard, setShowDesktopPostcard] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
   );
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)');
-    const sync = () => setShowDesktopVideo(media.matches);
+    const sync = () => setShowDesktopPostcard(media.matches);
     sync();
     media.addEventListener('change', sync);
     return () => media.removeEventListener('change', sync);
@@ -364,49 +374,7 @@ const Onboarding: React.FC = () => {
   return (
     <div className="h-screen bg-bg flex overflow-hidden">
 
-      {/* ═══ SOL — VİDEO ═══ */}
-      <div className="hidden lg:flex lg:w-2/5 relative overflow-hidden shrink-0">
-
-        {/* Fallback gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2b241d] via-[#211c17] to-[#2b241d]" />
-
-        {showDesktopVideo && (
-          <video
-            autoPlay loop muted playsInline preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="/videos/onboarding.mp4" type="video/mp4" />
-          </video>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/40 via-[#1c140c]/25 to-[#1c140c]/72" />
-
-        <div className="relative z-10 flex flex-col justify-end p-10 w-full">
-
-          {/* Adıma özel mesaj */}
-          <motion.div key={currentStep} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <div className="inline-flex items-center gap-2 px-3.5 py-[7px] bg-white/16 backdrop-blur-md border border-white/25 rounded-full mb-5">
-              <Sparkles size={11} className="text-white" />
-              <span className="text-white text-[11px] font-heading uppercase tracking-widest">{t('onboarding.badge')}</span>
-            </div>
-
-            <div className="text-4xl mb-4">
-              {currentStep === 1 && '🌍'}
-              {currentStep === 2 && '✨'}
-              {currentStep === 3 && '🍽️'}
-              {currentStep === 4 && '🏨'}
-            </div>
-
-            <h1 className="font-heading text-3xl text-white mb-3 leading-tight whitespace-pre-line">
-              {t(`onboarding.sidebar.step${currentStep}.title`)}
-            </h1>
-            <p className="text-white/75 text-sm leading-relaxed max-w-xs">
-              {t(`onboarding.sidebar.step${currentStep}.desc`)}
-            </p>
-          </motion.div>
-
-        </div>
-      </div>
+      {showDesktopPostcard && <OnboardingPostcard data={data} currentStep={currentStep} isGenerating={isGenerating} />}
 
       {/* ═══ SAĞ — FORM ═══ */}
       <div className="flex-1 flex flex-col h-screen min-w-0 relative">
@@ -420,7 +388,7 @@ const Onboarding: React.FC = () => {
             <div className="relative w-20 h-20 mb-6">
               <div className="absolute inset-0 rounded-full border-4 border-accent-200" />
               <div className="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center text-2xl">✈️</div>
+              <div className="absolute inset-0 flex items-center justify-center text-accent"><Plane size={28} strokeWidth={1.65} aria-hidden="true" /></div>
             </div>
             <h3 className="font-heading text-2xl text-text mb-2">{t('onboarding.loadingTitle')}</h3>
             <p className="text-sm text-muted mb-6 max-w-xs leading-relaxed">
@@ -461,7 +429,7 @@ const Onboarding: React.FC = () => {
                       ${completed  ? 'bg-sage text-white'
                       : active     ? 'bg-accent text-white shadow-[0_10px_22px_rgba(198,113,57,0.28)]'
                                    : 'bg-surface-2 text-muted'}`}>
-                      {completed ? <Check size={15} strokeWidth={3} /> : <Icon size={15} strokeWidth={2.5} />}
+                      {completed ? <Check size={16} strokeWidth={2} aria-hidden="true" /> : <Icon size={17} strokeWidth={1.75} aria-hidden="true" />}
                     </div>
                     <span className={`text-[11px] font-heading transition-colors
                       ${active ? 'text-accent' : completed ? 'text-sage-700' : 'text-muted'}`}>
@@ -587,11 +555,11 @@ const Onboarding: React.FC = () => {
                           className={`w-full grid grid-cols-2 text-left ${(hints.startDate || hints.endDate) ? 'bg-rose-50/50' : ''}`}
                         >
                           <div className="px-4 py-3 border-r border-divider">
-                            <p className="text-[10px] text-muted mb-0.5">{t('onboarding.step1.departure')}</p>
+                            <p className="text-[10px] text-muted mb-0.5 flex items-center gap-1.5"><PlaneTakeoff size={12} strokeWidth={1.65} aria-hidden="true" />{t('onboarding.step1.departure')}</p>
                             <p className={`text-[14.5px] ${data.startDate ? 'text-text' : 'text-muted'}`}>{formatDisplayDate(data.startDate)}</p>
                           </div>
                           <div className="px-4 py-3">
-                            <p className="text-[10px] text-muted mb-0.5">{t('onboarding.step1.return')}</p>
+                            <p className="text-[10px] text-muted mb-0.5 flex items-center gap-1.5"><PlaneLanding size={12} strokeWidth={1.65} aria-hidden="true" />{t('onboarding.step1.return')}</p>
                             <p className={`text-[14.5px] ${data.endDate ? 'text-text' : 'text-muted'}`}>{formatDisplayDate(data.endDate)}</p>
                           </div>
                         </button>
@@ -603,7 +571,7 @@ const Onboarding: React.FC = () => {
                           onClick={() => openTimePicker('arrival')}
                           className="w-full flex items-center px-4 py-3.5 text-left hover:bg-surface-2/50 transition-colors"
                         >
-                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.arrival')}</span>
+                          <span className="text-[14.5px] text-text flex items-center gap-2"><PlaneLanding size={16} strokeWidth={1.65} className="shrink-0 text-sage-700" aria-hidden="true" />{t('onboarding.step1.arrival')}</span>
                           <span className="flex-1 text-[14.5px] text-text text-right">{data.arrivalTime}</span>
                         </button>
 
@@ -614,7 +582,7 @@ const Onboarding: React.FC = () => {
                           onClick={() => openTimePicker('departure')}
                           className="w-full flex items-center px-4 py-3.5 text-left hover:bg-surface-2/50 transition-colors"
                         >
-                          <span className="text-[14.5px] text-text w-24 shrink-0">{t('onboarding.step1.departureTime')}</span>
+                          <span className="text-[14.5px] text-text flex items-center gap-2"><PlaneTakeoff size={16} strokeWidth={1.65} className="shrink-0 text-sage-700" aria-hidden="true" />{t('onboarding.step1.departureTime')}</span>
                           <span className="flex-1 text-[14.5px] text-text text-right">{data.departureTime}</span>
                         </button>
                       </div>
@@ -733,11 +701,11 @@ const Onboarding: React.FC = () => {
                         {([
                           { val: 'solo_macera',    Icon: Backpack,    labelKey: 'solo' },
                           { val: 'romantik',       Icon: Heart,       labelKey: 'romantic' },
-                          { val: 'balayi',         Icon: Sparkles,    labelKey: 'honeymoon' },
+                          { val: 'balayi',         Icon: Gem,         labelKey: 'honeymoon' },
                           { val: 'aile',           Icon: Users,       labelKey: 'family' },
-                          { val: 'arkadas_grubu',  Icon: PartyPopper, labelKey: 'friends' },
-                          { val: 'is_seyahati',    Icon: Briefcase,   labelKey: 'business' },
-                          { val: 'sehir_kacamagi', Icon: Coffee,      labelKey: 'cityEscape' },
+                          { val: 'arkadas_grubu',  Icon: Handshake,   labelKey: 'friends' },
+                          { val: 'is_seyahati',    Icon: BriefcaseBusiness, labelKey: 'business' },
+                          { val: 'sehir_kacamagi', Icon: TicketsPlane, labelKey: 'cityEscape' },
                           { val: 'klasik_tatil',   Icon: Map,         labelKey: 'classic' },
                         ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.travelType === val;
@@ -746,14 +714,13 @@ const Onboarding: React.FC = () => {
                               key={val}
                               type="button"
                               onClick={() => { updateData({ travelType: val }); setHints((h) => ({ ...h, travelType: false })); }}
+                              aria-pressed={selected}
                               className={`flex flex-col items-center gap-2 py-3 px-1 rounded-2xl border-2 transition-all duration-150
                                 ${selected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-accent-200' : 'bg-surface-2'}`}>
-                                <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
-                              </div>
+                              <IconBadge icon={Icon} selected={selected} />
                               <span className={`text-[10px] font-heading leading-tight text-center ${selected ? 'text-accent-700' : 'text-text'}`}>
                                 {t(`onboarding.step2.travelTypes.${labelKey}`)}
                               </span>
@@ -770,11 +737,11 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] text-muted mb-3">{t('onboarding.step2.interestsHint')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { val: 'culture',   emoji: '🏛️' },
-                          { val: 'relax',     emoji: '😴' },
-                          { val: 'nightlife', emoji: '🌙' },
-                          { val: 'nature',    emoji: '🏔️' },
-                        ].map(({ val, emoji }) => {
+                          { val: 'culture',   Icon: Landmark },
+                          { val: 'relax',     Icon: Waves },
+                          { val: 'nightlife', Icon: Music2 },
+                          { val: 'nature',    Icon: Trees },
+                        ].map(({ val, Icon }) => {
                           const currentPurposes: string[] = data.purposes && data.purposes.length > 0
                             ? data.purposes
                             : (data.tripPurpose ? [data.tripPurpose] : []);
@@ -803,12 +770,13 @@ const Onboarding: React.FC = () => {
                                   setPurposesWarning(false);
                                 }
                               }}
-                              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-left transition-all duration-150
+                              aria-pressed={isSelected}
+                              className={`relative flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-2xl border-2 text-left transition-all duration-150
                                 ${isSelected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-xl shrink-0 leading-none">{emoji}</span>
+                              <IconBadge icon={Icon} selected={isSelected} variant="inline" />
                               <div className="flex-1 min-w-0">
                                 <p className={`font-semibold text-sm leading-tight ${isSelected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step2.interestOptions.${val}.title`)}</p>
                                 <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step2.interestOptions.${val}.sub`)}</p>
@@ -844,7 +812,7 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] text-muted mb-3">{t('onboarding.step2.paceHint')}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {([
-                          { val: 'rahat',  Icon: Sofa,       labelKey: 'relaxed'  },
+                          { val: 'rahat',  Icon: Armchair,   labelKey: 'relaxed'  },
                           { val: 'normal', Icon: Footprints, labelKey: 'normal'   },
                           { val: 'aktif',  Icon: Mountain,   labelKey: 'active'   },
                           { val: 'esnek',  Icon: Compass,    labelKey: 'flexible' },
@@ -855,14 +823,13 @@ const Onboarding: React.FC = () => {
                               key={val}
                               type="button"
                               onClick={() => { updateData({ pace: val }); setHints((h) => ({ ...h, pace: false })); }}
+                              aria-pressed={selected}
                               className={`flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 text-center transition-all duration-150
                                 ${selected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? 'bg-accent-200' : 'bg-surface-2'}`}>
-                                <Icon size={17} strokeWidth={2.5} className={selected ? 'text-accent-700' : 'text-muted'} />
-                              </div>
+                              <IconBadge icon={Icon} selected={selected} />
                               <div>
                                 <p className={`font-heading text-xs ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.title`)}</p>
                                 <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.desc`)}</p>
@@ -879,13 +846,12 @@ const Onboarding: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => updateData({ earlyBird: !data.earlyBird })}
+                      aria-pressed={data.earlyBird}
                       className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-colors
                         ${data.earlyBird ? 'border-accent bg-accent-100' : 'border-divider bg-surface hover:border-accent/45'}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${data.earlyBird ? 'bg-accent-200' : 'bg-surface-2'}`}>
-                          <Sunrise size={17} strokeWidth={2.5} className={data.earlyBird ? 'text-accent-700' : 'text-muted'} />
-                        </div>
+                        <IconBadge icon={Sunrise} selected={data.earlyBird} />
                         <div className="text-left">
                           <p className={`text-sm font-semibold ${data.earlyBird ? 'text-accent-700' : 'text-text'}`}>{t('onboarding.step2.earlyBirdTitle')}</p>
                           <p className="text-[11px] text-muted mt-0.5">{t('onboarding.step2.earlyBirdSub')}</p>
@@ -909,13 +875,14 @@ const Onboarding: React.FC = () => {
                     {/* Beslenme Tercihleri */}
                     <div>
                       <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step3.dietaryTitle')}</p>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {DIET_KEYS.map((diet) => {
                           const selected = data.dietaryRestrictions.includes(diet);
                           return (
                             <button
                               key={diet}
                               type="button"
+                              aria-pressed={selected}
                               onClick={() => {
                                 updateData({ dietaryRestrictions: toggleDietaryRestriction(diet, data.dietaryRestrictions) });
                                 setHints((h) => ({ ...h, dietary: false }));
@@ -925,8 +892,8 @@ const Onboarding: React.FC = () => {
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-base leading-none shrink-0">{t(`onboarding.step3.diets.${diet}.emoji`)}</span>
-                              <span className={`text-xs font-semibold leading-tight truncate ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.diets.${diet}.label`)}</span>
+                              <IconBadge icon={DIET_ICONS[diet]} selected={selected} variant="compact" />
+                              <span className={`text-xs font-semibold leading-tight text-left ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.diets.${diet}.label`)}</span>
                             </button>
                           );
                         })}
@@ -940,12 +907,12 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] text-muted mb-3">{t('onboarding.step3.foodPhilosophyHint')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {([
-                          { val: 'iconic',      emoji: '⭐', labelKey: 'iconic' },
-                          { val: 'hidden_gems', emoji: '🗺️', labelKey: 'hiddenGems' },
-                          { val: 'fine_dining', emoji: '🍷', labelKey: 'fineDining' },
-                          { val: 'street_food', emoji: '🌮', labelKey: 'streetFood' },
-                          { val: 'mixed',       emoji: '🎲', labelKey: 'mixed' },
-                        ] as const).map(({ val, emoji, labelKey }) => {
+                          { val: 'iconic',      Icon: Star,      labelKey: 'iconic' },
+                          { val: 'hidden_gems', Icon: MapPinned, labelKey: 'hiddenGems' },
+                          { val: 'fine_dining', Icon: Wine,      labelKey: 'fineDining' },
+                          { val: 'street_food', Icon: Store,     labelKey: 'streetFood' },
+                          { val: 'mixed',       Icon: Shuffle,   labelKey: 'mixed' },
+                        ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.foodPhilosophy === val;
                           return (
                             <button
@@ -955,13 +922,14 @@ const Onboarding: React.FC = () => {
                                 updateData({ foodPhilosophy: val });
                                 setHints((h) => ({ ...h, foodPhilosophy: false }));
                               }}
-                              className={`relative flex items-center gap-3 px-3.5 py-3 rounded-2xl border-2 text-left transition-all duration-150
+                              aria-pressed={selected}
+                              className={`relative flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-3 rounded-2xl border-2 text-left transition-all duration-150
                                 ${val === 'mixed' ? 'col-span-2' : ''}
                                 ${selected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-xl shrink-0 leading-none">{emoji}</span>
+                              <IconBadge icon={Icon} selected={selected} variant="inline" />
                               <div className="flex-1 min-w-0">
                                 <p className={`font-semibold text-sm leading-tight ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.foodPhilosophyOptions.${labelKey}.title`)}</p>
                                 <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step3.foodPhilosophyOptions.${labelKey}.sub`)}</p>
@@ -983,22 +951,23 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step3.mealBudget')}</p>
                       <div className="grid grid-cols-3 gap-2.5">
                         {([
-                          { val: 'low',    emoji: '💵',     labelKey: 'low'    },
-                          { val: 'medium', emoji: '💵💵',   labelKey: 'medium' },
-                          { val: 'high',   emoji: '💵💵💵', labelKey: 'high'   },
-                        ] as const).map(({ val, emoji, labelKey }) => {
+                          { val: 'low',    Icon: Wallet,   labelKey: 'low'    },
+                          { val: 'medium', Icon: Banknote, labelKey: 'medium' },
+                          { val: 'high',   Icon: Coins,    labelKey: 'high'   },
+                        ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.mealBudget === val;
                           return (
                             <button
                               key={val}
                               type="button"
                               onClick={() => { updateData({ mealBudget: val as OnboardingData['mealBudget'] }); setHints((h) => ({ ...h, mealBudget: false })); }}
+                              aria-pressed={selected}
                               className={`flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl border-2 text-center transition-all duration-150
                                 ${selected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-lg leading-none">{emoji}</span>
+                              <IconBadge icon={Icon} selected={selected} />
                               <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step3.mealBudgetOptions.${labelKey}.title`)}</p>
                               <p className={`text-[10px] ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{t(`onboarding.step3.mealBudgetOptions.${labelKey}.sub`)}</p>
                             </button>
@@ -1019,14 +988,15 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.reservationStatus')}</p>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          { val: true,  emoji: '✅', labelKey: 'yes' },
-                          { val: false, emoji: '🔍', labelKey: 'no'  },
-                        ].map(({ val, emoji, labelKey }) => {
+                          { val: true,  Icon: CalendarCheck2, labelKey: 'yes' },
+                          { val: false, Icon: Search,         labelKey: 'no'  },
+                        ].map(({ val, Icon, labelKey }) => {
                           const selected = data.hasReservation === val;
                           return (
                             <button
                               key={String(val)}
                               type="button"
+                              aria-pressed={selected}
                               onClick={() => {
                                 updateData({ hasReservation: val, ...(!val ? { accommodationAddress: '' } : {}) });
                                 setHints((h) => ({ ...h, accommodation: false }));
@@ -1036,7 +1006,7 @@ const Onboarding: React.FC = () => {
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-3xl leading-none">{emoji}</span>
+                              <IconBadge icon={Icon} selected={selected} variant="prominent" />
                               <div>
                                 <p className={`font-heading text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.reservationOptions.${labelKey}.title`)}</p>
                                 <p className="text-[11px] text-muted mt-0.5 leading-tight">{t(`onboarding.step4.reservationOptions.${labelKey}.sub`)}</p>
@@ -1094,11 +1064,11 @@ const Onboarding: React.FC = () => {
                           <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.accommodationType')}</p>
                           <div className="grid grid-cols-2 gap-2.5">
                             {([
-                              { val: 'hotel',  emoji: '🏨', labelKey: 'hotel'  },
-                              { val: 'airbnb', emoji: '🏠', labelKey: 'airbnb' },
-                              { val: 'hostel', emoji: '🛏️', labelKey: 'hostel' },
-                              { val: 'resort', emoji: '🌴', labelKey: 'resort' },
-                            ] as const).map(({ val, emoji, labelKey }) => {
+                              { val: 'hotel',  Icon: Hotel,     labelKey: 'hotel'  },
+                              { val: 'airbnb', Icon: House,     labelKey: 'airbnb' },
+                              { val: 'hostel', Icon: BedSingle, labelKey: 'hostel' },
+                              { val: 'resort', Icon: TreePalm,  labelKey: 'resort' },
+                            ] as const).map(({ val, Icon, labelKey }) => {
                               const selected = data.accommodation === val;
                               return (
                                 <button
@@ -1108,12 +1078,13 @@ const Onboarding: React.FC = () => {
                                     updateData({ accommodation: val as OnboardingData['accommodation'] });
                                     setHints((h) => ({ ...h, accommodation: false }));
                                   }}
-                                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
+                                  aria-pressed={selected}
+                                  className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
                                     ${selected
                                       ? 'border-accent bg-accent-100'
                                       : 'border-divider bg-surface hover:border-accent/45'}`}
                                 >
-                                  <span className="text-2xl shrink-0 leading-none">{emoji}</span>
+                                  <IconBadge icon={Icon} selected={selected} variant="inline" />
                                   <div className="flex-1 min-w-0">
                                     <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.accommodationOptions.${labelKey}.title`)}</p>
                                     <p className="text-[11px] text-muted mt-0.5">{t(`onboarding.step4.accommodationOptions.${labelKey}.sub`)}</p>
@@ -1137,11 +1108,11 @@ const Onboarding: React.FC = () => {
                       <p className="text-[11px] font-heading uppercase tracking-widest text-muted mb-3">{t('onboarding.step4.transport')}</p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {([
-                          { val: 'public', emoji: '🚇', labelKey: 'public' },
-                          { val: 'walk',   emoji: '🚶', labelKey: 'walk'   },
-                          { val: 'taxi',   emoji: '🚕', labelKey: 'taxi'   },
-                          { val: 'car',    emoji: '🚗', labelKey: 'car'    },
-                        ] as const).map(({ val, emoji, labelKey }) => {
+                          { val: 'public', Icon: TramFront,    labelKey: 'public' },
+                          { val: 'walk',   Icon: Footprints,   labelKey: 'walk'   },
+                          { val: 'taxi',   Icon: CarTaxiFront, labelKey: 'taxi'   },
+                          { val: 'car',    Icon: CarFront,     labelKey: 'car'    },
+                        ] as const).map(({ val, Icon, labelKey }) => {
                           const selected = data.transport === val;
                           return (
                             <button
@@ -1151,12 +1122,13 @@ const Onboarding: React.FC = () => {
                                 updateData({ transport: val as OnboardingData['transport'] });
                                 setHints((h) => ({ ...h, transport: false }));
                               }}
-                              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
+                              aria-pressed={selected}
+                              className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-150
                                 ${selected
                                   ? 'border-accent bg-accent-100'
                                   : 'border-divider bg-surface hover:border-accent/45'}`}
                             >
-                              <span className="text-2xl shrink-0 leading-none">{emoji}</span>
+                              <IconBadge icon={Icon} selected={selected} variant="inline" />
                               <div className="flex-1 min-w-0">
                                 <p className={`font-semibold text-sm ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step4.transportOptions.${labelKey}.title`)}</p>
                                 <p className="text-[11px] text-muted mt-0.5">{t(`onboarding.step4.transportOptions.${labelKey}.sub`)}</p>
