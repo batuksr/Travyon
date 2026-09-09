@@ -10,6 +10,39 @@ export type TravelWalletCategory =
   | 'document'
   | 'other';
 
+export type TravelWalletDetailKey =
+  | 'airline'
+  | 'flightNumber'
+  | 'origin'
+  | 'destination'
+  | 'time'
+  | 'terminal'
+  | 'seat'
+  | 'baggage'
+  | 'address'
+  | 'checkOut'
+  | 'roomType'
+  | 'contact'
+  | 'venue'
+  | 'gate'
+  | 'insurer'
+  | 'endDate'
+  | 'emergencyPhone'
+  | 'documentType'
+  | 'expiryDate'
+  | 'issuer';
+
+export type TravelWalletDetails = Partial<Record<TravelWalletDetailKey, string>>;
+
+const CATEGORY_DETAIL_KEYS: Record<TravelWalletCategory, readonly TravelWalletDetailKey[]> = {
+  flight: ['airline', 'flightNumber', 'origin', 'destination', 'time', 'terminal', 'seat', 'baggage'],
+  stay: ['address', 'checkOut', 'roomType', 'contact'],
+  ticket: ['venue', 'time', 'seat', 'gate'],
+  insurance: ['insurer', 'endDate', 'emergencyPhone'],
+  document: ['documentType', 'expiryDate', 'issuer'],
+  other: [],
+};
+
 export interface TravelWalletEntry {
   id: string;
   planId: string;
@@ -19,6 +52,7 @@ export interface TravelWalletEntry {
   date: string;
   note: string;
   url: string;
+  details?: TravelWalletDetails;
   createdAt: number;
 }
 
@@ -30,6 +64,7 @@ export interface TravelWalletInput {
   date?: string;
   note?: string;
   url?: string;
+  details?: TravelWalletDetails;
 }
 
 interface TravelWalletState {
@@ -56,15 +91,30 @@ export const normalizeWalletUrl = (value: string | undefined): string | null => 
   }
 };
 
-export const sanitizeWalletInput = (input: TravelWalletInput): Omit<TravelWalletEntry, 'id' | 'createdAt'> => ({
-  planId: text(input.planId, 100) || 'general',
-  category: input.category,
-  title: text(input.title, 100),
-  reference: text(input.reference, 80),
-  date: text(input.date, 40),
-  note: text(input.note, 500),
-  url: normalizeWalletUrl(input.url) ?? '',
-});
+const sanitizeDetails = (
+  details: TravelWalletDetails | undefined,
+  category: TravelWalletCategory,
+): TravelWalletDetails =>
+  Object.fromEntries(
+    Object.entries(details ?? {})
+      .filter(([key]) => CATEGORY_DETAIL_KEYS[category].includes(key as TravelWalletDetailKey))
+      .map(([key, value]) => [key, text(value, 160)])
+      .filter(([, value]) => Boolean(value)),
+  ) as TravelWalletDetails;
+
+export const sanitizeWalletInput = (input: TravelWalletInput): Omit<TravelWalletEntry, 'id' | 'createdAt'> => {
+  const details = sanitizeDetails(input.details, input.category);
+  return {
+    planId: text(input.planId, 100) || 'general',
+    category: input.category,
+    title: text(input.title, 100),
+    reference: text(input.reference, 80),
+    date: text(input.date, 40),
+    note: text(input.note, 500),
+    url: normalizeWalletUrl(input.url) ?? '',
+    details,
+  };
+};
 
 const generateId = () =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'

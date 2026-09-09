@@ -2047,6 +2047,34 @@
     }
   },
   "travelWallet": {
+    "pocket": {
+      "subtitle": "Yolculuğunun tüm küçük detayları, tek bir cüzdanda.",
+      "label": "Seyahat kartlarının bulunduğu cüzdan",
+      "openCard": "{{title}} · {{category}} kartını aç",
+      "firstJourney": "Bir sonraki yolculuğun",
+      "personal": "Kişisel seyahat cüzdanı",
+      "addCard": "Kart ekle",
+      "hint": "Bir karta dokun, detaylarını keşfet.",
+      "emptyHint": "İlk kartın için cüzdanında yer hazır.",
+      "pages": "Cüzdandaki diğer kartlar",
+      "previous": "Önceki kartlar",
+      "next": "Sonraki kartlar",
+      "selectedCard": "Seçili kartın",
+      "storing": "Cüzdanına yerleşiyor…",
+      "stored": "Cüzdanında",
+      "addDetails": "Rezervasyon kodunu, tarihini veya küçük bir notu bu karta ekleyebilirsin.",
+      "emptyTitle": "Yolculuğunu cebine koy.",
+      "emptyDescription": "Biletlerin, rezervasyonların ve notların burada bir araya gelsin. Bir kayıt ekle, kartın cüzdanına yerleşsin.",
+      "examples": {
+        "flight": "Uçuşların ve rezervasyon kodların",
+        "stay": "Konaklama bilgilerin ve giriş tarihlerin",
+        "ticket": "Etkinlik biletlerin ve seyahat notların"
+      },
+      "storageNote": "Cüzdanın bu tarayıcıda saklanır; diğer cihazlarınla eşitlenmez.",
+      "putInWallet": "Cüzdana yerleştir",
+      "copied": "Referans bilgisi kopyalandı.",
+      "copyFailed": "Kopyalanamadı. Kodu seçerek kopyalayabilirsin."
+    },
     "back": "Hub'a dön",
     "eyebrow": "Seyahat belgeleri",
     "title": "Seyahat Cüzdanı",
@@ -2090,7 +2118,86 @@
       "noteLabel": "Kısa not",
       "notePlaceholder": "Terminal, bagaj hakkı veya önemli bir hatırlatma…",
       "titleRequired": "Kaydı tanıyabilmen için bir başlık yaz.",
-      "urlInvalid": "Geçerli bir web bağlantısı gir."
+      "urlInvalid": "Geçerli bir web bağlantısı gir.",
+      "categoryDetailsHint": "İhtiyaç anında aramadan bulabilmen için bu kayda özel bilgileri ekle.",
+      "titlePlaceholders": {
+        "flight": "Örn. İstanbul – Roma uçuşu",
+        "stay": "Örn. Roma merkez oteli",
+        "ticket": "Örn. Kolezyum giriş bileti",
+        "insurance": "Örn. Avrupa seyahat sigortası",
+        "document": "Örn. Pasaport bilgisi",
+        "other": "Örn. Havaalanı transferi"
+      },
+      "referenceLabels": {
+        "flight": "PNR / rezervasyon kodu",
+        "stay": "Rezervasyon kodu",
+        "ticket": "Bilet / sipariş kodu",
+        "insurance": "Poliçe numarası",
+        "document": "Belge referansı / son 4 hane",
+        "other": "Referans kodu"
+      },
+      "referencePlaceholders": {
+        "flight": "Örn. TRV123",
+        "stay": "Örn. HTL456",
+        "ticket": "Örn. BİLET-789",
+        "insurance": "Örn. POL-456789",
+        "document": "Tam belge numarasını kaydetme",
+        "other": "Varsa referans kodu"
+      },
+      "dateLabels": {
+        "flight": "Kalkış tarihi",
+        "stay": "Giriş tarihi",
+        "ticket": "Etkinlik tarihi",
+        "insurance": "Poliçe başlangıç tarihi",
+        "document": "Düzenlenme tarihi",
+        "other": "Tarih"
+      },
+      "categoryDetails": {
+        "flight": "Uçuş bilgileri",
+        "stay": "Konaklama bilgileri",
+        "ticket": "Bilet bilgileri",
+        "insurance": "Sigorta bilgileri",
+        "document": "Belge bilgileri",
+        "other": "Ek bilgiler"
+      },
+      "urlPlaceholders": {
+        "flight": "havayolu.com/rezervasyonum",
+        "stay": "otel.com/rezervasyonum",
+        "ticket": "bilet.com/siparisim",
+        "insurance": "sigorta.com/policem",
+        "document": "resmî doğrulama bağlantısı",
+        "other": "ilgili güvenli bağlantı"
+      },
+      "notePlaceholders": {
+        "flight": "Transfer, özel bagaj veya uçuş hatırlatması…",
+        "stay": "Kahvaltı, giriş talebi veya resepsiyon notu…",
+        "ticket": "Buluşma noktası veya giriş hatırlatması…",
+        "insurance": "Kapsam veya acil durumda izlenecek adımlar…",
+        "document": "Belgenin kendisini ya da hassas bilgileri yazma…",
+        "other": "İhtiyaç duyacağın kısa bir hatırlatma…"
+      }
+    },
+    "fields": {
+      "airline": { "label": "Havayolu", "placeholder": "Örn. Türk Hava Yolları" },
+      "flightNumber": { "label": "Uçuş numarası", "placeholder": "Örn. TK1861" },
+      "origin": { "label": "Kalkış havalimanı", "placeholder": "Örn. İstanbul (IST)" },
+      "destination": { "label": "Varış havalimanı", "placeholder": "Örn. Roma (FCO)" },
+      "time": { "label": "Saat", "placeholder": "Saat seç" },
+      "terminal": { "label": "Terminal", "placeholder": "Örn. Terminal 1" },
+      "seat": { "label": "Koltuk", "placeholder": "Örn. 12A" },
+      "baggage": { "label": "Bagaj hakkı", "placeholder": "Örn. 8 kg kabin + 20 kg" },
+      "address": { "label": "Adres", "placeholder": "Otelin açık adresi" },
+      "checkOut": { "label": "Çıkış tarihi", "placeholder": "Tarih seç" },
+      "roomType": { "label": "Oda tipi", "placeholder": "Örn. Deluxe çift kişilik" },
+      "contact": { "label": "İletişim telefonu", "placeholder": "Örn. +39 06 123 4567" },
+      "venue": { "label": "Mekân", "placeholder": "Örn. Kolezyum ana girişi" },
+      "gate": { "label": "Kapı / giriş", "placeholder": "Örn. B Kapısı" },
+      "insurer": { "label": "Sigorta şirketi", "placeholder": "Örn. Allianz" },
+      "endDate": { "label": "Poliçe bitiş tarihi", "placeholder": "Tarih seç" },
+      "emergencyPhone": { "label": "Acil yardım telefonu", "placeholder": "Örn. +90 850 000 00 00" },
+      "documentType": { "label": "Belge türü", "placeholder": "Örn. Pasaport veya vize" },
+      "expiryDate": { "label": "Son geçerlilik tarihi", "placeholder": "Tarih seç" },
+      "issuer": { "label": "Düzenleyen kurum", "placeholder": "Örn. İstanbul Valiliği" }
     },
     "actions": {
       "edit": "Kaydı düzenle",

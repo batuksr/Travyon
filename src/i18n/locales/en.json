@@ -2047,6 +2047,34 @@
     }
   },
   "travelWallet": {
+    "pocket": {
+      "subtitle": "All the little details of your journey, in one wallet.",
+      "label": "Wallet containing your travel cards",
+      "openCard": "Open {{title}} · {{category}} card",
+      "firstJourney": "Your next journey",
+      "personal": "Personal travel wallet",
+      "addCard": "Add card",
+      "hint": "Tap a card to explore its details.",
+      "emptyHint": "Your wallet has room for your first card.",
+      "pages": "More cards in your wallet",
+      "previous": "Previous cards",
+      "next": "Next cards",
+      "selectedCard": "Selected card",
+      "storing": "Slipping into your wallet…",
+      "stored": "In your wallet",
+      "addDetails": "Add a booking code, a date, or a little note to this card.",
+      "emptyTitle": "Your journey, in your pocket.",
+      "emptyDescription": "Bring your tickets, reservations, and notes together. Add a record and watch its card slip into your wallet.",
+      "examples": {
+        "flight": "Your flights and booking references",
+        "stay": "Your stays and check-in dates",
+        "ticket": "Your event tickets and travel notes"
+      },
+      "storageNote": "Your wallet is saved in this browser; it does not sync across devices.",
+      "putInWallet": "Put in wallet",
+      "copied": "Reference copied.",
+      "copyFailed": "Could not copy. You can select the code to copy it manually."
+    },
     "back": "Back to Hub",
     "eyebrow": "Travel documents",
     "title": "Travel Wallet",
@@ -2090,7 +2118,86 @@
       "noteLabel": "Short note",
       "notePlaceholder": "Terminal, baggage allowance, or an important reminder…",
       "titleRequired": "Add a title so you can recognize this record.",
-      "urlInvalid": "Enter a valid web address."
+      "urlInvalid": "Enter a valid web address.",
+      "categoryDetailsHint": "Add record-specific details so you can find them instantly when you need them.",
+      "titlePlaceholders": {
+        "flight": "e.g. Istanbul – Rome flight",
+        "stay": "e.g. Central Rome hotel",
+        "ticket": "e.g. Colosseum entry ticket",
+        "insurance": "e.g. Europe travel insurance",
+        "document": "e.g. Passport details",
+        "other": "e.g. Airport transfer"
+      },
+      "referenceLabels": {
+        "flight": "PNR / booking code",
+        "stay": "Booking code",
+        "ticket": "Ticket / order code",
+        "insurance": "Policy number",
+        "document": "Document reference / last 4 digits",
+        "other": "Reference code"
+      },
+      "referencePlaceholders": {
+        "flight": "e.g. TRV123",
+        "stay": "e.g. HTL456",
+        "ticket": "e.g. TICKET-789",
+        "insurance": "e.g. POL-456789",
+        "document": "Do not save the full document number",
+        "other": "Reference code, if any"
+      },
+      "dateLabels": {
+        "flight": "Departure date",
+        "stay": "Check-in date",
+        "ticket": "Event date",
+        "insurance": "Policy start date",
+        "document": "Issue date",
+        "other": "Date"
+      },
+      "categoryDetails": {
+        "flight": "Flight details",
+        "stay": "Accommodation details",
+        "ticket": "Ticket details",
+        "insurance": "Insurance details",
+        "document": "Document details",
+        "other": "Additional details"
+      },
+      "urlPlaceholders": {
+        "flight": "airline.com/my-booking",
+        "stay": "hotel.com/my-booking",
+        "ticket": "tickets.com/my-order",
+        "insurance": "insurance.com/my-policy",
+        "document": "official verification link",
+        "other": "related secure link"
+      },
+      "notePlaceholders": {
+        "flight": "Transfer, special baggage, or flight reminder…",
+        "stay": "Breakfast, check-in request, or reception note…",
+        "ticket": "Meeting point or entry reminder…",
+        "insurance": "Coverage or steps to follow in an emergency…",
+        "document": "Do not enter the document itself or sensitive details…",
+        "other": "A short reminder you may need…"
+      }
+    },
+    "fields": {
+      "airline": { "label": "Airline", "placeholder": "e.g. Turkish Airlines" },
+      "flightNumber": { "label": "Flight number", "placeholder": "e.g. TK1861" },
+      "origin": { "label": "Departure airport", "placeholder": "e.g. Istanbul (IST)" },
+      "destination": { "label": "Arrival airport", "placeholder": "e.g. Rome (FCO)" },
+      "time": { "label": "Time", "placeholder": "Select time" },
+      "terminal": { "label": "Terminal", "placeholder": "e.g. Terminal 1" },
+      "seat": { "label": "Seat", "placeholder": "e.g. 12A" },
+      "baggage": { "label": "Baggage allowance", "placeholder": "e.g. 8 kg cabin + 20 kg" },
+      "address": { "label": "Address", "placeholder": "Full hotel address" },
+      "checkOut": { "label": "Check-out date", "placeholder": "Select date" },
+      "roomType": { "label": "Room type", "placeholder": "e.g. Deluxe double" },
+      "contact": { "label": "Contact phone", "placeholder": "e.g. +39 06 123 4567" },
+      "venue": { "label": "Venue", "placeholder": "e.g. Colosseum main entrance" },
+      "gate": { "label": "Gate / entrance", "placeholder": "e.g. Gate B" },
+      "insurer": { "label": "Insurance company", "placeholder": "e.g. Allianz" },
+      "endDate": { "label": "Policy end date", "placeholder": "Select date" },
+      "emergencyPhone": { "label": "Emergency assistance phone", "placeholder": "e.g. +90 850 000 00 00" },
+      "documentType": { "label": "Document type", "placeholder": "e.g. Passport or visa" },
+      "expiryDate": { "label": "Expiry date", "placeholder": "Select date" },
+      "issuer": { "label": "Issuing authority", "placeholder": "e.g. Istanbul Governor's Office" }
     },
     "actions": {
       "edit": "Edit record",

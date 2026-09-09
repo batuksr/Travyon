@@ -29,6 +29,24 @@ describe('travel wallet input safety', () => {
       date: '',
       note: '',
       url: '',
+      details: {},
+    });
+  });
+
+  it('sanitizes category-specific details', () => {
+    expect(sanitizeWalletInput({
+      planId: 'plan-1',
+      category: 'flight',
+      title: 'Uçuş',
+      details: {
+        airline: '  Türk   Hava Yolları ',
+        flightNumber: ' TK 1861 ',
+        terminal: '',
+        issuer: 'Bu alan uçuşa ait değil',
+      },
+    }).details).toEqual({
+      airline: 'Türk Hava Yolları',
+      flightNumber: 'TK 1861',
     });
   });
 });
