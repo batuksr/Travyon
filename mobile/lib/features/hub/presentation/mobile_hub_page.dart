@@ -4,6 +4,8 @@ import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../../plans/presentation/plan_detail_page.dart';
+import '../../onboarding/data/plan_creation_repository.dart';
+import '../../onboarding/presentation/onboarding_page.dart';
 
 class MobileHubPage extends StatefulWidget {
   const MobileHubPage({
@@ -24,6 +26,16 @@ class MobileHubPage extends StatefulWidget {
 class _MobileHubPageState extends State<MobileHubPage> {
   int _selected = 0;
   late final _plans = widget.plansRepository.watchPlans(widget.session.uid);
+
+  void _create() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => OnboardingPage(
+        uid: widget.session.uid,
+        plansRepository: widget.plansRepository,
+        repository: FirebasePlanCreationRepository(),
+      ),
+    ),
+  );
 
   void _open(TravelPlanSummary plan) => Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -74,6 +86,12 @@ class _MobileHubPageState extends State<MobileHubPage> {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 26),
+                FilledButton.icon(
+                  onPressed: _create,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Yeni plan oluştur'),
+                ),
+                const SizedBox(height: 20),
                 if (snapshot.connectionState == ConnectionState.waiting)
                   const _LoadingPanel()
                 else if (snapshot.hasError)
@@ -461,7 +479,7 @@ class _EmptyPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Webde kaydettiğin planlar otomatik olarak burada görünecek.',
+            'Yeni plan oluştur ile şehrini ve seyahat tercihlerini seç. Kaydettiğin planlar webde ve telefonda birlikte görünsün.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.muted, height: 1.5),
           ),

@@ -8,6 +8,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getStorage } from "firebase-admin/storage";
 import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { lookupMobilePlace, validateMobilePlaceQuery, lookupMobilePhoto, validateMobilePhotoName } from "./mobilePlaces";
+import { lookupAccommodation, validateAccommodationQuery } from "./mobileAccommodation";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -84,6 +85,7 @@ const RATE_LIMITS: Record<string, number> = {
   geocodeAddress: 80,
   getMobilePlaceDetails: 60,
   getMobilePlacePhoto: 120,
+  getMobileAccommodation: 120,
   getDirections: 15,
 };
 
@@ -1594,6 +1596,17 @@ export const cancelSubscription = onCall(
 ═══════════════════════════════════════════════ */
 
 const GOOGLE_MAPS_REST_BASE = "https://maps.googleapis.com/maps/api";
+
+export const getMobileAccommodation = onCall(
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    const query = validateAccommodationQuery(request.data);
+    await checkRateLimit(request.auth.uid, "getMobileAccommodation", "Çok sık arama yapıldı. Biraz sonra tekrar deneyin.");
+    return lookupAccommodation(query, GOOGLE_MAPS_SERVER_KEY.value());
+  },
+);
 
 export const getMobilePlacePhoto = onCall(
   { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK, timeoutSeconds: 20 },

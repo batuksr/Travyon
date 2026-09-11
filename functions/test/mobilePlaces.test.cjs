@@ -51,3 +51,10 @@ test('reject a matching name in another city', async () => {
   const result = await lookupMobilePlace({name:'x',destination:'Rome',location:{lat:41.89,lng:12.49}}, 'test-key', async () => new Response(JSON.stringify(++n === 1 ? {places:[{id:'x'}]} : {location:{latitude:48.85,longitude:2.35}})));
   assert.equal(result.place, null);
 });
+
+test('non-object Google responses fail with a safe error', async () => {
+  for (const data of [null, [], 'invalid', 42]) {
+    await assert.rejects(lookupMobilePlace({name:'Hotel',destination:'Roma'}, 'secret',
+      async () => new Response(JSON.stringify(data))), /Google yanıtı okunamadı/);
+  }
+});

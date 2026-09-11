@@ -53,6 +53,42 @@ istemci arasında ortaktır.
 
 ## Tamamlanan mobil akış
 
+### Adım adım plan oluşturma
+
+Hub ve Planlar ekranındaki **Yeni plan oluştur** düğmesi web ile aynı soruları
+dört adımda açar: destinasyon/tarihler/kişi/bütçe, seyahat tercihleri,
+yeme-içme, konaklama/ulaşım. İlgi alanları en fazla üç ve öncelik sıralıdır;
+“Her Şeyi Yerim” diğer beslenme kısıtlarıyla birlikte seçilmez. Profildeki
+varsayılan bütçe, kişi sayısı, tempo ve para birimi başlangıçta yüklenir.
+
+Takvim Türkçedir; en fazla 31 günlük plan hazırlanır. Geri dönmek cevapları
+korur, formdan çıkarken değişiklik varsa onay istenir. Rezervasyon varsa otel
+adı/adresin en az üç karakteri yazılınca Google Places önerileri açılır.
+Aramalar 400 ms beklemeli, destinasyon konumuna öncelikli ve oturum tokenlıdır.
+Seçilen önerinin açık adresi ve koordinatları `getMobileAccommodation` üzerinden
+alınır; metin değiştirilirse önceki koordinatlar temizlenir. Geç gelen eski
+sonuçlar yoksayılır. Öneriler diske kaydedilmez, arayüzde Google Maps atfı vardır.
+Elle adres girişi de çalışır; konumu yoksa `geocodeAddress` plan oluştururken aranır.
+
+Yeni callable mevcut sunucu anahtarının Places API (New) iznini kullanır;
+mobil Maps anahtarını değiştirmeniz gerekmez. LOCAL için `functions` klasöründe
+`npm.cmd run build` çalıştırın. Emülatör yeni fonksiyonu yüklemezse kendi
+terminalinden yeniden başlatın. Production'da `getMobileAccommodation` ayrıca
+deploy edilmelidir; bu çalışma otomatik deploy yapmaz.
+Kaynak: [Autocomplete (New)](https://developers.google.com/maps/documentation/places/web-service/place-autocomplete),
+[Google Maps atıfları](https://developers.google.com/maps/documentation/places/web-service/policies).
+
+Plan mevcut `generateAIContent` callable servisiyle hazırlanır; yeni backend
+veya istemciye Gemini anahtarı gerekmez. Model yanıtı gün/tarih/koordinat/maliyet
+kontrollerinden geçirilir. Önizlemeden **Kaydet ve rotayı aç** ile
+`users/{uid}/plans` koleksiyonuna, web ile aynı alanlarla kaydedilir. Kayıt
+hatasında aynı plan kimliğiyle tekrar denenir; AI yeniden çağrılmaz. LOCAL
+modda Functions ve Firestore emülatörlerinin açık olması gerekir.
+
+Mobil prompt aynı tercihleri işler, ancak webdeki sonradan rota optimizasyonu
+ve arka planda durak koordinatı düzeltme işlemleri henüz port edilmedi.
+Gerçek AI yanıt kalitesi, kotalar ve canlı kayıt ayrıca cihazda doğrulanmalıdır.
+
 ### Telefon için plan deneyimi
 
 - Hub’daki plan kartları ve “Yolculuğuna devam et” düğmesi detay ekranını açar.

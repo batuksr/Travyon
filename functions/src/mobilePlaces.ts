@@ -6,6 +6,16 @@ export interface MobilePlaceQuery {
   location?: { lat: number; lng: number };
 }
 
+interface GooglePlaceSearchResponse {
+  places?: Array<{ id?: string }>;
+}
+
+// Only fields inspected here are narrowed; other requested fields (reviews,
+// photos and attributions) are forwarded unchanged to the mobile client.
+interface GooglePlaceDetailsResponse extends Record<string, unknown> {
+  location?: { latitude?: number; longitude?: number };
+}
+
 export function validateMobilePlaceQuery(data: unknown): MobilePlaceQuery {
   const input = data as Partial<MobilePlaceQuery> | null;
   if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 300 ||
@@ -24,7 +34,7 @@ export function validateMobilePlaceQuery(data: unknown): MobilePlaceQuery {
 // proxy. No Google content is persisted to Firestore or a server cache.
 export async function lookupMobilePlace(query: MobilePlaceQuery, key: string, request: typeof fetch = fetch) {
   if (!key) throw new HttpsError("failed-precondition", "Sunucu harita anahtarı tanımlanmamış.");
-  async function google(path: string, mask: string, body?: object): Promise<Record<string, any>> {
+  async function google<T extends object>(path: string, mask: string, body?: object): Promise<T> {
     let response: Response;
     try {
       response = await request(`https://places.googleapis.com/v1/${path}`, {
@@ -43,10 +53,14 @@ export async function lookupMobilePlace(query: MobilePlaceQuery, key: string, re
       if (response.status === 429) throw new HttpsError("resource-exhausted", "Google mekân sorgu sınırına ulaşıldı.");
       throw new HttpsError("unavailable", "Google mekân bilgisi şu an alınamıyor.");
     }
-    try { return await response.json(); }
+    try {
+      const data: unknown = await response.json();
+      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid Google response");
+      return data as T;
+    }
     catch { throw new HttpsError("unavailable", "Google yanıtı okunamadı."); }
   }
-  const search = await google("places:searchText", "places.id", {
+  const search = await google<GooglePlaceSearchResponse>("places:searchText", "places.id", {
     textQuery: `${query.name}, ${query.destination}`,
     languageCode: "tr", maxResultCount: 1,
     ...(query.location ? { locationBias: { circle: {
@@ -55,7 +69,7 @@ export async function lookupMobilePlace(query: MobilePlaceQuery, key: string, re
   });
   const id = search.places?.[0]?.id;
   if (typeof id !== "string" || !id) return { place: null };
-  const place = await google(`places/${encodeURIComponent(id)}?languageCode=tr`, [
+  const place = await google<GooglePlaceDetailsResponse>(`places/${encodeURIComponent(id)}?languageCode=tr`, [
     "id", "displayName", "formattedAddress", "location", "rating", "userRatingCount",
     "reviews", "regularOpeningHours", "websiteUri", "googleMapsUri", "attributions", "photos",
   ].join(","));
