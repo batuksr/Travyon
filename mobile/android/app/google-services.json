@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "338987864218",
+    "project_id": "travyon-5fb01",
+    "storage_bucket": "travyon-5fb01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338987864218:android:c7002de5f72cdf08584f23",
+        "android_client_info": {
+          "package_name": "com.travyon.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "338987864218-q6jrd4cqljjagoj7lgm4bvtnuohvr9vo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAewzhqXhw_wI54p-9hDHtmuvBepA9-hoc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338987864218-q6jrd4cqljjagoj7lgm4bvtnuohvr9vo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "338987864218-ss8gia71pjres297thodk37flle3kho9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.travyon.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
