@@ -3,6 +3,11 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { useAuthStore } from './useAuthStore';
 import type { TravelPlanResponse } from '../services/aiService';
 import type { OnboardingData } from './useOnboardingStore';
+import {
+  clearPlansFromCloud,
+  deletePlanFromCloud,
+  savePlanToCloud,
+} from '../services/savedPlansCloudService';
 
 export interface SavedPlan {
   id: string;
@@ -22,6 +27,7 @@ interface SavedPlansState {
   renamePlan: (id: string, name: string) => void;
   getPlanById: (id: string) => SavedPlan | undefined;
   clearAll: () => void;
+  replaceUserPlans: (uid: string, plans: SavedPlan[]) => void;
 }
 
 const generateId = (): string =>
@@ -45,19 +51,38 @@ export const useSavedPlansStore = create<SavedPlansState>()(
             [uid]: [newPlan, ...(state.plansByUser[uid] ?? [])],
           },
         }));
+        if (uid !== 'anonymous') void savePlanToCloud(uid, newPlan).catch(() => {});
         return id;
       },
 
       updatePlan: (id, plan, onboardingData) => {
         const uid = getUid();
-        set((state) => ({
-          plansByUser: {
-            ...state.plansByUser,
-            [uid]: (state.plansByUser[uid] ?? []).map((p) =>
-              p.id === id ? { ...p, plan, onboardingData } : p
-            ),
-          },
-        }));
+        let updatedPlan: SavedPlan | undefined;
+        set((state) => {
+          const userPlans = state.plansByUser[uid] ?? [];
+          const existingPlan = userPlans.find((savedPlan) => savedPlan.id === id);
+          updatedPlan = existingPlan
+            ? { ...existingPlan, plan, onboardingData }
+            : {
+                id,
+                createdAt: Date.now(),
+                isFavorite: false,
+                plan,
+                onboardingData,
+              };
+
+          return {
+            plansByUser: {
+              ...state.plansByUser,
+              [uid]: existingPlan
+                ? userPlans.map((savedPlan) => savedPlan.id === id ? updatedPlan! : savedPlan)
+                : [updatedPlan, ...userPlans],
+            },
+          };
+        });
+        if (uid !== 'anonymous' && updatedPlan) {
+          void savePlanToCloud(uid, updatedPlan).catch(() => {});
+        }
       },
 
       removePlan: (id) => {
@@ -68,30 +93,39 @@ export const useSavedPlansStore = create<SavedPlansState>()(
             [uid]: (state.plansByUser[uid] ?? []).filter((p) => p.id !== id),
           },
         }));
+        if (uid !== 'anonymous') void deletePlanFromCloud(uid, id).catch(() => {});
       },
 
       toggleFavorite: (id) => {
         const uid = getUid();
+        let updatedPlan: SavedPlan | undefined;
         set((state) => ({
           plansByUser: {
             ...state.plansByUser,
             [uid]: (state.plansByUser[uid] ?? []).map((p) =>
-              p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
+              p.id === id ? (updatedPlan = { ...p, isFavorite: !p.isFavorite }) : p
             ),
           },
         }));
+        if (uid !== 'anonymous' && updatedPlan) {
+          void savePlanToCloud(uid, updatedPlan).catch(() => {});
+        }
       },
 
       renamePlan: (id, name) => {
         const uid = getUid();
+        let updatedPlan: SavedPlan | undefined;
         set((state) => ({
           plansByUser: {
             ...state.plansByUser,
             [uid]: (state.plansByUser[uid] ?? []).map((p) =>
-              p.id === id ? { ...p, customName: name } : p
+              p.id === id ? (updatedPlan = { ...p, customName: name }) : p
             ),
           },
         }));
+        if (uid !== 'anonymous' && updatedPlan) {
+          void savePlanToCloud(uid, updatedPlan).catch(() => {});
+        }
       },
 
       getPlanById: (id) => {
@@ -103,6 +137,13 @@ export const useSavedPlansStore = create<SavedPlansState>()(
         const uid = getUid();
         set((state) => ({
           plansByUser: { ...state.plansByUser, [uid]: [] },
+        }));
+        if (uid !== 'anonymous') void clearPlansFromCloud(uid).catch(() => {});
+      },
+
+      replaceUserPlans: (uid, plans) => {
+        set((state) => ({
+          plansByUser: { ...state.plansByUser, [uid]: plans },
         }));
       },
     }),

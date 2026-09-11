@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class MobileBootstrapPage extends StatelessWidget {
-  const MobileBootstrapPage({super.key, this.initializationError});
+  const MobileBootstrapPage({
+    super.key,
+    this.initializationError,
+    this.onStart,
+  });
 
   final Object? initializationError;
+  final VoidCallback? onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +55,7 @@ class MobileBootstrapPage extends StatelessWidget {
               _ConnectionStatus(firebaseReady: firebaseReady),
               const SizedBox(height: 22),
               FilledButton.icon(
-                onPressed: firebaseReady ? () {} : null,
+                onPressed: firebaseReady ? onStart : null,
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: Text(
                   firebaseReady

@@ -13,6 +13,7 @@ import i18n, { LANGUAGE_TO_CODE } from "./i18n";
 import Sidebar from "./components/Sidebar";
 import { Home as HomeIcon, Sparkles, Bookmark, Users, Settings as SettingsIcon, Bell } from "lucide-react";
 import PwaInstallBanner from "./components/PwaInstallBanner";
+import SavedPlansCloudSync from "./components/SavedPlansCloudSync";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -245,6 +246,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppLayout isAuthenticated={!!user} />
+      <SavedPlansCloudSync />
       <PwaInstallBanner />
     </BrowserRouter>
   );

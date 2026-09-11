@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -6,6 +8,12 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val mapsDefines = (project.findProperty("dart-defines") as? String ?: "")
+    .split(",").filter { it.isNotBlank() }.mapNotNull {
+        val entry = String(Base64.getDecoder().decode(it), Charsets.UTF_8).split("=", limit = 2)
+        if (entry.size == 2) entry[0] to entry[1] else null
+    }.toMap()
 
 android {
     namespace = "com.travyon.app"
@@ -20,6 +28,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.travyon.app"
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = mapsDefines["GOOGLE_MAPS_ANDROID_API_KEY"] ?: ""
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

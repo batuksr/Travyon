@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../core/firebase/auth_repository.dart';
 import '../core/theme/app_theme.dart';
+import '../features/auth/presentation/auth_gate.dart';
 import '../features/bootstrap/presentation/mobile_bootstrap_page.dart';
+import '../features/plans/data/travel_plans_repository.dart';
 
 class TravyonApp extends StatelessWidget {
-  const TravyonApp({super.key, this.initializationError});
+  const TravyonApp({
+    super.key,
+    this.initializationError,
+    this.authRepository,
+    this.travelPlansRepository,
+  });
 
   final Object? initializationError;
+  final AuthRepository? authRepository;
+  final TravelPlansRepository? travelPlansRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +24,13 @@ class TravyonApp extends StatelessWidget {
       title: 'Travyon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: MobileBootstrapPage(initializationError: initializationError),
+      home: initializationError == null
+          ? AuthGate(
+              repository: authRepository ?? FirebaseAuthRepository(),
+              plansRepository:
+                  travelPlansRepository ?? FirebaseTravelPlansRepository(),
+            )
+          : MobileBootstrapPage(initializationError: initializationError),
     );
   }
 }

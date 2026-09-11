@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "338987864218-pthnofambto699aiq38p05om7iphcm6t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.travyon.app",
+            "certificate_hash": "3c57f8b5fe1c7491b8ecb0cccb2c0ac4ca8e0655"
+          }
+        },
+        {
           "client_id": "338987864218-q6jrd4cqljjagoj7lgm4bvtnuohvr9vo.apps.googleusercontent.com",
           "client_type": 3
         }

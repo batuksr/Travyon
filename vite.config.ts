@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   server: {
+    port: 5173,
+    strictPort: true,
     headers: {
       // Firebase Google sign-in popup'ının opener penceresiyle güvenli biçimde
       // haberleşmesine izin verir; Chrome'daki window.closed COOP uyarısını önler.

@@ -7,6 +7,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { getStorage } from "firebase-admin/storage";
 import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { lookupMobilePlace, validateMobilePlaceQuery, lookupMobilePhoto, validateMobilePhotoName } from "./mobilePlaces";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -81,6 +82,8 @@ const RATE_LIMITS: Record<string, number> = {
   initiateSubscriptionCheckout: 3,
   cancelSubscription: 5,
   geocodeAddress: 80,
+  getMobilePlaceDetails: 60,
+  getMobilePlacePhoto: 120,
   getDirections: 15,
 };
 
@@ -1591,6 +1594,32 @@ export const cancelSubscription = onCall(
 ═══════════════════════════════════════════════ */
 
 const GOOGLE_MAPS_REST_BASE = "https://maps.googleapis.com/maps/api";
+
+export const getMobilePlacePhoto = onCall(
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK, timeoutSeconds: 20 },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
+    const name = validateMobilePhotoName(request.data);
+    await checkRateLimit(request.auth.uid, "getMobilePlacePhoto", "Çok sık fotoğraf sorgulandı. Biraz sonra tekrar deneyin.");
+    return lookupMobilePhoto(name, GOOGLE_MAPS_SERVER_KEY.value());
+  },
+);
+
+export const getMobilePlaceDetails = onCall(
+  { secrets: [GOOGLE_MAPS_SERVER_KEY], enforceAppCheck: SHOULD_ENFORCE_APP_CHECK, timeoutSeconds: 30 },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    if (request.auth.token.email_verified !== true) {
+      throw new HttpsError("failed-precondition", "E-posta doğrulaması gerekli.");
+    }
+    const query = validateMobilePlaceQuery(request.data);
+    await checkRateLimit(request.auth.uid, "getMobilePlaceDetails", "Çok sık sorgu yapıldı. Biraz sonra tekrar deneyin.");
+    return lookupMobilePlace(query, GOOGLE_MAPS_SERVER_KEY.value());
+  },
+);
 
 interface GeocodeAddressRequest {
   address: string;

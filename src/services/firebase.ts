@@ -18,6 +18,9 @@ const firebaseConfig = {
 const useAllFirebaseEmulators =
   import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
 
+// The explicit npm modes win over legacy per-service flags in .env.local.
+const firebaseMode = import.meta.env.VITE_FIREBASE_MODE as 'local' | 'cloud' | undefined;
+
 const resolveEmulatorFlag = (override: string | undefined): boolean =>
   import.meta.env.DEV && (override === undefined || override === ''
     ? useAllFirebaseEmulators
@@ -25,10 +28,15 @@ const resolveEmulatorFlag = (override: string | undefined): boolean =>
 
 // Servis bazlı bayraklar gerçek Google Auth kullanırken diğer Firebase
 // servislerini yerelde çalıştırmaya izin verir.
-const useAuthEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_AUTH_EMULATOR);
-const useFirestoreEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FIRESTORE_EMULATOR);
-const useStorageEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_STORAGE_EMULATOR);
-const useFunctionsEmulator = resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR);
+const useAuthEmulator = firebaseMode
+  ? false
+  : resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_AUTH_EMULATOR);
+const useFirestoreEmulator = firebaseMode === 'local'
+  || (firebaseMode !== 'cloud' && resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FIRESTORE_EMULATOR));
+const useStorageEmulator = firebaseMode === 'local'
+  || (firebaseMode !== 'cloud' && resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_STORAGE_EMULATOR));
+const useFunctionsEmulator = firebaseMode === 'local'
+  || (firebaseMode !== 'cloud' && resolveEmulatorFlag(import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR));
 
 // Firebase'i Başlat
 // Eğer .env dosyası yoksa veya ayarlanmamışsa, uygulamanın çökmesini engellemek için mock bir obje döndürüyoruz.

@@ -80,52 +80,42 @@ VITE_RECAPTCHA_SITE_KEY=
 VITE_SENTRY_DSN=
 ```
 
-Ardından geliştirme sunucusunu başlat:
+### Çalışma modları
 
-```bash
-npm run dev
+Ortam ayarlarını `.env.local` içinde elle açıp kapatmak gerekmez. Kullanılacak
+Firebase ortamını doğrudan komut belirler.
+
+#### LOCAL — günlük geliştirme
+
+Bu modda web ve mobil aynı yerel Firestore, Functions ve Storage emülatörlerini
+kullanır. Authentication gerçek Firebase üzerinde kalır; bu nedenle iki istemcide
+de aynı Google/e-posta hesabıyla giriş yapılabilir.
+
+```powershell
+# Terminal 1 — yerel Firebase backend (UI: http://127.0.0.1:4000)
+npm.cmd run emulators
+
+# Terminal 2 — web (http://localhost:5173)
+npm.cmd run dev
+
+# Terminal 3 — Android uygulaması
+cd mobile
+flutter.bat run -d emulator-5554 --dart-define=TRAVYON_FIREBASE_MODE=local --dart-define-from-file=maps-config.local.json
 ```
 
-### Tamamen yerel geliştirme
+#### CLOUD — gerçek Firebase ile kontrol
 
-`.env.local` içinde `VITE_USE_FIREBASE_EMULATORS=true` olduğunda istemci Auth,
-Firestore, Storage ve Functions için production servislerine bağlanmaz. İki ayrı
-terminal açın:
+```powershell
+# Web
+npm.cmd run dev:cloud
 
-```bash
-# Terminal 1 — Firebase Emulator Suite (UI: http://127.0.0.1:4000)
-npm run emulators
-
-# Terminal 2 — Vite uygulaması (http://localhost:5173)
-npm run dev
+# Android/iOS
+cd mobile
+flutter.bat run -d emulator-5554 --dart-define-from-file=maps-config.local.json
 ```
 
-Emülatör verileri bellekte/geçici yerel dosyalarda tutulur ve production Firebase
-verilerini değiştirmez. Gerçek Firebase servisleriyle geliştirme yapmak gerekirse
-`.env.local` içindeki bayrağı geçici olarak `false` yapın.
-
-### Gerçek Google girişi + yerel backend
-
-Gerçek Google hesabıyla oturum açıp Firestore, Storage ve Functions servislerini
-yerelde çalıştırmak için `.env.local` içinde servis bazlı bayrakları kullanın:
-
-```env
-VITE_USE_FIREBASE_EMULATORS=false
-VITE_USE_FIREBASE_AUTH_EMULATOR=false
-VITE_USE_FIREBASE_FIRESTORE_EMULATOR=true
-VITE_USE_FIREBASE_STORAGE_EMULATOR=true
-VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true
-```
-
-Ardından iki ayrı terminal açın:
-
-```bash
-npm run emulators:hybrid
-npm run dev
-```
-
-Bu modda Google Authentication canlı Firebase üzerinden, uygulama verileri ve
-sunucu fonksiyonları ise yerel emulatorlar üzerinden çalışır.
+`npm run build` ve mağaza için alınan Flutter release derlemeleri varsayılan olarak
+gerçek Firebase'i kullanır. LOCAL emülatör verileri production verilerini değiştirmez.
 
 Windows başlangıç betiği, güncel Java gereksinimi için Android Studio ile gelen
 JBR'yi otomatik olarak kullanır. AI, harita REST ve e-posta fonksiyonları yerelde

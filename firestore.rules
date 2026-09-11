@@ -24,6 +24,14 @@ service cloud.firestore {
                       'locationEnabled', 'locationHistory', 'analyticsEnabled'
                     ]);
       allow delete: if false;
+
+      // Özel seyahat planları — web ve mobil aynı kullanıcı koleksiyonunu
+      // paylaşır. Yolun uid parçası sayesinde kullanıcı yalnızca kendi
+      // planlarını okuyabilir ve değiştirebilir.
+      match /plans/{planId} {
+        allow read, create, update, delete: if request.auth != null
+                                            && request.auth.uid == uid;
+      }
     }
 
     // Hata raporları — istek-sıklığı sınırı gerektiği için artık sadece

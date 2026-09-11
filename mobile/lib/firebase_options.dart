@@ -62,6 +62,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '338987864218',
     projectId: 'travyon-5fb01',
     storageBucket: 'travyon-5fb01.firebasestorage.app',
+    androidClientId: '338987864218-pthnofambto699aiq38p05om7iphcm6t.apps.googleusercontent.com',
     iosClientId: '338987864218-ss8gia71pjres297thodk37flle3kho9.apps.googleusercontent.com',
     iosBundleId: 'com.travyon.app',
   );
