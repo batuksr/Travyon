@@ -24,6 +24,7 @@ interface TravelSegment {
 type TravelMode = keyof Omit<TravelSegment, 'loading'>;
 
 interface Props {
+  journeyTools?: React.ReactNode;
   day: DailyPlan;
   onActivityClick?: (place: { placeName: string; lat: number; lng: number }) => void;
   /* Script yükleme TEK bir üst bileşende (Dashboard/CommunityPlanView) yapılır
@@ -304,9 +305,9 @@ const AddActivityPanel: React.FC<AddPanelProps> = ({
 /* ════════════════════════════════════════
    Main Component
 ════════════════════════════════════════ */
-const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
+const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded, journeyTools }) => {
   const { t, i18n } = useTranslation();
-  const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity, updateActivityNote } = usePlanStore();
+  const { plan, updateDayPlan, updateActivityActualCost, deleteActivity, moveActivity, addActivity, updateActivityNote, toggleActivityCompleted } = usePlanStore();
   const { data: tripData } = useOnboardingStore();
   const { distanceKm: distKm } = useAppSettingsStore();
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -326,7 +327,12 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
     () => day.activities.map(a => `${a.coordinates.lat},${a.coordinates.lng}`).join('|'),
     [day.activities]
   );
-  const prevKeyRef = useRef<string>('');
+  // Completion, costs and notes do not change the route. Keep an in-flight
+  // directions request alive when only those fields change.
+  const routeCoordinates = useMemo(() => activitiesKey.split('|').filter(Boolean).map(point => {
+    const [lat, lng] = point.split(',').map(Number);
+    return { lat, lng };
+  }), [activitiesKey]);
 
   /* Seyahat süreleri artık istemciden doğrudan DirectionsService (SDK) ile değil,
      getDirections Cloud Function'ı üzerinden tek toplu çağrıda hesaplanıyor —
@@ -335,16 +341,10 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
      yapılmak zorunda (bkz. functions/src/index.ts getDirections). */
   useEffect(() => {
     if (!isLoaded) return;
-    if (activitiesKey === prevKeyRef.current) return;
-    prevKeyRef.current = activitiesKey;
-
-    const pairs = day.activities.slice(0, -1).map((activity, index) => ({
+    const pairs = routeCoordinates.slice(0, -1).map((coordinates, index) => ({
       index,
-      origin: { lat: activity.coordinates.lat, lng: activity.coordinates.lng },
-      destination: {
-        lat: day.activities[index + 1].coordinates.lat,
-        lng: day.activities[index + 1].coordinates.lng,
-      },
+      origin: coordinates,
+      destination: routeCoordinates[index + 1],
     }));
     if (pairs.length === 0) {
       // Tek aktivite → çift yok, önceki günden kalan seyahat sürelerini temizle.
@@ -384,7 +384,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
       });
 
     return () => { cancelled = true; };
-  }, [isLoaded, activitiesKey, day.activities]);
+  }, [isLoaded, routeCoordinates]);
 
   const handleVibeSelect = async (vibe: VibeType) => {
     const newVibe = activeVibe === vibe ? null : vibe;
@@ -396,10 +396,12 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
         day, plan.dailyPlans, plan.destination, newVibe,
         tripData.startDate, tripData.arrivalTime,
         tripData.endDate,   tripData.departureTime,
-        (updatedDay) => updateDayPlan(day.dayNumber, updatedDay),
+        // Commit a regenerated day once, so Undo restores the original day,
+        // not a partially streamed response.
+        () => {},
         i18n.language === 'en' ? 'en' : 'tr',
       );
-      updateDayPlan(day.dayNumber, newDay);
+      if (usePlanStore.getState().plan === plan) updateDayPlan(day.dayNumber, newDay);
       setActiveVibe(null);
     } catch (error: unknown) {
       alert(t('dashboard.dailyPlanView.vibeUpdateError', { message: error instanceof Error ? error.message : t('dashboard.dailyPlanView.unknownError') }));
@@ -419,6 +421,8 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
     if (deletingIndex === index) {
       deleteActivity(day.dayNumber, index);
       setDeletingIndex(null);
+      setEditingIndex(null);
+      setNoteIndex(null);
     } else {
       setDeletingIndex(index);
     }
@@ -427,6 +431,9 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
   const handleMove = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= day.activities.length) return;
     moveActivity(day.dayNumber, fromIndex, toIndex);
+    setEditingIndex(null);
+    setNoteIndex(null);
+    setDeletingIndex(null);
   };
 
   const handleAdd = (activity: DailyActivity, period: string) => {
@@ -461,6 +468,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
 
       {/* ── TİMLİNE ── */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-5 pt-4 pb-2">
+        {journeyTools && <div className="-mx-3 -mt-4 mb-4 sm:-mx-5">{journeyTools}</div>}
         {day.activities.map((activity, index) => {
           const isLast       = index === day.activities.length - 1;
           const nextActivity = !isLast ? day.activities[index + 1] : null;
@@ -483,7 +491,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
                 </p>
               )}
 
-              <div className={`flex gap-3 rounded-xl transition-colors ${isDeleting ? 'bg-red-50' : ''}`}>
+              <div data-testid="plan-stop" className={`flex gap-3 rounded-xl transition-colors ${activity.completed ? 'bg-surface-2/60' : ''} ${isDeleting ? 'bg-red-50' : ''}`}>
                 {/* Circle + line */}
                 <div className="flex flex-col items-center shrink-0 w-6">
                   <div className={`w-6 h-6 rounded-full border-2 ${colors.border} ${colors.bg} flex items-center justify-center shrink-0`}>
@@ -494,7 +502,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
 
                 {/* Content */}
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-1' : 'pb-4'}`}>
-                  <div className="flex items-start gap-2">
+                  <div className="flex flex-col items-start gap-2 sm:flex-row">
 
                     {/* Yer adı + açıklama + not */}
                     <div className="flex-1 min-w-0">
@@ -506,11 +514,12 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
                           onActivityClick?.({ placeName: activity.placeName, lat: activity.coordinates.lat, lng: activity.coordinates.lng });
                         }}
                       >
-                        <h3 className={`font-heading text-sm leading-tight transition-colors ${isDeleting ? 'text-red-500' : 'text-text hover:text-accent'}`}>
+                        <h3 className={`font-heading text-sm leading-tight transition-colors ${activity.completed ? 'text-muted' : isDeleting ? 'text-red-500' : 'text-text hover:text-accent'}`}>
                           {activity.placeName}
                         </h3>
+                        {index === day.activities.findIndex(item => !item.completed) && journeyTools && <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-semibold text-accent-700">{t('dashboard.journey.next').replace(/:$/, '')}</span>}
                         {!isDeleting && noteIndex !== index && (
-                          <p className="text-xs text-muted mt-0.5 leading-relaxed">
+                          <p className={`text-xs text-muted mt-0.5 leading-relaxed ${activity.completed ? 'opacity-70' : ''}`}>
                             {activity.description}
                           </p>
                         )}
@@ -520,6 +529,13 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
                       </div>
 
                       {/* Mevcut not gösterimi */}
+                      <button type="button" aria-pressed={Boolean(activity.completed)}
+                        aria-label={t('dashboard.journey.markLabel', { place: activity.placeName })}
+                        onClick={() => toggleActivityCompleted(day.dayNumber, index)}
+                        className={`mt-1 inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-accent ${activity.completed ? 'bg-sage/10 text-sage-700' : 'text-muted hover:bg-surface-2'}`}>
+                        <span className={`flex h-4 w-4 items-center justify-center rounded border ${activity.completed ? 'border-sage bg-sage text-white' : 'border-divider'}`}>{activity.completed && <Check size={12} />}</span>
+                        {t(activity.completed ? 'dashboard.journey.completed' : 'dashboard.journey.mark')}
+                      </button>
                       {activity.note && noteIndex !== index && !isDeleting && (
                         <div
                           className="mt-1.5 flex items-start gap-1.5 cursor-pointer group/note"
@@ -574,7 +590,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded }) => {
                     </div>
 
                     {/* Sağ kontroller */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="ml-auto flex items-center gap-1 shrink-0 sm:ml-0">
                       {/* Sil onay durumu */}
                       {isDeleting ? (
                         <>

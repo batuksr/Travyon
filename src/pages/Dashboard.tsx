@@ -18,13 +18,13 @@ import {
   Sun,
   Moon,
   Cloud,
-  Wallet,
   Link2,
   Check,
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import DailyPlanView from '../components/DailyPlanView';
+import DayJourneyTools from '../components/DayJourneyTools';
 import MapView from '../components/MapView';
 import PlaceDetailsPanel from '../components/PlaceDetailsPanel';
 import WeatherView from '../components/WeatherView';
@@ -39,7 +39,8 @@ const Dashboard: React.FC = () => {
   // ikisinin ayrı ayrı useJsApiLoader çağırması yarış durumuna yol açıyordu.
   const { isLoaded: mapsLoaded } = useGoogleMapsLoader();
   const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
-  const { plan, savedPlanId, setSavedPlanId } = usePlanStore();
+  const { plan, savedPlanId, setSavedPlanId, history, undo } = usePlanStore();
+  const [undoVersion, setUndoVersion] = useState(0);
   const { user } = useAuthStore();
   const { addPlan, updatePlan } = useSavedPlansStore();
   const savedPlans = useUserPlans();
@@ -61,6 +62,7 @@ const Dashboard: React.FC = () => {
   const [showExitModal, setShowExitModal]   = useState(false);
   const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
   const [justSaved, setJustSaved]           = useState(false);
+  const [lastSavedPlan, setLastSavedPlan] = useState<typeof plan>(null);
   const [linkCopied, setLinkCopied]         = useState(false);
   const hasSaved = useRef(false);
   const [selectedPlace, setSelectedPlace] = useState<{
@@ -196,6 +198,7 @@ const Dashboard: React.FC = () => {
       setSavedPlanId(newId);
     }
     hasSaved.current = true;
+    setLastSavedPlan(plan);
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2500);
   };
@@ -238,6 +241,17 @@ const Dashboard: React.FC = () => {
   };
 
   const activeDay = plan.dailyPlans[activeDayIndex];
+  const savedFeedback = justSaved && lastSavedPlan === plan;
+  const handleUndo = () => {
+    const previous = history[history.length - 1];
+    if (!previous) return;
+    const changedDay = previous.dailyPlans.findIndex((day, index) => JSON.stringify(day) !== JSON.stringify(plan.dailyPlans[index]));
+    undo();
+    if (changedDay >= 0) setActiveDayIndex(changedDay);
+    setUndoVersion(version => version + 1);
+    setJustSaved(false);
+    setSelectedPlace(null);
+  };
 
   return (
   <>
@@ -436,14 +450,6 @@ const Dashboard: React.FC = () => {
         {/* Sağ: aksiyonlar */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
 
-          {/* Toplam maliyet — sadece md+ */}
-          <div className="hidden md:flex items-center gap-1.5 text-xs">
-            <span className="text-muted">{t('dashboard.topBar.total')}</span>
-            <span className="font-heading text-text">
-              {plan.currencySymbol}{plan.totalEstimatedCost.toLocaleString(locale)}
-            </span>
-          </div>
-
           {/* Mobil sekme butonları (Rehber + Hava) — sadece sm ve altında */}
           <button
             type="button"
@@ -466,15 +472,16 @@ const Dashboard: React.FC = () => {
           <button
             type="button"
             onClick={handleSavePlan}
-            disabled={justSaved}
+            disabled={savedFeedback}
+            aria-label={t(savedFeedback ? 'dashboard.topBar.saved' : savedPlanId ? 'dashboard.journey.saveChanges' : 'dashboard.topBar.save')}
             className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 font-heading rounded-full text-xs transition-all ${
-              justSaved
+              savedFeedback
                 ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
                 : 'bg-surface border-[1.5px] border-accent/40 text-accent hover:bg-accent-100 hover:border-accent'
             }`}
           >
-            {justSaved ? <BookmarkCheck size={12} strokeWidth={2.5} /> : <Bookmark size={12} strokeWidth={2.5} />}
-            <span className="hidden sm:inline">{justSaved ? t('dashboard.topBar.saved') : t('dashboard.topBar.save')}</span>
+            {savedFeedback ? <BookmarkCheck size={12} strokeWidth={2.5} /> : <Bookmark size={12} strokeWidth={2.5} />}
+            <span className="hidden sm:inline">{t(savedFeedback ? 'dashboard.topBar.saved' : savedPlanId ? 'dashboard.journey.saveChanges' : 'dashboard.topBar.save')}</span>
           </button>
 
           {/* Link Paylaş — sadece kayıtlı planlarda */}
@@ -514,15 +521,8 @@ const Dashboard: React.FC = () => {
 
         {/* SOL PANEL — Plan listesi */}
         <div
-          className="flex flex-col w-full lg:w-auto border-r border-divider bg-bg"
-          style={window.innerWidth >= 1024
-            ? {
-                width: `${leftWidthPct}%`,
-                flexBasis: `${leftWidthPct}%`,
-                flexGrow: 0,
-                flexShrink: 0,
-              }
-            : undefined}
+          className="flex min-w-0 shrink-0 flex-col w-full lg:w-[var(--plan-panel-width)] border-r border-divider bg-bg"
+          style={{ '--plan-panel-width': `${leftWidthPct}%` } as React.CSSProperties}
         >
 
           {/* Gün sekmeleri */}
@@ -577,48 +577,24 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Bütçe takip şeridi — en az 1 gerçek harcama girilince görünür ── */}
-          {budgetStats && budgetStats.enteredCount > 0 && (
-            <div className="shrink-0 px-4 py-2.5 border-b border-divider bg-surface">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Wallet size={11} strokeWidth={2.5} className="text-muted" />
-                  <span className="text-[10px] font-heading text-muted uppercase tracking-wider">
-                    {t('dashboard.budget.label')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-semibold">
-                  <span className="text-text">
-                    {t('dashboard.budget.spent', { amount: `${plan.currencySymbol}${budgetStats.actualSpent.toLocaleString(locale)}` })}
-                  </span>
-                  <span className="text-muted">·</span>
-                  <span className={budgetStats.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}>
-                    {budgetStats.remaining < 0
-                      ? t('dashboard.budget.exceeded', { amount: `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString(locale)}` })
-                      : t('dashboard.budget.remaining', { amount: `${plan.currencySymbol}${budgetStats.remaining.toLocaleString(locale)}` })}
-                  </span>
-                </div>
+          {/* Estimates, entered expenses and allocated budget have distinct meanings. */}
+          {budgetStats && (
+            <div className="shrink-0 px-4 py-3 border-b border-divider bg-surface" data-testid="plan-budget">
+              <dl className="grid grid-cols-3 gap-3">
+                {[
+                  { label: t('dashboard.journey.estimate'), value: plan.totalEstimatedCost },
+                  { label: t('dashboard.journey.actual'), value: budgetStats.actualSpent },
+                  { label: t('dashboard.journey.allocated'), value: budgetStats.totalBudget },
+                ].map(({ label, value }) => (
+                  <div key={label}><dt className="text-[10px] leading-relaxed text-muted">{label}</dt><dd className="mt-1 text-sm font-semibold text-text">{plan.currencySymbol}{value.toLocaleString(locale)}</dd></div>
+                ))}
+              </dl>
+              <div className="mt-2 h-1.5 bg-surface-2 rounded-full overflow-hidden" role="progressbar" aria-label={t('dashboard.budget.label')} aria-valuenow={Math.round(budgetStats.pct)} aria-valuemin={0} aria-valuemax={100}>
+                <div className={`h-full rounded-full transition-all motion-reduce:transition-none ${budgetStats.remaining < 0 ? 'bg-red-400' : budgetStats.pct >= 90 ? 'bg-amber-400' : 'bg-sage'}`} style={{ width: `${budgetStats.pct}%` }} />
               </div>
-
-              {/* Progress bar */}
-              <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    budgetStats.pct < 70  ? 'bg-emerald-400' :
-                    budgetStats.pct < 90  ? 'bg-amber-400'   :
-                                            'bg-red-400'
-                  }`}
-                  style={{ width: `${Math.min(budgetStats.pct, 100)}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-muted">
-                  {t('dashboard.budget.activitiesEntered', { count: budgetStats.enteredCount, pct: budgetStats.pct.toFixed(0) })}
-                </span>
-                <span className="text-[9px] text-muted">
-                  {t('dashboard.budget.totalBudget', { amount: `${plan.currencySymbol}${budgetStats.totalBudget.toLocaleString(locale)}` })}
-                </span>
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] text-muted">
+                <span>{budgetStats.enteredCount ? t('dashboard.journey.spendingCoverage', { entered: budgetStats.enteredCount, total: plan.dailyPlans.reduce((sum, day) => sum + day.activities.length, 0) }) : t('dashboard.journey.noSpending')}</span>
+                <span className={budgetStats.remaining < 0 ? 'text-red-600' : 'text-sage-700'}>{t(budgetStats.remaining < 0 ? 'dashboard.budget.exceeded' : 'dashboard.budget.remaining', { amount: `${plan.currencySymbol}${Math.abs(budgetStats.remaining).toLocaleString(locale)}` })}</span>
               </div>
             </div>
           )}
@@ -633,7 +609,7 @@ const Dashboard: React.FC = () => {
                     <>
                       <div className="flex items-center justify-end gap-1.5">
                         <span className="text-[9px] text-muted">{t('dashboard.daySummary.estimated')}</span>
-                        <span className="text-xs font-semibold text-muted line-through">
+                        <span className="text-xs font-semibold text-muted">
                           {plan.currencySymbol}{dayBudgetStats.estimated.toLocaleString(locale)}
                         </span>
                       </div>
@@ -684,7 +660,9 @@ const Dashboard: React.FC = () => {
             aria-label={activeDay ? t('dashboard.daySummary.panelAriaLabel', { number: activeDay.dayNumber }) : t('dashboard.topBar.tabPlan')}
             className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            {activeDay ? <DailyPlanView day={activeDay} onActivityClick={setSelectedPlace} isLoaded={mapsLoaded} /> : null}
+            {activeDay ? <DailyPlanView key={`${savedPlanId}-${activeDay.dayNumber}-${undoVersion}`} day={activeDay} onActivityClick={setSelectedPlace} isLoaded={mapsLoaded}
+              journeyTools={<DayJourneyTools day={activeDay} destination={plan.destination} planId={savedPlanId} canUndo={history.length > 0}
+                onUndo={handleUndo} />} /> : null}
           </div>
         </div>
 

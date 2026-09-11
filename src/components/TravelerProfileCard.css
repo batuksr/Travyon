@@ -1,0 +1,54 @@
+.traveler-profile-card {
+  position: relative; isolation: isolate; overflow: hidden; margin: 30px 0 36px;
+  padding: 28px 32px 24px; border: 1px solid #6c7f63; border-radius: 28px;
+  color: #f7eedb; background: radial-gradient(ellipse at 10% 0, #516447 0, transparent 60%), #293f34;
+  box-shadow: 0 18px 40px #263c3220, inset 0 1px 0 #ffffff12;
+  animation: traveler-card-arrive .55s ease-out both;
+}
+.traveler-profile-card::after { content: ''; position: absolute; inset: 9px; border: 1px dashed #dfd9b62c; border-radius: 20px; z-index: -1; pointer-events: none; }
+.traveler-profile-map { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; color: #c1c9a5; opacity: .17; pointer-events: none; }
+.traveler-profile-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid #e8e3c825; }
+.traveler-profile-top > span { display: inline-flex; align-items: center; gap: 8px; }
+.traveler-profile-top > span:first-child { font-size: 10px; letter-spacing: .17em; text-transform: uppercase; color: #d6ddc0; }
+.traveler-profile-brand { color: #cbd3b5; text-shadow: 0 1px 0 #ffffff15, 0 -1px 1px #12231f; }
+.traveler-profile-brand span { font-family: var(--font-heading); font-size: 23px; }
+.traveler-profile-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, .8fr); align-items: center; gap: 28px; padding: 32px 0; }
+.traveler-profile-identity { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.traveler-profile-avatar { width: 88px; height: 100px; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; border-radius: 16px; border: 4px solid #eee8d5; background: #607154; box-shadow: 0 6px 16px #15261f40; transform: rotate(-3deg); }
+.traveler-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.traveler-profile-avatar > span { font-family: var(--font-heading); font-size: 28px; }
+.traveler-profile-name { min-width: 0; }
+.traveler-profile-name > p { color: #cbd3bc; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 8px; }
+.traveler-profile-name h1 { font-family: var(--font-heading); font-size: clamp(24px, 3vw, 32px); line-height: 1.25; overflow-wrap: anywhere; }
+.traveler-profile-actions { margin-top: 16px; }
+.traveler-profile-actions button { min-height: 44px; }
+.traveler-profile-actions button:focus-visible { outline: 2px solid #edc593; outline-offset: 4px; }
+.traveler-profile-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px 0 16px 18px; border-left: 1px solid #e8e3c830; }
+.traveler-profile-stats > div { display: flex; flex-direction: column; gap: 8px; text-align: center; }
+.traveler-profile-stats dt { order: 1; font-size: 10px; line-height: 1.5; color: #d5dcc7; }
+.traveler-profile-stats dd { font-family: var(--font-heading); font-size: 29px; line-height: 1.2; overflow-wrap: anywhere; }
+.traveler-profile-bottom { padding-top: 20px; border-top: 1px solid #e8e3c830; }
+.traveler-profile-city-label { display: flex; align-items: center; gap: 7px; color: #d5dcc7; text-transform: uppercase; font-size: 9px; letter-spacing: .13em; }
+.traveler-profile-stamps { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; list-style: none; padding: 0; }
+.traveler-profile-stamps li { display: flex; align-items: center; gap: 7px; max-width: 100%; border: 1px solid #d4c09180; outline: 1px dashed #d4c09140; outline-offset: -4px; border-radius: 7px; padding: 10px 14px; color: #e7d6b0; background: #d4c09108; font-size: 12px; }
+.traveler-profile-stamps li span { overflow-wrap: anywhere; min-width: 0; }
+.traveler-profile-stamps li svg { flex-shrink: 0; }
+.traveler-profile-empty, .traveler-profile-footnote { font-size: 11px; line-height: 1.7; color: #bcc9b4; margin-top: 16px; }
+@keyframes traveler-card-arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 700px) {
+  .traveler-profile-main { grid-template-columns: 1fr; gap: 24px; }
+  .traveler-profile-stats { border-left: 0; padding: 18px 0 0; border-top: 1px solid #e8e3c825; }
+}
+@media (max-width: 420px) {
+  .traveler-profile-card { padding: 22px; border-radius: 24px; margin-top: 20px; }
+  .traveler-profile-top { gap: 8px; padding-bottom: 20px; }
+  .traveler-profile-top > span:first-child { font-size: 8px; letter-spacing: .09em; }
+  .traveler-profile-brand span { font-size: 19px; }
+  .traveler-profile-brand > svg { display: none; }
+  .traveler-profile-avatar { width: 64px; height: 78px; border-width: 3px; }
+  .traveler-profile-identity { gap: 14px; }
+  .traveler-profile-main { padding: 24px 0; }
+  .traveler-profile-name h1 { font-size: 23px; }
+  .traveler-profile-actions button { padding-left: 12px; padding-right: 12px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .traveler-profile-card { animation: none; } }

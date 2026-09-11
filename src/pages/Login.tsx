@@ -9,6 +9,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import TravyonLogo from '../components/TravyonLogo';
+import AuthTravelDesk from '../components/AuthTravelDesk';
 
 
 const Login: React.FC = () => {
@@ -126,28 +127,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sol Panel — Fotoğraf */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-[#1c140c]">
-        <img
-          src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=75&w=1600&auto=format&fit=crop"
-          alt={t('auth.login.photoAlt')}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'saturate(.72) contrast(.92) brightness(1.04)' }}
-          fetchPriority="high"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1c140c]/50 via-[#1c140c]/28 to-[#1c140c]/78" />
-        <div className="relative z-10 flex flex-col h-full p-10">
-          <Link to="/">
-            <TravyonLogo size={64} light />
-          </Link>
-          <div className="mt-auto">
-            <blockquote className="font-heading text-white text-2xl leading-snug max-w-xs">
-              "{t('auth.login.quoteLine1')}<br />{t('auth.login.quoteLine2')}"
-            </blockquote>
-            <p className="mt-3.5 text-white/60 text-sm">{t('auth.common.tagline')}</p>
-          </div>
-        </div>
-      </div>
+      <AuthTravelDesk variant="login" />
 
       {/* Sağ Panel — Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-10 bg-bg overflow-y-auto">

@@ -597,6 +597,7 @@ export interface DailyActivity {
   };
   estimatedCost: number;
   actualCost?: number;
+  completed?: boolean;
   note?: string;
 }
 

@@ -11,9 +11,9 @@ import type { OnboardingData } from '../store/useOnboardingStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
 import { usePlanStore } from '../store/usePlanStore';
-import { CITIES } from '../data/cities';
-import { Plane, MapPin, Wind, Wallet, Globe,
-         Shuffle, Sparkles, CalendarDays, ChevronRight, Zap,
+import HubGettingStarted from '../components/HubGettingStarted';
+import { Plane, MapPin, Wind, Globe,
+         CalendarDays, ChevronRight,
          Clock, CheckCheck, FileText, Loader2 } from 'lucide-react';
 import { relativeTime } from '../utils/timeUtils';
 import {
@@ -113,15 +113,6 @@ interface ActivityItem {
   sortKey:     number;
 }
 
-
-/* ── Vibe options ── */
-const VIBE_OPTIONS = [
-  { val: 'culture',   icon: 'landmark', labelKey: 'culture'   },
-  { val: 'relax',     icon: 'armchair', labelKey: 'relax'     },
-  { val: 'nightlife', icon: 'moon', labelKey: 'nightlife' },
-  { val: 'nature',    icon: 'mountain', labelKey: 'nature'    },
-] as const;
-
 /* ══════════════════════════════════════════════
    HUB
 ═══════════════════════════════════════════════ */
@@ -198,40 +189,8 @@ const Hub: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, sharedPlanIds, plans, plansPublic]);
 
-  /* ── Quick Actions state ── */
-  type RandState = 'idle' | 'spinning' | 'revealed';
-  const [randState, setRandState]     = useState<RandState>('idle');
-  const [randCity, setRandCity]       = useState<{ city: string; country: string } | null>(null);
-  const [displayCity, setDisplayCity] = useState('');
-  const [showVibe, setShowVibe]           = useState(false);
   const [activitiesShowAll, setActivitiesShowAll] = useState(false);
-  const spinRef       = useRef<ReturnType<typeof setInterval> | null>(null);
-  const hasFitRef     = useRef(false);
-
-  useEffect(() => () => { if (spinRef.current) clearInterval(spinRef.current); }, []);
-
-  /* ── Next weekend dates ── */
-  const nextWeekend = useMemo(() => {
-    const now = new Date();
-    const day = now.getDay();
-    const toSat = day === 6 ? 7 : (6 - day);
-    const sat = new Date(now); sat.setDate(now.getDate() + toSat);
-    const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
-    return {
-      startDate: sat.toISOString().split('T')[0],
-      endDate:   sun.toISOString().split('T')[0],
-      label: `${sat.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString(localeCode, { day: 'numeric', month: 'short' })}`,
-    };
-  }, [localeCode]);
-
-  /* ── Avg budget from past plans ── */
-  const avgBudget = useMemo(() => {
-    if (!plans.length) return { amount: 15000, symbol: '₺', code: 'TRY' };
-    const tryPlans = plans.filter(p => (p.onboardingData.currencyCode ?? 'TRY') === 'TRY');
-    const src = tryPlans.length ? tryPlans : plans;
-    const avg = Math.round(src.reduce((s, p) => s + p.onboardingData.budget, 0) / src.length / 1000) * 1000;
-    return { amount: avg, symbol: src[0].onboardingData.currencySymbol ?? '₺', code: src[0].onboardingData.currencyCode ?? 'TRY' };
-  }, [plans]);
+  const hasFitRef = useRef(false);
 
   const fmtNumber = useCallback((n: number) => n.toLocaleString(localeCode), [localeCode]);
 
@@ -239,52 +198,6 @@ const Hub: React.FC = () => {
   const startPlanWith = (initialData: Partial<OnboardingData>) => {
     navigate('/onboarding', { state: { initialData } });
   };
-
-  const handleWeekend = () => {
-    startPlanWith({ startDate: nextWeekend.startDate, endDate: nextWeekend.endDate });
-  };
-
-  const handleRandomCity = () => {
-    if (randState === 'spinning') return;
-    const final = CITIES[Math.floor(Math.random() * CITIES.length)];
-    setRandState('spinning');
-    let count = 0;
-    spinRef.current = setInterval(() => {
-      setDisplayCity(CITIES[Math.floor(Math.random() * CITIES.length)].city);
-      count++;
-      if (count >= 20) {
-        clearInterval(spinRef.current!);
-        setDisplayCity(final.city);
-        setRandCity(final);
-        setRandState('revealed');
-      }
-    }, 70);
-  };
-
-  const handleGoRandom = () => {
-    if (!randCity) return;
-    startPlanWith({ destination: `${randCity.city}, ${randCity.country}` });
-  };
-
-  const handleBudget = () => {
-    startPlanWith({ budget: avgBudget.amount, currencyCode: avgBudget.code, currencySymbol: avgBudget.symbol });
-  };
-
-  const handleVibe = (vibe: string) => {
-    const last = plans[0];
-    if (!last) return;
-    startPlanWith({
-      destination:          last.plan.destination,
-      startDate:            last.onboardingData.startDate,
-      endDate:              last.onboardingData.endDate,
-      budget:               last.onboardingData.budget,
-      currencyCode:         last.onboardingData.currencyCode ?? 'TRY',
-      currencySymbol:       last.onboardingData.currencySymbol ?? '₺',
-      peopleCount:          last.onboardingData.peopleCount,
-      tripPurpose:          vibe,
-    });
-  };
-
 
   /* ── Activity feed ── */
   const activities = useMemo((): ActivityItem[] => {
@@ -605,6 +518,9 @@ const Hub: React.FC = () => {
         </div>
 
         {/* ── Next Trip + Weather ── */}
+        {plans.length === 0 ? (
+          <HubGettingStarted onStart={startPlanWith} onCommunity={() => navigate('/community')} />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
           {nextTrip ? (
             <div className="relative overflow-hidden bg-gradient-to-br from-accent to-accent-700 rounded-3xl p-6 text-white shadow-[0_18px_40px_rgba(198,113,57,0.3)]">
@@ -748,121 +664,7 @@ const Hub: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* ── Hızlı Eylemler ── */}
-        {plans.length === 0 && <div className="mb-8">
-          <p className="text-xs font-heading text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Zap size={12} /> {t('hub.quickActions.title')}
-          </p>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-
-            {/* ① Bu hafta sonu */}
-            <button
-              onClick={handleWeekend}
-              className="group bg-surface border border-divider hover:border-accent/40 hover:shadow-md rounded-2xl p-4 text-left transition-all duration-200"
-            >
-              <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center mb-3">
-                <CalendarDays size={15} className="text-accent" />
-              </div>
-              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.weekend.title')}</p>
-              <p className="text-xs text-muted mb-3">{nextWeekend.label}</p>
-              <span className="text-xs font-heading text-accent flex items-center gap-0.5">
-                {t('hub.quickActions.weekend.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </button>
-
-            {/* ② Rastgele şehir */}
-            <div
-              onClick={randState === 'revealed' ? undefined : handleRandomCity}
-              className={`group bg-surface border border-divider hover:border-divider hover:shadow-md rounded-2xl p-4 transition-all duration-200 ${randState !== 'revealed' ? 'cursor-pointer' : ''}`}
-            >
-              <div className="w-8 h-8 bg-surface-2 rounded-lg flex items-center justify-center mb-3">
-                <Shuffle size={15} className="text-muted" />
-              </div>
-              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.random.title')}</p>
-
-              {randState === 'idle' && (
-                <>
-                  <p className="text-xs text-muted mb-3">{t('hub.quickActions.random.subtitle')}</p>
-                  <span className="text-xs font-heading text-muted flex items-center gap-0.5 group-hover:text-text transition-colors">
-                    {t('hub.quickActions.random.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                </>
-              )}
-              {randState === 'spinning' && (
-                <p className="text-sm font-heading text-text animate-pulse mt-1 tabular-nums">{displayCity}</p>
-              )}
-              {randState === 'revealed' && randCity && (
-                <div className="mt-1">
-                  <p className="text-sm font-heading text-text leading-tight">{randCity.city}</p>
-                  <p className="text-xs text-muted mb-2">{randCity.country}</p>
-                  <div className="flex gap-1.5">
-                    <button onClick={handleGoRandom} className="text-xs font-heading bg-accent text-white px-2.5 py-1 rounded-full hover:brightness-105 transition-all">
-                      {t('hub.quickActions.random.planCta')}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setRandState('idle'); setRandCity(null); setDisplayCity(''); }}
-                      className="text-xs font-heading text-muted px-2 py-1 rounded-full border border-divider hover:bg-surface-2 transition-colors"
-                    >↺</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ③ Bütçeme göre */}
-            <button
-              onClick={handleBudget}
-              className="group bg-surface border border-divider hover:border-emerald-200 hover:shadow-md rounded-2xl p-4 text-left transition-all duration-200"
-            >
-              <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center mb-3">
-                <Wallet size={15} className="text-emerald-600" />
-              </div>
-              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.budget.title')}</p>
-              <p className="text-xs text-muted mb-3">
-                {plans.length > 0 ? avgBudget.symbol + fmtNumber(avgBudget.amount) : t('hub.quickActions.budget.defaultLabel')}
-              </p>
-              <span className="text-xs font-heading text-emerald-600 flex items-center gap-0.5">
-                {t('hub.quickActions.budget.cta')} <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </button>
-
-            {/* ④ Vibe değiştir */}
-            <div
-              className={`bg-surface border border-divider hover:border-violet-200 hover:shadow-md rounded-2xl p-4 transition-all duration-200 ${plans.length > 0 ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-              onClick={() => plans.length > 0 && setShowVibe(v => !v)}
-            >
-              <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center mb-3">
-                <Sparkles size={15} className="text-violet-500" />
-              </div>
-              <p className="text-sm font-heading text-text mb-0.5">{t('hub.quickActions.vibe.title')}</p>
-              {!showVibe ? (
-                <>
-                  <p className="text-xs text-muted mb-3">
-                    {plans.length > 0 ? `"${plans[0].plan.destination.split(',')[0]}"` : t('hub.quickActions.vibe.noPlan')}
-                  </p>
-                  <span className="text-xs font-heading text-violet-500 flex items-center gap-0.5">
-                    {t('hub.quickActions.vibe.cta')} <ChevronRight size={11} />
-                  </span>
-                </>
-              ) : (
-                <div className="grid grid-cols-2 gap-1 mt-1">
-                  {VIBE_OPTIONS.map(v => (
-                    <button
-                      key={v.val}
-                      onClick={(e) => { e.stopPropagation(); handleVibe(v.val); }}
-                      className="flex items-center gap-1 bg-surface-2 hover:bg-violet-50 border border-divider hover:border-violet-200 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-text transition-colors"
-                    >
-                      <AppIcon name={v.icon} size={16} /><span>{t(`hub.vibeOptions.${v.labelKey}`)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>}
-
+        )}
 
         {/* ── Seyahat Kontrol Merkezi ── */}
         {plans.length > 0 && (
@@ -1026,8 +828,8 @@ const Hub: React.FC = () => {
           </>
         )}
 
-        {/* ── Dünya Haritası — her zaman görünür ── */}
-        <div className="bg-surface border border-divider rounded-3xl overflow-hidden">
+        {/* ── Dünya Haritası — kayıtlı plan varsa ── */}
+        {plans.length > 0 && <div className="bg-surface border border-divider rounded-3xl overflow-hidden">
 
           {/* Harita başlık */}
           <div className="px-6 pt-5 pb-4">
@@ -1112,7 +914,7 @@ const Hub: React.FC = () => {
               <p className="text-muted text-xs text-center">{t('hub.map.empty')}</p>
             </div>
           )}
-        </div>
+        </div>}
 
       </div>
     </div>

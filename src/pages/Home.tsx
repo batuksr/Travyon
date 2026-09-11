@@ -3,14 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, Sun, Moon, Plane } from 'lucide-react';
+import { ArrowRight, Sun, Moon, Plane, Route, Wallet, WalletCards } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { toggleWithCircle } from '../utils/themeTransition';
 import TravyonLogo from '../components/TravyonLogo';
 import TripPlannerDemo from '../components/tripPlanner/TripPlannerDemo';
-import MobileProductTour from '../components/tripPlanner/MobileProductTour';
-import MobileWhyTravyon from '../components/MobileWhyTravyon';
-import DesktopHowItWorks from '../components/DesktopHowItWorks';
+import MobilePlanPreview from '../components/tripPlanner/MobilePlanPreview';
+import HomeTravelJourney from '../components/HomeTravelJourney';
 import PreviewNudge from '../components/PreviewNudge';
 import { CITY_GUIDES, type CityGuideData } from '../data/cityGuides';
 
@@ -97,12 +96,6 @@ const DestinationCard: React.FC<{
             {cityName}
           </h3>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-white/25 bg-black/35 px-2 py-1 font-heading text-[8px] text-white backdrop-blur-md transition-all duration-200 group-hover:scale-105 sm:gap-1.5 sm:border-0 sm:bg-accent sm:px-4 sm:py-2.5 sm:text-xs sm:backdrop-blur-none">
-          <BookOpen size={10} className="sm:hidden" />
-          <BookOpen size={12} className="hidden sm:block" />
-          <span className="sm:hidden">{t('home.destinations.guideShort')}</span>
-          <span className="hidden sm:inline">{t('home.destinations.guideBadge')}</span>
-        </span>
       </div>
     </motion.div>
   );
@@ -266,9 +259,10 @@ const Home: React.FC = () => {
 
         {/* Overlay — mobilde düz, desktop'ta soldan sağa */}
         <div
-          className="absolute inset-0 bg-black/55 sm:bg-gradient-to-r sm:from-black/75 sm:via-black/40 sm:to-transparent"
+          className="absolute inset-0 bg-black/60 sm:bg-transparent sm:bg-linear-to-r sm:from-black/80 sm:via-black/45 sm:to-black/10"
           style={{ zIndex: 2 }}
         />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-black/45 to-transparent" style={{ zIndex: 2 }} />
 
         {/* İçerik */}
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-20 sm:pb-16 lg:py-0" style={{ zIndex: 3 }}>
@@ -289,7 +283,7 @@ const Home: React.FC = () => {
               <motion.p
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="mt-4 text-lg text-white/70 leading-relaxed max-w-md"
+                className="mt-4 text-base sm:text-lg text-white/90 leading-relaxed max-w-md"
               >
                 {t('home.hero.subtitle')}
               </motion.p>
@@ -302,27 +296,28 @@ const Home: React.FC = () => {
               >
                 <button
                   type="button" onClick={handleCTA}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-accent hover:brightness-105 text-white font-heading text-base rounded-full transition-all shadow-[0_12px_28px_rgba(198,113,57,0.3)] hover:-translate-y-0.5 active:translate-y-px"
+                  className="group inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3.5 bg-accent hover:brightness-105 text-white font-heading text-sm sm:text-base rounded-full transition-all shadow-[0_12px_28px_rgba(198,113,57,0.3)] hover:-translate-y-0.5 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                 >
                   {t('home.hero.ctaButton')}
                   <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
 
-              {/* İstatistikler */}
+              {/* Üründe kullanılabilen özellikler */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-white/15"
+                className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 pt-5 border-t border-white/25"
               >
                 {[
-                  [t('home.hero.stats.cityValue'), t('home.hero.stats.cityLabel')],
-                  [t('home.hero.stats.timeValue'), t('home.hero.stats.timeLabel')],
-                  [t('home.hero.stats.personalizedValue'), t('home.hero.stats.personalizedLabel')],
-                ].map(([val, label]) => (
-                  <div key={label}>
-                    <p className="font-heading text-2xl text-accent-200">{val}</p>
-                    <p className="text-sm text-white/60 mt-0.5">{label}</p>
+                  { key: 'route', Icon: Route },
+                  { key: 'budget', Icon: Wallet },
+                  { key: 'wallet', Icon: WalletCards },
+                ].map(({ key, Icon }) => (
+                  <div key={key}>
+                    <Icon size={22} strokeWidth={1.5} className="mb-2 text-accent-200" aria-hidden="true" />
+                    <p className="text-xs sm:text-sm font-semibold text-white">{t(`home.hero.features.${key}.title`)}</p>
+                    <p className="text-[11px] sm:text-xs leading-relaxed text-white/85 mt-1">{t(`home.hero.features.${key}.description`)}</p>
                   </div>
                 ))}
               </motion.div>
@@ -374,8 +369,7 @@ const Home: React.FC = () => {
         className="relative bg-bg overflow-x-hidden lg:mt-20"
       >
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8">
-          <MobileWhyTravyon />
-          <DesktopHowItWorks />
+          <HomeTravelJourney />
         </div>
       </section>
 
@@ -391,7 +385,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════════
           BÖLÜM 1.5 — ÜRÜN TANITIM VİDEOSU
          ══════════════════════════════════════════ */}
-      <section className="bg-bg py-10 sm:py-20 lg:py-24">
+      <section id="canli-plan" tabIndex={-1} aria-label={t('home.product.eyebrow')} className="bg-bg py-10 sm:py-20 lg:py-24 focus:outline-none">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Başlık */}
@@ -402,10 +396,12 @@ const Home: React.FC = () => {
           >
             <span className="text-accent-700 font-heading text-xs uppercase tracking-widest">{t('home.product.eyebrow')}</span>
             <h2 className="font-heading text-2xl md:text-3xl text-text mt-2">
-              {t('home.product.title')}
+              <span className="lg:hidden">{t('home.product.mobilePlan.title')}</span>
+              <span className="hidden lg:inline">{t('home.product.title')}</span>
             </h2>
             <p className="text-sm text-muted mt-2 max-w-md mx-auto leading-relaxed">
-              {t('home.product.subtitle')}
+              <span className="lg:hidden">{t('home.product.mobilePlan.subtitle')}</span>
+              <span className="hidden lg:inline">{t('home.product.subtitle')}</span>
             </p>
           </motion.div>
 
@@ -434,7 +430,7 @@ const Home: React.FC = () => {
             </div>
 
             <div className="lg:hidden">
-              <MobileProductTour />
+              <MobilePlanPreview />
             </div>
             <div className="hidden lg:block">
               <TripPlannerDemo />

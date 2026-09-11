@@ -25,7 +25,13 @@
       "titleLine1": "Plan Your",
       "titleLine2": "Dream",
       "titleLine3": "Trip.",
-      "subtitle": "Based on your budget, pace and taste, AI builds your personal, geographically optimized travel plan in seconds.",
+      "subtitle": "Choose your city, budget and travel style. Let Travyon build your day-by-day itinerary with places to explore.",
+      "previewButton": "Explore a sample plan",
+      "features": {
+        "route": { "title": "Daily itinerary", "description": "Explore day by day." },
+        "budget": { "title": "Budget tracking", "description": "Keep track of spending." },
+        "wallet": { "title": "Travel wallet", "description": "Your bookings, together." }
+      },
       "ctaButton": "Create a Free Plan",
       "goToPhoto": "Go to {{city}} photo",
       "stats": {
@@ -38,6 +44,54 @@
       }
     },
     "scroll": "Scroll",
+    "journeyGuide": {
+      "eyebrow": "HOW IT WORKS",
+      "title": "How does your trip work with Travyon?",
+      "intro": "Plan your trip, bring your reservation details together, and stay in control throughout your journey.",
+      "stepsLabel": "Getting started with Travyon", "tour": "A LITTLE JOURNEY", "sample": "Explore through a sample trip",
+      "account": { "title": "Create your account", "description": "Open your personal space to save your trips.", "resultLabel": "A PLACE TO BEGIN", "result": "A home for the plans you can return to, on every journey." },
+      "plan": { "title": "Build your personal plan", "description": "Choose your city, dates, budget, and interests; let Travyon create your daily route.", "resultLabel": "FROM PREFERENCES TO PLACES", "result": "Let each day take shape around your budget and travel style." },
+      "wallet": { "title": "Fill your travel wallet", "description": "Add flight, hotel, and ticket details to keep your trip information together.", "resultLabel": "SMALL DETAILS, ONE WALLET", "result": "The reservation details you add, within reach when you need them." },
+      "travel": { "title": "Manage your journey", "description": "Follow your itinerary on the map, log expenses, and adjust your route along the way.", "resultLabel": "WITH YOU ALONG THE WAY", "result": "Today's route and your expenses together, with room to change your plans." },
+      "community": { "title": "Explore the community", "description": "Share your plans, browse other travellers' routes, and find new ideas.", "resultLabel": "SHARE, EXPLORE, GET INSPIRED", "result": "Let your route inspire someone else, and discover your next journey through other travellers' plans." },
+      "art": {
+        "communityTitle": "Community", "sharedJourneys": "Routes from travellers", "yourPlan": "Your plan", "shared": "Shared with the community", "fromTravelers": "From other travellers", "parisWeekend": "A weekend in Paris", "explorePlan": "Explore the plan", "newInspiration": "Find inspiration for your next trip.", "shareYourRoute": "Share your route", "discoverTogether": "Explore together",
+        "journeyBegins": "Your journey begins", "travelerCard": "Your traveller card", "welcome": "Welcome, traveller.", "personalSpace": "Make room for new stories.", "accountReady": "Your personal space is ready",
+        "rome": "Rome, Italy", "threeDays": "3 days", "culture": "Culture & history", "personalRoute": "Your personal route", "romeJourney": "Three days in Rome", "shapedForYou": "Your pace, your discoveries.",
+        "colosseum": "Colosseum", "localFood": "A taste of local life", "cityWalk": "A city stroll", "yourPace": "Day by day, your way", "planReady": "Your route takes shape",
+        "flight": "Flight", "stay": "Stay", "ticket": "Event ticket", "flightSample": "Istanbul → Rome", "staySample": "Rome · City centre stay", "ticketSample": "Colosseum · Entry ticket", "yourWallet": "My travel wallet", "together": "Your trip details, together",
+        "dayOne": "Day 1", "budget": "Expense tracking", "expensesTogether": "Log your expenses as you go.", "inControl": "Your route, your choices"
+      }
+    },
+    "planStory": {
+      "eyebrow": "HOW IT WORKS", "title": "You dream it. Travyon plans it.",
+      "intro": "Tell us your destination, budget, and interests. Watch your travel idea become a personal daily itinerary.",
+      "destination": { "title": "Pick your city", "description": "Where, when, and how long? Your journey starts with you." },
+      "preferences": { "title": "Make it yours", "description": "Your budget, interests, and pace shape the plan." },
+      "creating": { "title": "Watch it unfold", "description": "AI matches your preferences with daily stops." },
+      "ready": { "title": "Your route is ready", "description": "Explore each day, see the map, and adjust your plan." },
+      "demo": "Planning example", "city": "Rome, Italy", "duration": "A 3-day getaway",
+      "formTitle": "Where are you headed next?", "formSubtitle": "Small choices, a journey that feels like you.",
+      "cityLabel": "Destination", "datesLabel": "Travel dates", "budgetLabel": "Total budget", "dates": "12–14 September",
+      "styleLabel": "Your travel style", "culture": "Culture & history", "food": "Local flavours", "relax": "Relaxation",
+      "generate": "Create my plan", "generating": "Shaping your route…", "matching": "Matching your preferences with places…",
+      "personal": "Your budget, your pace, your route.", "resultTitle": "Your Rome plan is ready", "day": "Day 1 / 3", "route": "Today's route",
+      "colosseum": "Colosseum", "colosseumNote": "Start your day with history", "lunch": "A taste of local life", "lunchNote": "Lunch in the streets of Monti",
+      "square": "Piazza Venezia", "squareNote": "A stroll through the squares", "budgetNote": "Shaped around your budget", "editable": "Make it your own",
+      "sampleNote": "Sample scenario · Automatic preview"
+    },
+    "wallet": {
+      "eyebrow": "Travel Wallet",
+      "title": "Every travel detail, in one wallet.",
+      "description": "Keep your flights, stays, and events alongside your itinerary. Have your reservation details within reach when you need them.",
+      "flight": { "label": "Your flights", "description": "Flight times, airports, and booking references.", "sample": "Istanbul → Rome" },
+      "stay": { "label": "Your stays", "description": "Hotel addresses and check-in and check-out dates.", "sample": "Rome · City centre stay" },
+      "ticket": { "label": "Your tickets", "description": "Event times and ticket details.", "sample": "Colosseum · Entry ticket" },
+      "personal": "My travel wallet",
+      "caption": "Sample wallet · A trip to Rome",
+      "start": "Create your own wallet",
+      "open": "Open your travel wallet"
+    },
     "product": {
       "eyebrow": "Live Preview",
       "title": "Bring your plan to life in seconds",
@@ -46,6 +100,21 @@
         "title": "This is just a live preview!",
         "body": "In the real app you can build much more detailed plans and unlock every feature. Start exploring the sample plan however you like.",
         "ok": "Got it"
+      },
+      "mobilePlan": {
+        "title": "Explore a Rome itinerary",
+        "subtitle": "Try a sample plan yourself. Switch days, explore stops and edit your itinerary.",
+        "city": "Rome, Italy", "sample": "Sample plan",
+        "hint": "A four-day trip. Pick a day and explore the stop descriptions.",
+        "readMore": "Read more", "readLess": "Show less",
+        "days": "Trip days", "day": "Day {{count}}", "stops": "{{count}} stops",
+        "estimate": "Daily estimate", "map": "Open map", "list": "Close map",
+        "reset": "Reset", "loadingMap": "Loading map…",
+        "mapNote": "Sample stop locations. Lines show the visit order, not navigation directions.",
+        "stopsLabel": "Stops for the selected day", "remove": "Remove {{title}} from the sample plan",
+        "removed": "Stop removed. Estimated budget updated.", "undo": "Undo",
+        "empty": "You removed every stop for this day. Reset to restore the sample.",
+        "disclaimer": "Try-it space · Changes are not saved. Prices are examples; your personal plan will reflect your preferences."
       },
       "mobileTour": {
         "title": "How does Travyon work?",
@@ -261,9 +330,15 @@
       }
     },
     "howItWorks": {
-      "eyebrow": "PROCESS",
-      "title": "How It Works",
-      "subtitle": "Turn your travel idea into a personal itinerary in four simple steps.",
+      "eyebrow": "FROM AN IDEA TO A JOURNEY",
+      "title": "Travyon, every step of your journey",
+      "subtitle": "From the first city on your wishlist to your return home, a companion for every step.",
+      "preview": {
+        "city": "Rome, Italy", "dream": "Let your next story begin here.",
+        "day": "Day 1 · Rome", "pace": "Balanced pace", "landmark": "Colosseum", "lunch": "Local flavours", "walk": "A walk through the squares",
+        "reservation": "Your travel wallet", "ready": "Reservations within reach",
+        "saved": "Saved itinerary", "memory": "Three days in Rome", "share": "Share your route with the community"
+      },
       "stepLabel": "Step {{number}}",
       "stepsAriaLabel": "Travel planning steps",
       "previous": "Previous step",
@@ -271,10 +346,10 @@
       "pause": "Pause automatic steps",
       "play": "Start automatic steps",
       "steps": [
-        { "label": "Create your account", "title": "Create your account", "desc": "Open your free account and start planning your first trip." },
-        { "label": "Set your preferences", "title": "Set your preferences", "desc": "Choose your city, dates, budget, and travel style." },
-        { "label": "Build your plan", "title": "Watch your plan take shape", "desc": "Let AI build your day-by-day itinerary and arrange the stops around your preferences." },
-        { "label": "Explore your route", "title": "Explore your route", "desc": "See your route on the map, track your spending, and make the plan your own." }
+        { "label": "Dream", "title": "Dream", "desc": "Choose a city you want to visit. Tell us your dates, budget, and the kind of trip you have in mind." },
+        { "label": "Plan", "title": "Plan", "desc": "Let AI build your personal daily itinerary. Explore the stops and adjust the plan to suit you." },
+        { "label": "Set off", "title": "Set off", "desc": "Follow your daily route and check the weather. Keep the reservations you add close by in your travel wallet." },
+        { "label": "Keep your memories", "title": "Keep your memories", "desc": "Save your itinerary to revisit any time. Share your route with the community and inspire other travellers." }
       ]
     },
     "destinations": {
@@ -342,6 +417,31 @@
     "copyright": "© 2026 Travyon. All rights reserved."
   },
   "auth": {
+    "desk": {
+      "home": "Travyon home",
+      "mapTitle": "Atlas of discoveries",
+      "mapFooter": "One route, a thousand stories",
+      "istanbul": "Istanbul",
+      "rome": "Rome",
+      "stamp": "Explore the world",
+      "boarding": "Your next stop",
+      "stay": "Your stay",
+      "oldTown": "Old town",
+      "experience": "A little discovery",
+      "wallet": "Your travel wallet",
+      "login": {
+        "title": "Pick up where your journey left off.",
+        "description": "Your routes, tickets, and places to discover. Your next story is waiting for you.",
+        "ticketNote": "Ready for new memories",
+        "sceneNote": "So many places still to go."
+      },
+      "register": {
+        "title": "Your first route starts here.",
+        "description": "Picture a city. Let's plan the rest together, with personal routes, little discoveries, and unforgettable memories.",
+        "ticketNote": "Off to your first discovery",
+        "sceneNote": "The next stop is your choice."
+      }
+    },
     "common": {
       "emailLabel": "Email",
       "emailPlaceholder": "example@email.com",
@@ -642,6 +742,28 @@
       "lastSaved": "Last saved plan",
       "noPlanTitle": "No plans yet",
       "noPlanSubtitle": "Start creating a new plan"
+    },
+    "discovery": {
+      "title": "Inspiration for your first route",
+      "subtitle": "Starting ideas for your city and travel style. Pick one, then choose your dates and budget to build your own plan.",
+      "ideaLabel": "Trip idea",
+      "cta": "Plan from this idea",
+      "ideas": {
+        "roma": { "city": "Rome", "destination": "Rome, Italy", "title": "Follow the traces of history", "description": "Build your own route around historic landmarks, squares and cultural stops.", "pace": "Culture · Balanced pace" },
+        "istanbul": { "city": "Istanbul", "destination": "Istanbul, Türkiye", "title": "Two continents, new stories", "description": "Explore neighbourhoods and cultural stops, leaving room for discoveries along the way.", "pace": "Culture · Flexible pace" },
+        "barcelona": { "city": "Barcelona", "destination": "Barcelona, Spain", "title": "Take your time exploring", "description": "Shape a trip with room for city strolls and relaxing breaks.", "pace": "Relaxation · Easy pace" }
+      },
+      "community": { "title": "Explore travellers' routes", "subtitle": "Find inspiration in the latest plans shared by the community.", "all": "Browse all plans", "shared": "From the community", "open": "View plan" }
+    },
+    "gettingStarted": {
+      "title": "Where will your first journey begin?",
+      "subtitle": "Choose your city and let's build a daily itinerary just for you.",
+      "cta": "Create my first plan",
+      "actionsTitle": "Find your starting point",
+      "first": { "title": "Create your first plan", "subtitle": "Choose your city, dates and travel style.", "cta": "Start planning" },
+      "weekend": { "title": "Escape this weekend", "cta": "Dates ready, pick a city" },
+      "random": { "title": "Suggest a city for me", "subtitle": "Let's find your next destination together.", "cta": "Discover a city", "planCta": "Plan this city", "retry": "Suggest another city", "loading": "Choosing a city…" },
+      "community": { "title": "Get inspired by travellers", "subtitle": "Browse travel plans shared by the community.", "cta": "Explore the community" }
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -1096,6 +1218,21 @@
     }
   },
   "dashboard": {
+    "journey": {
+      "progress": "{{done}} / {{total}} stops completed for this day",
+      "next": "Next stop:", "directions": "Get directions",
+      "mark": "Mark visited", "completed": "Visited", "markLabel": "Toggle visited status for {{place}}",
+      "allDone": "Every stop for this day is complete. You can unmark a stop at any time.",
+      "noStops": "No stops planned for this day yet.",
+      "undo": "Undo", "undoHint": "Undo the last change to this plan (last 20 actions in this session).",
+      "wallet": "Wallet entries for this day", "emptyWallet": "No wallet entries match this plan and selected day.",
+      "unsavedWallet": "Save your plan first, then add dated entries to it in Travel Wallet.",
+      "walletNote": "Only dated entries for this plan stored in this browser are shown. Stays and insurance also appear on the days they cover.",
+      "openBooking": "Open booking link",
+      "estimate": "Estimated plan cost", "actual": "Actual spending", "allocated": "Your trip budget",
+      "noSpending": "No spending recorded yet.", "spendingCoverage": "Spending recorded for {{entered}} / {{total}} stops.",
+      "saveChanges": "Save changes", "changes": "You have unsaved changes."
+    },
     "exitModal": {
       "title": "Save this plan?",
       "message": "Your {{destination}} plan hasn't been saved yet. Would you like to save it before leaving?",
@@ -2212,6 +2349,12 @@
     }
   },
   "userProfile": {
+    "travelerCard": {
+      "title": "Traveler card", "eyebrow": "Every route, a new story",
+      "plannedDays": "Planned Days", "cities": "Cities in their plans",
+      "empty": "New cities will appear here as itineraries are shared.",
+      "note": "This card summarizes the shared plans listed on this profile."
+    },
     "purposes": {
       "culture": "Culture",
       "relax": "Relaxation",

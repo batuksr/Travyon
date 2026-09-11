@@ -25,7 +25,13 @@
       "titleLine1": "Hayalindeki",
       "titleLine2": "Seyahati",
       "titleLine3": "Planla.",
-      "subtitle": "Bütçen, tempon ve zevklerine göre yapay zeka saniyeler içinde coğrafi olarak optimize edilmiş, kişisel seyahat planını oluşturur.",
+      "subtitle": "Şehrini, bütçeni ve seyahat tarzını seç. Travyon sana gün gün gezilecek yerleri ve rotanı hazırlasın.",
+      "previewButton": "Örnek planı incele",
+      "features": {
+        "route": { "title": "Günlük rota", "description": "Gün gün keşfet." },
+        "budget": { "title": "Bütçe takibi", "description": "Harcamalarını izle." },
+        "wallet": { "title": "Seyahat cüzdanı", "description": "Rezervasyonların bir arada." }
+      },
       "ctaButton": "Ücretsiz Plan Oluştur",
       "goToPhoto": "{{city}} fotoğrafına geç",
       "stats": {
@@ -38,6 +44,54 @@
       }
     },
     "scroll": "Scroll",
+    "journeyGuide": {
+      "eyebrow": "NASIL ÇALIŞIR?",
+      "title": "Travyon ile seyahatin nasıl işler?",
+      "intro": "Seyahatini planla, rezervasyon bilgilerini bir araya getir ve yolculuk boyunca her şeyin kontrolü sende olsun.",
+      "stepsLabel": "Travyon kullanım adımları", "tour": "KISA BİR YOLCULUK", "sample": "Örnek seyahat üzerinden keşfet",
+      "account": { "title": "Hesabını oluştur", "description": "Seyahatlerini kaydedebileceğin kişisel alanını aç.", "resultLabel": "SANA AİT BİR BAŞLANGIÇ", "result": "Planlarına yeniden dönebileceğin bir alan, her yolculuğunda yanında." },
+      "plan": { "title": "Sana özel planını hazırla", "description": "Şehrini, tarihlerini, bütçeni ve ilgi alanlarını seç; Travyon günlük rotanı oluştursun.", "resultLabel": "TERCİHLERİNDEN ROTANA", "result": "Günlerin, bütçene ve seyahat tarzına göre şekillensin." },
+      "wallet": { "title": "Seyahat cüzdanını doldur", "description": "Uçuş, otel ve bilet bilgilerini ekle; yolculuk detaylarını bir arada tut.", "resultLabel": "KÜÇÜK DETAYLAR, TEK CÜZDAN", "result": "Eklediğin rezervasyon bilgileri, ihtiyaç duyduğunda elinin altında." },
+      "travel": { "title": "Yolculuğunu yönet", "description": "Planını haritada takip et, harcamalarını kaydet ve gerektiğinde rotanı düzenle.", "resultLabel": "YOL BOYUNCA YANINDA", "result": "Bugünün rotası ve harcamaların bir arada; değişiklik yapmak senin elinde." },
+      "community": { "title": "Topluluğu keşfet", "description": "Oluşturduğun planları paylaş, diğer gezginlerin rotalarına göz at ve yeni fikirler bul.", "resultLabel": "PAYLAŞ, KEŞFET, İLHAM AL", "result": "Senin rotan bir başkasına ilham olsun; sonraki yolculuğunu gezginlerin planlarında keşfet." },
+      "art": {
+        "communityTitle": "Topluluk", "sharedJourneys": "Gezginlerin rotaları", "yourPlan": "Senin planın", "shared": "Toplulukla paylaşıldı", "fromTravelers": "Diğer gezginlerden", "parisWeekend": "Paris'te hafta sonu", "explorePlan": "Plana göz at", "newInspiration": "Bir sonraki seyahatine ilham bul.", "shareYourRoute": "Rotanı paylaş", "discoverTogether": "Birlikte keşfet",
+        "journeyBegins": "Yolculuğun başlıyor", "travelerCard": "Gezgin kartın", "welcome": "Hoş geldin, gezgin.", "personalSpace": "Yeni hikâyelerine bir yer aç.", "accountReady": "Kişisel alanın hazır",
+        "rome": "Roma, İtalya", "threeDays": "3 gün", "culture": "Kültür & tarih", "personalRoute": "Sana özel rota", "romeJourney": "Roma'da üç gün", "shapedForYou": "Senin tempon, senin keşiflerin.",
+        "colosseum": "Kolezyum", "localFood": "Yerel lezzet molası", "cityWalk": "Şehirde yürüyüş", "yourPace": "Gün gün, sana göre", "planReady": "Rotan şekillendi",
+        "flight": "Uçuş", "stay": "Konaklama", "ticket": "Etkinlik bileti", "flightSample": "İstanbul → Roma", "staySample": "Roma · Merkezde konaklama", "ticketSample": "Kolezyum · Giriş bileti", "yourWallet": "Seyahat cüzdanım", "together": "Yolculuk detayların bir arada",
+        "dayOne": "1. gün", "budget": "Harcama takibi", "expensesTogether": "Harcamalarını sen kaydet.", "inControl": "Rotanın kontrolü sende"
+      }
+    },
+    "planStory": {
+      "eyebrow": "NASIL ÇALIŞIR?", "title": "Sen hayal et, Travyon planlasın.",
+      "intro": "Nereye gitmek istediğini, bütçeni ve zevklerini söyle. Seyahat fikrinin sana özel bir günlük rotaya dönüşmesini izle.",
+      "destination": { "title": "Şehrini seç", "description": "Nereye, ne zaman, kaç gün? Yolculuğun seninle başlar." },
+      "preferences": { "title": "Tarzını belirle", "description": "Bütçen, ilgi alanların ve tempon planına yön verir." },
+      "creating": { "title": "Planın oluşsun", "description": "Yapay zekâ tercihlerini günlük duraklarla eşleştirir." },
+      "ready": { "title": "Rotan hazır", "description": "Gün gün keşfet, haritada incele ve dilediğin gibi düzenle." },
+      "demo": "Planlama örneği", "city": "Roma, İtalya", "duration": "3 günlük kaçamak",
+      "formTitle": "Sıradaki durağın neresi?", "formSubtitle": "Küçük tercihler, sana özel bir yolculuk.",
+      "cityLabel": "Destinasyon", "datesLabel": "Seyahat tarihleri", "budgetLabel": "Toplam bütçe", "dates": "12–14 Eylül",
+      "styleLabel": "Seyahat tarzın", "culture": "Kültür & tarih", "food": "Yerel lezzetler", "relax": "Dinlenme",
+      "generate": "Planımı oluştur", "generating": "Rotan şekilleniyor…", "matching": "Tercihlerin ve duraklar bir araya geliyor…",
+      "personal": "Senin bütçen, senin tempon, senin rotan.", "resultTitle": "Roma planın hazır", "day": "1. gün / 3", "route": "Günün rotası",
+      "colosseum": "Kolezyum", "colosseumNote": "Tarihle güne başla", "lunch": "Yerel lezzet molası", "lunchNote": "Monti sokaklarında öğle yemeği",
+      "square": "Piazza Venezia", "squareNote": "Meydanlarda bir keşif yürüyüşü", "budgetNote": "Bütçene göre şekillendi", "editable": "Dilediğin gibi düzenle",
+      "sampleNote": "Örnek senaryo · Otomatik tanıtım"
+    },
+    "wallet": {
+      "eyebrow": "Seyahat Cüzdanı",
+      "title": "Yolculuğunun detayları, tek bir cüzdanda.",
+      "description": "Uçuşunu, konaklamanı ve etkinliklerini planının yanında tut. İhtiyacın olduğunda rezervasyon bilgilerin elinin altında olsun.",
+      "flight": { "label": "Uçuş bilgilerin", "description": "Uçuş saatin, havalimanın ve rezervasyon kodun.", "sample": "İstanbul → Roma" },
+      "stay": { "label": "Konaklaman", "description": "Otel adresin, giriş ve çıkış tarihlerin.", "sample": "Roma · Merkezde konaklama" },
+      "ticket": { "label": "Biletlerin", "description": "Etkinlik saatin ve bilet bilgilerin.", "sample": "Kolezyum · Giriş bileti" },
+      "personal": "Seyahat cüzdanım",
+      "caption": "Örnek cüzdan · Bir Roma yolculuğu",
+      "start": "Kendi cüzdanını oluştur",
+      "open": "Seyahat cüzdanını aç"
+    },
     "product": {
       "eyebrow": "Canlı Önizleme",
       "title": "Planını saniyeler içinde canlandır",
@@ -46,6 +100,21 @@
         "title": "Bu sadece canlı bir önizleme!",
         "body": "Gerçek uygulamada çok daha detaylı planlar oluşturabilir, tüm özelliklere ulaşabilirsin. Örnek planı dilediğin gibi keşfetmeye başla.",
         "ok": "Tamam"
+      },
+      "mobilePlan": {
+        "title": "Roma planını keşfet",
+        "subtitle": "Bir örnek planı kendin dene. Günleri değiştir, durakları incele ve rotanı düzenle.",
+        "city": "Roma, İtalya", "sample": "Örnek plan",
+        "hint": "4 günlük bir yolculuk. Gününü seç, durakların açıklamalarını keşfet.",
+        "readMore": "Devamını oku", "readLess": "Daha az göster",
+        "days": "Seyahat günleri", "day": "{{count}}. Gün", "stops": "{{count}} durak",
+        "estimate": "Günlük tahmini", "map": "Haritayı aç", "list": "Haritayı kapat",
+        "reset": "Sıfırla", "loadingMap": "Harita yükleniyor…",
+        "mapNote": "Örnek durak konumlarıdır. Çizgiler ziyaret sırasını gösterir; yol tarifi değildir.",
+        "stopsLabel": "Seçili günün durakları", "remove": "{{title}} durağını örnek plandan kaldır",
+        "removed": "Durak kaldırıldı, tahmini bütçe güncellendi.", "undo": "Geri al",
+        "empty": "Bu günün tüm duraklarını kaldırdın. Sıfırla ile örneği geri getirebilirsin.",
+        "disclaimer": "Deneme alanı · Değişiklikler kaydedilmez. Fiyatlar örnektir; kişisel planın tercihlerine göre değişir."
       },
       "mobileTour": {
         "title": "Travyon nasıl çalışır?",
@@ -261,9 +330,15 @@
       }
     },
     "howItWorks": {
-      "eyebrow": "SÜREÇ",
-      "title": "Nasıl Çalışır?",
-      "subtitle": "Seyahat fikrini dört adımda sana özel bir rotaya dönüştür.",
+      "eyebrow": "FİKİRDEN YOLCULUĞA",
+      "title": "Seyahatin her aşamasında Travyon",
+      "subtitle": "Aklına düşen ilk şehirden eve dönüşüne kadar, yolculuğunun her adımında yanında.",
+      "preview": {
+        "city": "Roma, İtalya", "dream": "Bir sonraki hikâyen burada başlasın.",
+        "day": "1. gün · Roma", "pace": "Dengeli tempo", "landmark": "Kolezyum", "lunch": "Yerel lezzetler", "walk": "Meydanlarda yürüyüş",
+        "reservation": "Seyahat cüzdanın", "ready": "Rezervasyonların yanında",
+        "saved": "Kaydedilen plan", "memory": "Roma'da üç gün", "share": "Rotanı toplulukla paylaş"
+      },
       "stepLabel": "Adım {{number}}",
       "stepsAriaLabel": "Seyahat planlama adımları",
       "previous": "Önceki adım",
@@ -271,10 +346,10 @@
       "pause": "Otomatik geçişi duraklat",
       "play": "Otomatik geçişi başlat",
       "steps": [
-        { "label": "Hesabını oluştur", "title": "Hesabını oluştur", "desc": "Ücretsiz hesabını aç ve ilk seyahatini planlamaya başla." },
-        { "label": "Tercihlerini belirle", "title": "Tercihlerini belirle", "desc": "Şehrini, tarihlerini, bütçeni ve seyahat tarzını seç." },
-        { "label": "Planın şekillensin", "title": "Planın şekillensin", "desc": "Yapay zekâ, tercihlerine göre gün gün planını ve duraklarının sırasını hazırlasın." },
-        { "label": "Rotanı keşfet", "title": "Rotanı keşfet", "desc": "Rotanı haritada incele, harcamalarını takip et ve planını dilediğin gibi düzenle." }
+        { "label": "Hayal et", "title": "Hayal et", "desc": "Gitmek istediğin şehri seç. Tarihlerini, bütçeni ve nasıl bir yolculuk istediğini söyle." },
+        { "label": "Planla", "title": "Planla", "desc": "Yapay zekâ sana özel günlük rotanı hazırlasın. Duraklarını incele, planını dilediğin gibi düzenle." },
+        { "label": "Seyahate çık", "title": "Seyahate çık", "desc": "Günlük rotanı ve hava durumunu takip et. Eklediğin rezervasyonlar seyahat cüzdanında yanında olsun." },
+        { "label": "Anılarını sakla", "title": "Anılarını sakla", "desc": "Seyahat planını sakla, istediğinde yeniden aç. Rotanı toplulukla paylaşarak başka gezginlere ilham ver." }
       ]
     },
     "destinations": {
@@ -342,6 +417,31 @@
     "copyright": "© 2026 Travyon. Tüm hakları saklıdır."
   },
   "auth": {
+    "desk": {
+      "home": "Travyon ana sayfa",
+      "mapTitle": "Keşif atlası",
+      "mapFooter": "Bir rota, bin hikâye",
+      "istanbul": "İstanbul",
+      "rome": "Roma",
+      "stamp": "Dünyayı keşfet",
+      "boarding": "Bir sonraki durak",
+      "stay": "Konaklama",
+      "oldTown": "Tarihi merkez",
+      "experience": "Keşif bileti",
+      "wallet": "Seyahat cüzdanın",
+      "login": {
+        "title": "Kaldığın yerden, yeni keşiflere.",
+        "description": "Rotan, biletlerin ve keşfedeceğin yerler. Bir sonraki hikâyen seni bekliyor.",
+        "ticketNote": "Yeni anılara hazır",
+        "sceneNote": "Gidecek daha çok yer var."
+      },
+      "register": {
+        "title": "İlk rotan burada başlıyor.",
+        "description": "Bir şehir hayal et. Sana özel rotalar, küçük keşifler ve unutulmaz anılarla gerisini birlikte planlayalım.",
+        "ticketNote": "İlk keşfine doğru",
+        "sceneNote": "Sıradaki durak, senin seçimin."
+      }
+    },
     "common": {
       "emailLabel": "E-posta",
       "emailPlaceholder": "ornek@email.com",
@@ -606,7 +706,7 @@
   "hub": {
     "greeting": {
       "morning": "Günaydın",
-      "afternoon": "İyi Öğleler",
+      "afternoon": "İyi Öğlenler",
       "evening": "İyi Akşamlar",
       "night": "İyi Geceler",
       "defaultName": "Gezgin"
@@ -642,6 +742,28 @@
       "lastSaved": "Son kayıtlı plan",
       "noPlanTitle": "Henüz plan yok",
       "noPlanSubtitle": "Yeni plan oluşturmaya başla"
+    },
+    "discovery": {
+      "title": "İlk rotana ilham olsun",
+      "subtitle": "Şehir ve seyahat tarzı için başlangıç fikirleri. Birini seç, tarihlerini ve bütçeni belirleyerek kendi planını oluştur.",
+      "ideaLabel": "Rota fikri",
+      "cta": "Bu fikirle planla",
+      "ideas": {
+        "roma": { "city": "Roma", "destination": "Roma, İtalya", "title": "Tarihin izinde bir keşif", "description": "Tarihi yapılar, meydanlar ve kültür durakları etrafında kendi rotanı oluştur.", "pace": "Kültür · Dengeli tempo" },
+        "istanbul": { "city": "İstanbul", "destination": "İstanbul, Türkiye", "title": "İki kıta, yeni hikâyeler", "description": "Semtleri ve kültür duraklarını, arada keşfe yer bırakan bir tempoyla gez.", "pace": "Kültür · Esnek tempo" },
+        "barcelona": { "city": "Barselona", "destination": "Barselona, İspanya", "title": "Şehri yavaşça keşfet", "description": "Şehir yürüyüşlerine ve dinlenme molalarına yer açan bir yolculuk tasarla.", "pace": "Dinlenme · Rahat tempo" }
+      },
+      "community": { "title": "Gezginlerin rotalarına göz at", "subtitle": "Toplulukta paylaşılan son planlardan kendi yolculuğuna ilham bul.", "all": "Tüm planlara göz at", "shared": "Topluluktan", "open": "Planı incele" }
+    },
+    "gettingStarted": {
+      "title": "İlk yolculuğun nereden başlasın?",
+      "subtitle": "Şehrini seç, sana özel günlük rotanı birlikte hazırlayalım.",
+      "cta": "İlk planımı oluştur",
+      "actionsTitle": "Yolculuğuna bir yerden başla",
+      "first": { "title": "İlk planını oluştur", "subtitle": "Şehrini, tarihlerini ve seyahat tarzını seç.", "cta": "Planlamaya başla" },
+      "weekend": { "title": "Bu hafta sonu kaç", "cta": "Tarihler hazır, şehir seç" },
+      "random": { "title": "Bana bir şehir öner", "subtitle": "Nereye gideceğine birlikte karar verelim.", "cta": "Şehir keşfet", "planCta": "Bu şehri planla", "retry": "Başka bir şehir öner", "loading": "Şehir seçiliyor…" },
+      "community": { "title": "Gezginlerden ilham al", "subtitle": "Toplulukta paylaşılan seyahat planlarına göz at.", "cta": "Topluluğu keşfet" }
     },
     "quickActions": {
       "title": "Hızlı Eylemler",
@@ -1096,6 +1218,21 @@
     }
   },
   "dashboard": {
+    "journey": {
+      "progress": "Bu gün {{done}} / {{total}} durak tamamlandı",
+      "next": "Sıradaki durak:", "directions": "Yol tarifi al",
+      "mark": "Gezdim", "completed": "Gezildi", "markLabel": "{{place}} için gezildi durumunu değiştir",
+      "allDone": "Bu günün tüm duraklarını tamamladın. İstersen gezildi işaretini kaldırabilirsin.",
+      "noStops": "Bu günde henüz durak yok.",
+      "undo": "Geri al", "undoHint": "Bu plandaki son değişikliği geri al (bu oturumdaki son 20 işlem).",
+      "wallet": "Günün cüzdan kayıtları", "emptyWallet": "Bu plana ve seçili güne ait bir cüzdan kaydı yok.",
+      "unsavedWallet": "Önce planını kaydet; ardından Seyahat Cüzdanı'nda bu plana tarihli kayıtlar ekle.",
+      "walletNote": "Yalnızca bu tarayıcıdaki, bu plana bağlı tarihli kayıtlar gösterilir. Konaklama ve sigorta kayıtları geçerli oldukları günlerde de görünür.",
+      "openBooking": "Kayıt bağlantısını aç",
+      "estimate": "Tahmini plan maliyeti", "actual": "Gerçek harcama", "allocated": "Ayırdığın bütçe",
+      "noSpending": "Henüz harcama girilmedi.", "spendingCoverage": "{{entered}} / {{total}} durağın harcaması girildi.",
+      "saveChanges": "Değişiklikleri kaydet", "changes": "Kaydedilmemiş değişiklikler var."
+    },
     "exitModal": {
       "title": "Planı kaydetmek ister misiniz?",
       "message": "{{destination}} planınız kaydedilmedi. Çıkmadan önce kaydetmek ister misiniz?",
@@ -2212,6 +2349,12 @@
     }
   },
   "userProfile": {
+    "travelerCard": {
+      "title": "Gezgin kartı", "eyebrow": "Her rota, yeni bir hikâye",
+      "plannedDays": "Planlanan Gün", "cities": "Planlarındaki şehirler",
+      "empty": "Yeni şehirler, paylaşılan rotalarla burada yerini alacak.",
+      "note": "Bu kart, bu profilde listelenen paylaşılan planları özetler."
+    },
     "purposes": {
       "culture": "Kültür",
       "relax": "Dinlenme",
