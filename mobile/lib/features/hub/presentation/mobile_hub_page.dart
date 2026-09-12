@@ -6,6 +6,8 @@ import '../../plans/data/travel_plans_repository.dart';
 import '../../plans/presentation/plan_detail_page.dart';
 import '../../onboarding/data/plan_creation_repository.dart';
 import '../../onboarding/presentation/onboarding_page.dart';
+import '../../wallet/data/wallet_repository.dart';
+import '../../wallet/presentation/wallet_page.dart';
 
 class MobileHubPage extends StatefulWidget {
   const MobileHubPage({
@@ -26,6 +28,7 @@ class MobileHubPage extends StatefulWidget {
 class _MobileHubPageState extends State<MobileHubPage> {
   int _selected = 0;
   late final _plans = widget.plansRepository.watchPlans(widget.session.uid);
+  late final _wallet = FirebaseWalletRepository();
 
   void _create() => Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -68,46 +71,52 @@ class _MobileHubPageState extends State<MobileHubPage> {
         ],
       ),
       body: SafeArea(
-        child: StreamBuilder<List<TravelPlanSummary>>(
-          stream: _plans,
-          builder: (context, snapshot) {
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-              children: [
-                Text(
-                  _selected == 0 ? 'Merhaba, $name!' : 'Yolculukların',
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _selected == 0
-                      ? 'Bir sonraki keşfin seni bekliyor.'
-                      : 'Bir plan seç, gününü keşfet.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 26),
-                FilledButton.icon(
-                  onPressed: _create,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Yeni plan oluştur'),
-                ),
-                const SizedBox(height: 20),
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const _LoadingPanel()
-                else if (snapshot.hasError)
-                  const _ErrorPanel()
-                else if ((snapshot.data ?? const []).isEmpty)
-                  const _EmptyPanel()
-                else
-                  _PlansContent(
-                    plans: snapshot.data!,
-                    onOpen: _open,
-                    overview: _selected == 0,
-                  ),
-              ],
-            );
-          },
-        ),
+        child: _selected == 2
+            ? WalletPage(
+                uid: widget.session.uid,
+                repository: _wallet,
+                plansRepository: widget.plansRepository,
+              )
+            : StreamBuilder<List<TravelPlanSummary>>(
+                stream: _plans,
+                builder: (context, snapshot) {
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                    children: [
+                      Text(
+                        _selected == 0 ? 'Merhaba, $name!' : 'Yolculukların',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _selected == 0
+                            ? 'Bir sonraki keşfin seni bekliyor.'
+                            : 'Bir plan seç, gününü keşfet.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 26),
+                      FilledButton.icon(
+                        onPressed: _create,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Yeni plan oluştur'),
+                      ),
+                      const SizedBox(height: 20),
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        const _LoadingPanel()
+                      else if (snapshot.hasError)
+                        const _ErrorPanel()
+                      else if ((snapshot.data ?? const []).isEmpty)
+                        const _EmptyPanel()
+                      else
+                        _PlansContent(
+                          plans: snapshot.data!,
+                          onOpen: _open,
+                          overview: _selected == 0,
+                        ),
+                    ],
+                  );
+                },
+              ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selected,
@@ -117,6 +126,10 @@ class _MobileHubPageState extends State<MobileHubPage> {
           NavigationDestination(
             icon: Icon(Icons.route_outlined),
             label: 'Planlar',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            label: 'Cüzdan',
           ),
         ],
       ),

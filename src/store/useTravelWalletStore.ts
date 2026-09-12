@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useAuthStore } from './useAuthStore';
+import { writeWalletEntry, deleteWalletEntry } from '../services/travelWalletCloudService';
 
 export type TravelWalletCategory =
   | 'flight'
@@ -54,6 +55,7 @@ export interface TravelWalletEntry {
   url: string;
   details?: TravelWalletDetails;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface TravelWalletInput {
@@ -69,10 +71,13 @@ export interface TravelWalletInput {
 
 interface TravelWalletState {
   entriesByUser: Record<string, TravelWalletEntry[]>;
-  addEntry: (input: TravelWalletInput) => string;
-  updateEntry: (id: string, input: TravelWalletInput) => void;
-  removeEntry: (id: string) => void;
-  clearPlanEntries: (planId: string) => void;
+  readyUid: string | null;
+  syncError: string;
+  syncRetry: number;
+  addEntry: (input: TravelWalletInput) => Promise<string>;
+  updateEntry: (id: string, input: TravelWalletInput, expectedUpdatedAt?: number) => Promise<void>;
+  removeEntry: (id: string) => Promise<void>;
+  clearPlanEntries: (planId: string) => Promise<void>;
 }
 
 const text = (value: string | undefined, maxLength: number) =>
@@ -127,29 +132,39 @@ export const EMPTY_WALLET_ENTRIES: TravelWalletEntry[] = [];
 
 export const useTravelWalletStore = create<TravelWalletState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       entriesByUser: {},
+      readyUid: null,
+      syncError: '',
+      syncRetry: 0,
 
-      addEntry: (input) => {
+      addEntry: async (input) => {
         const uid = getUid();
+        if (get().readyUid !== uid) throw new Error('Cüzdan bağlantısını bekleyin.');
         const id = generateId();
         const entry: TravelWalletEntry = {
           id,
           createdAt: Date.now(),
           ...sanitizeWalletInput(input),
         };
+        await writeWalletEntry(uid, entry, 'create');
         set((state) => ({
           entriesByUser: {
             ...state.entriesByUser,
-            [uid]: [entry, ...(state.entriesByUser[uid] ?? [])],
+            [uid]: state.entriesByUser[uid]?.some(e => e.id === id)
+              ? state.entriesByUser[uid] : [entry, ...(state.entriesByUser[uid] ?? [])],
           },
         }));
         return id;
       },
 
-      updateEntry: (id, input) => {
+      updateEntry: async (id, input, expectedUpdatedAt) => {
         const uid = getUid();
+        if (get().readyUid !== uid) throw new Error('Cüzdan bağlantısını bekleyin.');
         const clean = sanitizeWalletInput(input);
+        const entry = get().entriesByUser[uid]?.find(e => e.id === id);
+        if (!entry) throw new Error('Kayıt bulunamadı.');
+        await writeWalletEntry(uid, { ...entry, ...clean, updatedAt: expectedUpdatedAt ?? entry.updatedAt ?? 0 }, 'update');
         set((state) => ({
           entriesByUser: {
             ...state.entriesByUser,
@@ -160,8 +175,10 @@ export const useTravelWalletStore = create<TravelWalletState>()(
         }));
       },
 
-      removeEntry: (id) => {
+      removeEntry: async (id) => {
         const uid = getUid();
+        if (get().readyUid !== uid) throw new Error('Cüzdan bağlantısını bekleyin.');
+        await deleteWalletEntry(uid, id);
         set((state) => ({
           entriesByUser: {
             ...state.entriesByUser,
@@ -170,8 +187,12 @@ export const useTravelWalletStore = create<TravelWalletState>()(
         }));
       },
 
-      clearPlanEntries: (planId) => {
+      clearPlanEntries: async (planId) => {
         const uid = getUid();
+        if (get().readyUid !== uid) throw new Error('Cüzdan bağlantısını bekleyin.');
+        for (const entry of get().entriesByUser[uid] ?? []) {
+          if (entry.planId === planId) await deleteWalletEntry(uid, entry.id);
+        }
         set((state) => ({
           entriesByUser: {
             ...state.entriesByUser,
@@ -183,6 +204,7 @@ export const useTravelWalletStore = create<TravelWalletState>()(
     {
       name: 'travyon-travel-wallet-v1',
       storage: createJSONStorage(() => localStorage),
+      partialize: state => ({ entriesByUser: state.entriesByUser }),
     },
   ),
 );

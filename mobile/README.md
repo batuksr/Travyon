@@ -92,8 +92,7 @@ Gerçek AI yanıt kalitesi, kotalar ve canlı kayıt ayrıca cihazda doğrulanma
 ### Telefon için plan deneyimi
 
 - Hub’daki plan kartları ve “Yolculuğuna devam et” düğmesi detay ekranını açar.
-- Hub / Planlar alt menüsü çalışır; henüz hazırlanmayan cüzdan ve topluluk
-  sayfalarının işlevsiz sekmeleri gösterilmez.
+- Hub / Planlar / Cüzdan alt menüsü çalışır; topluluk sekmesi henüz yoktur.
 - Plan detayında Günlük plan, Rota ve Bütçe ayrı görünümlerdir.
 - Gün seçimi yatay kaydırılır. Uzun durak açıklamaları “Devamını oku” ile açılır.
 - “Gezdim” ve gerçek harcama kayıtları Firestore’a yazılır. Eşzamanlı değişmiş
@@ -111,11 +110,37 @@ Gerçek AI yanıt kalitesi, kotalar ve canlı kayıt ayrıca cihazda doğrulanma
   istemciye gönderilmez. Fotoğraf sahibi atıfları korunur. Süresi dolan fotoğrafta
   yenileme, güncel fotoğraf referanslarını tekrar getirir; yorumlar ayrı kalır.
   Yorumlar önceden indirilmez veya Firestore'a kaydedilmez; yalnızca panel açılınca sorgulanır.
-- Tam plan düzenleyici ve mobil cüzdan bu sürümde bulunmaz.
+- Tam plan düzenleyici bu sürümde bulunmaz.
 - Yazma işlemleri bağlantı gerektirir. Kaydetme başarısı ve hatası ekranda bildirilir.
 
 Bu değişiklik yeni bir native paket içerdiği için ilk çalıştırmada hot reload
 yerine Flutter uygulamasını durdurup normal LOCAL komutuyla yeniden başlatın.
+
+### Seyahat cüzdanı
+
+- Cüzdan sekmesinde dokulu yeşil cüzdan, üstten görünen en fazla üç kart ve
+  tarihe/saate göre tüm kayıtların listesi bulunur. Kartlar detay panelini açar.
+- Genel cüzdan veya bir seyahat seçilebilir. Silinmiş planların kayıtları
+  arşivlenmiş seyahat olarak erişilebilir kalır.
+- Uçuş, konaklama, etkinlik, sigorta, belge bilgisi ve diğer kayıtlar eklenebilir,
+  düzenlenebilir, onayla silinebilir. Rezervasyon kodu kopyalanabilir; yalnızca
+  http(s) bağlantıları açılır. Dosya yükleme veya bilet satın alma yapılmaz.
+- Web ve mobil `users/{uid}/wallet/{entryId}` koleksiyonunu paylaşır. Kayıtlar
+  sahibine özeldir; planı toplulukta paylaşmak cüzdanı paylaşmaz.
+- Webde eskiden kayıtlar yalnızca localStorage içindeydi. Güncel web uygulaması
+  açılınca ilgili kullanıcının yerel kayıtları eksikse buluta taşınır. Önce
+  migration tamamlanır, sonra bulut dinlenir; başarısızlıkta yerel liste korunur.
+  Mevcut bulut kayıtları ezilmez. Başka cihazdaki eski kopyaların silinen kayıtları
+  geri getirmemesi için kişisel alanları silinmiş tombstone belgeleri tutulur.
+- Kaydetme işlemleri sunucu onayını bekler ve internet/emülatör bağlantısı gerekir.
+  Offline cüzdan görüntüsü önbellekten gelebilir; başarısız kayıt formda korunur.
+- Yeni Firestore kuralları LOCAL emülatörde kontrol edildi. Production için
+  `firebase deploy --only firestore:rules` ayrıca gereklidir; otomatik deploy yok.
+  Eski web kayıtlarını taşımak için bunların bulunduğu tarayıcıda güncel web
+  uygulamasına aynı hesapla giriş yapın. LOCAL ve production verileri ayrıdır.
+- Testler: `flutter.bat test`, kökte `npm.cmd test`; çalışan yerel emülatörle
+  `node --test scripts/test-wallet-rules.mjs`. Kural testi yalnızca localhost'a
+  gider, ayrı test kullanıcısı ve tek geçici belge oluşturup temizler.
 
 ### Google Maps ve yorum yapılandırması
 

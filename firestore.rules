@@ -32,6 +32,29 @@ service cloud.firestore {
         allow read, create, update, delete: if request.auth != null
                                             && request.auth.uid == uid;
       }
+
+      // Private cross-device wallet. Deletes erase personal fields and retain
+      // a tombstone so an old browser cannot re-import deleted local records.
+      match /wallet/{entryId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.updatedAt is number
+          && ((request.resource.data.deleted == true
+            && request.resource.data.keys().hasOnly(['deleted', 'updatedAt', 'schemaVersion']))
+          || (request.resource.data.deleted == false
+            && request.resource.data.keys().hasOnly(['planId', 'category', 'title', 'reference', 'date', 'note', 'url', 'details', 'createdAt', 'updatedAt', 'schemaVersion', 'deleted'])
+            && request.resource.data.planId is string && request.resource.data.planId.size() <= 100
+            && request.resource.data.category in ['flight', 'stay', 'ticket', 'insurance', 'document', 'other']
+            && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
+            && request.resource.data.reference is string && request.resource.data.reference.size() <= 80
+            && request.resource.data.date is string && request.resource.data.date.size() <= 40
+            && request.resource.data.note is string && request.resource.data.note.size() <= 500
+            && request.resource.data.url is string && request.resource.data.url.size() <= 2048
+            && request.resource.data.details is map && request.resource.data.details.size() <= 8
+            && request.resource.data.createdAt is number));
+        allow delete: if false;
+      }
     }
 
     // Hata raporları — istek-sıklığı sınırı gerektiği için artık sadece

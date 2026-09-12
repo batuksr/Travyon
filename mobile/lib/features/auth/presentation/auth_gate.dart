@@ -50,6 +50,7 @@ class AuthGate extends StatelessWidget {
         }
 
         return MobileHubPage(
+          key: ValueKey(session.uid),
           session: session,
           repository: repository,
           plansRepository: plansRepository,
