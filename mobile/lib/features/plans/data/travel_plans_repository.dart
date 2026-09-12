@@ -17,6 +17,7 @@ class TravelPlanSummary {
     required this.isFavorite,
     required this.createdAt,
     this.planData = const {},
+    this.allocatedBudget = 0,
   });
 
   final String id;
@@ -31,6 +32,7 @@ class TravelPlanSummary {
   final bool isFavorite;
   final DateTime? createdAt;
   final Map<String, dynamic> planData;
+  final double allocatedBudget;
   List<PlanDay> get days =>
       planList(planData['dailyPlans'])
           .asMap()
@@ -53,6 +55,7 @@ class TravelPlanSummary {
     return TravelPlanSummary(
       id: id,
       planData: plan,
+      allocatedBudget: planNumber(onboarding['budget']),
       destination: _text(plan['destination'], fallback: 'Yeni yolculuk'),
       customName: _text(data['customName']),
       startDate: _text(
@@ -87,7 +90,8 @@ class TravelPlanSummary {
     return text.isEmpty ? fallback : text;
   }
 
-  static double _number(Object? value) => value is num ? value.toDouble() : 0;
+  static double _number(Object? value) =>
+      value is num && value.isFinite ? value.toDouble() : 0;
 
   static DateTime? _date(Object? value) {
     if (value is Timestamp) return value.toDate();

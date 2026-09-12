@@ -29,6 +29,16 @@
 				<string>com.googleusercontent.apps.338987864218-ss8gia71pjres297thodk37flle3kho9</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.travyon.app.plan</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>travyon</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
@@ -84,5 +94,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Profil fotoğrafını seçebilmen için fotoğraf arşivine erişim gerekir.</string>
+    <key>FirebaseMessagingAutoInitEnabled</key>
+    <false/>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
 </dict>
 </plist>

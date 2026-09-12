@@ -1,0 +1,18 @@
+{
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/.firebase": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/firebase-export-*": true,
+    "**/node_modules": true,
+    "**/*.log": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "firebase.json": ".firebaserc, firestore.rules, firestore.indexes.json, storage.rules",
+    "package.json": "package-lock.json, eslint.config.js",
+    "README.md": "@project-docs.md"
+  }
+}

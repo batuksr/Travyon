@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../firebase_options.dart';
 import 'firebase_services.dart';
+import '../../features/notifications/data/firebase_mobile_push.dart';
 
 class AuthSession {
   const AuthSession({
@@ -150,7 +151,36 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    final uid = _auth.currentUser?.uid;
+    final push = FirebaseMobilePush.controller;
+    if (uid != null && push != null && push.available) {
+      if (!await push.disable(uid)) {
+        throw AuthFailure(
+          push.error ?? 'Bildirim cihaz kaydı kapatılamadı. Tekrar dene.',
+        );
+      }
+    }
+    await _auth.signOut();
+  }
+
+  /// Reauthenticate the existing account; never switch Firebase users when a
+  /// different Google account is selected in a sensitive settings operation.
+  Future<void> reauthenticateGoogle(String expectedUid) async {
+    final user = _auth.currentUser;
+    if (user == null || user.uid != expectedUid) {
+      throw const AuthFailure('Oturum değişti. Yeniden giriş yap.');
+    }
+    await _initializeGoogleSignIn();
+    final googleUser = await _googleSignIn.authenticate();
+    final token = googleUser.authentication.idToken;
+    if (token == null) {
+      throw const AuthFailure('Google doğrulaması tamamlanamadı.');
+    }
+    await user.reauthenticateWithCredential(
+      GoogleAuthProvider.credential(idToken: token),
+    );
+  }
 
   Future<void> _initializeGoogleSignIn() {
     return _googleInitialization ??= _googleSignIn.initialize(

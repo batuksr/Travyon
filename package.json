@@ -1,20 +1,20 @@
 {
-  "name": "temp-app",
+  "name": "travyon-workspace",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "npm run dev:local",
-    "dev:local": "vite --mode localdev",
-    "dev:cloud": "vite --mode clouddev",
-    "build": "node scripts/clean-dist.mjs && tsc -b && vite build",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "dev:local": "vite --config web/vite.config.ts --mode localdev",
+    "dev:cloud": "vite --config web/vite.config.ts --mode clouddev",
+    "build": "node scripts/clean-dist.mjs && tsc -b web/tsconfig.json && vite build --config web/vite.config.ts",
+    "lint": "eslint web functions/src",
+    "test": "vitest run --config web/vitest.config.ts",
+    "test:watch": "vitest --config web/vitest.config.ts",
     "emulators": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode hybrid",
     "emulators:hybrid": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode hybrid",
     "emulators:full": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode full",
-    "preview": "vite preview"
+    "preview": "vite preview --config web/vite.config.ts"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",

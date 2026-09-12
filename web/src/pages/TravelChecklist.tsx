@@ -10,6 +10,11 @@ import {
   TRAVEL_CHECKLIST_TOTAL,
   getTravelChecklistStorageKey,
 } from '../data/travelChecklist';
+import {
+  resetTravelChecklist,
+  setTravelChecklistItem,
+  watchTravelChecklist,
+} from '../services/travelChecklistCloudService';
 
 const TravelChecklist: React.FC = () => {
   const { t } = useTranslation();
@@ -29,6 +34,7 @@ const TravelChecklist: React.FC = () => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(
     () => new Set(CHECKLIST.map(g => g.id))
   );
+  const [syncError, setSyncError] = useState(false);
 
   const totalItems = TRAVEL_CHECKLIST_TOTAL;
   const checkedCount = checked.size;
@@ -48,12 +54,35 @@ const TravelChecklist: React.FC = () => {
     localStorage.setItem(storageKey, JSON.stringify([...checked]));
   }, [checked, storageKey]);
 
+  useEffect(() => {
+    if (!user?.uid || planId === 'default') return;
+    let localIds: string[] = [];
+    try {
+      localIds = JSON.parse(localStorage.getItem(storageKey) ?? '[]');
+    } catch { /* Invalid legacy data is ignored. */ }
+    return watchTravelChecklist(
+      user.uid,
+      planId,
+      localIds,
+      ids => {
+        setChecked(new Set(ids));
+        setSyncError(false);
+      },
+      () => setSyncError(true),
+    );
+  }, [planId, storageKey, user?.uid]);
+
   const toggle = (id: string) => {
+    const shouldCheck = !checked.has(id);
     setChecked(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+    if (user?.uid && planId !== 'default') {
+      void setTravelChecklistItem(user.uid, planId, id, shouldCheck)
+        .catch(() => setSyncError(true));
+    }
   };
 
   const toggleGroup = (id: string) => {
@@ -67,6 +96,10 @@ const TravelChecklist: React.FC = () => {
   const reset = () => {
     setChecked(new Set());
     localStorage.removeItem(storageKey);
+    if (user?.uid && planId !== 'default') {
+      void resetTravelChecklist(user.uid, planId)
+        .catch(() => setSyncError(true));
+    }
   };
 
   return (
@@ -209,8 +242,8 @@ const TravelChecklist: React.FC = () => {
           })}
         </div>
 
-        <p className="text-center text-xs text-muted mt-8">
-          {t('travelChecklist.autoSaved')} <AppIcon name="check" />
+        <p className={`text-center text-xs mt-8 ${syncError ? 'text-red-600' : 'text-muted'}`}>
+          {syncError ? t('common.unknownError') : t('travelChecklist.autoSaved')} {!syncError && <AppIcon name="check" />}
         </p>
 
       </div>

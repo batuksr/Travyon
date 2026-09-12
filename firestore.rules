@@ -1,6 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Device tokens are private and only managed by authenticated callables.
+    match /mobilePushDevices/{deviceId} {
+      allow read, write: if false;
+    }
+
+    // Scheduled/event delivery receipts are server-only deduplication records.
+    match /mobilePushDeliveries/{deliveryId} {
+      allow read, write: if false;
+    }
 
     // Kullanıcı profil ve ayarları — sadece kendi belgesi.
     // isPro ve abonelik/kullanım alanları istisna: ödeme durumunu ve
@@ -12,12 +21,16 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == uid
                     && !request.resource.data.keys().hasAny([
                       'isPro', 'subscriptionReferenceCode', 'subscriptionStatus',
+                      'subscriptionProvider', 'subscriptionProductId',
+                      'storeOriginalTransactionId',
                       'proSince', 'lastPaymentAt', 'currentPeriodEnd',
                       'plansUsedThisMonth', 'plansMonthWindowStart'
                     ]);
       allow update: if request.auth != null && request.auth.uid == uid
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                       'isPro', 'subscriptionReferenceCode', 'subscriptionStatus',
+                      'subscriptionProvider', 'subscriptionProductId',
+                      'storeOriginalTransactionId',
                       'proSince', 'lastPaymentAt', 'currentPeriodEnd',
                       'plansUsedThisMonth', 'plansMonthWindowStart',
                       'profilePublic', 'plansPublic', 'followPublic',
@@ -31,6 +44,33 @@ service cloud.firestore {
       match /plans/{planId} {
         allow read, create, update, delete: if request.auth != null
                                             && request.auth.uid == uid;
+
+        // One shared checklist state per plan. Both web and mobile use this
+        // document, while server timestamps resolve cross-device ordering.
+        match /checklist/{checklistId} {
+          allow read: if request.auth != null
+                      && request.auth.uid == uid
+                      && checklistId == 'state';
+          allow create, update: if request.auth != null
+                                && request.auth.uid == uid
+                                && checklistId == 'state'
+                                && request.resource.data.keys().hasOnly([
+                                  'schemaVersion', 'checkedIds', 'updatedAt'
+                                ])
+                                && request.resource.data.schemaVersion == 1
+                                && request.resource.data.checkedIds is list
+                                && request.resource.data.checkedIds.size() <= 50
+                                && request.resource.data.checkedIds.hasOnly([
+                                  'passport', 'visa', 'ticket', 'hotel',
+                                  'insurance', 'emergency', 'cash', 'card',
+                                  'backup', 'medicine', 'firstaid', 'sunscreen',
+                                  'vaccine', 'charger', 'powerbank', 'simcard',
+                                  'offline', 'transport', 'clothes', 'shoes',
+                                  'lock', 'copies', 'notify'
+                                ])
+                                && request.resource.data.updatedAt is timestamp;
+          allow delete: if false;
+        }
       }
 
       // Private cross-device wallet. Deletes erase personal fields and retain
@@ -122,6 +162,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /pendingWebhookEvents/{refCode} {
+      allow read, write: if false;
+    }
+    // Future Google Play / App Store receipts and server notifications remain
+    // server-only. A mobile client can never grant itself Pro access.
+    match /mobileStoreTransactions/{transactionId} {
+      allow read, write: if false;
+    }
+    match /mobileStoreNotifications/{notificationId} {
       allow read, write: if false;
     }
 

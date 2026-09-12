@@ -3,9 +3,9 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const distDir = resolve(join(projectRoot, 'dist'));
+const distDir = resolve(join(projectRoot, 'web', 'dist'));
 
-if (dirname(distDir) !== projectRoot || !distDir.endsWith(`${sep}dist`)) {
+if (dirname(dirname(distDir)) !== projectRoot || !distDir.endsWith(`${sep}web${sep}dist`)) {
   throw new Error(`Refusing to remove unsafe build path: ${distDir}`);
 }
 

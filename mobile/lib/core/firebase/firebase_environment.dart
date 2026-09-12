@@ -36,10 +36,21 @@ abstract final class FirebaseEnvironment {
     }
 
     final host = emulatorHost;
-    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    // We already select 10.0.2.2 for Android emulators above. Preserve an
+    // explicit 127.0.0.1 override for physical devices using adb reverse;
+    // FlutterFire would otherwise silently map it back to 10.0.2.2.
+    FirebaseFirestore.instance.useFirestoreEmulator(
+      host,
+      8080,
+      automaticHostMapping: false,
+    );
     FirebaseFunctions.instanceFor(region: 'europe-west1')
-        .useFunctionsEmulator(host, 5001);
-    FirebaseStorage.instance.useStorageEmulator(host, 9199);
+        .useFunctionsEmulator(host, 5001, automaticHostMapping: false);
+    await FirebaseStorage.instance.useStorageEmulator(
+      host,
+      9199,
+      automaticHostMapping: false,
+    );
 
     debugPrint(
       'Travyon Firebase modu: LOCAL '

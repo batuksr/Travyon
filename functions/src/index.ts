@@ -1,4 +1,5 @@
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineBoolean, defineSecret, defineString } from "firebase-functions/params";
 import { setGlobalOptions } from "firebase-functions/v2";
 import * as logger from "firebase-functions/logger";
@@ -9,6 +10,9 @@ import { getStorage } from "firebase-admin/storage";
 import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { lookupMobilePlace, validateMobilePlaceQuery, lookupMobilePhoto, validateMobilePhotoName } from "./mobilePlaces";
 import { lookupAccommodation, validateAccommodationQuery } from "./mobileAccommodation";
+import { getMessaging } from "firebase-admin/messaging";
+import { parsePushInput, runMobilePush, PushDevice } from "./mobilePush";
+import { communityPush, sendMobilePushEvent, tripReminderPush } from "./mobilePushEvents";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -17,6 +21,7 @@ const db = getFirestore();
 // App Check production'da zorunlu kalır. Yerel Functions emulator'ında ise
 // gerçek reCAPTCHA/debug-token kurulumu gerektirmeden geliştirme yapılabilir.
 const SHOULD_ENFORCE_APP_CHECK = process.env.FUNCTIONS_EMULATOR !== "true";
+const MOBILE_PUSH_ENABLED = defineBoolean("MOBILE_PUSH_ENABLED", { default: false });
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Resend'de doğrulanmış bir gönderim domaini olmadan sadece hesap sahibinin
@@ -69,6 +74,9 @@ const PRO_FEATURES_ENABLED = defineBoolean("PRO_FEATURES_ENABLED", { default: fa
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 dakika
 const RATE_LIMITS: Record<string, number> = {
+  mobilePush_register: 30,
+  mobilePush_unregister: 100,
+  mobilePush_test: 3,
   generateAIContent: 15,
   askTravelAssistant: 25,
   submitBugReport: 5,
@@ -82,6 +90,7 @@ const RATE_LIMITS: Record<string, number> = {
   followUserAction: 30,
   initiateSubscriptionCheckout: 3,
   cancelSubscription: 5,
+  getSubscriptionEntitlement: 60,
   geocodeAddress: 80,
   getMobilePlaceDetails: 60,
   getMobilePlacePhoto: 120,
@@ -128,6 +137,122 @@ const isProActive = (d: Record<string, unknown> | undefined): boolean => {
   const periodEndMs = periodEnd?.toMillis?.() ?? 0;
   return periodEndMs === 0 || Date.now() < periodEndMs;
 };
+
+export const mobilePushAction = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  if (request.data?.expectedUid !== request.auth.uid) throw new HttpsError("unauthenticated", "Oturum değişti.");
+  const input = parsePushInput(request.data);
+  if (input.action !== "unregister" && !request.auth.token.email_verified) {
+    throw new HttpsError("failed-precondition", "Önce e-posta adresini doğrula.");
+  }
+  await checkRateLimit(request.auth.uid, `mobilePush_${input.action}`, "Çok sık bildirim isteği. Biraz sonra tekrar dene.");
+  const devices = db.collection("mobilePushDevices");
+  return runMobilePush(input, request.auth.uid, {
+    enabled: MOBILE_PUSH_ENABLED.value(),
+    emulator: process.env.FUNCTIONS_EMULATOR === "true",
+    store: {
+      bind: async (id, device) => { await devices.doc(id).set(device); },
+      read: async (id) => (await devices.doc(id).get()).data() as PushDevice | undefined,
+      removeOwned: async (id, uid) => {
+        await db.runTransaction(async (tx) => {
+          const ref = devices.doc(id);
+          const snap = await tx.get(ref);
+          if (snap.data()?.uid === uid) tx.delete(ref);
+        });
+      },
+    },
+    send: (message) => getMessaging().send(message),
+  });
+});
+
+const deliverPush = async (uid: string, event: ReturnType<typeof communityPush.follow>): Promise<boolean> => {
+  try {
+    await sendMobilePushEvent(db, getMessaging(), uid, event, MOBILE_PUSH_ENABLED.value());
+    return true;
+  } catch (error) {
+    // A notification can never roll back the user's primary action.
+    logger.warn("[mobilePushEvent] delivery failed", {
+      uid,
+      kind: event.kind,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+};
+
+const notifyFollowersAboutPlan = async (ownerUid: string, planId: string): Promise<void> => {
+  if (!MOBILE_PUSH_ENABLED.value()) return;
+  const followers = await db.collectionGroup("following")
+    .where("targetUid", "==", ownerUid)
+    .limit(2_500)
+    .get();
+  const uids = [...new Set(followers.docs
+    .map((document) => document.data().followerUid)
+    .filter((uid): uid is string => typeof uid === "string" && uid.length > 0))];
+  for (let index = 0; index < uids.length; index += 25) {
+    await Promise.all(uids.slice(index, index + 25)
+      .map((uid) => deliverPush(uid, communityPush.sharedPlan(planId))));
+  }
+};
+
+const istanbulDate = (daysFromToday: number): string => {
+  const date = new Date(Date.now() + daysFromToday * DAY_MS);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+};
+
+const claimScheduledPush = async (id: string, data: Record<string, unknown>): Promise<boolean> => {
+  const ref = db.collection("mobilePushDeliveries").doc(id);
+  return db.runTransaction(async (tx) => {
+    const existing = await tx.get(ref);
+    if (existing.exists) return false;
+    tx.create(ref, {
+      ...data,
+      status: "claimed",
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return true;
+  });
+};
+
+/** Daily, deduplicated reminders. The lock-screen payload is deliberately generic. */
+export const sendTripReminders = onSchedule(
+  { schedule: "0 9 * * *", timeZone: "Europe/Istanbul" },
+  async () => {
+    if (!MOBILE_PUSH_ENABLED.value()) return;
+    for (const days of [7, 1]) {
+      const startDate = istanbulDate(days);
+      const plans = await db.collectionGroup("plans")
+        .where("onboardingData.startDate", "==", startDate)
+        .get();
+      for (const plan of plans.docs) {
+        const uid = plan.ref.parent.parent?.id;
+        if (!uid) continue;
+        const deliveryId = createHash("sha256")
+          .update(`${uid}:${plan.id}:${startDate}:${days}`)
+          .digest("hex");
+        if (!await claimScheduledPush(deliveryId, {
+          uid,
+          planId: plan.id,
+          kind: "trip_reminder",
+          startDate,
+          days,
+        })) continue;
+        const delivered = await deliverPush(uid, tripReminderPush(plan.id, days));
+        await db.collection("mobilePushDeliveries").doc(deliveryId).set({
+          status: delivered ? "processed" : "failed",
+          processedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+    }
+  },
+);
 
 /**
  * Ücretsiz kullanıcılar için aylık (30 günlük kayan pencere) plan oluşturma
@@ -335,7 +460,7 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Re-homed from src/services/aiService.ts's executeWithFallback — SAME retry
+ * Re-homed from web/src/services/aiService.ts's executeWithFallback — SAME retry
  * semantics, just server-side now:
  *  - 400/401/invalid_api_key/json parse → unrecoverable, rethrow immediately
  *  - 403                                → try next model
@@ -393,7 +518,7 @@ const generateWithFallback = async (
  * @google/generative-ai fetch-error messages embed the full request URL
  * (`Error fetching from ${url}: [...] ...`) and, depending on SDK
  * version/error path, that URL can carry the API key as a query param.
- * Classify into the same buckets src/services/aiService.ts's
+ * Classify into the same buckets web/src/services/aiService.ts's
  * getFriendlyError() already scans .message for, and return ONLY a fixed,
  * safe string — the raw text is logged server-side (Cloud Logging only),
  * never returned to the browser.
@@ -849,9 +974,10 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck:
     endDate: onboardingData.endDate ?? "",
     planData: plan,
   };
+  let newlyPublished = false;
   try {
     const planRef = db.collection("publicPlans").doc(planId);
-    await db.runTransaction(async (tx) => {
+    newlyPublished = await db.runTransaction(async (tx) => {
       const existing = await tx.get(planRef);
       if (existing.exists && existing.data()?.userId !== request.auth?.uid) {
         throw new HttpsError("permission-denied", "Bu plan kimliği başka bir kullanıcıya ait.");
@@ -863,12 +989,23 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck:
         avgRating: previous?.avgRating ?? 0,
         ratingCount: previous?.ratingCount ?? 0,
       });
+      return linkOnly !== true && previous?.feedVisible !== true;
     });
   } catch (err) {
     logger.error("[sharePublicPlan] Firestore yazım hatası", {
       err: err instanceof Error ? err.message : String(err),
     });
     throw new HttpsError("internal", "Plan paylaşılamadı.");
+  }
+
+  if (newlyPublished) {
+    await notifyFollowersAboutPlan(request.auth.uid, planId).catch((error) => {
+      logger.warn("[sharePublicPlan] follower notification failed", {
+        uid: request.auth?.uid,
+        planId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
   }
 
   return { ok: true };
@@ -947,7 +1084,7 @@ export const ratePublicPlan = onCall<RatePublicPlanRequest>({ enforceAppCheck: S
 
   const planRef = db.collection("publicPlans").doc(planId);
   const ratingRef = db.collection("planRatings").doc(`${planId}_${request.auth.uid}`);
-  return db.runTransaction(async (tx) => {
+  const outcome = await db.runTransaction(async (tx) => {
     const [planSnap, existingRating] = await Promise.all([tx.get(planRef), tx.get(ratingRef)]);
     if (!planSnap.exists) throw new HttpsError("not-found", "Plan bulunamadı.");
 
@@ -969,8 +1106,17 @@ export const ratePublicPlan = onCall<RatePublicPlanRequest>({ enforceAppCheck: S
       updatedAt: FieldValue.serverTimestamp(),
     });
     tx.update(planRef, { avgRating: newAvg, ratingCount: count });
-    return { newAvg, newCount: count };
+    return {
+      newAvg,
+      newCount: count,
+      ownerUid: typeof planData.userId === "string" ? planData.userId : "",
+      firstRating: !existingRating.exists,
+    };
   });
+  if (outcome.firstRating && outcome.ownerUid && outcome.ownerUid !== request.auth.uid) {
+    await deliverPush(outcome.ownerUid, communityPush.rating(planId));
+  }
+  return { newAvg: outcome.newAvg, newCount: outcome.newCount };
 });
 
 interface FollowUserActionRequest {
@@ -1003,16 +1149,21 @@ export const followUserAction = onCall<FollowUserActionRequest>({ enforceAppChec
     throw new HttpsError("permission-denied", "Bu kullanıcı takip isteklerini kapatmış.");
   }
 
-  await db
-    .collection("userFollows")
+  const followRef = db.collection("userFollows")
     .doc(request.auth.uid)
     .collection("following")
-    .doc(targetUid)
-    .set({
-      followerUid: request.auth.uid,
+    .doc(targetUid);
+  const created = await db.runTransaction(async (tx) => {
+    const existing = await tx.get(followRef);
+    if (existing.exists) return false;
+    tx.create(followRef, {
+      followerUid: request.auth!.uid,
       targetUid,
       followedAt: FieldValue.serverTimestamp(),
     });
+    return true;
+  });
+  if (created) await deliverPush(targetUid, communityPush.follow());
 
   return { ok: true };
 });
@@ -1113,7 +1264,7 @@ export const deleteMyAccount = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHEC
     throw new HttpsError("failed-precondition", "Aktif abonelik önce iptal edilmeli.");
   }
 
-  const [plansSnap, ratingsSnap, incomingFollows, followRoots, bugReports, checkouts, subscriptions, payments] = await Promise.all([
+  const [plansSnap, ratingsSnap, incomingFollows, followRoots, bugReports, checkouts, subscriptions, payments, pushDevices, pushDeliveries] = await Promise.all([
     db.collection("publicPlans").where("userId", "==", uid).get(),
     db.collection("planRatings").where("userId", "==", uid).get(),
     db.collectionGroup("following").where("targetUid", "==", uid).get(),
@@ -1122,6 +1273,8 @@ export const deleteMyAccount = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHEC
     db.collection("subscriptionCheckouts").where("uid", "==", uid).get(),
     db.collection("subscriptionsByRef").where("uid", "==", uid).get(),
     db.collection("payments").where("uid", "==", uid).get(),
+    db.collection("mobilePushDevices").where("uid", "==", uid).get(),
+    db.collection("mobilePushDeliveries").where("uid", "==", uid).get(),
   ]);
 
   const writer = db.bulkWriter();
@@ -1137,7 +1290,7 @@ export const deleteMyAccount = onCall({ enforceAppCheck: SHOULD_ENFORCE_APP_CHEC
   for (const ratingDoc of ratingsSnap.docs) {
     if (!deletedRatingIds.has(ratingDoc.id)) writer.delete(ratingDoc.ref);
   }
-  for (const snap of [incomingFollows, bugReports, checkouts, subscriptions, payments]) {
+  for (const snap of [incomingFollows, bugReports, checkouts, subscriptions, payments, pushDevices, pushDeliveries]) {
     for (const item of snap.docs) writer.delete(item.ref);
   }
   // targetUid alanı eklenmeden önce oluşmuş takip kayıtları collectionGroup
@@ -1282,6 +1435,7 @@ const activateSubscription = async (
       isPro: true,
       subscriptionReferenceCode: params.subscriptionReferenceCode,
       subscriptionStatus: "active",
+      subscriptionProvider: "iyzico",
       lastPaymentAt: FieldValue.serverTimestamp(),
       currentPeriodEnd,
     };
@@ -1291,12 +1445,45 @@ const activateSubscription = async (
     tx.set(paymentRef, {
       uid,
       subscriptionReferenceCode: params.subscriptionReferenceCode,
+      provider: "iyzico",
       amount: "49.90",
       currency: "TRY",
       createdAt: FieldValue.serverTimestamp(),
     });
   });
 };
+
+/**
+ * Provider-neutral entitlement read model for web, Google Play and App Store.
+ * Store receipts must later be verified server-side before these protected
+ * fields are written; this callable never trusts client purchase claims.
+ */
+export const getSubscriptionEntitlement = onCall(
+  { enforceAppCheck: SHOULD_ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    await checkRateLimit(
+      request.auth.uid,
+      "getSubscriptionEntitlement",
+      "Çok sık abonelik kontrolü yapıldı. Biraz sonra tekrar dene.",
+    );
+    const user = (await db.collection("users").doc(request.auth.uid).get()).data();
+    const periodEnd = user?.currentPeriodEnd as { toMillis?: () => number } | undefined;
+    return {
+      active: isProActive(user),
+      status: typeof user?.subscriptionStatus === "string"
+        ? user.subscriptionStatus
+        : "inactive",
+      provider: typeof user?.subscriptionProvider === "string"
+        ? user.subscriptionProvider
+        : null,
+      productId: typeof user?.subscriptionProductId === "string"
+        ? user.subscriptionProductId
+        : null,
+      currentPeriodEndMs: periodEnd?.toMillis?.() ?? null,
+    };
+  },
+);
 
 /** İyzico'nun kuyrukladığı, henüz eşlemesi bulunamamış bir webhook olayı
  *  varsa (callback'ten önce gelmiş) uygular ve kuyruktan siler. */

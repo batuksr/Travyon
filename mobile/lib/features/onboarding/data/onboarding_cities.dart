@@ -1,4 +1,4 @@
-// Mirrored from src/data/cities.ts; keep the web and mobile suggestions aligned.
+// Mirrored from web/src/data/cities.ts; keep the web and mobile suggestions aligned.
 const onboardingCities = <String>[
   'İstanbul, Türkiye',
   'Ankara, Türkiye',

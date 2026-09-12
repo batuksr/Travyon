@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import GoogleMaps
+import firebase_messaging
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -8,6 +9,7 @@ import GoogleMaps
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    FLTFirebaseMessagingPlugin.configureNotificationCenterDelegate()
     let defines = Bundle.main.object(forInfoDictionaryKey: "TravyonDartDefines") as? String ?? ""
     for entry in defines.split(separator: ",") {
       guard let data = Data(base64Encoded: String(entry)),

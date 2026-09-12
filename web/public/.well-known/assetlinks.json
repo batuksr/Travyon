@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.travyon.app",
+      "sha256_cert_fingerprints": [
+        "24:DA:62:BF:DB:D7:D1:25:48:CE:7F:E0:91:BF:F7:E7:C7:DC:4F:99:EA:BD:69:4F:BE:32:C0:10:4E:98:1C:D8"
+      ]
+    }
+  }
+]

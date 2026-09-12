@@ -1,13 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/navigation/travyon_deep_links.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../../plans/presentation/plan_detail_page.dart';
 import '../../onboarding/data/plan_creation_repository.dart';
 import '../../onboarding/presentation/onboarding_page.dart';
 import '../../wallet/data/wallet_repository.dart';
 import '../../wallet/presentation/wallet_page.dart';
+import '../../community/data/community_repository.dart';
+import '../../community/presentation/community_page.dart';
+import '../../community/presentation/community_plan_page.dart';
+import '../../settings/data/settings_repository.dart';
+import '../../settings/presentation/settings_page.dart';
+import '../../settings/data/settings_fields.dart';
+import '../../plans/data/plan_management_repository.dart';
+import '../../plans/presentation/saved_plans_page.dart';
+import '../../notifications/data/notification_repository.dart';
+import '../../notifications/presentation/notifications_page.dart';
+import '../../notifications/data/firebase_mobile_push.dart';
 
 class MobileHubPage extends StatefulWidget {
   const MobileHubPage({
@@ -25,10 +39,101 @@ class MobileHubPage extends StatefulWidget {
   State<MobileHubPage> createState() => _MobileHubPageState();
 }
 
-class _MobileHubPageState extends State<MobileHubPage> {
+class _MobileHubPageState extends State<MobileHubPage>
+    with WidgetsBindingObserver {
+  StreamSubscription<void>? _pushOpen, _pushForeground;
+  StreamSubscription<String>? _deepLinkOpen;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _pushOpen = FirebaseMobilePush.opened.stream.listen((_) => _consumePush());
+    _pushForeground = FirebaseMobilePush.foreground.stream.listen((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Yeni bir Travyon bildirimin var.'),
+          action: SnackBarAction(
+            label: 'Bildirimler',
+            onPressed: _notifications,
+          ),
+        ),
+      );
+    });
+    FirebaseMobilePush.controller?.refresh(widget.session.uid);
+    _deepLinkOpen = TravyonDeepLinks.openedPlans.listen(_openPublicPlan);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _consumePush();
+      final planId = TravyonDeepLinks.takePendingPlan();
+      if (planId != null) _openPublicPlan(planId);
+    });
+  }
+
+  void _consumePush() {
+    if (!mounted || !FirebaseMobilePush.pendingOpen) return;
+    FirebaseMobilePush.pendingOpen = false;
+    _notifications();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      FirebaseMobilePush.controller?.refresh(widget.session.uid);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pushOpen?.cancel();
+    _pushForeground?.cancel();
+    _deepLinkOpen?.cancel();
+    super.dispose();
+  }
+
+  void _notifications() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => NotificationsPage(
+        uid: widget.session.uid,
+        plansRepository: widget.plansRepository,
+        repository: FirebaseNotificationRepository(),
+        onOpen: _open,
+        onSettings: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => SettingsEditor(
+              section: settingsSections.firstWhere(
+                (s) => s.id == 'notifications',
+              ),
+              repository: FirebaseSettingsRepository(widget.session.uid),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _openPublicPlan(String planId) {
+    if (!mounted) return;
+    if (TravyonDeepLinks.pendingPlanId == planId) {
+      TravyonDeepLinks.takePendingPlan();
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CommunityPlanPage(
+          uid: widget.session.uid,
+          id: planId,
+          repository: _community,
+        ),
+      ),
+    );
+  }
+
   int _selected = 0;
   late final _plans = widget.plansRepository.watchPlans(widget.session.uid);
   late final _wallet = FirebaseWalletRepository();
+  late final _community = FirebaseCommunityRepository();
+  late final _management = FirebasePlanManagementRepository();
 
   void _create() => Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -63,15 +168,42 @@ class _MobileHubPageState extends State<MobileHubPage> {
         title: const _Wordmark(),
         actions: [
           IconButton(
-            onPressed: widget.repository.signOut,
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Çıkış yap',
+            tooltip: 'Bildirimler',
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: _notifications,
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SettingsPage(
+                  uid: widget.session.uid,
+                  repository: FirebaseSettingsRepository(widget.session.uid),
+                  onSignOut: widget.repository.signOut,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Ayarlar',
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
-        child: _selected == 2
+        child: _selected == 1
+            ? SavedPlansPage(
+                uid: widget.session.uid,
+                repository: widget.plansRepository,
+                management: _management,
+                onOpen: _open,
+                onCreate: _create,
+              )
+            : _selected == 3
+            ? CommunityPage(
+                uid: widget.session.uid,
+                repository: _community,
+                plansRepository: widget.plansRepository,
+              )
+            : _selected == 2
             ? WalletPage(
                 uid: widget.session.uid,
                 repository: _wallet,
@@ -130,6 +262,10 @@ class _MobileHubPageState extends State<MobileHubPage> {
           NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),
             label: 'Cüzdan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline_rounded),
+            label: 'Topluluk',
           ),
         ],
       ),

@@ -2,8 +2,8 @@
 set -uo pipefail
 
 FFMPEG="/c/Users/batuk/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0-full_build/bin/ffmpeg.exe"
-VIDEOS_DIR="public/videos"
-BACKUP_DIR="public/videos_originals"
+VIDEOS_DIR="web/public/videos"
+BACKUP_DIR="web/public/videos_originals"
 
 declare -A widths=( [start.mp4]=1280 [onboarding.mp4]=1280 [travyon.mp4]=1280 \
                      [roma.mp4]=960 [paris.mp4]=960 [tokyo.mp4]=960 \

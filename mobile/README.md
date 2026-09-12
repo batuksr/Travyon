@@ -47,7 +47,7 @@ yayını için macOS üzerinde Xcode gerekir.
 
 ## Mimari notu
 
-Web arayüzü `src/` altında yaşamaya devam eder. `mobile/` yalnızca Android ve
+Web arayüzü `web/src/` altında yaşamaya devam eder. `mobile/` yalnızca Android ve
 iOS arayüzüdür. Authentication, Firestore, Storage ve Cloud Functions iki
 istemci arasında ortaktır.
 
@@ -182,3 +182,246 @@ silme, yeniden adlandırma ve favori değişiklikleri cihazlar arasında eşitle
 
 Firebase App Check paketi kuruludur. Play Integrity ve App Attest kayıtları
 Firebase Console'da tamamlandıktan sonra enforcement etkinleştirilmelidir.
+
+## Mobil topluluk
+
+Alt menüdeki **Topluluk**, web ile aynı `publicPlans`, `userFollows` ve
+`planRatings` verilerini kullanır. Keşfet ve en beğenilenler son 50 genel paylaşım
+üzerinden gösterilir; bağlantıya özel planlar akışa dahil edilmez.
+
+- Şehir/gezgin arama, takip edilen gezginler ve herkese açık gezgin kartları.
+- Salt okunur günlük rota, Google haritası/yer detayları, rehber ve tercihler.
+- 1–5 yıldız değerlendirme; tekrar puan vermek mevcut değerlendirmeyi günceller.
+- Paylaşımlarım: kayıtlı planı onayla paylaşma/güncelleme ve paylaşımı kaldırma.
+- Ayar simgesi: web ile ortak profil, plan paylaşımı ve takip gizliliği.
+
+Mobil paylaşım, mevcut `sharePublicPlan`, `unsharePublicPlan`, `ratePublicPlan`,
+`followUserAction`, `getPublicProfile` ve `updatePrivacySettings` fonksiyonlarını
+kullanır. Yeni backend fonksiyonu veya kural değişikliği gerekmez; var olan web
+fonksiyonları ve `firestore.indexes.json` indeksleri aynı ortamda bulunmalıdır.
+LOCAL modunda Firebase emülatörleri açık olmalıdır. Mobildeki ve webdeki ortam
+farklıysa aynı topluluk verileri görünmez.
+
+Paylaşım için `plansPublic` izni açık olmalı ve kullanıcı ayrıca planı seçip
+onaylamalıdır. Bu izin açılınca planlar kendiliğinden yayınlanmaz. Mobil yayın
+şeması cüzdanı, rezervasyon adresini, kişisel durak notlarını, tamamlanma durumunu
+ve gerçek harcamaları göndermez. Rota metinlerinde kendin yazdığın kişisel bilgileri
+paylaşmadan önce gözden geçir. Özel planın aslı değiştirilmez.
+
+Kontrol: `flutter.bat test test/community_test.dart`.
+
+## Mobil ayarlar
+
+Hub'ın sağ üstündeki dişli simgesi Ayarlar'ı açar. Hesap, seyahat,
+bildirim/gizlilik, fatura, destek ve veri işlemleri ayrı ekranlardadır.
+
+- Profil, seyahat varsayılanları ve iletişim tercihleri webdeki `users/{uid}`
+  alanlarına yalnızca ilgili alanları birleştirerek yazılır. Yeni plan oluşturma
+  bu varsayılanları kullanır; mevcut planların bütçesi dönüştürülmez.
+- JPEG profil fotoğrafı mevcut Storage kuralıyla uyumlu olarak 512 KB altında
+  olmalıdır. Galeri seçiminde küçültme istenir; JPEG olmayan dosyalar reddedilir.
+- Şifre/e-posta değişikliği yeniden kimlik doğrulaması gerektirir. Google girişi
+  aynı Firebase kullanıcısını yeniden doğrular, farklı hesaba geçiş yapmaz.
+  Yeni e-posta doğrulanmadan mevcut adres değiştirilmez.
+- Pasaport hatırlatıcısı yalnızca ülke ve geçerlilik tarihini cihazda,
+  kullanıcı kimliğine özel anahtarda tutar. Numara alınmaz; weble eşitlenmez.
+- Veri dışa aktarımı hesap/profil, buluttaki özel planlar, cüzdan ve cihazdaki
+  pasaport hatırlatıcısını JSON olarak sistem paylaşım ekranına verir. Hassas
+  bilgiler içerebilir; yalnızca güvenilir hedefe kaydedilmelidir. Webde kalan
+  yerel kontrol listeleri dahil değildir. Paylaşım paketi geçici önbellek dosyası
+  oluşturabilir; bu işlem bir şifreli yedekleme sistemi değildir.
+- Hesap silme yazılı onay ve yeniden doğrulama ister. LOCAL modunda kapalıdır:
+  hybrid yapıdaki gerçek Auth hesabını silip bulut verilerini geride bırakmak
+  önlenir. Production'da mevcut `deleteMyAccount` fonksiyonu kullanılır; aktif
+  abonelik koşullarını sunucu kontrol eder. Gerçek hesaplarla silme testi yapılmadı.
+
+Henüz bağlı olmayan özellikler ekranda açıkça belirtilir: mobil İngilizce
+arayüz/birim dönüşümleri, otomatik telefon hatırlatmaları ve mağaza içi satın alma.
+Telefon bildirimlerinin izin/cihaz kaydı/test altyapısı aşağıdaki kontrollü kurulumla açılır.
+Dil/birim ve iletişim tercihleri ortak hesapta kaydedilir; ilgili mobil
+özelliklerin aktif olduğu anlamına gelmez. Abonelik ve ödeme geçmişi salt okunur;
+bu ekrandan ödeme alınmaz. Konum geçmişi toplanmaz.
+
+Yeni native paketler nedeniyle yalnızca hot reload yeterli değildir. Çalışan
+Flutter oturumunu `q` ile kapatıp `mobile` klasöründen yeniden başlat:
+
+```powershell
+flutter.bat run -d emulator-5554 --dart-define=TRAVYON_FIREBASE_MODE=local --dart-define-from-file=maps-config.local.json
+```
+
+Kontrol: `flutter.bat test test/settings_test.dart`. iOS derlemesi ve gerçek
+cihazdaki galeri/sistem paylaşım ekranı ayrıca doğrulanmalıdır.
+
+Paket kaynakları: [image_picker](https://pub.dev/packages/image_picker),
+[share_plus](https://pub.dev/packages/share_plus),
+[SharedPreferencesAsync](https://pub.dev/documentation/shared_preferences/latest/shared_preferences/SharedPreferencesAsync-class.html).
+
+## Planlarım ve uygulama içi bildirimler
+
+Alt menüdeki Planlar artık ayrı bir arşiv ekranıdır: şehir/ad arama, favoriler,
+yaklaşan/devam eden/geçmiş filtreleri, kayıt veya seyahat tarihine göre sıralama,
+yeniden adlandırma, bağlantı kopyalama ve onaylı silme. Favori ve ad değişikliği
+aynı `users/{uid}/plans/{id}` belgesinin ilgili alanlarını günceller; rota içeriğini
+ezmez. Silmeden önce varsa kullanıcının genel paylaşımı kaldırılır; kaldırma
+başarısızsa özel plan silinmez. Cüzdan kayıtları silinmez, arşiv grubunda kalır.
+
+Bağlantı paylaşımı production ortamında `sharePublicPlan` kullanır. Mevcut genel
+paylaşım korunur; yeni bağlantıya özel kopya akışa çıkmaz. LOCAL veri için bozuk
+production bağlantısı üretilmez. Web bağlantı rotası giriş gerektirir. Aynı
+planın eski tarayıcıda kalan yerel kopyasının yeniden taşınması mevcut web
+migrasyon davranışına tabidir; burada web senkronizasyonu değiştirilmedi.
+
+Hub'ın sağ üstündeki zil Bildirimler'i açar. Bildirimler gerçek kayıtlı
+planlardan üretilir: 0–7 gün içinde yolculuk, 0–14 gün içinde olası rezervasyon,
+%20/%50/%80 harcama eşikleri. Rezervasyon hatırlatması isim eşleştirmesidir;
+bilet zorunluluğu veya satın alma onayı değildir. Harcama oranının paydası
+tahmini plan maliyeti, yoksa ayrılan bütçedir ve bildirimde açıkça yazılır.
+
+Yaklaşan (en fazla 7 gün) veya devam eden ilk konumlu plan için rota noktasının
+güncel hava bilgisi alınır. Sadece yaklaşık durak koordinatı Open-Meteo'ya
+gönderilir; telefon konumu, kullanıcı kimliği veya rezervasyon bilgileri gönderilmez.
+Veri 30 dakika yeniden kullanılabilir, 3 saatten eski veri gösterilmez. Hava
+bilgisi alınamazsa diğer bildirimler çalışır. Gelecek seyahat tarihinin tahmini
+olarak sunulmaz. Kar/yağmur/fırtına kodları ayrı değerlendirilir. Sıcaklık
+bildirimleri `tempCelsius` tercihini uygular.
+
+Bildirim kapatma/geri getirme cihazda kullanıcıya özel saklanır; webdeki
+localStorage ile eşitlenmez. Yerel depolama hatası listeyi engellemez fakat
+kalıcı kapatma yapılamaz. `appPlanNotif=false` plan bildirimlerini,
+`appCommunityNotif=false` takip/puan/yeni paylaşım push mesajlarını kapatır.
+
+Test: `flutter.bat test test/plans_notifications_test.dart`.
+Hava API alanları/kodları: [Open-Meteo dokümantasyonu](https://open-meteo.com/en/docs).
+
+## Telefon bildirimleri — kontrollü ilk aşama
+
+### USB ile gerçek Android cihazda LOCAL bağlantı
+
+Firebase emülatörleri bilgisayarda çalışırken, `flutter.bat devices` çıktısındaki
+telefon kimliğiyle üç portu USB üzerinden yönlendir (`CIHAZ_KIMLIGI`ni değiştir):
+
+```powershell
+$travyonAdb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $travyonAdb -s CIHAZ_KIMLIGI reverse tcp:8080 tcp:8080
+& $travyonAdb -s CIHAZ_KIMLIGI reverse tcp:5001 tcp:5001
+& $travyonAdb -s CIHAZ_KIMLIGI reverse tcp:9199 tcp:9199
+```
+
+`mobile` klasöründe:
+
+```powershell
+flutter.bat run -d CIHAZ_KIMLIGI --dart-define=TRAVYON_FIREBASE_MODE=local --dart-define=TRAVYON_FIREBASE_EMULATOR_HOST=127.0.0.1 --dart-define-from-file=maps-config.local.json
+```
+
+`FirebaseEnvironment` üç serviste de `automaticHostMapping: false` kullanır.
+Aksi halde FlutterFire Android'de `127.0.0.1` adresini sessizce emülatöre özel
+`10.0.2.2` adresine çevirir: Google Auth başarılı olsa bile profil/plan okumaları
+başarısız olabilir. Host verilmediğinde Android emülatörü için `10.0.2.2` seçimi
+uygulama tarafından yapılmaya devam eder. USB bağlantısı yeniden kurulduğunda
+port yönlendirmelerini kontrol et. Adres değişikliğinde uygulamayı tamamen
+durdurup yeniden çalıştır; hot reload yeterli değildir.
+
+### Bildirim aktivasyonu
+
+Ayarlar → Telefon bildirimleri: cihaz izni, kayıt, kapatma ve yalnızca kendi
+cihazına test gönderimi. Varsayılan derlemede kapalıdır. LOCAL modunda, bayrak
+açık olsa bile hem istemci hem sunucu gerçek FCM gönderimini engeller.
+Mevcut uygulama içi bildirim ekranı bundan bağımsız çalışır.
+
+Uygulama izni otomatik sormaz; kullanıcı anahtarı açmalıdır. FCM auto-init
+Android/iOS'ta kapalı kalır. Token yalnızca izin/cihaz onayı sonrası alınır;
+sunucu doğrulaması başarılı olmadan arayüz "kayıtlı" demez. Başarısız sunucu
+kaydında kullanıcının açık onayı korunur ve sonraki yenilemede tekrar denenir.
+Token yenilenmesi ve çıkış işlemleri sırayla yürütülür. Normal çıkışta sunucu
+kaydı kaldırılır veya FCM tokenı geçersizleştirilir; ikisi de başarısızsa hata
+gösterilir. Hesap silmenin sunucu temizliği cihaz kayıtlarını da kapsar.
+
+`mobilePushAction` doğrulanmış oturum ve production App Check ister. Cihazlar
+sunucuya özel `mobilePushDevices/{sha256(token)}` koleksiyonundadır; aynı token
+yalnızca son kayıt yapan hesaba bağlıdır. İstemci koleksiyonu okuyamaz/yazamaz.
+Test sınırı hesap başına 10 dakikada 3 istektir. Tokenlar loga yazılmaz.
+Kilit ekranı mesajı isim, rota, rezervasyon veya cüzdan bilgisi içermez. Eski
+token hataları sunucudan temizlenir. Testin FCM tarafından kabul edilmesi
+cihaza teslim garantisi değildir. Test TTL'i 60 saniyedir.
+
+Aktivasyon **henüz yapılmadı**; hesaplar hazır olmadan şu aşamada bayrakları açma:
+
+1. Firebase projesindeki Cloud Messaging API ve uygulama yapılandırmasını
+   doğrula. Production callables için App Check cihaz kaydını tamamla.
+   Push açık debug derleme debug provider, release Android Play Integrity,
+   release iOS DeviceCheck kullanır. Debug tokenını yalnızca Firebase Console'a
+   ekle; depoya, ekran görüntüsüne veya paylaşılan loglara koyma.
+2. iOS için Mac/Xcode üzerinde Runner'a Push Notifications capability ekle;
+   imzalama profilinin `aps-environment` entitlement'ını doğrula. Firebase'e
+   Apple Developer APNs anahtarını yükle. Background modes ve UIScene
+   notification delegate kodda hazırdır; bu, imzalama/APNs kurulumunun yerini tutmaz.
+3. Sunucu parametresi `MOBILE_PUSH_ENABLED=true` ile **onaylı deployment** yap.
+   `mobilePushAction`, cihaz temizliği güncellenen `deleteMyAccount` ve
+   Firestore kuralları birlikte yayınlanmalı. Bu çalışma deploy yapmaz.
+4. `mobile` klasöründen production test derlemesini tam yeniden başlat:
+
+   ```powershell
+   flutter.bat run -d emulator-5554 --dart-define=TRAVYON_FIREBASE_MODE=production --dart-define=TRAVYON_PUSH_ENABLED=true --dart-define-from-file=maps-config.local.json
+   ```
+
+   Bu komut **gerçek bulut verilerini** kullanır; test hesabı tercih et.
+   Android cihaz/emülatör Google Play services içermelidir. Cihaz kimliğini
+   `flutter.bat devices` çıktısına göre değiştir.
+5. Ayarlardan izin ver ve test gönder. Önde mesaj uygulama içinde görünür.
+   Arka plan testi için düğmeye bastıktan sonra uygulamayı arka plana al;
+   gerçek teslimi telefonun bildirim alanında doğrula. Uygulama bildirime
+   dokunarak açıldığında oturum kontrolünden sonra Bildirimler ekranına gider.
+   Zorla durdurulmuş uygulamanın davranışı ayrı test edilmelidir.
+
+Otomatik sunucu olayları; ilk takip, ilk puan, takip edilen gezginin yeni genel
+paylaşımı ile yolculuktan 7 ve 1 gün önceki hatırlatmaları kapsar. Günlük zamanlayıcı
+09:00 Europe/Istanbul saatinde çalışır ve `mobilePushDeliveries` ile tekrar gönderimi
+önler. Mesajlar kilit ekranında kişi, destinasyon, not veya cüzdan verisi göstermez.
+Scheduler deployment için Firebase projesinde faturalandırma/Cloud Scheduler gerekir.
+iOS build ve gerçek cihaz FCM teslimi henüz doğrulanmadı. Kapalı bayraklarla
+normal LOCAL geliştirmeye aynı komutla devam edebilirsin; yeni native paket
+nedeniyle hot reload yerine `q` ve yeniden `flutter.bat run` gerekir.
+
+Testler: `flutter.bat test test/mobile_push_test.dart`; kökten
+`npm.cmd --prefix functions test`. Firebase kaynakları:
+[Flutter FCM kurulumu](https://firebase.google.com/docs/cloud-messaging/flutter/get-started),
+[mesaj alma](https://firebase.google.com/docs/cloud-messaging/flutter/receive-messages),
+[App Check](https://firebase.google.com/docs/app-check/flutter/default-providers).
+
+## Ortak seyahat kontrol listesi
+
+Web kontrol listesi artık `users/{uid}/plans/{planId}/checklist/state` belgesini
+dinler. Eski tarayıcı localStorage kaydı ilk açılışta bir kez Firestore'a taşınır;
+sonraki değişiklikler web ve mobil için aynı güvenli veri modelinde tutulur. İstemci
+yalnızca tanımlı kontrol maddelerini yazabilir. Mobil kontrol listesi arayüzü sonraki
+frontend aşamasında bu belgeye bağlanacaktır.
+
+## Plan bağlantıları
+
+Flutter uygulaması hem `https://travyon-5fb01.web.app/plan/{id}` hem de
+`travyon://plan/{id}` biçimini doğrulayıp salt-okunur topluluk planına yönlendirir.
+Android intent filter ve test cihazının SHA-256 değeriyle Hosting
+`/.well-known/assetlinks.json` hazırdır. Play App Signing açılınca dosyaya Google
+Play'in release SHA-256 değeri de eklenmelidir. iOS özel `travyon` şeması hazırdır;
+HTTPS Universal Link için Apple Developer hesabı açıldıktan sonra Associated Domains
+capability, Team ID ve `apple-app-site-association` dosyası tamamlanmalıdır.
+
+## Yayına hazırlıkta kalan işler
+
+- [x] Otomatik seyahat/topluluk push tetikleyicileri ve tekrar gönderim önleme.
+- [ ] İngilizce ekran metinleri ve uygulama genelinde dil tercihi; kalan birim dönüşümleri.
+- [ ] Google Play Console / Apple Developer hesapları ve gerçek abonelik ürünleri.
+- [ ] Satın alma, sunucuda makbuz doğrulama, yenileme/iptal/iade bildirimleri ve satın alımı geri yükleme.
+- [ ] Gerçek Android ve iPhone üzerinde oturum, Maps, fotoğraf, paylaşım, izin reddi ve bağlantı kaybı testleri.
+- [ ] Mac üzerinde iOS imzalama/build; mağaza görselleri, gizlilik beyanları ve test dağıtımları.
+
+Mağaza ödeme ekranı ve Pro yetkisi bu turda değiştirilmedi. Gerçek ürünler ve
+sunucu doğrulaması olmadan satın alınmış gibi erişim verilmez. Kayıtlı kart,
+Apple anahtarı, servis hesabı JSON'u veya mağaza şifresi depoya eklenmemelidir.
+
+Ortak yetki okuma sözleşmesi `getSubscriptionEntitlement` callable fonksiyonudur.
+`isPro`, sağlayıcı, ürün, işlem ve dönem alanları Firestore kurallarıyla istemci
+yazımına kapalıdır; mevcut iyzico aktivasyonu sağlayıcı olarak `iyzico` kaydeder.
+Gelecekteki Play/App Store makbuzları için `mobileStoreTransactions` ve sunucu
+bildirimleri için `mobileStoreNotifications` koleksiyonları da yalnızca Admin SDK'ya
+açıktır. Hesaplar ve gerçek ürün kimlikleri alınmadan doğrulama endpoint'i açılmaz.

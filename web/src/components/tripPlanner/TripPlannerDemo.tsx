@@ -37,7 +37,7 @@ const fmtDayDate = (dateStr: string, locale: string): string =>
 
 /* Landing sayfasına gömülü, üye olmadan denenebilen etkileşimli gezi planlayıcı demosu.
    `Roma Gezi Planlayıcı.dc.html` tasarım referansının React/TS + projenin kendi tasarım
-   token'larıyla yeniden kurulmuş hali — bkz. 1.md. Veri sabit örnek (src/data/tripPlannerDemo.ts),
+   token'larıyla yeniden kurulmuş hali — bkz. 1.md. Veri sabit örnek (web/src/data/tripPlannerDemo.ts),
    gerçek kullanıcı planlarıyla aynı etkileşim setini (gün geçişi, aktivite ekle/sil/kopyala/
    sırala, Rehber/Hava panelleri, vibe çipleri, tema) sunar. */
 const TripPlannerDemo: React.FC = () => {

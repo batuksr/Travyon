@@ -26,10 +26,15 @@ dist-ssr
 .env.local
 .env.*.local
 
-# Uygulamada kullanılan optimize videolar public/videos altında versionlanır.
+# Web uygulamasında kullanılan optimize videolar web/public/videos altında versionlanır.
 # Sıkıştırılmamış orijinal video yedekleri ise asla commit edilmez.
-public/videos_originals/
-source-media/
+web/public/videos_originals/
+web/source-media/
 
 # Firebase CLI local cache
 .firebase
+firebase-export-*/
+
+# VS Code workspace görünümü ortak ve sade tutulur.
+!.vscode/
+!.vscode/settings.json

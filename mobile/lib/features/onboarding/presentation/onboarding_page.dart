@@ -173,6 +173,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (e.code == 'unauthenticated') {
         return 'Oturumun sona ermiş. Yeniden giriş yap.';
       }
+      if (e.code == 'not-found') {
+        return 'Plan servisi hazır değil. Yerel Functions terminalini yeniden başlatıp tekrar dene.';
+      }
+      if (e.code == 'failed-precondition') {
+        return 'Plan servisi yapılandırması eksik. Functions terminalindeki Gemini ve Maps ayarlarını kontrol et.';
+      }
       if (e.code == 'deadline-exceeded') {
         return 'Planın hazırlanması uzun sürdü. Tercihlerin korundu; tekrar deneyebilirsin.';
       }

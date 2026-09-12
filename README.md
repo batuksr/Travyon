@@ -34,18 +34,27 @@ Google Maps, TripAdvisor veya Wanderlog gibi araçlar yalnızca destinasyon ve t
 ## 📁 Proje Yapısı
 
 ```
-src/
-├── components/   # Yeniden kullanılabilir UI bileşenleri (Sidebar, MapView, DailyPlanView, ...)
-├── pages/        # Sayfalar (Home, Onboarding, Dashboard, Community, Settings, ...)
-├── services/     # Dış servis entegrasyonları (aiService, firebase, placesService, weatherService, ...)
-├── store/        # Zustand store'ları (auth, onboarding, plan, tema, ayarlar, ...)
-├── hooks/        # Özel React hook'ları
-├── utils/        # Yardımcı fonksiyonlar
-├── data/         # Statik veri (şehir listesi vb.)
-└── assets/       # Görseller ve statik varlıklar
+web/                  # React web uygulaması
+├── src/              # Sayfalar, bileşenler, servisler ve Zustand store'ları
+├── public/           # Web fontları, videolar ve statik dosyalar
+├── tests/            # Vitest web testleri
+├── index.html
+└── vite.config.ts
+
+mobile/               # Flutter Android/iOS uygulaması
+├── lib/               # Mobil özellikler ve Firebase veri katmanı
+├── android/
+├── ios/
+└── test/
+
+functions/            # Firebase Cloud Functions backend'i
+scripts/              # Ortak geliştirme ve emulator komutları
+firebase.json         # Firestore, Storage, Hosting ve Functions bağlantıları
+firestore.rules       # Ortak veritabanı güvenlik kuralları
+storage.rules         # Ortak dosya güvenlik kuralları
 ```
 
-Optimize production videoları `public/videos/` altında sürüm kontrolüne ve derlemeye dahildir. Sıkıştırılmamış ve kullanılmayan kaynaklar `source-media/` altında yerel olarak tutulur; Git'e ve production derlemesine dahil edilmez.
+Optimize production videoları `web/public/videos/` altında sürüm kontrolüne ve derlemeye dahildir. Sıkıştırılmamış ve kullanılmayan kaynaklar `web/source-media/` altında yerel olarak tutulur; Git'e ve production derlemesine dahil edilmez.
 
 ## 🚀 Kurulum
 
@@ -66,7 +75,7 @@ npm install
 npm --prefix functions install
 ```
 
-Proje kök dizininde bir `.env` dosyası oluşturup aşağıdaki değişkenleri kendi anahtarlarınla doldur:
+`web/.env` dosyasını oluşturup aşağıdaki değişkenleri kendi anahtarlarınla doldur:
 
 ```env
 VITE_FIREBASE_API_KEY=
@@ -82,7 +91,7 @@ VITE_SENTRY_DSN=
 
 ### Çalışma modları
 
-Ortam ayarlarını `.env.local` içinde elle açıp kapatmak gerekmez. Kullanılacak
+Ortam ayarlarını `web/.env.local` içinde elle açıp kapatmak gerekmez. Kullanılacak
 Firebase ortamını doğrudan komut belirler.
 
 #### LOCAL — günlük geliştirme
