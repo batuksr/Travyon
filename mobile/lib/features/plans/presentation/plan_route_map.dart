@@ -101,6 +101,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
           text: '${stop.index + 1}',
           style: const TextStyle(
             fontSize: 36,
+            fontFamily: AppTypography.body,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -118,8 +119,8 @@ class _RouteCanvasState extends State<_RouteCanvas> {
         setState(
           () => _icons[stop.index] = BitmapDescriptor.bytes(
             bytes.buffer.asUint8List(),
-            width: 48,
-            height: 48,
+            width: 32,
+            height: 32,
           ),
         );
       }
@@ -203,7 +204,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Bu günün duraklarında konum bilgisi yok.\nAşağıdan bir durak seçip yol tarifi açabilirsin.',
+            'Bu günün duraklarında konum bilgisi yok.\nDurak kartına dokunarak mekân detaylarını açabilirsin.',
             textAlign: TextAlign.center,
           ),
         ),
@@ -237,6 +238,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
             Marker(
               markerId: MarkerId('stop-${place.index}'),
               position: _point(place),
+              anchor: const Offset(0.5, 0.5),
               icon:
                   _icons[place.index] ??
                   BitmapDescriptor.defaultMarkerWithHue(
@@ -258,7 +260,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                 polylineId: PolylineId('leg-$i'),
                 points: [_point(widget.stops[i - 1]), _point(widget.stops[i])],
                 color: AppColors.forest,
-                width: 3,
+                width: 2,
                 patterns: [PatternItem.dot, PatternItem.gap(10)],
               ),
         },
@@ -282,93 +284,109 @@ class _RouteCanvasState extends State<_RouteCanvas> {
         ],
       );
     }
-    return LayoutBuilder(
-      builder: (context, constraints) => Column(
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                key: const ValueKey('route-map-viewport'),
+                borderRadius: BorderRadius.circular(24),
+                child: map,
               ),
-              child: map,
             ),
-          ),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: constraints.maxHeight * 0.43,
-            ),
-            child: Material(
-              color: AppColors.surface,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (located.isNotEmpty)
-                      Text(
-                        'Çizgiler durak sırasını gösterir, yol tarifi değildir.${missing > 0 ? ' $missing durağın konumu eksik.' : ''}',
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 11,
-                        ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * 0.30,
+              ),
+              child: Material(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                clipBehavior: Clip.antiAlias,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _showDetails(stop),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${_selected + 1} / ${widget.stops.length} durak · ${stop.period}',
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      stop.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Önceki durak',
+                            onPressed: _selected > 0
+                                ? () => _select(_selected - 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_left),
+                          ),
+                          IconButton(
+                            tooltip: 'Sonraki durak',
+                            onPressed: _selected < widget.stops.length - 1
+                                ? () => _select(_selected + 1)
+                                : null,
+                            icon: const Icon(Icons.chevron_right),
+                          ),
+                        ],
                       ),
-                    Row(
-                      children: [
-                        Expanded(
+                      if (stop.location == null)
+                        const Text(
+                          'Bu durağın konumu kayıtlı değil.',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      if (located.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, top: 5),
                           child: Text(
-                            '${_selected + 1} / ${widget.stops.length} durak · ${stop.period}',
+                            'Çizgiler durak sırasıdır, yol tarifi değildir.${missing > 0 ? ' $missing konum eksik.' : ''}',
                             style: const TextStyle(
                               color: AppColors.muted,
-                              fontSize: 12,
+                              fontSize: 10,
+                              height: 1.3,
                             ),
                           ),
                         ),
-                        IconButton(
-                          tooltip: 'Önceki durak',
-                          onPressed: _selected > 0
-                              ? () => _select(_selected - 1)
-                              : null,
-                          icon: const Icon(Icons.chevron_left),
-                        ),
-                        IconButton(
-                          tooltip: 'Sonraki durak',
-                          onPressed: _selected < widget.stops.length - 1
-                              ? () => _select(_selected + 1)
-                              : null,
-                          icon: const Icon(Icons.chevron_right),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      stop.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (stop.location == null)
-                      const Text(
-                        'Konumu kayıtlı değil; adıyla yol tarifi aranacak.',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12),
-                      ),
-                    TextButton.icon(
-                      onPressed: () => _showDetails(stop),
-                      icon: const Icon(Icons.star_outline, size: 18),
-                      label: const Text('Google puanı ve yorumlar'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => widget.onDirections(stop),
-                      icon: const Icon(Icons.near_me_outlined, size: 18),
-                      label: const Text('Google Maps’te yol tarifi'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

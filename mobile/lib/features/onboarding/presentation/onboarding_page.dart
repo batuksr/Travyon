@@ -13,6 +13,8 @@ import '../data/onboarding_cities.dart';
 import '../data/plan_creation_repository.dart';
 import '../data/accommodation_repository.dart';
 import 'accommodation_field.dart';
+import 'onboarding_widgets.dart';
+import 'travel_date_sheet.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({
@@ -21,11 +23,13 @@ class OnboardingPage extends StatefulWidget {
     required this.plansRepository,
     required this.repository,
     this.initialData,
+    this.applySavedDefaults = false,
   });
   final String uid;
   final TravelPlansRepository plansRepository;
   final PlanCreationRepository repository;
   final OnboardingData? initialData;
+  final bool applySavedDefaults;
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
@@ -36,7 +40,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   late final _budgetController = TextEditingController(
     text: data.budget.toStringAsFixed(0),
   );
-  final _scroll = ScrollController();
+  final _scroll = ScrollController(keepScrollOffset: false);
   final _draftId =
       'mobile_${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1 << 32).toRadixString(16)}';
   int _step = 0, _elapsed = 0;
@@ -58,17 +62,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
     'Konaklama ve ulaşım tercihlerini belirt.',
   ];
   static const labels = ['Destinasyon', 'Tercihler', 'Yemek', 'Konaklama'];
-  static const icons = [
-    Icons.place_outlined,
-    Icons.favorite_border,
-    Icons.restaurant_outlined,
-    Icons.bed_outlined,
-  ];
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialData == null) _defaults();
+    if (widget.initialData == null || widget.applySavedDefaults) _defaults();
   }
 
   Future<void> _defaults() async {
@@ -76,7 +74,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       final defaults = await widget.repository.defaults(widget.uid);
       if (!mounted || _edited) return;
       setState(() {
-        data.applyDefaults(defaults);
+        // A new trip starts at zero; the traveler enters this trip's budget.
+        data.applyDefaults(defaults, includeBudget: false);
         _budgetController.text = data.budget.toStringAsFixed(0);
       });
     } catch (_) {
@@ -110,7 +109,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       _step = step;
       _error = null;
     });
-    _top();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _top();
+    });
   }
 
   void _next() {
@@ -252,29 +253,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime.tryParse(data.startDate),
         end = DateTime.tryParse(data.endDate);
-    final selected = await showDateRangePicker(
+    final selected = await showModalBottomSheet<DateTimeRange>(
       context: context,
-      firstDate: today,
-      lastDate: DateTime(today.year + 3, 12, 31),
-      initialDateRange: start != null && end != null && !start.isBefore(today)
-          ? DateTimeRange(start: start, end: end)
-          : DateTimeRange(
-              start: today,
-              end: today.add(const Duration(days: 1)),
-            ),
-      helpText: 'Seyahat tarihleri',
-      saveText: 'Tarihleri seç',
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          datePickerTheme: DatePickerTheme.of(context).copyWith(
-            rangePickerHeaderHeadlineStyle: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        child: child!,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .9,
       ),
+      builder: (_) => TravelDateSheet(today: today, start: start, end: end),
     );
     if (selected != null && mounted) {
       _change(() {
@@ -333,118 +320,53 @@ class _OnboardingPageState extends State<OnboardingPage> {
             : Column(
                 children: [
                   if (_plan == null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: List.generate(
-                              4,
-                              (i) => Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 3,
-                                  ),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: i <= _step
-                                          ? AppColors.accent
-                                          : AppColors.divider,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            spacing: 16,
-                            runSpacing: 4,
-                            children: [
-                              Text(
-                                'Adım ${_step + 1} / 4',
-                                style: const TextStyle(color: AppColors.muted),
-                              ),
-                              Text(
-                                labels[_step],
-                                style: const TextStyle(
-                                  color: AppColors.forest,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    OnboardingProgress(step: _step, labels: labels),
                   Expanded(
-                    child: AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : const Duration(milliseconds: 200),
-                      child: ListView(
-                        key: ValueKey(
-                          _plan != null ? 'preview' : 'step-$_step',
-                        ),
-                        controller: _scroll,
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                        children: [
-                          if (_error != null)
-                            Container(
-                              key: const ValueKey('form-error'),
-                              margin: const EdgeInsets.only(bottom: 16),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFE9E3),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Semantics(
-                                liveRegion: true,
-                                child: Text(
-                                  _error!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF9B3020),
-                                  ),
+                    child: ListView(
+                      key: ValueKey(_plan != null ? 'preview' : 'step-$_step'),
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      children: [
+                        if (_error != null)
+                          Container(
+                            key: const ValueKey('form-error'),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFE9E3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                _error!,
+                                style: const TextStyle(
+                                  color: Color(0xFF9B3020),
                                 ),
                               ),
                             ),
-                          if (_plan != null)
-                            ..._preview()
-                          else ...[
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: CircleAvatar(
-                                backgroundColor: AppColors.forest,
-                                child: Icon(
-                                  icons[_step],
-                                  color: AppColors.surface,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              titles[_step],
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              subtitles[_step],
-                              style: const TextStyle(color: AppColors.muted),
-                            ),
-                            const SizedBox(height: 24),
-                            ...switch (_step) {
-                              0 => _basics(),
-                              1 => _preferences(),
-                              2 => _food(),
-                              _ => _stay(),
-                            },
-                          ],
+                          ),
+                        if (_plan != null)
+                          ..._preview()
+                        else ...[
+                          Text(
+                            titles[_step],
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            subtitles[_step],
+                            style: const TextStyle(color: AppColors.muted),
+                          ),
+                          const SizedBox(height: 24),
+                          ...switch (_step) {
+                            0 => _basics(),
+                            1 => _preferences(),
+                            2 => _food(),
+                            _ => _stay(),
+                          },
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -454,7 +376,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ? null
           : SafeArea(
               top: false,
-              child: Padding(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(top: BorderSide(color: AppColors.divider)),
+                ),
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
                 child: FilledButton.icon(
                   key: const ValueKey('onboarding-next'),
@@ -522,14 +448,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
   );
 
   Widget _section(String title, {String? hint}) => Padding(
-    padding: const EdgeInsets.only(top: 12, bottom: 12),
+    padding: const EdgeInsets.only(top: 22, bottom: 14),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-        ),
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
         if (hint != null)
           Padding(
             padding: const EdgeInsets.only(top: 5),
@@ -548,190 +471,203 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ValueChanged<String> select, {
     Map<String, String> hints = const {},
     bool ranked = false,
-  }) => LayoutBuilder(
-    builder: (context, bounds) {
-      final columns =
-          bounds.maxWidth >= 340 &&
-              MediaQuery.textScalerOf(context).scale(1) < 1.4
-          ? 2
-          : 1;
-      return Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: options.entries.map((entry) {
-          final active = selected.contains(entry.key);
-          return SizedBox(
-            width: (bounds.maxWidth - (columns - 1) * 10) / columns,
-            child: Semantics(
-              selected: active,
-              child: Material(
-                color: active ? const Color(0xFFE5ECDC) : AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
-                  key: ValueKey('$field-${entry.key}'),
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () => select(entry.key),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 66),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: active ? AppColors.forest : AppColors.divider,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entry.value,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (hints[entry.key] != null)
-                                Text(
-                                  hints[entry.key]!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (active) ...[
-                          const SizedBox(width: 8),
-                          ranked
-                              ? Text(
-                                  '${selected.indexOf(entry.key) + 1}',
-                                  style: const TextStyle(
-                                    color: AppColors.forest,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.forest,
-                                  size: 20,
-                                ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    },
+  }) => OnboardingChoices(
+    field: field,
+    options: options,
+    selected: selected,
+    onSelect: select,
+    hints: hints,
+    ranked: ranked,
   );
 
   List<Widget> _basics() => [
-    _section('Destinasyon'),
-    Autocomplete<String>(
-      initialValue: TextEditingValue(text: data.destination),
-      optionsBuilder: (value) {
-        final query = value.text.toLowerCase().trim();
-        return query.isEmpty
-            ? const Iterable<String>.empty()
-            : onboardingCities
-                  .where((c) => c.toLowerCase().contains(query))
-                  .take(8);
-      },
-      onSelected: (value) => _change(() {
-        data.destination = value;
-        data.accommodationLat = null;
-        data.accommodationLng = null;
-      }),
-      fieldViewBuilder: (context, controller, focus, submit) => TextField(
-        key: const ValueKey('destination'),
-        controller: controller,
-        focusNode: focus,
-        maxLength: 200,
-        decoration: const InputDecoration(
-          hintText: 'Örn. Roma, İtalya',
-          prefixIcon: Icon(Icons.search),
-          counterText: '',
-        ),
-        onChanged: (value) => _change(() {
+    OnboardingSection(
+      title: 'Nereyi keşfedelim?',
+      hint: 'Bir şehir yaz veya önerilerden seç.',
+      icon: Icons.place_outlined,
+      child: Autocomplete<String>(
+        initialValue: TextEditingValue(text: data.destination),
+        optionsBuilder: (value) {
+          final query = value.text.toLowerCase().trim();
+          return query.isEmpty
+              ? const Iterable<String>.empty()
+              : onboardingCities
+                    .where((c) => c.toLowerCase().contains(query))
+                    .take(8);
+        },
+        onSelected: (value) => _change(() {
           data.destination = value;
           data.accommodationLat = null;
           data.accommodationLng = null;
         }),
+        fieldViewBuilder: (context, controller, focus, submit) => TextField(
+          key: const ValueKey('destination'),
+          controller: controller,
+          focusNode: focus,
+          maxLength: 200,
+          decoration: const InputDecoration(
+            hintText: 'Örn. Roma, İtalya',
+            prefixIcon: Icon(Icons.search),
+            counterText: '',
+          ),
+          onChanged: (value) => _change(() {
+            data.destination = value;
+            data.accommodationLat = null;
+            data.accommodationLng = null;
+          }),
+        ),
       ),
     ),
-    _section('Seyahat Tarihleri'),
-    OutlinedButton.icon(
-      key: const ValueKey('dates'),
-      onPressed: _dates,
-      icon: const Icon(Icons.date_range),
-      label: Text(
-        data.startDate.isEmpty
-            ? 'Gidiş ve dönüş tarihlerini seç'
-            : '${data.startDate} → ${data.endDate}',
-        textAlign: TextAlign.center,
+    OnboardingSection(
+      title: 'Seyahat Tarihleri',
+      hint: 'Kaç günlük bir keşfe çıkıyorsun?',
+      icon: Icons.calendar_month_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            label: 'Gidiş ve dönüş tarihlerini seç',
+            child: InkWell(
+              key: const ValueKey('dates'),
+              onTap: _dates,
+              borderRadius: BorderRadius.circular(16),
+              child: OnboardingPair(
+                first: OnboardingValueTile(
+                  title: 'Gidiş',
+                  value: travelDateLabel(data.startDate),
+                  icon: Icons.flight_takeoff_rounded,
+                ),
+                second: OnboardingValueTile(
+                  title: 'Dönüş',
+                  value: travelDateLabel(data.endDate),
+                  icon: Icons.flight_land_rounded,
+                ),
+              ),
+            ),
+          ),
+          if (data.dayCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                '${data.dayCount} gün · ${data.dayCount - 1} gece',
+                style: const TextStyle(
+                  color: AppColors.forest,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          const SizedBox(height: 14),
+          OnboardingPair(
+            first: OnboardingValueTile(
+              title: 'Varış saati',
+              value: data.arrivalTime,
+              icon: Icons.schedule_rounded,
+              onTap: () => _time(true),
+            ),
+            second: OnboardingValueTile(
+              title: 'Ayrılış saati',
+              value: data.departureTime,
+              icon: Icons.schedule_rounded,
+              onTap: () => _time(false),
+            ),
+          ),
+        ],
       ),
     ),
-    Wrap(
-      spacing: 12,
-      children: [
-        TextButton(
-          onPressed: () => _time(true),
-          child: Text('Varış  ${data.arrivalTime}'),
-        ),
-        TextButton(
-          onPressed: () => _time(false),
-          child: Text('Ayrılış  ${data.departureTime}'),
-        ),
-      ],
-    ),
-    _section('Kişi Sayısı'),
-    Row(
-      children: [
-        IconButton(
-          tooltip: 'Kişi azalt',
-          onPressed: data.peopleCount > 1
-              ? () => _change(() => data.peopleCount--)
-              : null,
-          icon: const Icon(Icons.remove_circle_outline),
-        ),
-        Text(
-          '${data.peopleCount} kişi',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        IconButton(
-          tooltip: 'Kişi artır',
-          onPressed: data.peopleCount < 15
-              ? () => _change(() => data.peopleCount++)
-              : null,
-          icon: const Icon(Icons.add_circle_outline),
-        ),
-      ],
-    ),
-    _section('Toplam Bütçe', hint: 'Tüm kişiler ve seyahatin tamamı için.'),
-    TextFormField(
-      key: const ValueKey('budget'),
-      controller: _budgetController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(
-        labelText: 'Bütçe',
-        prefixText: '${currencies[data.currencyCode]} ',
-      ),
-      onChanged: (value) => _change(
-        () => data.budget = double.tryParse(value.replaceAll(',', '.')) ?? 0,
+    OnboardingSection(
+      title: 'Kaç kişi gidiyorsunuz?',
+      icon: Icons.people_outline_rounded,
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Kişi azalt',
+            onPressed: data.peopleCount > 1
+                ? () => _change(() => data.peopleCount--)
+                : null,
+            icon: const Icon(Icons.remove_circle_outline),
+          ),
+          Expanded(
+            child: Text(
+              '${data.peopleCount} kişi',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Kişi artır',
+            onPressed: data.peopleCount < 15
+                ? () => _change(() => data.peopleCount++)
+                : null,
+            icon: const Icon(Icons.add_circle_outline),
+          ),
+        ],
       ),
     ),
-    const SizedBox(height: 12),
-    _choices(
-      'currency',
-      {for (final c in currencies.entries) c.key: '${c.key} · ${c.value}'},
-      [data.currencyCode],
-      (value) => _change(() => data.currencyCode = value),
+    OnboardingSection(
+      title: 'Toplam Bütçe',
+      hint: 'Tüm kişiler ve seyahatin tamamı için.',
+      icon: Icons.account_balance_wallet_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            key: const ValueKey('budget'),
+            controller: _budgetController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Bütçe',
+              prefixText: '${currencies[data.currencyCode]} ',
+            ),
+            onChanged: (value) => _change(
+              () => data.budget =
+                  double.tryParse(value.replaceAll(',', '.')) ?? 0,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              for (final currency in currencies.entries)
+                ChoiceChip(
+                  key: ValueKey('currency-${currency.key}'),
+                  label: Text('${currency.key} · ${currency.value}'),
+                  labelStyle: TextStyle(
+                    color: data.currencyCode == currency.key
+                        ? const Color(0xFF8C491A)
+                        : AppColors.text,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  backgroundColor: AppColors.surface,
+                  side: BorderSide(
+                    color: data.currencyCode == currency.key
+                        ? AppColors.accent
+                        : AppColors.divider,
+                  ),
+                  selected: data.currencyCode == currency.key,
+                  onSelected: (_) =>
+                      _change(() => data.currencyCode = currency.key),
+                  selectedColor: const Color(0xFFFFE4D1),
+                  showCheckmark: false,
+                ),
+            ],
+          ),
+          if (data.dayCount > 0 && data.budget.isFinite && data.budget > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                'Kişi başı günlük yaklaşık ${currencies[data.currencyCode]}${(data.budget / data.dayCount / data.peopleCount).toStringAsFixed(0)}',
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ),
+        ],
+      ),
     ),
   ];
   List<Widget> _preferences() => [
@@ -779,7 +715,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
     const SizedBox(height: 18),
     SwitchListTile.adaptive(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.divider),
+      ),
+      tileColor: AppColors.surface,
+      secondary: const OnboardingEmoji('🌅'),
       title: const Text('Erken kalkmayı severim'),
       subtitle: const Text('Sabah erken aktivite planlanabilir'),
       value: data.earlyBird,
@@ -891,50 +833,165 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
   List<Widget> _preview() => [
-    const Icon(Icons.check_circle_outline, size: 48, color: AppColors.forest),
-    const SizedBox(height: 16),
-    Text('Planın hazır', style: Theme.of(context).textTheme.headlineMedium),
-    const SizedBox(height: 8),
-    Text(data.destination, style: Theme.of(context).textTheme.titleLarge),
-    Text(
-      '${data.dayCount} gün · ${data.peopleCount} kişi · ${currencies[data.currencyCode]}${planNumber(_plan!['totalEstimatedCost']).toStringAsFixed(0)} tahmini',
-    ),
-    const SizedBox(height: 16),
-    Text(_plan!['overallSummary'] as String? ?? ''),
-    if (planNumber(_plan!['totalEstimatedCost']) > data.budget)
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          'Tahmini maliyet ayırdığın bütçeyi aşıyor. Kaydetmeden önce tercihlerini gözden geçirebilirsin.',
-          style: TextStyle(color: AppColors.accent),
-        ),
+    Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: AppColors.forest,
+        borderRadius: BorderRadius.circular(24),
       ),
-    const SizedBox(height: 20),
-    for (final raw in planList(_plan!['dailyPlans']))
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${planMap(raw)['dayNumber']}. Gün · ${planMap(raw)['date']}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Text(planMap(raw)['daySummary'] as String? ?? ''),
-              Text(
-                '${planList(planMap(raw)['activities']).length} durak',
-                style: const TextStyle(color: AppColors.muted),
-              ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const OnboardingEmoji('🎉', size: 34),
+          const SizedBox(height: 14),
+          Text(
+            'Planın hazır',
+            style: Theme.of(context).textTheme.headlineMedium
+                ?.copyWith(color: AppColors.surface),
           ),
+          const SizedBox(height: 10),
+          Text(
+            data.destination,
+            style: const TextStyle(
+              color: AppColors.surface,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${data.dayCount} gün · ${data.peopleCount} kişi',
+            style: const TextStyle(color: Color(0xFFDCE5DC)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${currencies[data.currencyCode]}${planNumber(_plan!['totalEstimatedCost']).toStringAsFixed(0)} tahmini toplam',
+            style: const TextStyle(
+              color: Color(0xFFE7BA8D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+    const SizedBox(height: 18),
+    Text(
+      _plan!['overallSummary'] as String? ?? '',
+      style: const TextStyle(height: 1.6),
+    ),
+    if (planNumber(_plan!['totalEstimatedCost']) > data.budget)
+      Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF0E5),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Text(
+          'Tahmini maliyet ayırdığın bütçeyi aşıyor. Kaydetmeden önce tercihlerini gözden geçirebilirsin.',
+          style: TextStyle(color: Color(0xFF8C491A), height: 1.5),
         ),
       ),
+    _section(
+      'Gün gün yolculuğun',
+      hint: 'Durakları görmek için bir güne dokun.',
+    ),
+    for (final raw in planList(_plan!['dailyPlans'])) _previewDay(planMap(raw)),
     const SizedBox(height: 16),
     const Text(
       'Kaydettiğinde planın bu hesaptaki web ve mobil planlarına eklenecek. Fiyatlar tahminidir; güncel saat ve rezervasyonları kontrol et.',
-      style: TextStyle(color: AppColors.muted),
+      style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.6),
     ),
   ];
+
+  Widget _previewDay(Map<String, dynamic> day) {
+    final stops = planList(day['activities']);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: ExpansionTile(
+        key: ValueKey('preview-day-${day['dayNumber']}'),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        title: Text(
+          '${day['dayNumber']}. Gün · ${travelDateLabel(day['date'] as String? ?? '')}',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            '${stops.length} durak',
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
+        ),
+        children: [
+          if ((day['daySummary'] as String? ?? '').isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Text(
+                day['daySummary'] as String,
+                style: const TextStyle(color: AppColors.muted, height: 1.5),
+              ),
+            ),
+          for (var i = 0; i < stops.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFFFF0E5),
+                    ),
+                    child: Text(
+                      '${i + 1}',
+                      textScaler: TextScaler.noScaling,
+                      style: const TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          planMap(stops[i])['period'] as String? ?? '',
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          planMap(stops[i])['placeName'] as String? ?? '',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

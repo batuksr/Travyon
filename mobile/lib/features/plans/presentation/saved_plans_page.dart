@@ -6,6 +6,7 @@ import '../../community/presentation/community_page.dart';
 import '../../settings/data/settings_repository.dart';
 import '../data/plan_management_repository.dart';
 import '../data/travel_plans_repository.dart';
+import 'saved_plan_card.dart';
 
 class SavedPlansPage extends StatefulWidget {
   const SavedPlansPage({
@@ -93,241 +94,238 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
     }
   }
 
+  void _refresh() => setState(() {
+    _plans = widget.repository.watchPlans(widget.uid);
+  });
+
+  void _clearFilters() => setState(() {
+    _search.clear();
+    _filter = PlanFilter.all;
+  });
+
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-    children: [
-      Text(
-        'Yolculuk arşivin',
-        style: Theme.of(context).textTheme.labelLarge
-            ?.copyWith(color: AppColors.accent),
-      ),
-      const SizedBox(height: 8),
-      Row(
+  Widget build(BuildContext context) => StreamBuilder<List<TravelPlanSummary>>(
+    stream: _plans,
+    builder: (context, snapshot) {
+      final all = snapshot.data ?? <TravelPlanSummary>[];
+      final ready = snapshot.hasData && !snapshot.hasError;
+      final filtered = filterSavedPlans(
+        all,
+        _search.text,
+        _filter,
+        DateTime.now(),
+        byTripDate: _byDate,
+      );
+      return ListView(
+        key: const PageStorageKey('saved-plans'),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
         children: [
-          Expanded(
-            child: Text(
-              'Planlarım',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Planları yenile',
-            onPressed: () => setState(() {
-              _plans = widget.repository.watchPlans(widget.uid);
-            }),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-      const Text('Rotanı aç, favorilerini sakla, sonraki keşfini planla.'),
-      const SizedBox(height: 20),
-      FilledButton.icon(
-        onPressed: widget.onCreate,
-        icon: const Icon(Icons.add),
-        label: const Text('Yeni plan oluştur'),
-      ),
-      const SizedBox(height: 18),
-      TextField(
-        controller: _search,
-        onChanged: (_) => setState(() {}),
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search),
-          hintText: 'Şehir veya plan adı ara',
-        ),
-      ),
-      const SizedBox(height: 12),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final (value, title) in [
-              (PlanFilter.all, 'Tümü'),
-              (PlanFilter.favorites, 'Favoriler'),
-              (PlanFilter.upcoming, 'Yaklaşan / devam eden'),
-              (PlanFilter.past, 'Geçmiş'),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(title),
-                  selected: _filter == value,
-                  onSelected: (_) => setState(() => _filter = value),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Planlarım',
+                  style: Theme.of(context).textTheme.headlineLarge,
                 ),
               ),
-          ],
-        ),
-      ),
-      Align(
-        alignment: Alignment.centerRight,
-        child: TextButton.icon(
-          onPressed: () => setState(() => _byDate = !_byDate),
-          icon: const Icon(Icons.sort),
-          label: Text(_byDate ? 'Seyahat tarihine göre' : 'En yeni kayıtlar'),
-        ),
-      ),
-      StreamBuilder<List<TravelPlanSummary>>(
-        stream: _plans,
-        builder: (context, s) {
-          if (s.hasError) {
-            return CommunityStatus(message: settingsError(s.error!));
-          }
-          if (!s.hasData) return const CommunityLoading();
-          if (s.data!.isEmpty) {
-            return const CommunityStatus(
-              message: 'Henüz kayıtlı planın yok. İlk yolculuğunu oluşturarak başla.',
-            );
-          }
-          final filtered = filterSavedPlans(
-            s.data!,
-            _search.text,
-            _filter,
-            DateTime.now(),
-            byTripDate: _byDate,
-          );
-          if (filtered.isEmpty) {
-            return const CommunityStatus(
-              message: 'Bu arama veya filtreye uygun plan bulunamadı.',
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${filtered.length} plan'),
-              const SizedBox(height: 12),
-              for (final p in filtered)
-                CommunityPanel(
-                  key: ValueKey(p.id),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.forest,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Expanded(
-                                  child: Icon(
-                                    Icons.explore_outlined,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: p.isFavorite
-                                      ? 'Favorilerden çıkar'
-                                      : 'Favorilere ekle',
-                                  onPressed: _busy.contains(p.id)
-                                      ? null
-                                      : () => _run(
-                                          p,
-                                          () => widget.management.favorite(
-                                            widget.uid,
-                                            p.id,
-                                            !p.isFavorite,
-                                          ),
-                                        ),
-                                  icon: Icon(
-                                    p.isFavorite
-                                        ? Icons.star_rounded
-                                        : Icons.star_outline_rounded,
-                                    color: const Color(0xffffdda0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              p.title,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                            if (p.title != p.destination)
-                              Text(
-                                p.destination,
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                          ],
-                        ),
+              IconButton(
+                tooltip: 'Planları yenile',
+                onPressed: _refresh,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            ready && all.isNotEmpty
+                ? '${all.length} yolculuk, keşfedilecek yeni hikâyeler.'
+                : 'Bir sonraki yolculuğuna buradan devam et.',
+            style: const TextStyle(color: AppColors.muted, height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          if (snapshot.hasError)
+            _message(
+              icon: Icons.cloud_off_outlined,
+              title: 'Planlarına ulaşamadık',
+              description: settingsError(snapshot.error!),
+              action: 'Tekrar dene',
+              onAction: _refresh,
+            )
+          else if (!snapshot.hasData)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 64),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (all.isEmpty)
+            _message(
+              icon: Icons.route_outlined,
+              title: 'İlk rotana yer aç',
+              description: 'Keşfetmek istediğin şehri seç. Kaydettiğin yolculuklar burada, webde ve telefonunda seni beklesin.',
+              action: 'İlk planımı oluştur',
+              onAction: widget.onCreate,
+            )
+          else ...[
+            TextField(
+              key: const ValueKey('saved-plans-search'),
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintText: 'Şehir veya plan adı ara',
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Aramayı temizle',
+                        onPressed: () => setState(() => _search.clear()),
+                        icon: const Icon(Icons.close_rounded),
                       ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          Chip(label: Text('${p.dayCount} gün')),
-                          Chip(label: Text('${p.activityCount} durak')),
-                          Chip(
-                            label: Text(
-                              '${p.currencySymbol}${p.estimatedCost.toStringAsFixed(0)} tahmini',
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (p.startDate.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Text('${p.startDate} – ${p.endDate}'),
+              ),
+            ),
+            const SizedBox(height: 14),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final (value, title) in [
+                    (PlanFilter.all, 'Tümü'),
+                    (PlanFilter.favorites, 'Favoriler'),
+                    (PlanFilter.upcoming, 'Yaklaşan / devam eden'),
+                    (PlanFilter.past, 'Geçmiş'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        key: ValueKey('plan-filter-${value.name}'),
+                        label: Text(title),
+                        labelStyle: TextStyle(
+                          fontFamily: AppTypography.body,
+                          color: _filter == value
+                              ? Colors.white
+                              : AppColors.text,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _busy.contains(p.id)
-                                  ? null
-                                  : () => widget.onOpen(p),
-                              icon: const Icon(Icons.route_outlined),
-                              label: const Text('Planı aç'),
-                            ),
-                          ),
-                          if (_busy.contains(p.id))
-                            const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          else
-                            PopupMenuButton<String>(
-                              tooltip: 'Plan işlemleri',
-                              onSelected: (value) => _action(p, value),
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                  value: 'rename',
-                                  child: Text('Adını değiştir'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'link',
-                                  child: Text('Bağlantıyı kopyala'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Planı sil'),
-                                ),
-                              ],
-                            ),
-                        ],
+                        selectedColor: AppColors.forest,
+                        backgroundColor: AppColors.surface,
+                        showCheckmark: false,
+                        selected: _filter == value,
+                        onSelected: (_) => setState(() => _filter = value),
                       ),
-                    ],
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              children: [
+                Text(
+                  '${filtered.length} plan',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+                TextButton.icon(
+                  onPressed: () => setState(() => _byDate = !_byDate),
+                  icon: const Icon(Icons.sort_rounded, size: 18),
+                  label: Text(
+                    _byDate ? 'Seyahat tarihine göre' : 'En yeni kayıtlar',
+                    style: const TextStyle(
+                      fontFamily: AppTypography.body,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-            ],
-          );
-        },
-      ),
-    ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (filtered.isEmpty)
+              _message(
+                icon: _filter == PlanFilter.favorites && _search.text.isEmpty
+                    ? Icons.star_outline_rounded
+                    : Icons.search_off_rounded,
+                title: _filter == PlanFilter.favorites && _search.text.isEmpty
+                    ? 'Favorilerin burada toplanır'
+                    : 'Eşleşen plan bulunamadı',
+                description:
+                    _filter == PlanFilter.favorites && _search.text.isEmpty
+                    ? 'Bir planın yıldızına dokunarak onu favorilerine ekleyebilirsin.'
+                    : 'Başka bir şehir veya plan adı dene; filtrelerini de temizleyebilirsin.',
+                action: 'Tüm planları göster',
+                onAction: _clearFilters,
+              )
+            else
+              for (final p in filtered)
+                SavedPlanCard(
+                  key: ValueKey(p.id),
+                  plan: p,
+                  busy: _busy.contains(p.id),
+                  onOpen: () => widget.onOpen(p),
+                  onFavorite: () => _run(
+                    p,
+                    () => widget.management.favorite(
+                      widget.uid,
+                      p.id,
+                      !p.isFavorite,
+                    ),
+                  ),
+                  onAction: (value) => _action(p, value),
+                ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: widget.onCreate,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Yeni yolculuk planla'),
+            ),
+          ],
+        ],
+      );
+    },
+  );
+
+  Widget _message({
+    required IconData icon,
+    required String title,
+    required String description,
+    required String action,
+    required VoidCallback onAction,
+  }) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: const BoxDecoration(
+            color: Color(0xFFEAF0E8),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: AppColors.forest, size: 32),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          description,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.muted,
+            height: 1.6,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 24),
+        FilledButton(onPressed: onAction, child: Text(action)),
+      ],
+    ),
   );
 }
 

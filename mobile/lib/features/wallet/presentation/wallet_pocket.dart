@@ -144,8 +144,9 @@ class WalletPocket extends StatelessWidget {
                               textScaler: TextScaler.noScaling,
                               style: TextStyle(
                                 color: Color(0xFFE1DFC2),
+                                fontFamily: AppTypography.heading,
                                 fontSize: 28,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w400,
                                 letterSpacing: -1,
                               ),
                             ),

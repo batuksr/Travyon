@@ -37,6 +37,28 @@ Map<String, dynamic> fixture() => {
 };
 
 void main() {
+  testWidgets('hub can open the current travel day directly', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: PlanDetailPage(
+          uid: 'test',
+          planId: 'p1',
+          repository: DetailFake(),
+          initialDayIndex: 1,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Villa Borghese'), findsWidgets);
+    final chips = tester
+        .widgetList<ChoiceChip>(find.byType(ChoiceChip))
+        .toList();
+    expect(chips[1].selected, isTrue);
+    expect(chips[0].selected, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   test('mobile edits preserve all web fields and other days', () {
     final plan = fixture();
     final day = PlanDay(planMap(planList(plan['dailyPlans'])[0]), 0);
@@ -110,7 +132,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('2. Gün  ·  12 Eylül'));
       await tester.pumpAndSettle();
-      expect(find.text('Villa Borghese'), findsOneWidget);
+      expect(find.text('Villa Borghese'), findsWidgets);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Rota'));
       await tester.pumpAndSettle();
@@ -119,7 +141,7 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Bütçe'));
       await tester.pumpAndSettle();
-      expect(find.text('KAYDETTİĞİN HARCAMA'), findsOneWidget);
+      expect(find.text('Gerçek harcama'), findsOneWidget);
       final edit = find.byKey(const ValueKey('expense-0-0'));
       await tester.scrollUntilVisible(edit, 160);
       await tester.pumpAndSettle();

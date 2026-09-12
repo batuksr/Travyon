@@ -60,7 +60,7 @@ export default defineConfig({
         // yakalamamalı; aksi halde Google hesap seçici yerine uygulama açılır.
         navigateFallbackDenylist: [/^\/__\//],
         // Precache: tüm statik dosyalar
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,ttf,woff,woff2}'],
         // Büyük video dosyalarını precache'den çıkar
         globIgnores: ['**/videos/**'],
         runtimeCaching: [

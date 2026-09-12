@@ -1,10 +1,67 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travyon/app/travyon_app.dart';
 import 'package:travyon/core/firebase/auth_repository.dart';
 import 'package:travyon/features/plans/data/travel_plans_repository.dart';
 import 'package:travyon/features/plans/data/plan_detail.dart';
+import 'package:travyon/features/onboarding/presentation/onboarding_page.dart';
 
 void main() {
+  testWidgets(
+    'center navigation action opens onboarding and preserves current tab',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        TravyonApp(
+          authRepository: FakeAuthRepository(
+            session: const AuthSession(
+              uid: 'test-user',
+              email: 'gezgin@example.com',
+              displayName: 'Batu',
+              emailVerified: true,
+            ),
+          ),
+          travelPlansRepository: FakeTravelPlansRepository(const []),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(bar.destinations.map((w) => (w as NavigationDestination).label), [
+        'Ana Sayfa',
+        'Planlar',
+        'Plan oluştur',
+        'Cüzdan',
+        'Topluluk',
+      ]);
+      await tester.tap(find.byKey(const ValueKey('nav-create-plan')));
+      await tester.pumpAndSettle();
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.text('Nereye gidiyorsun?'), findsOneWidget);
+      await tester.tap(find.byTooltip('Geri'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        0,
+      );
+
+      await tester.tap(find.text('Planlar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('nav-create-plan')));
+      await tester.pumpAndSettle();
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      await tester.tap(find.byTooltip('Geri'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        1,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('shows the Travyon mobile bootstrap screen when signed out', (
     tester,
   ) async {
@@ -77,7 +134,7 @@ void main() {
 
     expect(find.text('Merhaba, Batu!'), findsOneWidget);
     expect(find.text('Planlar'), findsOneWidget);
-    expect(find.text('Henüz kayıtlı planın yok'), findsOneWidget);
+    expect(find.text('İlk planımı oluştur'), findsOneWidget);
   });
 
   testWidgets('shows cloud plans on the mobile hub', (tester) async {

@@ -483,7 +483,11 @@ class _AuthWordmark extends StatelessWidget {
           ),
         ],
       ),
-      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+      style: TextStyle(
+        fontFamily: AppTypography.heading,
+        fontSize: 28,
+        fontWeight: FontWeight.w400,
+      ),
     );
   }
 }

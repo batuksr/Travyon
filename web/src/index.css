@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Travyon Display";
+  src: url("/fonts/TravyonDisplay-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Inter";
   src: url("/fonts/Inter-Variable.ttf") format("truetype");
   font-style: normal;
@@ -49,7 +57,7 @@
   --color-sage:       var(--sage);
   --color-sage-200:   var(--sage-200);
   --color-sage-700:   var(--sage-700);
-  --font-heading: "Caprasimo", Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  --font-heading: "Travyon Display", Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   --font-body:    "Inter", system-ui, sans-serif;
   --radius-2xl: 24px;
   --radius-3xl: 28px;

@@ -87,7 +87,19 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(map!.markers.length, 2);
+      expect(map!.markers.first.anchor, const Offset(0.5, 0.5));
+      expect(find.text('Google puanı ve yorumlar'), findsNothing);
+      expect(find.text('Google Maps’te yol tarifi'), findsNothing);
+      expect(
+        tester.getSize(find.byKey(const ValueKey('route-map-viewport'))).height,
+        greaterThan(480 * .65),
+      );
       expect(map!.polylines, isEmpty);
+      expect(places.calls, 0);
+      await tester.tap(find.byTooltip('Sonraki durak'));
+      await tester.pumpAndSettle();
+      expect(find.text('Eksik'), findsOneWidget);
+      expect(find.text('Bu durağın konumu kayıtlı değil.'), findsOneWidget);
       expect(places.calls, 0);
       map!.markers.firstWhere((m) => m.markerId.value == 'stop-2').onTap!();
       await tester.pump();
@@ -127,6 +139,52 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('compact route remains usable with large text on short screens', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            height: 320,
+            child: PlanRouteMap(
+              day: PlanDay({
+                'activities': [
+                  point(
+                    'Monumento a Vittorio Emanuele II (Altare della Patria)',
+                    41.89,
+                    12.49,
+                  ),
+                  point('Pantheon', 41.90, 12.47),
+                ],
+              }, 0),
+              onDirections: (_) {},
+              mapBuilder: (_) => const SizedBox.expand(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getSize(find.byKey(const ValueKey('route-map-viewport'))).height,
+      greaterThan((320 - 12) * .67),
+    );
+    await tester.tap(find.byTooltip('Sonraki durak'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pantheon'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('details error can retry and empty result is explicit', (
     tester,
   ) async {

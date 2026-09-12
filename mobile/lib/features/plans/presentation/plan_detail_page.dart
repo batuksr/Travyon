@@ -5,6 +5,12 @@ import '../../../core/theme/app_theme.dart';
 import '../data/plan_detail.dart';
 import '../data/travel_plans_repository.dart';
 import 'plan_route_map.dart';
+import '../data/plan_editing_repository.dart';
+import 'stop_editor_sheet.dart';
+import 'plan_journey_tools.dart';
+import '../../wallet/data/wallet_repository.dart';
+import '../data/travel_times_repository.dart';
+import 'travel_time_strip.dart';
 
 String money(String symbol, double value) =>
     '$symbol${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2)}';
@@ -34,19 +40,177 @@ class PlanDetailPage extends StatefulWidget {
     required this.uid,
     required this.planId,
     required this.repository,
+    this.initialDayIndex = 0,
+    this.editingRepository,
+    this.walletRepository,
+    this.travelTimesRepository,
   });
   final String uid;
   final String planId;
   final TravelPlansRepository repository;
+  final int initialDayIndex;
+  final PlanEditingRepository? editingRepository;
+  final WalletRepository? walletRepository;
+  final TravelTimesRepository? travelTimesRepository;
   @override
   State<PlanDetailPage> createState() => _PlanDetailPageState();
 }
 
 class _PlanDetailPageState extends State<PlanDetailPage> {
   late Stream<List<TravelPlanSummary>> _stream;
-  int _day = 0;
+  late int _day = widget.initialDayIndex;
   int _tab = 0;
   bool _saving = false;
+  late final _travelTimes = TravelTimesCache(
+    widget.travelTimesRepository ?? FirebaseTravelTimesRepository(),
+  );
+  late final _wallet = widget.walletRepository ?? FirebaseWalletRepository();
+  late final _editing =
+      widget.editingRepository ?? FirebasePlanEditingRepository();
+  final _history = <({PlanDay before, PlanDay after})>[];
+
+  Future<void> _replace(PlanDay day, Map<String, dynamic> replacement) async {
+    if (_saving) throw StateError('Diğer işlemin bitmesini bekle.');
+    setState(() => _saving = true);
+    try {
+      final after = await _editing.replaceDay(
+        widget.uid,
+        widget.planId,
+        day,
+        replacement,
+      );
+      if (mounted) {
+        setState(() {
+          _history.add((before: day, after: after));
+          if (_history.length > 20) _history.removeAt(0);
+        });
+        _message('Değişiklik kaydedildi.');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _undo() async {
+    if (_saving || _history.isEmpty) return;
+    final entry = _history.last;
+    setState(() => _saving = true);
+    try {
+      await _editing.replaceDay(
+        widget.uid,
+        widget.planId,
+        entry.after,
+        entry.before.raw,
+      );
+      if (mounted) {
+        setState(() {
+          _history.removeLast();
+          _day = entry.before.index;
+        });
+      }
+      _message('Son düzenleme geri alındı.');
+    } catch (e) {
+      _message(
+        e is StateError ? e.message.toString() : 'Geri alınamadı. Tekrar dene.',
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _editor(
+    PlanDay day, {
+    PlanStop? stop,
+    required String destination,
+  }) async {
+    if (_saving) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => StopEditorSheet(
+        note: stop?.note,
+        save: (fields) async {
+          final stops = day.stops.map((s) => s.raw).toList();
+          if (stop != null) {
+            stops[stop.index] = {...stop.raw, ...fields};
+          } else {
+            if (stops.length >= 15) {
+              throw StateError('Bir güne en fazla 15 durak ekleyebilirsin.');
+            }
+            final coordinates = await _editing.locate(
+              fields['placeName'] as String,
+              destination,
+            );
+            const periods = ['Sabah', 'Öğle', 'Öğleden Sonra', 'Akşam', 'Gece'];
+            final rank = periods.indexOf(fields['period'] as String);
+            final next = stops.indexWhere(
+              (s) => periods.indexOf(s['period'] as String? ?? '') > rank,
+            );
+            stops.insert(next < 0 ? stops.length : next, {
+              ...fields,
+              'coordinates': coordinates,
+            });
+          }
+          await _replace(day, {...day.raw, 'activities': stops});
+        },
+      ),
+    );
+  }
+
+  Future<void> _stopAction(
+    PlanDay day,
+    PlanStop stop,
+    String action,
+    String destination,
+  ) async {
+    if (_saving) return;
+    if (action == 'note') {
+      await _editor(day, stop: stop, destination: destination);
+      return;
+    }
+    if (action == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Durak silinsin mi?'),
+          content: Text(
+            '“${stop.name}” notu ve durağa girilen harcamayla birlikte plandan kaldırılacak. Ayrı cüzdan kayıtların silinmez. Bu ekrandayken geri alabilirsin.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Vazgeç'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Durağı sil'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    final stops = day.stops.map((s) => s.raw).toList();
+    if (action == 'delete') {
+      stops.removeAt(stop.index);
+    } else {
+      final target = stop.index + (action == 'up' ? -1 : 1);
+      if (target < 0 || target >= stops.length) return;
+      final moved = stops.removeAt(stop.index);
+      stops.insert(target, moved);
+    }
+    try {
+      await _replace(day, {...day.raw, 'activities': stops});
+    } catch (e) {
+      _message(
+        e is StateError ? e.message.toString() : 'Kaydedilemedi. Tekrar dene.',
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -171,7 +335,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, _tab == 1 ? 4 : 12),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Column(
@@ -179,7 +343,11 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                       children: [
                         Text(
                           plan.title,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          maxLines: _tab == 1 ? 2 : null,
+                          overflow: _tab == 1 ? TextOverflow.ellipsis : null,
+                          style: _tab == 1
+                              ? Theme.of(context).textTheme.titleLarge
+                              : Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -192,7 +360,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                 ),
                 if (_tab != 2)
                   SizedBox(
-                    height: 72,
+                    height: _tab == 1 ? 60 : 72,
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -204,11 +372,14 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                       itemBuilder: (_, i) => ChoiceChip(
                         selected: selected == i,
                         labelStyle: TextStyle(
+                          fontFamily: AppTypography.body,
                           color: selected == i ? Colors.white : AppColors.text,
                         ),
                         showCheckmark: false,
                         label: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          padding: EdgeInsets.symmetric(
+                            vertical: _tab == 1 ? 0 : 5,
+                          ),
                           child: Text(
                             '${i + 1}. Gün  ·  ${dayDate(days[i].date)}',
                           ),
@@ -249,7 +420,40 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
   }
 
   List<Widget> _itinerary(TravelPlanSummary plan, PlanDay day) => [
+    PlanBudgetSummary(plan: plan, collapsible: true),
+    const SizedBox(height: 12),
     _DayOverview(day: day, symbol: plan.currencySymbol),
+    const SizedBox(height: 12),
+    NextStopPanel(
+      day: day,
+      onDirections: (stop) => _directions(stop, plan.destination),
+    ),
+    const SizedBox(height: 12),
+    DayWalletPanel(
+      uid: widget.uid,
+      planId: widget.planId,
+      date: day.date,
+      repository: _wallet,
+    ),
+    const SizedBox(height: 8),
+    Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      spacing: 12,
+      children: [
+        TextButton.icon(
+          onPressed: _saving
+              ? null
+              : () => _editor(day, destination: plan.destination),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Durak ekle'),
+        ),
+        TextButton.icon(
+          onPressed: _saving || _history.isEmpty ? null : _undo,
+          icon: const Icon(Icons.undo_rounded),
+          label: const Text('Geri al'),
+        ),
+      ],
+    ),
     const SizedBox(height: 22),
     for (final stop in day.stops) ...[
       if (stop.index == 0 || day.stops[stop.index - 1].period != stop.period)
@@ -272,8 +476,20 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         onComplete: () => _save(day, stop, completed: !stop.completed),
         onExpense: () => _expense(day, stop, plan.currencySymbol),
         onDirections: () => _directions(stop, plan.destination),
+        onAction: (action) => _stopAction(day, stop, action, plan.destination),
+        canMoveUp: stop.index > 0,
+        canMoveDown: stop.index < day.stops.length - 1,
       ),
       const SizedBox(height: 14),
+      if (stop.index + 1 < day.stops.length &&
+          stop.location != null &&
+          day.stops[stop.index + 1].location != null)
+        TravelTimeStrip(
+          key: ValueKey('travel-${day.index}-${stop.index}'),
+          day: day,
+          index: stop.index,
+          cache: _travelTimes,
+        ),
     ],
     if (day.stops.isEmpty)
       const _Status(
@@ -284,58 +500,13 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
 
   List<Widget> _budget(TravelPlanSummary plan) {
     final stops = plan.days.expand((day) => day.stops);
-    final spent = stops.fold<double>(
-      0,
-      (sum, stop) => sum + (stop.actual ?? 0),
-    );
     final count = stops.where((stop) => stop.actual != null).length;
     return [
-      _Paper(
-        dark: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'KAYDETTİĞİN HARCAMA',
-              style: TextStyle(
-                color: Color(0xFFDCE5DC),
-                fontSize: 12,
-                letterSpacing: 1.3,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              money(plan.currencySymbol, spent),
-              style: const TextStyle(
-                color: AppColors.surface,
-                fontSize: 36,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '$count / ${plan.activityCount} durağa harcama girildi.',
-              style: const TextStyle(color: Color(0xFFDCE5DC)),
-            ),
-          ],
-        ),
-      ),
+      PlanBudgetSummary(plan: plan),
       const SizedBox(height: 14),
-      _Paper(
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 6,
-          children: [
-            const Text(
-              'Tahmini plan maliyeti',
-              style: TextStyle(color: AppColors.muted),
-            ),
-            Text(
-              money(plan.currencySymbol, plan.estimatedCost),
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
+      Text(
+        '$count / ${plan.activityCount} durağa harcama girildi.',
+        style: const TextStyle(color: AppColors.muted),
       ),
       const SizedBox(height: 24),
       const Text(
@@ -481,11 +652,16 @@ class _StopCard extends StatelessWidget {
     required this.onComplete,
     required this.onExpense,
     required this.onDirections,
+    required this.onAction,
+    required this.canMoveUp,
+    required this.canMoveDown,
   });
   final PlanStop stop;
   final String symbol;
   final bool busy;
   final VoidCallback onComplete, onExpense, onDirections;
+  final ValueChanged<String> onAction;
+  final bool canMoveUp, canMoveDown;
   @override
   Widget build(BuildContext context) => _Paper(
     child: Column(
@@ -505,6 +681,35 @@ class _StopCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+            ),
+            PopupMenuButton<String>(
+              tooltip: 'Durak işlemleri',
+              enabled: !busy,
+              onSelected: onAction,
+              icon: const Icon(Icons.more_horiz_rounded),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'note',
+                  child: Text(stop.note.isEmpty ? 'Not ekle' : 'Notu düzenle'),
+                ),
+                PopupMenuItem(
+                  value: 'up',
+                  enabled: canMoveUp,
+                  child: const Text('Yukarı taşı'),
+                ),
+                PopupMenuItem(
+                  value: 'down',
+                  enabled: canMoveDown,
+                  child: const Text('Aşağı taşı'),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text(
+                    'Durağı sil',
+                    style: TextStyle(color: Color(0xFF9B3020)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

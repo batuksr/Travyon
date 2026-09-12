@@ -98,7 +98,11 @@ class _Wordmark extends StatelessWidget {
             ),
           ],
         ),
-        style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+        style: TextStyle(
+          fontFamily: AppTypography.heading,
+          fontSize: 32,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }

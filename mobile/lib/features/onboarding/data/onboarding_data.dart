@@ -64,7 +64,7 @@ String dateKey(DateTime d) =>
 class OnboardingData {
   String destination = '', startDate = '', endDate = '';
   String arrivalTime = '10:00', departureTime = '14:00';
-  double budget = 15000;
+  double budget = 0;
   String currencyCode = 'TRY';
   int peopleCount = 1;
   String travelType = '', pace = 'normal';
@@ -75,9 +75,14 @@ class OnboardingData {
   String accommodationAddress = '', accommodation = '', transport = '';
   double? accommodationLat, accommodationLng;
 
-  void applyDefaults(Map<String, dynamic> defaults) {
+  void applyDefaults(
+    Map<String, dynamic> defaults, {
+    bool includeBudget = true,
+  }) {
     final amount = double.tryParse('${defaults['defaultBudget']}');
-    if (amount != null && amount.isFinite && amount >= 100) budget = amount;
+    if (includeBudget && amount != null && amount.isFinite && amount >= 100) {
+      budget = amount;
+    }
     final people = int.tryParse('${defaults['defaultPeopleCount']}');
     if (people != null && people >= 1 && people <= 15) peopleCount = people;
     final savedPace = defaults['defaultPace'];

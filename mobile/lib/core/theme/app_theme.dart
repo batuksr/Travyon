@@ -10,6 +10,11 @@ abstract final class AppColors {
   static const divider = Color(0xFFDED2C1);
 }
 
+abstract final class AppTypography {
+  static const body = 'Inter';
+  static const heading = 'Travyon Display';
+}
+
 abstract final class AppTheme {
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
@@ -20,6 +25,7 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppTypography.body,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       appBarTheme: const AppBarTheme(
@@ -30,7 +36,8 @@ abstract final class AppTheme {
         titleTextStyle: TextStyle(
           color: AppColors.text,
           fontSize: 17,
-          fontWeight: FontWeight.w700,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -59,6 +66,10 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           foregroundColor: AppColors.forest,
+          textStyle: const TextStyle(
+            fontFamily: AppTypography.heading,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -66,24 +77,61 @@ abstract final class AppTheme {
           minimumSize: const Size(48, 48),
           foregroundColor: AppColors.forest,
           side: const BorderSide(color: AppColors.divider),
+          textStyle: const TextStyle(
+            fontFamily: AppTypography.heading,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
       textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        displayMedium: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        displaySmall: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
         headlineLarge: TextStyle(
           color: AppColors.text,
           fontSize: 30,
           height: 1.2,
-          fontWeight: FontWeight.w800,
-        ),
-        titleMedium: TextStyle(
-          color: AppColors.text,
-          fontWeight: FontWeight.w700,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
         ),
         headlineMedium: TextStyle(
           color: AppColors.text,
           fontSize: 26,
           height: 1.2,
-          fontWeight: FontWeight.w800,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        headlineSmall: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        titleLarge: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        titleMedium: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.heading,
+          fontWeight: FontWeight.w400,
+        ),
+        titleSmall: TextStyle(
+          color: AppColors.text,
+          fontFamily: AppTypography.body,
+          fontWeight: FontWeight.w700,
         ),
         bodyLarge: TextStyle(color: AppColors.muted, fontSize: 16, height: 1.5),
       ),
@@ -95,7 +143,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontFamily: AppTypography.heading,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

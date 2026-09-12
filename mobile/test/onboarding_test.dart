@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travyon/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import 'package:travyon/features/onboarding/presentation/onboarding_page.dart';
 import 'widget_test.dart' show FakeTravelPlansRepository;
 
 OnboardingData answers() => OnboardingData()
+  ..budget = 15000
   ..destination = 'Roma, İtalya'
   ..startDate = dateKey(DateTime.now().add(const Duration(days: 10)))
   ..endDate = dateKey(DateTime.now().add(const Duration(days: 11)))
@@ -57,13 +59,19 @@ Map<String, dynamic> generated(OnboardingData data) => {
 };
 
 class CreationFake implements PlanCreationRepository {
+  Map<String, dynamic> savedDefaults = {};
+  int defaultReads = 0;
   int generations = 0;
   bool failGeneration = false;
   final ids = <String>[];
   Map<String, dynamic>? savedAnswers;
   Completer<Map<String, dynamic>>? pending;
   @override
-  Future<Map<String, dynamic>> defaults(String uid) async => {};
+  Future<Map<String, dynamic>> defaults(String uid) async {
+    defaultReads++;
+    return savedDefaults;
+  }
+
   @override
   Future<Map<String, dynamic>> generate(OnboardingData data) async {
     generations++;
@@ -91,6 +99,7 @@ Future<void> mount(
   OnboardingData data,
   CreationFake repo, {
   double scale = 1,
+  bool applySavedDefaults = false,
 }) async {
   tester.view.physicalSize = const Size(360, 740);
   tester.view.devicePixelRatio = 1;
@@ -112,6 +121,7 @@ Future<void> mount(
         repository: repo,
         plansRepository: FakeTravelPlansRepository([]),
         initialData: data,
+        applySavedDefaults: applySavedDefaults,
       ),
     ),
   );
@@ -136,6 +146,104 @@ Future<void> choose(WidgetTester tester, String key) async {
 }
 
 void main() {
+  testWidgets(
+    'currency labels stay dark when selected and headers have no large emoji',
+    (tester) async {
+      final data = answers();
+      await mount(tester, data, CreationFake());
+      expect(find.text('🌍'), findsNothing);
+      await choose(tester, 'currency-EUR');
+      for (final entry in currencies.entries) {
+        final label = find.text('${entry.key} · ${entry.value}');
+        final paragraph = tester.renderObject<RenderParagraph>(label);
+        final color = paragraph.text.style!.color!;
+        expect(
+          color,
+          entry.key == 'EUR' ? const Color(0xFF8C491A) : AppColors.text,
+        );
+        final background = entry.key == 'EUR'
+            ? const Color(0xFFFFE4D1)
+            : AppColors.surface;
+        final contrast =
+            (background.computeLuminance() + .05) /
+            (color.computeLuminance() + .05);
+        expect(contrast, greaterThanOrEqualTo(4.5));
+      }
+      await next(tester);
+      expect(find.text('🧭'), findsNothing); // No emoji above the step title.
+      expect(find.text('🎒'), findsOneWidget); // Choice emojis are preserved.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('pace-esnek')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('🧭'),
+        findsOneWidget,
+      ); // Flexible pace card only, not header.
+      await next(tester);
+      expect(find.text('🍽️'), findsOneWidget); // Halal choice only.
+      await next(tester);
+      expect(find.text('🛎️'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('all redesigned steps fit narrow screens at large text scale', (
+    tester,
+  ) async {
+    final data = answers();
+    await mount(tester, data, CreationFake(), scale: 2);
+    expect(find.text('Nereye gidiyorsun?'), findsOneWidget);
+    await choose(tester, 'currency-EUR');
+    expect(tester.takeException(), isNull);
+    await next(tester);
+    await choose(tester, 'travelType-aile');
+    await choose(tester, 'pace-rahat');
+    expect(tester.takeException(), isNull);
+    await next(tester);
+    await choose(tester, 'diet-vegan');
+    await choose(tester, 'meal-medium');
+    expect(tester.takeException(), isNull);
+    await next(tester);
+    await choose(tester, 'stay-hostel');
+    await choose(tester, 'transport-public');
+    expect(tester.takeException(), isNull);
+    await next(tester);
+    expect(find.text('Planın hazır'), findsOneWidget);
+    await choose(tester, 'preview-day-1');
+    expect(find.text('Pantheon'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'hub seeds retain city and dates while loading saved preferences',
+    (tester) async {
+      final seed = OnboardingData()
+        ..destination = 'Roma, İtalya'
+        ..startDate = '2026-10-10'
+        ..endDate = '2026-10-11';
+      final repo = CreationFake()
+        ..savedDefaults = {
+          'defaultBudget': 800,
+          'defaultCurrency': 'EUR — €',
+          'defaultPeopleCount': 2,
+          'defaultPace': 'rahat',
+        };
+      await mount(tester, seed, repo, applySavedDefaults: true);
+      expect(repo.defaultReads, 1);
+      expect(seed.destination, 'Roma, İtalya');
+      expect(seed.startDate, '2026-10-10');
+      expect(seed.endDate, '2026-10-11');
+      expect(seed.budget, 0);
+      expect(seed.currencyCode, 'EUR');
+      expect(seed.peopleCount, 2);
+      expect(seed.pace, 'rahat');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('web profile defaults accept persisted strings and currency labels', () {
     final data = OnboardingData()
       ..applyDefaults({
@@ -258,6 +366,15 @@ void main() {
       await tester.tap(find.text('Tarihleri seç'));
       await tester.pumpAndSettle();
       expect(data.dayCount, 2);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('budget')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('budget')), '15000');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       await next(tester);
       await choose(tester, 'travelType-aile');
       await choose(tester, 'interest-culture');
@@ -275,9 +392,12 @@ void main() {
       await choose(tester, 'meal-medium');
       await next(tester);
       await choose(tester, 'reservation-yes');
-      await tester.ensureVisible(
+      await tester.scrollUntilVisible(
         find.byKey(const ValueKey('accommodation-address')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
+      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('accommodation-address')),
         'Hotel Roma Centro',
