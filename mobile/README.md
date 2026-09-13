@@ -180,8 +180,11 @@ Web uygulaması güncel sürümle ilk kez açıldığında tarayıcıdaki mevcut
 aynı kullanıcıya ait Firestore koleksiyonuna otomatik taşır. Sonraki ekleme,
 silme, yeniden adlandırma ve favori değişiklikleri cihazlar arasında eşitlenir.
 
-Firebase App Check paketi kuruludur. Play Integrity ve App Attest kayıtları
-Firebase Console'da tamamlandıktan sonra enforcement etkinleştirilmelidir.
+Firebase App Check, production bağlantısında bildirimlerden bağımsız başlar.
+Android release için Play Integrity, iOS release için DeviceCheck kullanılır.
+Production Cloud Functions kodunda App Check zorunludur; ilgili uygulama/provider
+kaydı Firebase Console'da tamamlanmalıdır. Debug derlemelerde debug tokenı
+kaydedilmelidir. Yerel emülatör modu bu doğrulamayı kullanmaz.
 
 ## Mobil topluluk
 
@@ -348,8 +351,10 @@ Aktivasyon **henüz yapılmadı**; hesaplar hazır olmadan şu aşamada bayrakla
 
 1. Firebase projesindeki Cloud Messaging API ve uygulama yapılandırmasını
    doğrula. Production callables için App Check cihaz kaydını tamamla.
-   Push açık debug derleme debug provider, release Android Play Integrity,
-   release iOS DeviceCheck kullanır. Debug tokenını yalnızca Firebase Console'a
+   App Check, bildirim bayrağından bağımsız olarak Firebase başlangıcında çalışır.
+   Production modundaki debug derleme debug provider, release Android Play Integrity,
+   release iOS DeviceCheck kullanır. Local emülatör modunda etkinleşmez.
+   Bildirimler kapalı olsa da production debug tokenını yalnızca Firebase Console'a
    ekle; depoya, ekran görüntüsüne veya paylaşılan loglara koyma.
 2. iOS için Mac/Xcode üzerinde Runner'a Push Notifications capability ekle;
    imzalama profilinin `aps-environment` entitlement'ını doğrula. Firebase'e

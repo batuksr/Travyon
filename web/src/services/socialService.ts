@@ -35,7 +35,6 @@ const normalizePlanForSharing = (
   plan: TravelPlanResponse,
   onboardingData: OnboardingData,
 ): TravelPlanResponse => ({
-  ...plan,
   destination: boundedText(plan.destination, 200, onboardingData.destination || 'Gezi planı').trim()
     || 'Gezi planı',
   overallSummary: boundedText(plan.overallSummary, 10_000),
@@ -47,7 +46,6 @@ const normalizePlanForSharing = (
     generalAdvice: boundedText(plan.cityGuide?.generalAdvice, 5_000),
   },
   dailyPlans: (Array.isArray(plan.dailyPlans) ? plan.dailyPlans : []).slice(0, 31).map((day, dayIndex) => ({
-    ...day,
     dayNumber: dayIndex + 1,
     date: boundedText(day?.date, 32, fallbackDate(onboardingData.startDate, dayIndex)).trim()
       || fallbackDate(onboardingData.startDate, dayIndex),
@@ -67,17 +65,7 @@ const normalizePlanForSharing = (
         estimatedCost: boundedAmount(activity?.estimatedCost),
       };
 
-      if (activity?.actualCost !== undefined) {
-        return {
-          ...normalized,
-          actualCost: boundedAmount(activity.actualCost),
-          ...(typeof activity.note === 'string' ? { note: boundedText(activity.note, 2_000) } : {}),
-        };
-      }
-      return {
-        ...normalized,
-        ...(typeof activity?.note === 'string' ? { note: boundedText(activity.note, 2_000) } : {}),
-      };
+      return normalized;
     }),
   })),
 });

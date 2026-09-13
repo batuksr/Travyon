@@ -13,6 +13,7 @@ import { lookupAccommodation, validateAccommodationQuery } from "./mobileAccommo
 import { getMessaging } from "firebase-admin/messaging";
 import { parsePushInput, runMobilePush, PushDevice } from "./mobilePush";
 import { communityPush, sendMobilePushEvent, tripReminderPush } from "./mobilePushEvents";
+import { parsePrivacySettings, publicPlanPayload } from "./securityPayloads";
 
 initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
@@ -972,7 +973,7 @@ export const sharePublicPlan = onCall<SharePublicPlanRequest>({ enforceAppCheck:
     transport: onboardingData.transport ?? "",
     startDate: onboardingData.startDate ?? "",
     endDate: onboardingData.endDate ?? "",
-    planData: plan,
+    planData: publicPlanPayload(plan),
   };
   let newlyPublished = false;
   try {
@@ -1209,17 +1210,7 @@ interface PrivacySettingsRequest {
 /** Gizlilik ayarlarını kaydeder ve profil görünürlüğünü mevcut paylaşımlara uygular. */
 export const updatePrivacySettings = onCall<PrivacySettingsRequest>({ enforceAppCheck: SHOULD_ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
-  const data = request.data ?? ({} as Partial<PrivacySettingsRequest>);
-  const keys: (keyof PrivacySettingsRequest)[] = [
-    "profilePublic", "plansPublic", "followPublic", "locationEnabled",
-    "locationHistory", "analyticsEnabled",
-  ];
-  if (keys.some((key) => typeof data[key] !== "boolean")) {
-    throw new HttpsError("invalid-argument", "invalid privacy settings");
-  }
-  if (data.locationEnabled === false && data.locationHistory === true) {
-    throw new HttpsError("invalid-argument", "location history requires location access");
-  }
+  const data = parsePrivacySettings(request.data);
   await checkRateLimit(request.auth.uid, "updatePrivacySettings", "Rate limit exceeded.");
 
   await db.collection("users").doc(request.auth.uid).set(data, { merge: true });

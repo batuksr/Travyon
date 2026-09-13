@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,16 +36,6 @@ abstract final class FirebaseMobilePush {
           : 'Bu derlemede telefon bildirimleri etkin değil. Önce Firebase ve cihaz kurulumu tamamlanmalı.',
     );
     if (!available) return;
-    // Existing production callables enforce App Check. Debug providers need
-    // their device token registered in Firebase Console, never in source code.
-    await FirebaseAppCheck.instance.activate(
-      providerAndroid: kDebugMode
-          ? const AndroidDebugProvider()
-          : const AndroidPlayIntegrityProvider(),
-      providerApple: kDebugMode
-          ? const AppleDebugProvider()
-          : const AppleDeviceCheckProvider(),
-    );
     FirebaseMessaging.instance.onTokenRefresh.listen(
       (_) {
         final user = FirebaseServices.auth.currentUser;
