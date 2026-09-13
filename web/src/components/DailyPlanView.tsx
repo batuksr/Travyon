@@ -11,6 +11,7 @@ import { useOnboardingStore } from '../store/useOnboardingStore';
 import { haversineDistance } from '../utils/geoOptimization';
 export type VibeType = 'rest' | 'indoor' | 'budget' | 'explore' | null;
 import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import { formatDistanceKm } from '../utils/unitFormatters';
 import { functions } from '../services/firebase';
 
 interface TravelSegment {
@@ -476,7 +477,7 @@ const DailyPlanView: React.FC<Props> = ({ day, onActivityClick, isLoaded, journe
             ? haversineDistance(activity.coordinates.lat, activity.coordinates.lng, nextActivity.coordinates.lat, nextActivity.coordinates.lng)
             : null;
           const distText = rawDistKm != null
-            ? distKm ? `${rawDistKm.toFixed(1)} km` : `${(rawDistKm * 0.621371).toFixed(1)} mi`
+            ? formatDistanceKm(rawDistKm, distKm, i18n.language)
             : null;
           const colors          = getPeriodColor(activity.period);
           const prevPeriod      = index > 0 ? day.activities[index - 1].period : null;

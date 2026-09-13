@@ -238,14 +238,15 @@ bildirim/gizlilik, fatura, destek ve veri işlemleri ayrı ekranlardadır.
   önlenir. Production'da mevcut `deleteMyAccount` fonksiyonu kullanılır; aktif
   abonelik koşullarını sunucu kontrol eder. Gerçek hesaplarla silme testi yapılmadı.
 
-Henüz bağlı olmayan özellikler ekranda açıkça belirtilir: tüm ekranlardaki
-mesafe/sıcaklık birim dönüşümleri ve mağaza içi satın alma.
+Henüz bağlı olmayan mağaza içi satın alma özelliği ekranda açıkça belirtilir.
 Telefon bildirimlerinin izin/cihaz kaydı/test altyapısı aşağıdaki kontrollü kurulumla açılır.
 Türkçe/İngilizce dil tercihi mobil arayüze anında uygulanır, cihazda saklanır ve
 oturum açıldığında web hesabındaki `language` alanıyla eşitlenir. Kullanıcının
-girdiği plan, şehir ve mekân adları çevrilmez. Dil/birim ve iletişim tercihleri
-ortak hesapta kaydedilir; birim tercihlerinin tüm mobil sunumlarda dönüşüm yaptığı
-anlamına gelmez. Abonelik ve ödeme geçmişi salt okunur;
+girdiği plan, şehir ve mekân adları çevrilmez. `distanceKm` ve `tempCelsius`
+tercihleri de cihazda saklanır, ortak hesap belgesinden canlı eşitlenir ve rota,
+plan, tempo seçenekleri, hava durumu ile bildirimlerde uygulanır. Dil/birim ve
+iletişim tercihleri web ve mobil tarafından aynı alanlarla kullanılır. Abonelik
+ve ödeme geçmişi salt okunur;
 bu ekrandan ödeme alınmaz. Konum geçmişi toplanmaz.
 
 Web sözlükleriyle ortak sabit metinleri yenilemek için `mobile` klasöründe:
@@ -429,7 +430,7 @@ capability, Team ID ve `apple-app-site-association` dosyası tamamlanmalıdır.
 
 - [x] Otomatik seyahat/topluluk push tetikleyicileri ve tekrar gönderim önleme.
 - [x] Türkçe/İngilizce mobil ekran metinleri ve hesapla eşitlenen uygulama dili.
-- [ ] Mesafe/sıcaklık tercihlerini bütün mobil sunumlarda gerçek birim dönüşümüne bağlama.
+- [x] Mesafe/sıcaklık tercihlerini rota, plan ve hava bildirimlerinde gerçek birim dönüşümüne bağlama.
 - [ ] Google Play Console / Apple Developer hesapları ve gerçek abonelik ürünleri.
 - [ ] Satın alma, sunucuda makbuz doğrulama, yenileme/iptal/iade bildirimleri ve satın alımı geri yükleme.
 - [ ] Gerçek Android ve iPhone üzerinde oturum, Maps, fotoğraf, paylaşım, izin reddi ve bağlantı kaybı testleri.

@@ -11,6 +11,12 @@ import {
 } from '../services/weatherService';
 import type { TravelPlanResponse } from '../services/aiService';
 import type { OnboardingData } from '../store/useOnboardingStore';
+import { useAppSettingsStore } from '../store/useAppSettingsStore';
+import {
+  formatSpeedKmh,
+  formatTemperatureC,
+  formatUnitNumber,
+} from '../utils/unitFormatters';
 
 interface Props {
   plan: TravelPlanResponse;
@@ -18,11 +24,12 @@ interface Props {
   onClose: () => void;
 }
 
-const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-
-const fmt = (dateStr: string): string => {
+const fmt = (dateStr: string, locale: string): string => {
   const d = new Date(dateStr + 'T00:00:00');
-  return `${d.getDate()} ${MONTHS_TR[d.getMonth()]}`;
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+  }).format(d);
 };
 
 const windyUrl = (lat: number, lng: number): string =>
@@ -69,7 +76,9 @@ const getPackingTipsLocalized = (weatherList: DayWeather[], t: TFunction): { ico
 };
 
 const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { tempCelsius, distanceKm } = useAppSettingsStore();
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const [result, setResult]   = useState<WeatherResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
@@ -115,7 +124,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('weatherView.title')}</h2>
             </div>
             <p className="text-[10px] text-slate-400">
-              {plan.destination} · {fmt(onboardingData.startDate)} – {fmt(onboardingData.endDate)}
+              {plan.destination} · {fmt(onboardingData.startDate, locale)} – {fmt(onboardingData.endDate, locale)}
             </p>
           </div>
           <button
@@ -174,7 +183,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                         <div>
                           <p className="text-[10px] text-slate-400 font-medium">{t('weatherView.dayLabel', { number: day.dayNumber })}</p>
                           <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5">
-                            {fmt(day.date)}
+                            {fmt(day.date, locale)}
                           </p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{weatherLabel(w.weatherCode, t)}</p>
                         </div>
@@ -183,8 +192,8 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
 
                       {/* Sıcaklık */}
                       <div className="flex items-baseline gap-1 mb-2.5">
-                        <span className="text-xl font-bold text-slate-900 dark:text-white">{w.tempMax}°</span>
-                        <span className="text-sm text-slate-400">/ {w.tempMin}°C</span>
+                        <span className="text-xl font-bold text-slate-900 dark:text-white">{formatTemperatureC(w.tempMax, tempCelsius, i18n.language)}</span>
+                        <span className="text-sm text-slate-400">/ {formatTemperatureC(w.tempMin, tempCelsius, i18n.language)}</span>
                       </div>
 
                       {/* Yağış + Rüzgar */}
@@ -197,7 +206,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                         ) : w.precipitationSum > 0 ? (
                           <div className="flex items-center gap-1">
                             <Droplets size={9} className="text-sky-400 shrink-0" />
-                            <span>{w.precipitationSum} mm</span>
+                            <span>{formatUnitNumber(w.precipitationSum, i18n.language)} mm</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1">
@@ -207,7 +216,7 @@ const WeatherView: React.FC<Props> = ({ plan, onboardingData, onClose }) => {
                         )}
                         <div className="flex items-center gap-1">
                           <Wind size={9} className="text-slate-400 shrink-0" />
-                          <span>{w.windSpeedMax} km/h</span>
+                          <span>{formatSpeedKmh(w.windSpeedMax, distanceKm, i18n.language)}</span>
                         </div>
                       </div>
                     </div>

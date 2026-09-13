@@ -24,6 +24,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useAppSettingsStore, CURRENCY_MAP } from '../store/useAppSettingsStore';
 import { usePlanStore } from '../store/usePlanStore';
 import { useSavedPlansStore } from '../store/useSavedPlansStore';
+import { formatDistanceKm, formatTemperatureC } from '../utils/unitFormatters';
 import {
   User, Mail, Lock, ChevronRight, Check, AlertCircle, Loader2, Camera,
   Settings2, BookOpen, MapPin, Globe, Ruler,
@@ -1710,8 +1711,8 @@ const Settings: React.FC = () => {
                 <div className="p-3.5 bg-surface-2 rounded-xl border border-divider">
                   <p className="text-[11px] font-semibold text-muted mb-2">{t('settings.units.previewTitle')}</p>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-text font-medium"><AppIcon name="map-pin" /> {t('settings.units.previewDistance')} <strong>{distanceKm ? '2.4 km' : '1.5 mi'}</strong></span>
-                    <span className="text-text font-medium"><AppIcon name="thermometer" /> {t('settings.units.previewWeather')} <strong>{tempCelsius ? '24°C' : '75°F'}</strong></span>
+                    <span className="text-text font-medium"><AppIcon name="map-pin" /> {t('settings.units.previewDistance')} <strong>{formatDistanceKm(2.4, distanceKm, i18n.language)}</strong></span>
+                    <span className="text-text font-medium"><AppIcon name="thermometer" /> {t('settings.units.previewWeather')} <strong>{formatTemperatureC(24, tempCelsius, i18n.language)}</strong></span>
                   </div>
                 </div>
               </div>

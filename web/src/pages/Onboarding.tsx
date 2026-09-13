@@ -29,7 +29,8 @@ import { searchCities, type CityOption } from '../data/cities';
 import { useAuthStore } from '../store/useAuthStore';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { CURRENCY_MAP } from '../store/useAppSettingsStore';
+import { CURRENCY_MAP, useAppSettingsStore } from '../store/useAppSettingsStore';
+import { formatDistanceRangeKm } from '../utils/unitFormatters';
 
 const getToday = () => {
   const d = new Date();
@@ -158,6 +159,7 @@ const Onboarding: React.FC = () => {
   const { currentStep, data, nextStep, prevStep, updateData, setStep, resetForm } = useOnboardingStore();
   const { setPlan } = usePlanStore();
   const { user } = useAuthStore();
+  const distanceKm = useAppSettingsStore((state) => state.distanceKm);
   const [showDesktopPostcard, setShowDesktopPostcard] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
   );
@@ -833,7 +835,15 @@ const Onboarding: React.FC = () => {
                               <div>
                                 <p className={`font-heading text-xs ${selected ? 'text-accent-700' : 'text-text'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.title`)}</p>
                                 <p className={`text-[10px] mt-0.5 leading-tight ${selected ? 'text-accent-700/70' : 'text-muted'}`}>{t(`onboarding.step2.paceOptions.${labelKey}.desc`)}</p>
-                                <p className="text-[10px] text-muted mt-0.5">{t(`onboarding.step2.paceOptions.${labelKey}.detail`)}</p>
+                                <p className="text-[10px] text-muted mt-0.5">
+                                  {labelKey === 'relaxed'
+                                    ? formatDistanceRangeKm(3, 4, distanceKm, i18n.language, true)
+                                    : labelKey === 'normal'
+                                      ? formatDistanceRangeKm(6, 8, distanceKm, i18n.language, true)
+                                      : labelKey === 'active'
+                                        ? formatDistanceRangeKm(10, 15, distanceKm, i18n.language, true)
+                                        : t(`onboarding.step2.paceOptions.${labelKey}.detail`)}
+                                </p>
                               </div>
                             </button>
                           );

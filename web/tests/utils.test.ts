@@ -2,6 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { haversineDistance, optimizeRouteTSP } from '../src/utils/geoOptimization';
 import { relativeTime } from '../src/utils/timeUtils';
 import type { DailyActivity } from '../src/services/aiService';
+import {
+  formatDistanceKm,
+  formatDistanceRangeKm,
+  formatSpeedKmh,
+  formatTemperatureC,
+} from '../src/utils/unitFormatters';
 
 const activity = (placeName: string, lat: number, lng: number): DailyActivity => ({
   period: 'Sabah',
@@ -37,5 +43,20 @@ describe('relativeTime', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-07T12:00:00Z'));
     expect(relativeTime(Date.now() - 2 * 60_000, 'en-US')).toBe('2 minutes ago');
+  });
+});
+
+describe('unit formatters', () => {
+  it('uses metric units and Turkish decimal formatting', () => {
+    expect(formatDistanceKm(2.4, true, 'tr')).toBe('2,4 km');
+    expect(formatTemperatureC(24, true, 'tr')).toBe('24°C');
+    expect(formatSpeedKmh(18, true, 'tr')).toBe('18 km/sa');
+  });
+
+  it('converts values and uses English decimal formatting', () => {
+    expect(formatDistanceKm(2.4, false, 'en')).toBe('1.5 mi');
+    expect(formatTemperatureC(24, false, 'en')).toBe('75°F');
+    expect(formatSpeedKmh(18, false, 'en')).toBe('11 mph');
+    expect(formatDistanceRangeKm(3, 4, false, 'en', true)).toBe('1.9–2.5 mi/day');
   });
 });

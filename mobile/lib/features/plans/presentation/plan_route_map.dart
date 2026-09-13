@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/preferences/unit_formatter.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -202,6 +203,9 @@ class _RouteCanvasState extends State<_RouteCanvas> {
     final located = _located;
     final stop = widget.stops[_selected];
     final missing = widget.stops.length - located.length;
+    final routeDistance = routeDistanceKm(
+      widget.stops.map((item) => item.location),
+    );
     Widget map;
     if (located.isEmpty) {
       map = const Center(
@@ -377,10 +381,18 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                           padding: const EdgeInsets.only(left: 4, top: 5),
                           child: Text(
                             context.tr(
-                              missing > 0
+                              routeDistance > 0 && missing > 0
+                                  ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+                                  : routeDistance > 0
+                                  ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.'
+                                  : missing > 0
                                   ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
                                   : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
-                              values: {'count': missing},
+                              values: {
+                                'distance': UnitFormatter.of(context)
+                                    .distance(routeDistance),
+                                'count': missing,
+                              },
                             ),
                             style: const TextStyle(
                               color: AppColors.muted,

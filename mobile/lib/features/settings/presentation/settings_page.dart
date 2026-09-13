@@ -7,6 +7,8 @@ import 'package:flutter/material.dart' hide Text;
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/preferences/app_unit_controller.dart';
+import '../../../core/preferences/unit_formatter.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -464,11 +466,21 @@ class _SettingsEditorState extends State<SettingsEditor> {
       ..._values,
       for (final e in _controllers.entries) e.key: e.value.text,
     };
+    final localeController = widget.section.id == 'appearance'
+        ? AppLocaleScope.of(context)
+        : null;
+    final unitController = widget.section.id == 'appearance'
+        ? AppUnitScope.maybeOf(context)
+        : null;
     try {
       await widget.repository.save(widget.section, values);
       if (mounted) {
         if (widget.section.id == 'appearance') {
-          await AppLocaleScope.of(context).setLanguage(values['language']);
+          await localeController!.setLanguage(values['language']);
+          await unitController?.setUnits(
+            distanceKm: values['distanceKm'] != false,
+            tempCelsius: values['tempCelsius'] != false,
+          );
           if (!mounted) return;
         }
         setState(() => _dirty = false);
@@ -622,6 +634,58 @@ class _SettingsEditorState extends State<SettingsEditor> {
                               },
                             ),
                     ),
+                  if (widget.section.id == 'appearance') ...[
+                    Builder(
+                      builder: (context) {
+                        final formatter = UnitFormatter(
+                          distanceKm: _values['distanceKm'] != false,
+                          tempCelsius: _values['tempCelsius'] != false,
+                          english: context.l10n.isEnglish,
+                        );
+                        return CommunityPanel(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Önizleme',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 18,
+                                runSpacing: 8,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.route_outlined,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(formatter.distance(2.4)),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.thermostat_outlined,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(formatter.temperature(24)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                   FilledButton(
                     onPressed: _busy ? null : _save,
                     child: Text(

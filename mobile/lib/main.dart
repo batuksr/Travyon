@@ -6,6 +6,7 @@ import 'core/firebase/firebase_environment.dart';
 import 'core/firebase/mobile_app_check.dart';
 import 'core/localization/app_locale_controller.dart';
 import 'core/navigation/travyon_deep_links.dart';
+import 'core/preferences/app_unit_controller.dart';
 import 'firebase_options.dart';
 import 'features/notifications/data/firebase_mobile_push.dart';
 
@@ -30,10 +31,12 @@ Future<void> main() async {
   }
 
   final localeController = await AppLocaleController.load();
+  final unitController = await AppUnitController.load();
   runApp(
     TravyonApp(
       initializationError: initializationError,
       localeController: localeController,
+      unitController: unitController,
     ),
   );
 }

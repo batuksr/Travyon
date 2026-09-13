@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/preferences/app_unit_controller.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../community/presentation/community_page.dart';
@@ -213,7 +214,9 @@ class _NotificationsPageState extends State<NotificationsPage>
       all.add(
         _weather!.notice(
           _weatherPlan!,
-          celsiusUnit: _prefs?['tempCelsius'] != false,
+          celsiusUnit:
+              AppUnitScope.maybeOf(context)?.tempCelsius ??
+              (_prefs?['tempCelsius'] != false),
         ),
       );
     }

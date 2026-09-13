@@ -23,6 +23,7 @@ import {
 import { AiAssistantWidget } from '../components/AiAssistantWidget';
 import { useGoogleMapsLoader } from '../utils/googleMapsLoader';
 import HubTravelControlCenter from '../components/HubTravelControlCenter';
+import { formatSpeedKmh, formatTemperatureC } from '../utils/unitFormatters';
 
 /* ── Greeting ── */
 const getGreeting = (t: TFunction): { text: string; icon: string } => {
@@ -135,8 +136,8 @@ const Hub: React.FC = () => {
   const { tempCelsius, distanceKm: distKm } = useAppSettingsStore();
 
   /* Birim yardımcıları */
-  const displayTemp  = (c: number) => tempCelsius ? `${c}°C` : `${Math.round(c * 9 / 5 + 32)}°F`;
-  const displayWind  = (kmh: number) => distKm ? `${kmh} ${t('hub.units.kmh')}` : `${Math.round(kmh * 0.621371)} mph`;
+  const displayTemp = (c: number) => formatTemperatureC(c, tempCelsius, i18n.language);
+  const displayWind = (kmh: number) => formatSpeedKmh(kmh, distKm, i18n.language);
 
   /* ── Social state (paylaş butonu için) ── */
   const [sharedPlanIds, setSharedPlanIds] = useState<Set<string>>(new Set());

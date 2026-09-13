@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronUp, ChevronDown, Trash2, Pencil, Plus } from 'lucide-react';
 import { GROUP_COLORS, type RuntimeActivity } from './types';
 import type { DemoTravelTimes } from '../../data/tripPlannerDemo';
+import { useAppSettingsStore } from '../../store/useAppSettingsStore';
+import { formatDistanceKm } from '../../utils/unitFormatters';
 
 const TRAVEL_MODES = ['car', 'bus', 'walk', 'bike'] as const;
 type TravelMode = typeof TRAVEL_MODES[number];
@@ -19,11 +21,12 @@ interface ActivityListProps {
 }
 
 const TravelStrip: React.FC<{ times: DemoTravelTimes }> = ({ times }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const distanceKm = useAppSettingsStore((state) => state.distanceKm);
   const fastest = TRAVEL_MODES.reduce<TravelMode>((best, m) => (times[m] < times[best] ? m : best), 'car');
   return (
     <div className="flex items-center flex-wrap gap-1.5 mt-2.5">
-      <span className="text-[11px] text-muted">↕ {times.km} km</span>
+      <span className="text-[11px] text-muted">↕ {formatDistanceKm(times.km, distanceKm, i18n.language)}</span>
       <span className="text-divider">·</span>
       {TRAVEL_MODES.map((mode) => {
         const isFastest = mode === fastest;

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '../core/firebase/auth_repository.dart';
 import '../core/localization/app_locale_controller.dart';
 import '../core/localization/app_localizations.dart';
+import '../core/preferences/app_unit_controller.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/auth_gate.dart';
 import '../features/bootstrap/presentation/mobile_bootstrap_page.dart';
@@ -16,38 +17,46 @@ class TravyonApp extends StatelessWidget {
     this.authRepository,
     this.travelPlansRepository,
     this.localeController,
+    this.unitController,
   });
 
   final Object? initializationError;
   final AuthRepository? authRepository;
   final TravelPlansRepository? travelPlansRepository;
   final AppLocaleController? localeController;
+  final AppUnitController? unitController;
 
   @override
   Widget build(BuildContext context) {
     final locale = localeController ?? AppLocaleController.testing();
+    final units = unitController ?? AppUnitController.testing();
     return AppLocaleScope(
       controller: locale,
-      child: ListenableBuilder(
-        listenable: locale,
-        builder: (context, _) => MaterialApp(
-          title: 'Travyon',
-          debugShowCheckedModeBanner: false,
-          locale: locale.locale,
-          supportedLocales: supportedAppLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          theme: AppTheme.light,
-          home: initializationError == null
-              ? AuthGate(
-                  repository: authRepository ?? FirebaseAuthRepository(),
-                  plansRepository:
-                      travelPlansRepository ?? FirebaseTravelPlansRepository(),
-                  localeController: locale,
-                )
-              : MobileBootstrapPage(initializationError: initializationError),
+      child: AppUnitScope(
+        controller: units,
+        child: ListenableBuilder(
+          listenable: locale,
+          builder: (context, _) => MaterialApp(
+            title: 'Travyon',
+            debugShowCheckedModeBanner: false,
+            locale: locale.locale,
+            supportedLocales: supportedAppLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            theme: AppTheme.light,
+            home: initializationError == null
+                ? AuthGate(
+                    repository: authRepository ?? FirebaseAuthRepository(),
+                    plansRepository:
+                        travelPlansRepository ??
+                        FirebaseTravelPlansRepository(),
+                    localeController: locale,
+                    unitController: units,
+                  )
+                : MobileBootstrapPage(initializationError: initializationError),
+          ),
         ),
       ),
     );

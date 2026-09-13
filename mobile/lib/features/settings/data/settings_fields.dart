@@ -138,7 +138,7 @@ const settingsSections = [
         toggle: true,
       ),
     ],
-    note: 'Bu tercihler web hesabında da saklanır. Dil seçimin mobil arayüze hemen uygulanır; bildirimlerin hava sıcaklığı seçtiğin birimle gösterilir.',
+    note: 'Bu tercihler web hesabında da saklanır ve iki uygulama arasında eşitlenir. Dil, rota mesafeleri, hava durumu ve bildirimler seçtiğin biçime hemen geçer.',
   ),
   SettingsSection(
     'notifications',

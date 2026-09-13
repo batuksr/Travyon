@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide Text;
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/firebase/firebase_services.dart';
 import '../../../core/localization/app_locale_controller.dart';
+import '../../../core/preferences/app_unit_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../bootstrap/presentation/mobile_bootstrap_page.dart';
 import '../../hub/presentation/mobile_hub_page.dart';
@@ -19,11 +20,13 @@ class AuthGate extends StatelessWidget {
     required this.repository,
     required this.plansRepository,
     required this.localeController,
+    required this.unitController,
   });
 
   final AuthRepository repository;
   final TravelPlansRepository plansRepository;
   final AppLocaleController localeController;
+  final AppUnitController unitController;
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +59,11 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        return _AccountLocaleSync(
-          key: ValueKey('locale-${session.uid}'),
+        return _AccountPreferenceSync(
+          key: ValueKey('preferences-${session.uid}'),
           uid: session.uid,
-          controller: localeController,
+          localeController: localeController,
+          unitController: unitController,
           child: MobileHubPage(
             key: ValueKey(session.uid),
             session: session,
@@ -72,23 +76,25 @@ class AuthGate extends StatelessWidget {
   }
 }
 
-class _AccountLocaleSync extends StatefulWidget {
-  const _AccountLocaleSync({
+class _AccountPreferenceSync extends StatefulWidget {
+  const _AccountPreferenceSync({
     super.key,
     required this.uid,
-    required this.controller,
+    required this.localeController,
+    required this.unitController,
     required this.child,
   });
 
   final String uid;
-  final AppLocaleController controller;
+  final AppLocaleController localeController;
+  final AppUnitController unitController;
   final Widget child;
 
   @override
-  State<_AccountLocaleSync> createState() => _AccountLocaleSyncState();
+  State<_AccountPreferenceSync> createState() => _AccountPreferenceSyncState();
 }
 
-class _AccountLocaleSyncState extends State<_AccountLocaleSync> {
+class _AccountPreferenceSyncState extends State<_AccountPreferenceSync> {
   StreamSubscription<Map<String, dynamic>?>? _subscription;
 
   @override
@@ -103,7 +109,10 @@ class _AccountLocaleSyncState extends State<_AccountLocaleSync> {
         .listen(
           (data) {
             final language = data?['language'];
-            if (language != null) widget.controller.setLanguage(language);
+            if (language != null) {
+              widget.localeController.setLanguage(language);
+            }
+            widget.unitController.applyAccountSettings(data);
           },
           onError: (_) {
             // The cached device preference keeps the app usable offline.

@@ -30,6 +30,14 @@ const mobileEnglishTranslations = <String, String>{
   'Çizgiler durak sırasıdır, yol tarifi değildir.':
       'Lines show stop order, not turn-by-turn directions.',
   'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.': 'Lines show stop order, not turn-by-turn directions. {count} locations are missing.',
+  'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.': 'Approximately {distance} between points. Lines show stop order, not turn-by-turn directions.',
+  'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.': 'Approximately {distance} between points. Lines show stop order, not turn-by-turn directions. {count} locations are missing.',
+  'Sonraki durak: {name} · kuş uçuşu {distance}':
+      'Next stop: {name} · {distance} straight-line distance',
+  'Önizleme': 'Preview',
+  'Az yürüyüş': 'Less walking',
+  'Standart tempo': 'Standard pace',
+  'Her şeyi gör': 'See it all',
   '{mode} · {duration}': '{mode} · {duration}',
   '{mode} · {duration} · En hızlı': '{mode} · {duration} · Fastest',
   '“{title}” web ve mobil cüzdanından kaldırılacak. Bu işlem geri alınamaz.': '“{title}” will be removed from your web and mobile wallet. This cannot be undone.',
@@ -152,6 +160,7 @@ const mobileEnglishTranslations = <String, String>{
   'Mesafeleri kilometre göster': 'Show distances in kilometers',
   'Sıcaklığı Celsius göster': 'Show temperature in Celsius',
   'Bu tercihler web hesabında da saklanır. Dil seçimin mobil arayüze hemen uygulanır; bildirimlerin hava sıcaklığı seçtiğin birimle gösterilir.': 'These preferences are also saved to your web account. Your language selection is applied to the mobile app immediately; notification temperatures use your selected unit.',
+  'Bu tercihler web hesabında da saklanır ve iki uygulama arasında eşitlenir. Dil, rota mesafeleri, hava durumu ve bildirimler seçtiğin biçime hemen geçer.': 'These preferences are saved to your web account and synced between both apps. Language, route distances, weather and notifications switch to your chosen format immediately.',
   'Adını değiştir': 'Rename',
   'Bağlantı açılamadı.': 'Could not open the link.',
   'Bağlantıyı kopyala': 'Copy link',

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/preferences/unit_formatter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../plans/data/plan_detail.dart';
@@ -716,11 +717,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
       paces,
       [data.pace],
       (v) => _change(() => data.pace = v),
-      hints: const {
-        'rahat': 'Az yürüyüş · 3–4 km/gün',
-        'normal': 'Standart tempo · 6–8 km/gün',
-        'aktif': 'Her şeyi gör · 10–15 km/gün',
-        'esnek': 'AI karar versin · Değişken',
+      hints: {
+        'rahat':
+            '${context.tr('Az yürüyüş')} · ${UnitFormatter.of(context).distanceRange(3, 4, perDay: true)}',
+        'normal':
+            '${context.tr('Standart tempo')} · ${UnitFormatter.of(context).distanceRange(6, 8, perDay: true)}',
+        'aktif':
+            '${context.tr('Her şeyi gör')} · ${UnitFormatter.of(context).distanceRange(10, 15, perDay: true)}',
+        'esnek': context.tr('AI karar versin · Değişken'),
       },
     ),
     const SizedBox(height: 18),

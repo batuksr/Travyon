@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -180,7 +180,10 @@ function App() {
       setLoading(false);
       return;
     }
+    let unsubscribeSettings: (() => void) | undefined;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      unsubscribeSettings?.();
+      unsubscribeSettings = undefined;
       // Önceki hesabın izinleri yeni hesaba bir render bile taşınmasın.
       resetSettings();
       setUser(currentUser);
@@ -195,10 +198,10 @@ function App() {
       const activePlanOwner = usePlanStore.getState().ownerUid;
       if (activePlanOwner !== currentUser.uid) clearPlan();
 
-      // Kullanıcı giriş yaptığında uygulama ayarlarını Firestore'dan yükle
+      // Web ve mobil değişiklikleri açık oturumda anında eşitle.
       if (currentUser) {
         const settingsOwnerUid = currentUser.uid;
-        getDoc(doc(db, 'users', settingsOwnerUid)).then((snap) => {
+        unsubscribeSettings = onSnapshot(doc(db, 'users', settingsOwnerUid), (snap) => {
           if (auth.currentUser?.uid !== settingsOwnerUid) return;
           if (!snap.exists()) return;
           const d = snap.data();
@@ -235,10 +238,13 @@ function App() {
             analyticsEnabled:   d.analyticsEnabled     ?? false,
             photoURL:           d.photoURL             ?? null,
           });
-        }).catch(() => {});
+        }, () => {});
       }
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribeSettings?.();
+      unsubscribe();
+    };
   }, [setUser, setLoading, setSettings, resetSettings, clearPlan]);
 
   // Not: burada global bir "loading" bekletmesi yok — herkese açık sayfalar

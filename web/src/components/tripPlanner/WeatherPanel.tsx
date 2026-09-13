@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { X, CloudSun, ExternalLink, Droplets, Wind } from 'lucide-react';
 import { DEMO_DAYS, type DemoWeatherCond } from '../../data/tripPlannerDemo';
+import { useAppSettingsStore } from '../../store/useAppSettingsStore';
+import { formatSpeedKmh, formatTemperatureC } from '../../utils/unitFormatters';
 
 interface WeatherPanelProps {
   onClose: () => void;
@@ -20,6 +22,7 @@ const fmtDate = (dateStr: string, locale: string): string =>
 
 const WeatherPanel: React.FC<WeatherPanelProps> = ({ onClose }) => {
   const { t, i18n } = useTranslation();
+  const { tempCelsius, distanceKm } = useAppSettingsStore();
   const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const rangeStart = fmtDate(DEMO_DAYS[0].date, locale);
   const rangeEnd = fmtDate(DEMO_DAYS[DEMO_DAYS.length - 1].date, locale);
@@ -68,11 +71,11 @@ const WeatherPanel: React.FC<WeatherPanelProps> = ({ onClose }) => {
             </div>
             <div className="px-4 pb-3.5">
               <p className="font-semibold text-[24px] text-text">
-                {day.weather.hi}° <span className="text-[14px] text-muted font-medium">/ {day.weather.lo}°C</span>
+                {formatTemperatureC(day.weather.hi, tempCelsius, i18n.language)} <span className="text-[14px] text-muted font-medium">/ {formatTemperatureC(day.weather.lo, tempCelsius, i18n.language)}</span>
               </p>
               <div className="flex gap-4 mt-1.5 text-[12px] text-muted">
                 <span className="inline-flex items-center gap-1"><Droplets size={12} />{t('weatherView.precipitationChance', { value: day.weather.rain })}</span>
-                <span className="inline-flex items-center gap-1"><Wind size={12} />{day.weather.windKmh} km/h</span>
+                <span className="inline-flex items-center gap-1"><Wind size={12} />{formatSpeedKmh(day.weather.windKmh, distanceKm, i18n.language)}</span>
               </div>
             </div>
           </div>

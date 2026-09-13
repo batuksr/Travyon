@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/localized_text.dart';
+import '../../../core/preferences/unit_formatter.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -115,11 +116,22 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
           );
         }
         final fastest = times.values.reduce((a, b) => a < b ? a : b);
+        final distance = distanceBetweenKm(
+          widget.day.stops[widget.index].location!,
+          widget.day.stops[widget.index + 1].location!,
+        );
+        final formattedDistance = UnitFormatter.of(context).distance(distance);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sonraki durak: ${widget.day.stops[widget.index + 1].name}',
+              context.tr(
+                'Sonraki durak: {name} · kuş uçuşu {distance}',
+                values: {
+                  'name': widget.day.stops[widget.index + 1].name,
+                  'distance': formattedDistance,
+                },
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11, color: AppColors.muted),
