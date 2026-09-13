@@ -44,9 +44,9 @@ abstract final class AppTheme {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.forest.withValues(alpha: 0.10),
-        height: 72,
+        height: 64,
         labelTextStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          TextStyle(fontSize: 10.5, height: 1, fontWeight: FontWeight.w600),
         ),
       ),
       chipTheme: ChipThemeData(

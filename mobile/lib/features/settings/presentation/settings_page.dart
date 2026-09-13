@@ -437,7 +437,12 @@ class _SettingsEditorState extends State<SettingsEditor> {
         }
         _values[f.key] = value;
         if (!f.toggle && f.options == null) {
-          _controllers[f.key] = TextEditingController(text: '$value');
+          final displayValue =
+              (f.key == 'nationality' || f.key == 'country') &&
+                  value == 'Türkiye'
+              ? context.tr('Türkiye')
+              : '$value';
+          _controllers[f.key] = TextEditingController(text: displayValue);
         }
       }
     } catch (e) {

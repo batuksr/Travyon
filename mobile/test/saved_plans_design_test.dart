@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/plans/data/travel_plans_repository.dart';
 import 'package:travyon/features/plans/presentation/saved_plans_page.dart';
@@ -17,6 +19,7 @@ void main() {
     VoidCallback? onCreate,
     ValueChanged<TravelPlanSummary>? onOpen,
     FakeManagement? manager,
+    Locale locale = const Locale('tr'),
   }) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -25,6 +28,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        locale: locale,
+        supportedLocales: const [Locale('tr'), Locale('en')],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context)
               .copyWith(textScaler: TextScaler.linear(scale)),
@@ -66,6 +75,21 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('empty library is fully localized in English', (tester) async {
+    await mount(tester, [], locale: const Locale('en'));
+    expect(find.text('My plans'), findsOneWidget);
+    expect(find.text('Continue your next journey from here.'), findsOneWidget);
+    expect(find.text('Start your first route'), findsOneWidget);
+    expect(
+      find.text(
+        'Choose a city to explore. Your saved journeys will be waiting here, on the web and on your phone.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Create my first plan'), findsOneWidget);
+    expect(find.textContaining('İlk rotana'), findsNothing);
+  });
 
   testWidgets('search, empty results and reset retain saved plans', (
     tester,

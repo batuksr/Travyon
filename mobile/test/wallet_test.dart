@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/wallet/data/wallet_repository.dart';
 import 'package:travyon/features/wallet/presentation/wallet_page.dart';
@@ -54,7 +55,12 @@ const flight = WalletEntry(
   details: {'time': '10:00', 'airline': 'THY'},
 );
 
-Future<void> mount(WidgetTester tester, Widget page, {double scale = 1}) async {
+Future<void> mount(
+  WidgetTester tester,
+  Widget page, {
+  double scale = 1,
+  Locale locale = const Locale('tr'),
+}) async {
   tester.view.physicalSize = const Size(360, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -62,9 +68,12 @@ Future<void> mount(WidgetTester tester, Widget page, {double scale = 1}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
-      locale: const Locale('tr'),
-      supportedLocales: const [Locale('tr')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      locale: locale,
+      supportedLocales: const [Locale('tr'), Locale('en')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
       builder: (c, child) => MediaQuery(
         data: MediaQuery.of(c).copyWith(textScaler: TextScaler.linear(scale)),
         child: child!,
@@ -86,6 +95,27 @@ Future<void> see(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets('empty wallet is fully localized in English', (tester) async {
+    final repo = FakeWallet();
+    addTearDown(repo.changes.close);
+    await mount(
+      tester,
+      WalletPage(
+        uid: 'u',
+        repository: repo,
+        plansRepository: FakeTravelPlansRepository([]),
+      ),
+      locale: const Locale('en'),
+    );
+    expect(find.text('Wallet'), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.text('A NEW JOURNEY'), findsOneWidget);
+    expect(find.text('Add your first ticket'), findsOneWidget);
+    expect(find.text('GENERAL WALLET'), findsOneWidget);
+    expect(find.text('Seyahatin'), findsNothing);
+    expect(find.text('Genel cüzdan'), findsNothing);
+  });
+
   test('wallet uses web fields, category whitelist and safe links', () {
     final entry = WalletEntry.fromMap('x', {
       ...flight.toMap(),

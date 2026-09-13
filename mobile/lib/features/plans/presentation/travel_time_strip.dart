@@ -143,36 +143,37 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
               children: [
                 for (final mode in travelModes)
                   if (times.containsKey(mode))
-                    OutlinedButton.icon(
-                      onPressed: _opening ? null : () => _open(mode),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: times[mode] == fastest
-                            ? const Color(0xFFFFE5D3)
-                            : AppColors.surface,
-                        foregroundColor: times[mode] == fastest
-                            ? const Color(0xFF98491C)
-                            : AppColors.text,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        textStyle: const TextStyle(
-                          fontFamily: AppTypography.body,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Tooltip(
+                      message: context.tr(
+                        times[mode] == fastest
+                            ? '{mode} · {duration} · En hızlı'
+                            : '{mode} · {duration}',
+                        values: {
+                          'mode': context.tr(labels[mode]!),
+                          'duration': duration(context, times[mode]!),
+                        },
                       ),
-                      icon: Icon(icons[mode], size: 16),
-                      label: Text(
-                        context.tr(
-                          times[mode] == fastest
-                              ? '{mode} · {duration} · En hızlı'
-                              : '{mode} · {duration}',
-                          values: {
-                            'mode': context.tr(labels[mode]!),
-                            'duration': duration(context, times[mode]!),
-                          },
+                      child: OutlinedButton.icon(
+                        onPressed: _opening ? null : () => _open(mode),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: times[mode] == fastest
+                              ? const Color(0xFFFFE5D3)
+                              : AppColors.surface,
+                          foregroundColor: times[mode] == fastest
+                              ? const Color(0xFF98491C)
+                              : AppColors.text,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          textStyle: const TextStyle(
+                            fontFamily: AppTypography.body,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        icon: Icon(icons[mode], size: 16),
+                        label: Text(duration(context, times[mode]!)),
                       ),
                     ),
               ],

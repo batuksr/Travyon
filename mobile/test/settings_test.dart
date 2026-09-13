@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show MissingPluginException, PlatformException;
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart'
+    show MissingPluginException, PlatformException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/onboarding/data/onboarding_data.dart';
 import 'package:travyon/features/settings/data/settings_fields.dart';
@@ -68,11 +71,89 @@ class FakeSettings implements SettingsRepository {
   Future<String> exportData() async => '{}';
 }
 
-Widget host(Widget child) => MaterialApp(theme: AppTheme.light, home: child);
+Widget host(Widget child, {Locale locale = const Locale('tr')}) => MaterialApp(
+  theme: AppTheme.light,
+  locale: locale,
+  supportedLocales: const [Locale('tr'), Locale('en')],
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    ...GlobalMaterialLocalizations.delegates,
+  ],
+  home: child,
+);
 SettingsSection section(String id) =>
     settingsSections.firstWhere((s) => s.id == id);
 
 void main() {
+  test('English catalog covers every settings field definition', () {
+    const strings = AppLocalizations(Locale('en'));
+    for (final section in settingsSections) {
+      expect(strings.text(section.title), isNot(section.title));
+      if (section.note.isNotEmpty) {
+        expect(strings.text(section.note), isNot(section.note));
+      }
+      for (final field in section.fields) {
+        expect(strings.text(field.label), isNot(field.label));
+      }
+    }
+    expect(
+      settingsPatch(section('profile'), {
+        'nationality': 'Turkey',
+      })['nationality'],
+      'Türkiye',
+    );
+  });
+
+  testWidgets('profile form and discard dialog are fully English', (
+    tester,
+  ) async {
+    final repo = FakeSettings()
+      ..values.addAll({
+        'username': '',
+        'phone': '',
+        'birthDate': '',
+        'nationality': 'Türkiye',
+        'gender': 'Erkek',
+        'address': '',
+      });
+    await tester.pumpWidget(
+      host(
+        SettingsEditor(section: section('profile'), repository: repo),
+        locale: const Locale('en'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final text in [
+      'Profile information',
+      'Full name',
+      'Username',
+      'Phone',
+      'Date of birth',
+      'Nationality',
+      'Turkey',
+      'Gender',
+      'Male',
+    ]) {
+      expect(find.text(text), findsWidgets);
+    }
+    expect(find.text('Kullanıcı adı'), findsNothing);
+    expect(find.text('Telefon'), findsNothing);
+    expect(find.text('Türkiye'), findsNothing);
+
+    await tester.enterText(find.byType(TextFormField).at(1), 'traveler');
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Address'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    expect(find.text('Your unsaved changes will be lost.'), findsOneWidget);
+    expect(find.text('Discard'), findsOneWidget);
+    expect(find.text('Confirm'), findsOneWidget);
+    expect(find.textContaining('Değişiklik'), findsNothing);
+  });
+
   test('missing device plugin does not block cloud settings or hide missing passport data', () async {
     final data = await loadPassportMetadata(
       () async => throw PlatformException(code: 'channel-error'),

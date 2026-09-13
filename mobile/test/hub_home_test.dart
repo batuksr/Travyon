@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/community/data/community_repository.dart';
 import 'package:travyon/features/hub/data/hub_content.dart';
@@ -75,6 +77,7 @@ void main() {
     double width = 390,
     double scale = 1,
     bool failed = false,
+    Locale locale = const Locale('tr'),
   }) async {
     tester.view.reset();
     tester.view.physicalSize = Size(width, 844);
@@ -84,6 +87,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        locale: locale,
+        supportedLocales: const [Locale('tr'), Locale('en')],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context)
               .copyWith(textScaler: TextScaler.linear(scale)),
@@ -125,6 +134,24 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('empty home welcome card is fully localized in English', (
+    tester,
+  ) async {
+    await home(tester, locale: const Locale('en'));
+    expect(
+      find.text('Where should your first\njourney begin?'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Choose your city. Let’s build a daily route around your tastes and pace.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Create my first plan'), findsOneWidget);
+    expect(find.textContaining('İlk yolculuğun'), findsNothing);
+  });
 
   testWidgets('city and weekend actions pass editable onboarding seeds', (
     tester,

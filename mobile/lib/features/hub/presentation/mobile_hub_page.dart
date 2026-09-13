@@ -192,32 +192,36 @@ class _MobileHubPageState extends State<MobileHubPage>
     final name = firstName.isEmpty ? 'Gezgin' : firstName;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        title: const _Wordmark(),
-        actions: [
-          IconButton(
-            tooltip: context.tr('Bildirimler'),
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: _notifications,
-          ),
-          IconButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => SettingsPage(
-                  uid: widget.session.uid,
-                  repository: FirebaseSettingsRepository(widget.session.uid),
-                  onSignOut: widget.repository.signOut,
+      appBar: _selected == 0
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              title: const _Wordmark(),
+              actions: [
+                IconButton(
+                  tooltip: context.tr('Bildirimler'),
+                  icon: const Icon(Icons.notifications_none_rounded),
+                  onPressed: _notifications,
                 ),
-              ),
-            ),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: context.tr('Ayarlar'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SettingsPage(
+                        uid: widget.session.uid,
+                        repository: FirebaseSettingsRepository(
+                          widget.session.uid,
+                        ),
+                        onSignOut: widget.repository.signOut,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.settings_outlined),
+                  tooltip: context.tr('Ayarlar'),
+                ),
+                const SizedBox(width: 8),
+              ],
+            )
+          : null,
       body: SafeArea(
         child: _selected == 1
             ? SavedPlansPage(
@@ -282,12 +286,25 @@ class _MobileHubPageState extends State<MobileHubPage>
           ),
           NavigationDestination(
             key: const ValueKey('nav-create-plan'),
-            icon: const CircleAvatar(
-              radius: 17,
-              backgroundColor: AppColors.accent,
-              child: Icon(Icons.add_rounded, color: Colors.white, size: 23),
+            icon: Semantics(
+              label: context.tr('Yeni plan oluştur'),
+              button: true,
+              child: Transform.translate(
+                offset: const Offset(0, 7),
+                child: const ExcludeSemantics(
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.accent,
+                    child: Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
             ),
-            label: context.tr('Plan oluştur'),
+            label: '',
             tooltip: context.tr('Yeni plan oluştur'),
           ),
           NavigationDestination(

@@ -30,6 +30,39 @@ void main() {
     expect(strings.text('Merhaba, Batu!'), 'Hello, Batu!');
     expect(strings.text('3 gün · 12 durak'), '3 days · 12 stops');
     expect(strings.text('13 Eylül 2026'), '13 September 2026');
+    expect(strings.text('13 Ara 2026'), '13 Dec 2026');
+    expect(strings.text('Ara'), 'Search');
+    expect(strings.text('2. Gün · 13 Eylül'), 'Day 2 · 13 September');
+    expect(
+      strings.text('3 gün · 12 durak · €300 tahmini'),
+      '3 days · 12 stops · €300 estimated',
+    );
+    expect(
+      strings.text('€40 harcandı · €260 kaldı'),
+      '€40 spent · €260 remaining',
+    );
+    expect(strings.text('★ 4.8  ·  10 değerlendirme'), '★ 4.8 · 10 reviews');
+    expect(
+      strings.text('İlk yolculuğun\nnereden başlasın?'),
+      'Where should your first\njourney begin?',
+    );
+    expect(
+      strings.text('Bir sonraki yolculuğuna buradan devam et.'),
+      'Continue your next journey from here.',
+    );
+    expect(strings.text('İlk rotana yer aç'), 'Start your first route');
+    expect(strings.text('Seyahatin'), 'Your trip');
+    expect(strings.text('Genel cüzdan'), 'General wallet');
+    expect(strings.text('İlk biletini ekle'), 'Add your first ticket');
+    expect(strings.text('YENİ BİR YOLCULUK'), 'A NEW JOURNEY');
+    expect(
+      strings.text('2 yolculuk, keşfedilecek yeni hikâyeler.'),
+      '2 journeys, with new stories to discover.',
+    );
+    expect(
+      strings.text('İşlem tamamlanamadı. Bağlantını kontrol edip tekrar dene.'),
+      'Could not complete the action. Check your connection and try again.',
+    );
     expect(
       strings.text(
         'Adım {number}: {label}, şu anki adım',
@@ -127,7 +160,7 @@ void main() {
       navigation.destinations.map(
         (widget) => (widget as NavigationDestination).label,
       ),
-      ['Home', 'Plans', 'Create plan', 'Wallet', 'Community'],
+      ['Home', 'Plans', '', 'Wallet', 'Community'],
     );
     expect(tester.takeException(), isNull);
   });

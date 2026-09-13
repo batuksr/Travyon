@@ -497,6 +497,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           return query.isEmpty
               ? const Iterable<String>.empty()
               : onboardingCities
+                    .map(
+                      (city) => context.l10n.isEnglish
+                          ? englishOnboardingCity(city)
+                          : city,
+                    )
                     .where((c) => c.toLowerCase().contains(query))
                     .take(8);
         },
@@ -911,11 +916,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       hint: 'Durakları görmek için bir güne dokun.',
     ),
     for (final raw in planList(_plan!['dailyPlans'])) _previewDay(planMap(raw)),
-    const SizedBox(height: 16),
-    const Text(
-      'Kaydettiğinde planın bu hesaptaki web ve mobil planlarına eklenecek. Fiyatlar tahminidir; güncel saat ve rezervasyonları kontrol et.',
-      style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.6),
-    ),
   ];
 
   Widget _previewDay(Map<String, dynamic> day) {

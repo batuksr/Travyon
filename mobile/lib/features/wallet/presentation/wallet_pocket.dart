@@ -109,7 +109,9 @@ class WalletPocket extends StatelessWidget {
                     height: cardHeight + 55,
                     color: walletCardColor(cards[i].category),
                     title: cards[i].title,
-                    label: walletCategories[cards[i].category]!.toUpperCase(),
+                    label: context
+                        .tr(walletCategories[cards[i].category]!)
+                        .toUpperCase(),
                     icon: walletIcon(cards[i].category),
                     onTap: () => onOpen(cards[i]),
                   ),
@@ -157,7 +159,7 @@ class WalletPocket extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          city.toUpperCase(),
+                          context.tr(city).toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

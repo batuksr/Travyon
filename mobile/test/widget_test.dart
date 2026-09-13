@@ -32,7 +32,7 @@ void main() {
       expect(bar.destinations.map((w) => (w as NavigationDestination).label), [
         'Ana Sayfa',
         'Planlar',
-        'Plan oluştur',
+        '',
         'Cüzdan',
         'Topluluk',
       ]);

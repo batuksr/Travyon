@@ -208,9 +208,7 @@ void main() {
     (tester) async {
       final fake = EditingFake();
       await mount(tester, fake);
-      await reveal(tester, find.byTooltip('Durak işlemleri'));
-      await tester.tap(find.byTooltip('Durak işlemleri'));
-      await tester.pumpAndSettle();
+      await reveal(tester, find.text('Notu düzenle'));
       await tester.tap(find.text('Notu düzenle'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Yeni not');
@@ -234,18 +232,14 @@ void main() {
         fake.current.first.days.first.stops.first.note,
         'Biletini yanına al',
       );
-      await reveal(tester, find.byTooltip('Durak işlemleri'));
-      await tester.tap(find.byTooltip('Durak işlemleri'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Durağı sil'));
+      await reveal(tester, find.byTooltip('Durağı sil'));
+      await tester.tap(find.byTooltip('Durağı sil'));
       await tester.pumpAndSettle();
       expect(fake.current.first.days.first.stops.length, 1);
       await tester.tap(find.text('Vazgeç'));
       await tester.pumpAndSettle();
       expect(fake.current.first.days.first.stops.length, 1);
-      await tester.tap(find.byTooltip('Durak işlemleri'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Durağı sil'));
+      await tester.tap(find.byTooltip('Durağı sil'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Durağı sil'));
       await tester.pumpAndSettle();
@@ -277,10 +271,8 @@ void main() {
         lng: 12.5,
       ));
       expect(fake.current.first.estimatedCost, 50);
-      await reveal(tester, find.byTooltip('Durak işlemleri').first);
-      await tester.tap(find.byTooltip('Durak işlemleri').first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Aşağı taşı'));
+      await reveal(tester, find.byTooltip('Aşağı taşı').first);
+      await tester.tap(find.byTooltip('Aşağı taşı').first);
       await tester.pumpAndSettle();
       expect(fake.current.first.days.first.stops.first.name, 'Pantheon');
       expect(fake.current.first.days.first.stops.last.raw['webOnly'], {

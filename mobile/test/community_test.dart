@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/community/data/community_repository.dart';
 import 'package:travyon/features/community/presentation/community_page.dart';
@@ -115,12 +117,76 @@ class FakeCommunity implements CommunityRepository {
   }
 }
 
-Widget host(Widget child) => MaterialApp(
+Widget host(Widget child, {Locale locale = const Locale('tr')}) => MaterialApp(
+  locale: locale,
+  supportedLocales: const [Locale('tr'), Locale('en')],
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
   theme: AppTheme.light,
   home: Scaffold(body: child),
 );
 
 void main() {
+  testWidgets(
+    'English community handles search recovery and sharing at large text scale',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 850);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repo = FakeCommunity();
+      addTearDown(repo.events.close);
+      await tester.pumpWidget(
+        host(
+          MediaQuery(
+            data: const MediaQueryData(
+              size: Size(320, 850),
+              textScaler: TextScaler.linear(2),
+            ),
+            child: CommunityPage(
+              uid: 'me',
+              repository: repo,
+              plansRepository: FakeTravelPlansRepository([]),
+            ),
+          ),
+          locale: const Locale('en'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final feedScroll = find
+          .descendant(
+            of: find.byType(ListView).first,
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      Future<void> reveal(Finder target, {bool up = false}) => tester
+          .scrollUntilVisible(target, up ? -220 : 220, scrollable: feedScroll);
+      await reveal(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'NoSuchCity');
+      await tester.pumpAndSettle();
+      await reveal(find.text('No matching routes yet'));
+      expect(find.text('No matching routes yet'), findsOneWidget);
+      await reveal(find.byTooltip('Clear search'), up: true);
+      await tester.tap(find.byTooltip('Clear search'));
+      await tester.pumpAndSettle();
+      await reveal(find.text('Roma'));
+      expect(find.text('Roma'), findsOneWidget);
+      await reveal(find.text('My shares'), up: true);
+      await tester.tap(find.text('My shares'));
+      await tester.pumpAndSettle();
+      await reveal(find.text('Your story starts here'));
+      expect(find.text('Your story starts here'), findsOneWidget);
+      expect(repo.shares, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('public payload excludes private fields and preserves valid route', () {
     final input = savedPlan();
     final payload = publicSharePayload(input);

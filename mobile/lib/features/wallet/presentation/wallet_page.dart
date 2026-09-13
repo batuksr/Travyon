@@ -242,45 +242,52 @@ class _WalletPageState extends State<WalletPage> {
         );
         final loading = wallet.connectionState == ConnectionState.waiting;
         return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           children: [
-            Text(
-              'Seyahat cüzdanın',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
+            Text('Cüzdan', style: Theme.of(context).textTheme.headlineLarge),
             const SizedBox(height: 8),
             const Text(
               'Biletlerin, rezervasyonların ve yolculuk detayların bir arada.',
-              style: TextStyle(color: AppColors.muted, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            DropdownButtonFormField<String>(
-              key: ValueKey('wallet-trip-$selected-${trips.keys.join()}'),
-              initialValue: selected,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: context.tr('Seyahatin'),
-                prefixIcon: const Icon(Icons.route_outlined),
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 14,
+                height: 1.5,
               ),
-              items: trips.entries
-                  .map(
-                    (e) => DropdownMenuItem(
-                      value: e.key,
-                      child: Text(
-                        e.value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: _busy
-                  ? null
-                  : (v) => setState(() {
-                      _planId = v!;
-                      _highlight = null;
-                    }),
             ),
+            if (trips.length > 1) const SizedBox(height: 24),
+            if (trips.length > 1)
+              DropdownButtonFormField<String>(
+                key: ValueKey('wallet-trip-$selected-${trips.keys.join()}'),
+                initialValue: selected,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: context.tr('Seyahatin'),
+                  prefixIcon: const Icon(Icons.route_outlined),
+                ),
+                items: trips.entries
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e.key,
+                        child: Text(
+                          e.value,
+                          style: const TextStyle(
+                            fontFamily: AppTypography.body,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _busy
+                    ? null
+                    : (v) => setState(() {
+                        _planId = v!;
+                        _highlight = null;
+                      }),
+              ),
             if (plans.hasError)
               const Padding(
                 padding: EdgeInsets.only(top: 12),
@@ -288,7 +295,7 @@ class _WalletPageState extends State<WalletPage> {
                   'Seyahat listesi alınamadı. Genel cüzdanı kullanabilir veya tekrar deneyebilirsin.',
                 ),
               ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             if (loading)
               const SizedBox(
                 height: 240,
@@ -315,26 +322,35 @@ class _WalletPageState extends State<WalletPage> {
                 },
                 highlightId: _highlight,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               FilledButton.icon(
                 key: const ValueKey('wallet-add'),
                 onPressed: _busy ? null : () => _edit(null, selected),
                 icon: const Icon(Icons.add),
-                label: const Text('Kayıt ekle'),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                entries.isEmpty
-                    ? 'İlk yolculuk detayını ekle'
-                    : 'Tüm kayıtlar · ${entries.length}',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              if (entries.isEmpty)
-                const Text(
-                  'Uçuşun, otelin veya etkinlik biletin hazır olduğunda buraya ekleyebilirsin.',
-                  style: TextStyle(color: AppColors.muted, height: 1.5),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(54),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                 ),
+                label: const Text('Cüzdanına ekle'),
+              ),
+              if (entries.isEmpty) ...[
+                const SizedBox(height: 24),
+                const _WalletGettingStarted(),
+              ],
+              if (entries.isNotEmpty) ...[
+                const SizedBox(height: 28),
+                Text(
+                  'Tüm kayıtlar · ${entries.length}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.muted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               for (final entry in entries)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
@@ -360,7 +376,7 @@ class _WalletPageState extends State<WalletPage> {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: Text(
-                        '${walletCategories[entry.category]} · ${entry.date.isEmpty ? 'Tarih eklenmedi' : entry.date}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
+                        '${context.tr(walletCategories[entry.category] ?? 'Diğer')} · ${entry.date.isEmpty ? context.tr('Tarih eklenmedi') : entry.date}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _busy ? null : () => _open(entry),
@@ -368,16 +384,66 @@ class _WalletPageState extends State<WalletPage> {
                   ),
                 ),
               if (_busy) const LinearProgressIndicator(),
-              const SizedBox(height: 24),
-              const Text(
-                'Yalnızca sana özel · Aynı hesapla webde ve telefonda',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
-              ),
             ],
           ],
         );
       },
+    ),
+  );
+}
+
+class _WalletGettingStarted extends StatelessWidget {
+  const _WalletGettingStarted();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Neler ekleyebilirsin?',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 18,
+          runSpacing: 12,
+          children: [
+            for (final item in const [
+              (Icons.flight_takeoff_rounded, 'Bilet bilgileri'),
+              (Icons.hotel_outlined, 'Rezervasyonlar'),
+              (Icons.description_outlined, 'Belge bilgileri'),
+            ])
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(item.$1, size: 18, color: AppColors.forest),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      item.$2,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.forest,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Türünü seç, tarihini ve rezervasyon kodunu gir. Kaydettiğin detayları cüzdanındaki karta dokunarak açabilirsin.',
+          style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.6),
+        ),
+      ],
     ),
   );
 }

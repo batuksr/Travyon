@@ -118,9 +118,13 @@ void main() {
         0: {'driving': 5, 'walking': 2, 'cycling': 2},
       });
       await tester.pumpAndSettle();
-      expect(find.textContaining('En hızlı'), findsNWidgets(2));
+      expect(find.textContaining('En hızlı'), findsNothing);
+      expect(find.textContaining('Araba'), findsNothing);
+      expect(find.textContaining('Yürüyüş'), findsNothing);
+      expect(find.textContaining('Bisiklet'), findsNothing);
       expect(find.textContaining('Toplu taşıma'), findsNothing);
-      await tester.tap(find.text('Bisiklet · 2 dk · En hızlı'));
+      expect(find.text('2 dk'), findsNWidgets(2));
+      await tester.tap(find.byTooltip('Bisiklet · 2 dk · En hızlı'));
       await tester.pumpAndSettle();
       expect(opened?.queryParameters['travelmode'], 'bicycling');
       expect(fake.calls, 2);

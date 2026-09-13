@@ -499,8 +499,6 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         symbol: plan.currencySymbol,
         busy: _saving,
         onComplete: () => _save(day, stop, completed: !stop.completed),
-        onExpense: () => _expense(day, stop, plan.currencySymbol),
-        onDirections: () => _directions(stop, plan.destination),
         onAction: (action) => _stopAction(day, stop, action, plan.destination),
         canMoveUp: stop.index > 0,
         canMoveDown: stop.index < day.stops.length - 1,
@@ -658,13 +656,9 @@ class _Number extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CircleAvatar(
     radius: 18,
-    backgroundColor: stop.completed
-        ? AppColors.forest
-        : const Color(0xFFF6E6D7),
-    foregroundColor: stop.completed ? Colors.white : AppColors.accent,
-    child: stop.completed
-        ? const Icon(Icons.check, size: 18)
-        : Text('${stop.index + 1}'),
+    backgroundColor: const Color(0xFFF6E6D7),
+    foregroundColor: AppColors.accent,
+    child: Text('${stop.index + 1}'),
   );
 }
 
@@ -675,8 +669,6 @@ class _StopCard extends StatelessWidget {
     required this.symbol,
     required this.busy,
     required this.onComplete,
-    required this.onExpense,
-    required this.onDirections,
     required this.onAction,
     required this.canMoveUp,
     required this.canMoveDown,
@@ -684,7 +676,7 @@ class _StopCard extends StatelessWidget {
   final PlanStop stop;
   final String symbol;
   final bool busy;
-  final VoidCallback onComplete, onExpense, onDirections;
+  final VoidCallback onComplete;
   final ValueChanged<String> onAction;
   final bool canMoveUp, canMoveDown;
   @override
@@ -707,34 +699,26 @@ class _StopCard extends StatelessWidget {
                 ),
               ),
             ),
-            PopupMenuButton<String>(
-              tooltip: context.tr('Durak işlemleri'),
-              enabled: !busy,
-              onSelected: onAction,
-              icon: const Icon(Icons.more_horiz_rounded),
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'note',
-                  child: Text(stop.note.isEmpty ? 'Not ekle' : 'Notu düzenle'),
+            IconButton(
+              tooltip: context.tr(stop.completed ? 'Gezildi' : 'Gezdim'),
+              onPressed: busy ? null : onComplete,
+              style: IconButton.styleFrom(
+                backgroundColor: stop.completed
+                    ? AppColors.forest
+                    : AppColors.surface,
+                foregroundColor: stop.completed
+                    ? Colors.white
+                    : AppColors.forest,
+                side: BorderSide(
+                  color: stop.completed ? AppColors.forest : AppColors.divider,
                 ),
-                PopupMenuItem(
-                  value: 'up',
-                  enabled: canMoveUp,
-                  child: const Text('Yukarı taşı'),
-                ),
-                PopupMenuItem(
-                  value: 'down',
-                  enabled: canMoveDown,
-                  child: const Text('Aşağı taşı'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text(
-                    'Durağı sil',
-                    style: TextStyle(color: Color(0xFF9B3020)),
-                  ),
-                ),
-              ],
+              ),
+              icon: Icon(
+                stop.completed
+                    ? Icons.check_rounded
+                    : Icons.done_outline_rounded,
+                size: 21,
+              ),
             ),
           ],
         ),
@@ -759,27 +743,26 @@ class _StopCard extends StatelessWidget {
           spacing: 8,
           runSpacing: 4,
           children: [
-            OutlinedButton.icon(
-              onPressed: busy ? null : onComplete,
-              icon: Icon(
-                stop.completed ? Icons.check_circle : Icons.circle_outlined,
-                size: 18,
-              ),
-              label: Text(stop.completed ? 'Gezildi' : 'Gezdim'),
-            ),
             TextButton.icon(
-              onPressed: busy ? null : onExpense,
-              icon: const Icon(Icons.payments_outlined, size: 18),
-              label: Text(
-                stop.actual == null
-                    ? 'Harcama ekle'
-                    : money(symbol, stop.actual!),
-              ),
+              onPressed: busy ? null : () => onAction('note'),
+              icon: const Icon(Icons.note_alt_outlined, size: 19),
+              label: Text(stop.note.isEmpty ? 'Not ekle' : 'Notu düzenle'),
             ),
-            TextButton.icon(
-              onPressed: onDirections,
-              icon: const Icon(Icons.near_me_outlined, size: 18),
-              label: const Text('Yol tarifi'),
+            IconButton.outlined(
+              tooltip: context.tr('Yukarı taşı'),
+              onPressed: busy || !canMoveUp ? null : () => onAction('up'),
+              icon: const Icon(Icons.arrow_upward_rounded, size: 19),
+            ),
+            IconButton.outlined(
+              tooltip: context.tr('Aşağı taşı'),
+              onPressed: busy || !canMoveDown ? null : () => onAction('down'),
+              icon: const Icon(Icons.arrow_downward_rounded, size: 19),
+            ),
+            IconButton.outlined(
+              tooltip: context.tr('Durağı sil'),
+              onPressed: busy ? null : () => onAction('delete'),
+              color: const Color(0xFF9B3020),
+              icon: const Icon(Icons.delete_outline_rounded, size: 19),
             ),
           ],
         ),

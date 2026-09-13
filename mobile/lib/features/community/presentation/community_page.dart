@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/community_repository.dart';
 import 'community_plan_page.dart';
+import 'community_design.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({
@@ -31,6 +32,24 @@ class _CommunityPageState extends State<CommunityPage> {
   String _query = '';
   bool _busy = false;
   final _search = TextEditingController();
+
+  void _selectTab(int tab) => setState(() {
+    _tab = tab;
+    _query = '';
+    _search.clear();
+  });
+
+  void _refresh() => setState(() {
+    _feed = widget.repository.feed();
+    _following = widget.repository.following(widget.uid);
+    _own = widget.repository.sharedBy(widget.uid, own: true);
+    _saved = widget.plansRepository.watchPlans(widget.uid);
+  });
+
+  void _clearSearch() => setState(() {
+    _query = '';
+    _search.clear();
+  });
   @override
   void dispose() {
     _search.dispose();
@@ -88,55 +107,20 @@ class _CommunityPageState extends State<CommunityPage> {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+    key: const PageStorageKey('community-feed'),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
     children: [
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.forest,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.public_rounded,
-              color: Color(0xffffe6bc),
-              size: 30,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Bir rota, bin ilham.',
-              style: Theme.of(context).textTheme.headlineMedium
-                  ?.copyWith(color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Gezginlerin rotalarını keşfet. Kendi yolculuğunla bir başkasına ilham ver.',
-              style: TextStyle(color: Color(0xffe5ecdf), height: 1.5),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 16),
       Row(
         children: [
           Expanded(
             child: Text(
               'Topluluk',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineLarge,
             ),
           ),
           IconButton(
             tooltip: context.tr('Topluluğu yenile'),
-            onPressed: _busy
-                ? null
-                : () => setState(() {
-                    _feed = widget.repository.feed();
-                    _following = widget.repository.following(widget.uid);
-                    _own = widget.repository.sharedBy(widget.uid, own: true);
-                    _saved = widget.plansRepository.watchPlans(widget.uid);
-                  }),
+            onPressed: _busy ? null : _refresh,
             icon: const Icon(Icons.refresh_rounded),
           ),
           IconButton(
@@ -153,41 +137,30 @@ class _CommunityPageState extends State<CommunityPage> {
           ),
         ],
       ),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final (i, label) in [
-              'Keşfet',
-              'Takip ettiklerin',
-              'En beğenilen',
-              'Paylaşımlarım',
-            ].indexed)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(label),
-                  selected: _tab == i,
-                  onSelected: (_) => setState(() {
-                    _tab = i;
-                    _query = '';
-                    _search.clear();
-                  }),
-                ),
-              ),
-          ],
-        ),
+      const SizedBox(height: 4),
+      const Text(
+        'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
+        style: TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
       ),
-      const SizedBox(height: 14),
+      const SizedBox(height: 20),
       TextField(
         controller: _search,
         onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.search),
           hintText: context.tr('Şehir veya gezgin ara'),
+          suffixIcon: _query.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: context.tr('Aramayı temizle'),
+                  onPressed: _clearSearch,
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                ),
         ),
       ),
-      const SizedBox(height: 18),
+      const SizedBox(height: 16),
+      CommunityTabs(selected: _tab, onSelect: _selectTab),
+      const SizedBox(height: 24),
       if (_tab == 3) ...[
         const Text(
           'Paylaşmak istediğin kayıtlı planı seç. Değiştirdiğin bir planı yeniden paylaşarak güncelleyebilirsin.',
@@ -215,8 +188,16 @@ class _CommunityPageState extends State<CommunityPage> {
                       .contains(_query),
                 );
                 if (ids.isEmpty) {
-                  return const CommunityStatus(
-                    message: 'Henüz plan yok. Planlar sekmesinden ilk rotanı oluştur.',
+                  return CommunityEmptyState(
+                    title: _query.isEmpty
+                        ? 'Hikâyen burada başlasın'
+                        : 'Eşleşen plan bulunamadı',
+                    icon: Icons.bookmarks_outlined,
+                    message: _query.isEmpty
+                        ? 'Henüz plan yok. Planlar sekmesinden ilk rotanı oluştur.'
+                        : 'Başka bir şehir veya plan adı dene; filtrelerini de temizleyebilirsin.',
+                    actionLabel: _query.isEmpty ? null : 'Aramayı temizle',
+                    onAction: _query.isEmpty ? null : _clearSearch,
                   );
                 }
                 return Column(
@@ -280,8 +261,12 @@ class _CommunityPageState extends State<CommunityPage> {
             }
             if (!snapshot.hasData) return const CommunityLoading();
             if (snapshot.data!.isEmpty) {
-              return const CommunityStatus(
+              return CommunityEmptyState(
+                title: 'Yol arkadaşlarını keşfet',
+                icon: Icons.people_outline_rounded,
                 message: 'Henüz kimseyi takip etmiyorsun. Bir rotanın gezgin kartından başlayabilirsin.',
+                actionLabel: 'Rotaları keşfet',
+                onAction: () => _selectTab(0),
               );
             }
             return _FollowingPeople(
@@ -319,9 +304,30 @@ class _CommunityPageState extends State<CommunityPage> {
               });
             }
             if (plans.isEmpty) {
-              return const CommunityStatus(
-                message:
-                    'Burada henüz rota yok. İlk ilhamı sen paylaşabilirsin.',
+              return CommunityEmptyState(
+                title: _query.isNotEmpty
+                    ? 'Aradığın rota henüz burada değil'
+                    : _tab == 2
+                    ? 'Yeni favoriler yolda'
+                    : 'İlk ilham senden gelsin',
+                icon: _query.isNotEmpty
+                    ? Icons.search_rounded
+                    : _tab == 2
+                    ? Icons.star_outline_rounded
+                    : Icons.route_rounded,
+                message: _query.isNotEmpty
+                    ? 'Farklı bir şehir veya gezgin adıyla tekrar dene.'
+                    : _tab == 2
+                    ? 'Puanlanan rotalar burada öne çıkar. Keşfettiğin rotaları değerlendirerek katkıda bulun.'
+                    : 'Burada henüz rota yok. İlk ilhamı sen paylaşabilirsin.',
+                actionLabel: _query.isNotEmpty
+                    ? 'Aramayı temizle'
+                    : _tab == 2
+                    ? 'Rotaları keşfet'
+                    : 'Planını paylaş',
+                onAction: _query.isNotEmpty
+                    ? _clearSearch
+                    : () => _selectTab(_tab == 2 ? 0 : 3),
               );
             }
             return Column(
@@ -369,51 +375,140 @@ class CommunityPlanCard extends StatelessWidget {
       opacity: MediaQuery.disableAnimationsOf(context) ? 1 : value,
       child: child,
     ),
-    child: CommunityPanel(
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.divider),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextButton.icon(
-            onPressed: onProfile,
-            icon: const Icon(Icons.account_circle_outlined),
-            label: Text(
-              plan.author,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            plan.destination,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              Chip(label: Text('${plan.summary.dayCount} gün')),
-              Chip(
-                label: Text(
-                  '${plan.summary.currencySymbol}${plan.summary.estimatedCost.toStringAsFixed(0)} tahmini',
+          Material(
+            color: const Color(0xFFEAF0E9),
+            child: InkWell(
+              onTap: onOpen,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.route_rounded,
+                          size: 22,
+                          color: AppColors.forest,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            plan.purpose.isEmpty
+                                ? 'Topluluk rotası'
+                                : plan.purpose,
+                            style: const TextStyle(
+                              color: AppColors.forest,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.north_east_rounded,
+                          size: 20,
+                          color: AppColors.forest,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      plan.destination,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ],
                 ),
               ),
-              if (plan.purpose.isNotEmpty) Chip(label: Text(plan.purpose)),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            plan.ratingCount == 0
-                ? 'Henüz değerlendirme yok'
-                : '★ ${plan.rating.toStringAsFixed(1)} · ${plan.ratingCount} değerlendirme',
-            style: const TextStyle(color: AppColors.forest),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onOpen,
-              icon: const Icon(Icons.route_outlined),
-              label: const Text('Rotayı keşfet'),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    CommunityMetric(
+                      icon: Icons.calendar_today_outlined,
+                      label: '${plan.summary.dayCount} gün',
+                    ),
+                    CommunityMetric(
+                      icon: Icons.place_outlined,
+                      label: '${plan.summary.activityCount} durak',
+                    ),
+                    CommunityMetric(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label:
+                          '${plan.summary.currencySymbol}${plan.summary.estimatedCost.toStringAsFixed(0)} tahmini',
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: onProfile,
+                        style: TextButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.zero,
+                          textStyle: const TextStyle(
+                            fontFamily: AppTypography.body,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        icon: const CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Color(0xFFF5E9DB),
+                          child: Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        label: Text(
+                          plan.author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.text),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  plan.ratingCount == 0
+                      ? 'Henüz değerlendirme yok'
+                      : '★ ${plan.rating.toStringAsFixed(1)} · ${plan.ratingCount} değerlendirme',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onOpen,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    label: const Text('Rotayı keşfet'),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

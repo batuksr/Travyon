@@ -250,5 +250,13 @@ Map<String, dynamic> settingsPatch(
   for (final f in section.fields)
     f.key: f.toggle
         ? values[f.key] == true
-        : '${values[f.key] ?? f.initial}'.trim(),
+        : _canonicalSettingValue(f, '${values[f.key] ?? f.initial}'.trim()),
 };
+
+String _canonicalSettingValue(SettingField field, String value) {
+  if ((field.key == 'nationality' || field.key == 'country') &&
+      value == 'Turkey') {
+    return 'Türkiye';
+  }
+  return value;
+}

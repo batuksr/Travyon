@@ -179,7 +179,7 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${stop.index + 1} · ${stop.period}',
+                          '${stop.index + 1} · ${context.tr(stop.period)}',
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: 8),

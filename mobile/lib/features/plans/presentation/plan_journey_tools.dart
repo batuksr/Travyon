@@ -347,7 +347,7 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                     ),
                   ),
                   subtitle: Text(
-                    '${walletCategories[entry.category] ?? 'Diğer'}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
+                    '${context.tr(walletCategories[entry.category] ?? 'Diğer')}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.muted,
@@ -378,7 +378,7 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                             key: PageStorageKey(
                               'wallet-field-${entry.id}-${item.$1}',
                             ),
-                            '${item.$1}: ${item.$2}',
+                            '${context.tr(item.$1)}: ${item.$2}',
                             style: const TextStyle(fontSize: 13),
                           ),
                         ),
