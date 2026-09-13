@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/plan_detail.dart';
@@ -88,12 +91,16 @@ class _GooglePlaceGalleryState extends State<GooglePlaceGallery> {
                     // Adjacent pages must not trigger additional billable photo requests.
                     if (index != _index) return const SizedBox.expand();
                     return Semantics(
-                      label: '${index + 1}. mekân fotoğrafı',
+                      label: context.tr(
+                        '{count}. mekân fotoğrafı',
+                        values: {'count': index + 1},
+                      ),
                       child: FutureBuilder<String>(
                         key: ValueKey(index),
                         future: _photo,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState != ConnectionState.done) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );

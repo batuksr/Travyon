@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/localized_text.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -289,10 +293,15 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
         ),
         clipBehavior: Clip.antiAlias,
         child: ExpansionTile(
-        key: PageStorageKey('day-wallet-${widget.planId}-${widget.date}'),
+          key: PageStorageKey('day-wallet-${widget.planId}-${widget.date}'),
           leading: const Icon(Icons.wallet_outlined, color: AppColors.forest),
           title: Text(
-            'Günün cüzdan kayıtları${snapshot.hasData && !snapshot.hasError ? ' · ${entries.length}' : ''}',
+            context.tr(
+              snapshot.hasData && !snapshot.hasError
+                  ? 'Günün cüzdan kayıtları · {count}'
+                  : 'Günün cüzdan kayıtları',
+              values: {'count': entries.length},
+            ),
             style: const TextStyle(
               fontFamily: AppTypography.body,
               fontSize: 14,
@@ -326,7 +335,9 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
             else ...[
               for (final entry in entries)
                 ExpansionTile(
-                  key: PageStorageKey('wallet-entry-${entry.id}-${entry.updatedAt}'),
+                  key: PageStorageKey(
+                    'wallet-entry-${entry.id}-${entry.updatedAt}',
+                  ),
                   tilePadding: const EdgeInsets.symmetric(horizontal: 4),
                   title: Text(
                     entry.title,
@@ -363,8 +374,10 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                         ),
                         child: Align(
                           alignment: Alignment.centerLeft,
-                        child: SelectableText(
-                          key: PageStorageKey('wallet-field-${entry.id}-${item.$1}'),
+                          child: SelectableText(
+                            key: PageStorageKey(
+                              'wallet-field-${entry.id}-${item.$1}',
+                            ),
                             '${item.$1}: ${item.$2}',
                             style: const TextStyle(fontSize: 13),
                           ),

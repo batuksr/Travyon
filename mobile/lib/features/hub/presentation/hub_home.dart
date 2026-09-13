@@ -1,6 +1,9 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../community/data/community_repository.dart';
@@ -109,8 +112,10 @@ class HubHome extends StatelessWidget {
               final city = hubCities[index];
               return _CityCard(
                 city: city,
-                onTap: () =>
-                    onCreate(OnboardingData()..destination = city.destination),
+                onTap: () => onCreate(
+                  OnboardingData()
+                    ..destination = city.destinationFor(context.l10n.isEnglish),
+                ),
               );
             },
           ),
@@ -203,6 +208,7 @@ class HubHome extends StatelessWidget {
 
   void _suggestCity(BuildContext context) {
     final city = hubCities[Random().nextInt(hubCities.length)];
+    final english = context.l10n.isEnglish;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -221,19 +227,27 @@ class HubHome extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                '${city.name} nasıl olur?',
+                context.tr(
+                  '{city} nasıl olur?',
+                  values: {'city': city.displayName(english)},
+                ),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
               Text(
-                '${city.caption}. Tarihlerini ve seyahat tarzını seçerek sana özel bir rota hazırlayabilirsin.',
+                english
+                    ? '${city.englishCaption}. Choose your dates and travel style to create a route tailored to you.'
+                    : '${city.caption}. Tarihlerini ve seyahat tarzını seçerek sana özel bir rota hazırlayabilirsin.',
                 style: const TextStyle(color: AppColors.muted, height: 1.5),
               ),
               const SizedBox(height: 22),
               FilledButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  onCreate(OnboardingData()..destination = city.destination);
+                  onCreate(
+                    OnboardingData()
+                      ..destination = city.destinationFor(english),
+                  );
                 },
                 child: const Text('Bu şehri planla'),
               ),
@@ -401,10 +415,15 @@ class _CityCard extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => SizedBox(
+    // Curated suggestions have explicit localized names. Saved/user-authored
+    // destinations elsewhere remain verbatim.
     width: 190,
     child: Semantics(
       button: true,
-      label: '${city.destination} için plan oluştur',
+      label: context.tr(
+        '{city} için plan oluştur',
+        values: {'city': city.destinationFor(context.l10n.isEnglish)},
+      ),
       excludeSemantics: true,
       child: _SurfaceCard(
         onTap: onTap,
@@ -447,14 +466,14 @@ class _CityCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    city.name,
+                    city.displayName(context.l10n.isEnglish),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    city.country,
+                    city.displayCountry(context.l10n.isEnglish),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -464,7 +483,7 @@ class _CityCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    city.caption,
+                    city.displayCaption(context.l10n.isEnglish),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

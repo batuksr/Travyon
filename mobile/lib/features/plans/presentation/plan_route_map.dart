@@ -1,7 +1,11 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -272,7 +276,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
             top: 10,
             right: 12,
             child: IconButton.filled(
-              tooltip: 'Tüm durakları göster',
+              tooltip: context.tr('Tüm durakları göster'),
               onPressed: _fit,
               style: IconButton.styleFrom(
                 backgroundColor: AppColors.surface,
@@ -345,14 +349,14 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Önceki durak',
+                            tooltip: context.tr('Önceki durak'),
                             onPressed: _selected > 0
                                 ? () => _select(_selected - 1)
                                 : null,
                             icon: const Icon(Icons.chevron_left),
                           ),
                           IconButton(
-                            tooltip: 'Sonraki durak',
+                            tooltip: context.tr('Sonraki durak'),
                             onPressed: _selected < widget.stops.length - 1
                                 ? () => _select(_selected + 1)
                                 : null,
@@ -372,7 +376,12 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         Padding(
                           padding: const EdgeInsets.only(left: 4, top: 5),
                           child: Text(
-                            'Çizgiler durak sırasıdır, yol tarifi değildir.${missing > 0 ? ' $missing konum eksik.' : ''}',
+                            context.tr(
+                              missing > 0
+                                  ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+                                  : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
+                              values: {'count': missing},
+                            ),
                             style: const TextStyle(
                               color: AppColors.muted,
                               fontSize: 10,

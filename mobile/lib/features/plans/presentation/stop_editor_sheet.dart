@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 
@@ -100,7 +103,7 @@ class _StopEditorSheetState extends State<StopEditorSheet> {
               minLines: _isNote ? 3 : 1,
               maxLines: _isNote ? 6 : 2,
               decoration: InputDecoration(
-                labelText: _isNote ? 'Not' : 'Mekân adı ve adresi',
+                labelText: context.tr(_isNote ? 'Not' : 'Mekân adı ve adresi'),
               ),
             ),
             if (!_isNote) ...[
@@ -108,7 +111,9 @@ class _StopEditorSheetState extends State<StopEditorSheet> {
               DropdownButtonFormField<String>(
                 initialValue: _period,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Günün bölümü'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Günün bölümü'),
+                ),
                 items: [
                   for (final p in [
                     'Sabah',
@@ -130,7 +135,9 @@ class _StopEditorSheetState extends State<StopEditorSheet> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: 'Tahmini tutar'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Tahmini tutar'),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -138,8 +145,8 @@ class _StopEditorSheetState extends State<StopEditorSheet> {
                 enabled: !_busy,
                 maxLength: 1000,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (isteğe bağlı)',
+                decoration: InputDecoration(
+                  labelText: context.tr('Açıklama (isteğe bağlı)'),
                 ),
               ),
             ],

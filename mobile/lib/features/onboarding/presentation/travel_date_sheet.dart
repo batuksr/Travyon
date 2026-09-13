@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/onboarding_data.dart';
@@ -128,7 +131,7 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                   Row(
                     children: [
                       IconButton(
-                        tooltip: 'Önceki ay',
+                        tooltip: context.tr('Önceki ay'),
                         onPressed:
                             first.isAfter(DateTime(_min.year, _min.month))
                             ? () => setState(
@@ -148,7 +151,7 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Sonraki ay',
+                        tooltip: context.tr('Sonraki ay'),
                         onPressed:
                             first.isBefore(DateTime(_max.year, _max.month))
                             ? () => setState(
@@ -215,7 +218,7 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                           day.isAfter(_start!) &&
                           day.isBefore(_end!);
                       return Semantics(
-                        label: travelDateLabel(dateKey(day)),
+                        label: context.tr(travelDateLabel(dateKey(day))),
                         selected: edge || inside,
                         button: true,
                         enabled: !disabled,

@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/accommodation_repository.dart';
@@ -156,7 +159,7 @@ class _AccommodationFieldState extends State<AccommodationField> {
         minLines: 1,
         maxLines: 3,
         decoration: InputDecoration(
-          hintText: 'Otel adı veya adres yaz',
+          hintText: context.tr('Otel adı veya adres yaz'),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _loading
               ? const Padding(

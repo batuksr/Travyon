@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -184,7 +188,10 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         builder: (context) => AlertDialog(
           title: const Text('Durak silinsin mi?'),
           content: Text(
-            '“${stop.name}” notu ve durağa girilen harcamayla birlikte plandan kaldırılacak. Ayrı cüzdan kayıtların silinmez. Bu ekrandayken geri alabilirsin.',
+            context.tr(
+              '“{name}” notu ve durağa girilen harcamayla birlikte plandan kaldırılacak. Ayrı cüzdan kayıtların silinmez. Bu ekrandayken geri alabilirsin.',
+              values: {'name': stop.name},
+            ),
           ),
           actions: [
             TextButton(
@@ -289,22 +296,22 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (value) => setState(() => _tab = value),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.view_day_outlined),
-            label: 'Günlük plan',
+            icon: const Icon(Icons.view_day_outlined),
+            label: context.tr('Günlük plan'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.route_outlined),
-            label: 'Rota',
+            icon: const Icon(Icons.route_outlined),
+            label: context.tr('Rota'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            label: 'Bütçe',
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            label: context.tr('Bütçe'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.checklist_rounded),
-            label: 'Hazırlık',
+            icon: const Icon(Icons.checklist_rounded),
+            label: context.tr('Hazırlık'),
           ),
         ],
       ),
@@ -562,7 +569,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                   ),
                   trailing: IconButton(
                     key: ValueKey('expense-${day.index}-${stop.index}'),
-                    tooltip: 'Harcama düzenle',
+                    tooltip: context.tr('Harcama düzenle'),
                     onPressed: _saving
                         ? null
                         : () => _expense(day, stop, plan.currencySymbol),
@@ -701,7 +708,7 @@ class _StopCard extends StatelessWidget {
               ),
             ),
             PopupMenuButton<String>(
-              tooltip: 'Durak işlemleri',
+              tooltip: context.tr('Durak işlemleri'),
               enabled: !busy,
               onSelected: onAction,
               icon: const Icon(Icons.more_horiz_rounded),
@@ -875,7 +882,10 @@ class _ExpenseSheetState extends State<_ExpenseSheet> {
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: 'Ödediğin tutar (${widget.symbol})',
+            labelText: context.tr(
+              'Ödediğin tutar ({symbol})',
+              values: {'symbol': widget.symbol},
+            ),
             errorText: error,
           ),
         ),

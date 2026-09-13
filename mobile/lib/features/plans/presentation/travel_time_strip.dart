@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/localized_text.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -69,9 +73,17 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
     'walking': Icons.directions_walk,
     'cycling': Icons.directions_bike,
   };
-  String duration(int minutes) => minutes < 60
-      ? '$minutes dk'
-      : '${minutes ~/ 60} sa${minutes % 60 == 0 ? '' : ' ${minutes % 60} dk'}';
+  String duration(BuildContext context, int minutes) {
+    if (context.l10n.isEnglish) {
+      return minutes < 60
+          ? '$minutes min'
+          : '${minutes ~/ 60} hr${minutes % 60 == 0 ? '' : ' ${minutes % 60} min'}';
+    }
+    return minutes < 60
+        ? '$minutes dk'
+        : '${minutes ~/ 60} sa${minutes % 60 == 0 ? '' : ' ${minutes % 60} dk'}';
+  }
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
@@ -140,7 +152,15 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
                       ),
                       icon: Icon(icons[mode], size: 16),
                       label: Text(
-                        '${labels[mode]} · ${duration(times[mode]!)}${times[mode] == fastest ? ' · En hızlı' : ''}',
+                        context.tr(
+                          times[mode] == fastest
+                              ? '{mode} · {duration} · En hızlı'
+                              : '{mode} · {duration}',
+                          values: {
+                            'mode': context.tr(labels[mode]!),
+                            'duration': duration(context, times[mode]!),
+                          },
+                        ),
                       ),
                     ),
               ],

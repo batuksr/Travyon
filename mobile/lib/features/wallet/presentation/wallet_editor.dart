@@ -1,6 +1,9 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../data/wallet_repository.dart';
 import '../../onboarding/data/onboarding_data.dart' show dateKey;
@@ -184,11 +187,11 @@ class _WalletEditorState extends State<WalletEditor> {
       maxLines: lines,
       keyboardType: key == 'url' ? TextInputType.url : TextInputType.text,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: context.tr(label),
         counterText: '',
         suffixIcon: date || time
             ? IconButton(
-                tooltip: 'Temizle',
+                tooltip: context.tr('Temizle'),
                 onPressed: _busy
                     ? null
                     : () => setState(() {
@@ -208,10 +211,15 @@ class _WalletEditorState extends State<WalletEditor> {
         _dirty = true;
       },
       validator: (v) {
-        if (required && (v ?? '').trim().isEmpty) return 'Başlık gir.';
-        if (date) return _validDate(v);
+        if (required && (v ?? '').trim().isEmpty) {
+          return context.tr('Başlık gir.');
+        }
+        if (date) {
+          final error = _validDate(v);
+          return error == null ? null : context.tr(error);
+        }
         if (key == 'url' && walletUrl(v ?? '') == null) {
-          return 'Geçerli bir http veya https bağlantısı gir.';
+          return context.tr('Geçerli bir http veya https bağlantısı gir.');
         }
         return null;
       },
@@ -227,7 +235,7 @@ class _WalletEditorState extends State<WalletEditor> {
       appBar: AppBar(
         title: Text(widget.entry == null ? 'Cüzdanına ekle' : 'Kaydı düzenle'),
         leading: IconButton(
-          tooltip: 'Geri',
+          tooltip: context.tr('Geri'),
           onPressed: _busy ? null : _back,
           icon: const Icon(Icons.arrow_back),
         ),
@@ -255,7 +263,9 @@ class _WalletEditorState extends State<WalletEditor> {
               DropdownButtonFormField<String>(
                 initialValue: _category,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Kayıt türü'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Kayıt türü'),
+                ),
                 items: walletCategories.entries
                     .map(
                       (e) =>

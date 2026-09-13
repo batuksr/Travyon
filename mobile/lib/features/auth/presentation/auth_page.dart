@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
@@ -149,7 +152,7 @@ class _AuthPageState extends State<AuthPage> {
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
+          tooltip: context.tr('Geri'),
         ),
       ),
       body: SafeArea(
@@ -189,12 +192,12 @@ class _AuthPageState extends State<AuthPage> {
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
                     autofillHints: const [AutofillHints.name],
-                    decoration: const InputDecoration(
-                      labelText: 'Ad soyad',
-                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    decoration: InputDecoration(
+                      labelText: context.tr('Ad soyad'),
+                      prefixIcon: const Icon(Icons.person_outline_rounded),
                     ),
                     validator: (value) => (value?.trim().length ?? 0) < 2
-                        ? 'Adını ve soyadını yaz.'
+                        ? context.tr('Adını ve soyadını yaz.')
                         : null,
                   ),
                   const SizedBox(height: 14),
@@ -205,14 +208,14 @@ class _AuthPageState extends State<AuthPage> {
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
                   autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'E-posta',
-                    prefixIcon: Icon(Icons.mail_outline_rounded),
+                  decoration: InputDecoration(
+                    labelText: context.tr('E-posta'),
+                    prefixIcon: const Icon(Icons.mail_outline_rounded),
                   ),
                   validator: (value) {
                     final email = value?.trim() ?? '';
                     return !email.contains('@') || !email.contains('.')
-                        ? 'Geçerli bir e-posta adresi gir.'
+                        ? context.tr('Geçerli bir e-posta adresi gir.')
                         : null;
                   },
                 ),
@@ -230,7 +233,7 @@ class _AuthPageState extends State<AuthPage> {
                     if (!_loading) _submit();
                   },
                   decoration: InputDecoration(
-                    labelText: 'Şifre',
+                    labelText: context.tr('Şifre'),
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
                       onPressed: () =>
@@ -240,13 +243,13 @@ class _AuthPageState extends State<AuthPage> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                       ),
-                      tooltip: _obscurePassword
-                          ? 'Şifreyi göster'
-                          : 'Şifreyi gizle',
+                      tooltip: context.tr(
+                        _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                      ),
                     ),
                   ),
                   validator: (value) => (value?.length ?? 0) < 8
-                      ? 'Şifren en az 8 karakter olmalı.'
+                      ? context.tr('Şifren en az 8 karakter olmalı.')
                       : null,
                 ),
                 if (!registering)

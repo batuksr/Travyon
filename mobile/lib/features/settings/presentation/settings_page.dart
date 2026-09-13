@@ -2,7 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_locale_controller.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -133,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           IconButton(
             onPressed: _busy ? null : _reload,
-            tooltip: 'Yenile',
+            tooltip: context.tr('Yenile'),
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -237,7 +242,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    'Pasaport hatırlatıcısı yüklenemedi. Diğer ayarlarını kullanabilirsin. ${data['passportLoadError']}',
+                    context.tr(
+                      'Pasaport hatırlatıcısı yüklenemedi. Diğer ayarlarını kullanabilirsin. {error}',
+                      values: {'error': data['passportLoadError']},
+                    ),
                   ),
                 ),
               _group('HESABIM', [
@@ -459,6 +467,10 @@ class _SettingsEditorState extends State<SettingsEditor> {
     try {
       await widget.repository.save(widget.section, values);
       if (mounted) {
+        if (widget.section.id == 'appearance') {
+          await AppLocaleScope.of(context).setLanguage(values['language']);
+          if (!mounted) return;
+        }
         setState(() => _dirty = false);
         communityNotice(context, 'Değişikliklerin kaydedildi.');
       }
@@ -559,7 +571,9 @@ class _SettingsEditorState extends State<SettingsEditor> {
                           ? DropdownButtonFormField<String>(
                               initialValue: '${_values[f.key]}',
                               isExpanded: true,
-                              decoration: InputDecoration(labelText: f.label),
+                              decoration: InputDecoration(
+                                labelText: context.tr(f.label),
+                              ),
                               items: f.options!.entries
                                   .map(
                                     (e) => DropdownMenuItem(
@@ -586,10 +600,10 @@ class _SettingsEditorState extends State<SettingsEditor> {
                                     )
                                   : TextInputType.text,
                               decoration: InputDecoration(
-                                labelText: f.label,
+                                labelText: context.tr(f.label),
                                 suffixIcon: f.date
                                     ? IconButton(
-                                        tooltip: 'Tarihi temizle',
+                                        tooltip: context.tr('Tarihi temizle'),
                                         onPressed: _busy
                                             ? null
                                             : () => setState(() {
@@ -602,7 +616,10 @@ class _SettingsEditorState extends State<SettingsEditor> {
                               ),
                               onTap: f.date ? () => _date(f) : null,
                               onChanged: (_) => setState(() => _dirty = true),
-                              validator: (v) => validateSetting(f, v ?? ''),
+                              validator: (v) {
+                                final error = validateSetting(f, v ?? '');
+                                return error == null ? null : context.tr(error);
+                              },
                             ),
                     ),
                   FilledButton(
@@ -734,24 +751,29 @@ class _SettingsActionPageState extends State<SettingsActionPage> {
                   ? TextInputType.emailAddress
                   : TextInputType.text,
               decoration: InputDecoration(
-                labelText: switch (widget.action) {
+                labelText: context.tr(switch (widget.action) {
                   'email' => 'Yeni e-posta',
                   'password' => 'Yeni şifre',
                   'delete' => 'HESABIMI SİL',
                   _ => 'Konu',
-                },
+                }),
               ),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Bu alanı doldur.';
-                if (widget.action == 'delete' && v != 'HESABIMI SİL') {
-                  return 'Onay metnini aynen yaz.';
+                if (v == null || v.trim().isEmpty) {
+                  return context.tr('Bu alanı doldur.');
+                }
+                final deletePhrase = context.l10n.isEnglish
+                    ? 'DELETE MY ACCOUNT'
+                    : 'HESABIMI SİL';
+                if (widget.action == 'delete' && v != deletePhrase) {
+                  return context.tr('Onay metnini aynen yaz.');
                 }
                 if (widget.action == 'email' &&
                     !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())) {
-                  return 'Geçerli bir e-posta gir.';
+                  return context.tr('Geçerli bir e-posta gir.');
                 }
                 if (widget.action == 'password' && v.length < 8) {
-                  return 'En az 8 karakter kullan.';
+                  return context.tr('En az 8 karakter kullan.');
                 }
                 return null;
               },
@@ -765,14 +787,16 @@ class _SettingsActionPageState extends State<SettingsActionPage> {
                 maxLines: _support ? 6 : 1,
                 maxLength: _support ? 3000 : 150,
                 decoration: InputDecoration(
-                  labelText: _support
-                      ? 'Mesajın (şifre veya rezervasyon kodu yazma)'
-                      : 'Yeni şifreyi tekrar yaz',
+                  labelText: context.tr(
+                    _support
+                        ? 'Mesajın (şifre veya rezervasyon kodu yazma)'
+                        : 'Yeni şifreyi tekrar yaz',
+                  ),
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Bu alanı doldur.'
+                    ? context.tr('Bu alanı doldur.')
                     : !_support && v != _first.text
-                    ? 'Şifreler eşleşmiyor.'
+                    ? context.tr('Şifreler eşleşmiyor.')
                     : null,
               ),
             if (!_support && widget.passwordProvider) ...[
@@ -781,9 +805,12 @@ class _SettingsActionPageState extends State<SettingsActionPage> {
                 controller: _password,
                 enabled: !_busy,
                 obscureText: !_show,
-                decoration: const InputDecoration(labelText: 'Mevcut şifren'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Mevcut şifreni gir.' : null,
+                decoration: InputDecoration(
+                  labelText: context.tr('Mevcut şifren'),
+                ),
+                validator: (v) => v == null || v.isEmpty
+                    ? context.tr('Mevcut şifreni gir.')
+                    : null,
               ),
             ],
             if (!_support)
@@ -909,7 +936,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     ),
                     if (p['createdAt'] is Timestamp)
                       Text(dateKey((p['createdAt'] as Timestamp).toDate())),
-                    Text('İşlem: ${p['id']}'),
+                    Text(context.tr('İşlem: {id}', values: {'id': p['id']})),
                   ],
                 ),
               ),

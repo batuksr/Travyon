@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/theme/app_theme.dart';
 
@@ -82,12 +85,14 @@ class OnboardingProgress extends StatelessWidget {
           children: [
             for (var i = 0; i < labels.length; i++) ...[
               Semantics(
-                label:
-                    '${i + 1}. adım, ${labels[i]}${i < step
-                        ? ', tamamlandı'
-                        : i == step
-                        ? ', şu anki adım'
-                        : ''}',
+                label: context.tr(
+                  i < step
+                      ? 'Adım {number}: {label}, tamamlandı'
+                      : i == step
+                      ? 'Adım {number}: {label}, şu anki adım'
+                      : 'Adım {number}: {label}',
+                  values: {'number': i + 1, 'label': context.tr(labels[i])},
+                ),
                 excludeSemantics: true,
                 child: AnimatedContainer(
                   duration: MediaQuery.disableAnimationsOf(context)

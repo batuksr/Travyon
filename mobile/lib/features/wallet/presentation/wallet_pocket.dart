@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/wallet_repository.dart';
@@ -44,7 +47,7 @@ class WalletPocket extends StatelessWidget {
     final count = cards.isEmpty ? 1 : cards.length;
     final height = 170 + cardHeight * count;
     return Semantics(
-      label: 'Seyahat cüzdanı',
+      label: context.tr('Seyahat cüzdanı'),
       child: SizedBox(
         height: height + 16,
         child: Stack(

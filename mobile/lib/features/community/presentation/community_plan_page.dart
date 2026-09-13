@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../plans/data/plan_detail.dart';
@@ -262,7 +266,10 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
                       children: [
                         for (var i = 1; i <= 5; i++)
                           IconButton(
-                            tooltip: '$i yıldız ver',
+                            tooltip: context.tr(
+                              '{count} yıldız ver',
+                              values: {'count': i},
+                            ),
                             onPressed: _busy ? null : () => _rate(i),
                             icon: Icon(
                               i <= (_myRating ?? 0)

@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -58,7 +62,10 @@ class _WalletPageState extends State<WalletPage> {
       builder: (c) => AlertDialog(
         title: const Text('Kayıt silinsin mi?'),
         content: Text(
-          '“${entry.title}” web ve mobil cüzdanından kaldırılacak. Bu işlem geri alınamaz.',
+          context.tr(
+            '“{title}” web ve mobil cüzdanından kaldırılacak. Bu işlem geri alınamaz.',
+            values: {'title': entry.title},
+          ),
         ),
         actions: [
           TextButton(
@@ -106,7 +113,7 @@ class _WalletPageState extends State<WalletPage> {
                 const SizedBox(width: 12),
                 Expanded(child: Text(walletCategories[entry.category]!)),
                 IconButton(
-                  tooltip: 'Kapat',
+                  tooltip: context.tr('Kapat'),
                   onPressed: () => Navigator.pop(c),
                   icon: const Icon(Icons.close),
                 ),
@@ -135,7 +142,7 @@ class _WalletPageState extends State<WalletPage> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Kodu kopyala',
+                    tooltip: context.tr('Kodu kopyala'),
                     onPressed: () async {
                       try {
                         await Clipboard.setData(
@@ -251,9 +258,9 @@ class _WalletPageState extends State<WalletPage> {
               key: ValueKey('wallet-trip-$selected-${trips.keys.join()}'),
               initialValue: selected,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Seyahatin',
-                prefixIcon: Icon(Icons.route_outlined),
+              decoration: InputDecoration(
+                labelText: context.tr('Seyahatin'),
+                prefixIcon: const Icon(Icons.route_outlined),
               ),
               items: trips.entries
                   .map(

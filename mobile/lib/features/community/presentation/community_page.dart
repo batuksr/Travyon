@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../plans/data/travel_plans_repository.dart';
@@ -125,7 +128,7 @@ class _CommunityPageState extends State<CommunityPage> {
             ),
           ),
           IconButton(
-            tooltip: 'Topluluğu yenile',
+            tooltip: context.tr('Topluluğu yenile'),
             onPressed: _busy
                 ? null
                 : () => setState(() {
@@ -137,7 +140,7 @@ class _CommunityPageState extends State<CommunityPage> {
             icon: const Icon(Icons.refresh_rounded),
           ),
           IconButton(
-            tooltip: 'Topluluk gizliliği',
+            tooltip: context.tr('Topluluk gizliliği'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => CommunityPrivacyPage(
@@ -179,9 +182,9 @@ class _CommunityPageState extends State<CommunityPage> {
       TextField(
         controller: _search,
         onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search),
-          hintText: 'Şehir veya gezgin ara',
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.search),
+          hintText: context.tr('Şehir veya gezgin ara'),
         ),
       ),
       const SizedBox(height: 18),

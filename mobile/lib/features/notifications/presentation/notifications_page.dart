@@ -1,6 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../community/presentation/community_page.dart';
@@ -221,12 +224,12 @@ class _NotificationsPageState extends State<NotificationsPage>
         title: const Text('Bildirimler'),
         actions: [
           IconButton(
-            tooltip: 'Bildirim ayarları',
+            tooltip: context.tr('Bildirim ayarları'),
             onPressed: widget.onSettings,
             icon: const Icon(Icons.tune),
           ),
           IconButton(
-            tooltip: 'Bildirimleri yenile',
+            tooltip: context.tr('Bildirimleri yenile'),
             onPressed: _busy
                 ? null
                 : () {
@@ -322,7 +325,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                               ),
                             ),
                             IconButton(
-                              tooltip: 'Bildirimi kapat',
+                              tooltip: context.tr('Bildirimi kapat'),
                               onPressed: !_storageReady || _busy
                                   ? null
                                   : () => _dismiss({n.id}),

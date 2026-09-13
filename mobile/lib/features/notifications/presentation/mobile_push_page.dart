@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
 
 import '../data/firebase_mobile_push.dart';
 import '../data/mobile_push_controller.dart';
@@ -130,7 +132,7 @@ class _MobilePushPageState extends State<MobilePushPage>
                   ],
                   const SizedBox(height: 24),
                   const Text(
-                    'İlk aşama: izin, cihaz kaydı ve test gönderimi. Otomatik seyahat ve topluluk push bildirimleri henüz bağlı değil. Kilit ekranındaki test mesajı özel seyahat veya cüzdan bilgisi içermez.',
+                    'Gezi yaklaşınca ve toplulukta takip, puan veya yeni paylaşım olduğunda tercihlerin açıksa bildirim alırsın. Kilit ekranındaki mesajlar özel seyahat veya cüzdan bilgisi içermez.',
                   ),
                 ],
               ),

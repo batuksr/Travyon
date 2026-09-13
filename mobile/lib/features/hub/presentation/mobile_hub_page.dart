@@ -1,6 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
@@ -58,7 +61,7 @@ class _MobileHubPageState extends State<MobileHubPage>
         SnackBar(
           content: const Text('Yeni bir Travyon bildirimin var.'),
           action: SnackBarAction(
-            label: 'Bildirimler',
+            label: context.tr('Bildirimler'),
             onPressed: _notifications,
           ),
         ),
@@ -195,7 +198,7 @@ class _MobileHubPageState extends State<MobileHubPage>
         title: const _Wordmark(),
         actions: [
           IconButton(
-            tooltip: 'Bildirimler',
+            tooltip: context.tr('Bildirimler'),
             icon: const Icon(Icons.notifications_none_rounded),
             onPressed: _notifications,
           ),
@@ -210,7 +213,7 @@ class _MobileHubPageState extends State<MobileHubPage>
               ),
             ),
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Ayarlar',
+            tooltip: context.tr('Ayarlar'),
           ),
           const SizedBox(width: 8),
         ],
@@ -268,32 +271,32 @@ class _MobileHubPageState extends State<MobileHubPage>
             _selected = index < 2 ? index : index - 1;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Ana Sayfa',
+            icon: const Icon(Icons.home_outlined),
+            label: context.tr('Ana Sayfa'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.route_outlined),
-            label: 'Planlar',
+            icon: const Icon(Icons.route_outlined),
+            label: context.tr('Planlar'),
           ),
           NavigationDestination(
-            key: ValueKey('nav-create-plan'),
-            icon: CircleAvatar(
+            key: const ValueKey('nav-create-plan'),
+            icon: const CircleAvatar(
               radius: 17,
               backgroundColor: AppColors.accent,
               child: Icon(Icons.add_rounded, color: Colors.white, size: 23),
             ),
-            label: 'Plan oluştur',
-            tooltip: 'Yeni plan oluştur',
+            label: context.tr('Plan oluştur'),
+            tooltip: context.tr('Yeni plan oluştur'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            label: 'Cüzdan',
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            label: context.tr('Cüzdan'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            label: 'Topluluk',
+            icon: const Icon(Icons.people_outline_rounded),
+            label: context.tr('Topluluk'),
           ),
         ],
       ),

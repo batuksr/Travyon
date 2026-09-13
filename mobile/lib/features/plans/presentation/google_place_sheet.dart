@@ -1,5 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -77,7 +81,7 @@ class _GooglePlaceSheetState extends State<GooglePlaceSheet> {
               ),
             ),
             IconButton(
-              tooltip: 'Kapat',
+              tooltip: context.tr('Kapat'),
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.close),
             ),

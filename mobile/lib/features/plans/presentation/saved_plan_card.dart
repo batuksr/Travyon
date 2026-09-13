@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/travel_plans_repository.dart';
@@ -190,7 +193,7 @@ class SavedPlanCard extends StatelessWidget {
                       )
                     else
                       PopupMenuButton<String>(
-                        tooltip: 'Plan işlemleri',
+                        tooltip: context.tr('Plan işlemleri'),
                         onSelected: onAction,
                         icon: const Icon(Icons.more_horiz_rounded),
                         itemBuilder: (_) => const [

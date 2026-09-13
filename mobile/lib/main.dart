@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'app/travyon_app.dart';
 import 'core/firebase/firebase_environment.dart';
 import 'core/firebase/mobile_app_check.dart';
+import 'core/localization/app_locale_controller.dart';
 import 'core/navigation/travyon_deep_links.dart';
 import 'firebase_options.dart';
 import 'features/notifications/data/firebase_mobile_push.dart';
@@ -28,5 +29,11 @@ Future<void> main() async {
     // A malformed platform link must not prevent normal app startup.
   }
 
-  runApp(TravyonApp(initializationError: initializationError));
+  final localeController = await AppLocaleController.load();
+  runApp(
+    TravyonApp(
+      initializationError: initializationError,
+      localeController: localeController,
+    ),
+  );
 }

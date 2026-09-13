@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -129,7 +133,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
                 ),
               ),
               IconButton(
-                tooltip: 'Planları yenile',
+                tooltip: context.tr('Planları yenile'),
                 onPressed: _refresh,
                 icon: const Icon(Icons.refresh_rounded),
               ),
@@ -171,11 +175,11 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search_rounded),
-                hintText: 'Şehir veya plan adı ara',
+                hintText: context.tr('Şehir veya plan adı ara'),
                 suffixIcon: _search.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Aramayı temizle',
+                        tooltip: context.tr('Aramayı temizle'),
                         onPressed: () => setState(() => _search.clear()),
                         icon: const Icon(Icons.close_rounded),
                       ),
@@ -382,7 +386,10 @@ class _RenameDialogState extends State<_RenameDialog> {
         controller: _name,
         enabled: !_busy,
         maxLength: 100,
-        decoration: InputDecoration(labelText: 'Plan adı', errorText: _error),
+        decoration: InputDecoration(
+          labelText: context.tr('Plan adı'),
+          errorText: _error == null ? null : context.tr(_error!),
+        ),
       ),
       actions: [
         TextButton(

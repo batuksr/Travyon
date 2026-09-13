@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/checklist_catalog.dart';
@@ -222,7 +225,10 @@ class _ChecklistHero extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Semantics(
-          label: 'Hazırlık ilerlemesi yüzde $progress',
+          label: context.tr(
+            'Hazırlık ilerlemesi yüzde {progress}',
+            values: {'progress': progress},
+          ),
           child: Container(
             width: 76,
             height: 76,
@@ -442,8 +448,8 @@ class _ChecklistRow extends StatelessWidget {
     button: true,
     checked: checked,
     excludeSemantics: true,
-    label: item.label,
-    hint: checked ? 'Tamamlandı' : item.tip,
+    label: context.tr(item.label),
+    hint: checked ? context.tr('Tamamlandı') : context.tr(item.tip),
     child: InkWell(
       onTap: busy ? null : onTap,
       child: Padding(

@@ -2,33 +2,64 @@ import '../../onboarding/data/onboarding_data.dart';
 import '../../plans/data/travel_plans_repository.dart';
 
 class HubCity {
-  const HubCity(this.name, this.country, this.caption, this.photo);
+  const HubCity(
+    this.name,
+    this.country,
+    this.caption,
+    this.photo, {
+    required this.englishName,
+    required this.englishCountry,
+    required this.englishCaption,
+  });
   final String name, country, caption, photo;
+  final String englishName, englishCountry, englishCaption;
   String get destination => '$name, $country';
+  String displayName(bool english) => english ? englishName : name;
+  String displayCountry(bool english) => english ? englishCountry : country;
+  String displayCaption(bool english) => english ? englishCaption : caption;
+  String destinationFor(bool english) =>
+      '${displayName(english)}, ${displayCountry(english)}';
   String get imageUrl =>
       'https://images.unsplash.com/$photo?auto=format&fit=crop&w=600&q=80';
 }
 
 // The same destination photos used in web/src/data/cityGuideVisuals.ts.
 const hubCities = [
-  HubCity('Roma', 'İtalya', 'Tarihin izinde', 'photo-1552832230-c0197dd311b5'),
+  HubCity(
+    'Roma',
+    'İtalya',
+    'Tarihin izinde',
+    'photo-1552832230-c0197dd311b5',
+    englishName: 'Rome',
+    englishCountry: 'Italy',
+    englishCaption: 'Follow the traces of history',
+  ),
   HubCity(
     'İstanbul',
     'Türkiye',
     'İki kıta, bir yolculuk',
     'photo-1524231757912-21f4fe3a7200',
+    englishName: 'Istanbul',
+    englishCountry: 'Türkiye',
+    englishCaption: 'Two continents, one journey',
   ),
   HubCity(
     'Paris',
     'Fransa',
     'Sokak sokak keşfet',
     'photo-1502602898657-3e91760cbb34',
+    englishName: 'Paris',
+    englishCountry: 'France',
+    englishCaption: 'Discover it street by street',
   ),
   HubCity(
     'Barselona',
     'İspanya',
     'Şehrin renklerini izle',
     'photo-1583422409516-2895a77efded',
+    englishName: 'Barcelona',
+    englishCountry: 'Spain',
+    englishCaption: 'Follow the colors of the city',
   ),
 ];
 

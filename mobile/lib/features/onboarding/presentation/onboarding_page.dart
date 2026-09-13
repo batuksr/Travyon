@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../../../core/localization/localized_text.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../plans/data/plan_detail.dart';
@@ -209,6 +212,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (mounted) setState(() => _elapsed++);
     });
     try {
+      data.outputLanguage = context.l10n.isEnglish ? 'en' : 'tr';
       final plan = await widget.repository.generate(data);
       if (mounted) {
         setState(() => _plan = plan);
@@ -279,7 +283,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         hour: int.parse(parts[0]),
         minute: int.parse(parts[1]),
       ),
-      helpText: arrival ? 'Varış saati' : 'Ayrılış saati',
+      helpText: context.tr(arrival ? 'Varış saati' : 'Ayrılış saati'),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
         child: child!,
@@ -307,7 +311,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Geri',
+          tooltip: context.tr('Geri'),
           onPressed: _busy ? null : _back,
           icon: const Icon(Icons.arrow_back),
         ),
@@ -505,9 +509,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           controller: controller,
           focusNode: focus,
           maxLength: 200,
-          decoration: const InputDecoration(
-            hintText: 'Örn. Roma, İtalya',
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            hintText: context.tr('Örn. Roma, İtalya'),
+            prefixIcon: const Icon(Icons.search),
             counterText: '',
           ),
           onChanged: (value) => _change(() {
@@ -527,7 +531,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           Semantics(
             button: true,
-            label: 'Gidiş ve dönüş tarihlerini seç',
+            label: context.tr('Gidiş ve dönüş tarihlerini seç'),
             child: InkWell(
               key: const ValueKey('dates'),
               onTap: _dates,
@@ -581,7 +585,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Kişi azalt',
+            tooltip: context.tr('Kişi azalt'),
             onPressed: data.peopleCount > 1
                 ? () => _change(() => data.peopleCount--)
                 : null,
@@ -595,7 +599,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           IconButton(
-            tooltip: 'Kişi artır',
+            tooltip: context.tr('Kişi artır'),
             onPressed: data.peopleCount < 15
                 ? () => _change(() => data.peopleCount++)
                 : null,
@@ -616,7 +620,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             controller: _budgetController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: 'Bütçe',
+              labelText: context.tr('Bütçe'),
               prefixText: '${currencies[data.currencyCode]} ',
             ),
             onChanged: (value) => _change(
@@ -658,7 +662,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
-                'Kişi başı günlük yaklaşık ${currencies[data.currencyCode]}${(data.budget / data.dayCount / data.peopleCount).toStringAsFixed(0)}',
+                context.tr(
+                  'Kişi başı günlük yaklaşık {amount}',
+                  values: {
+                    'amount':
+                        '${currencies[data.currencyCode]}${(data.budget / data.dayCount / data.peopleCount).toStringAsFixed(0)}',
+                  },
+                ),
                 style: const TextStyle(
                   color: AppColors.muted,
                   fontSize: 12,
