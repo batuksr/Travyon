@@ -92,8 +92,8 @@ Gerçek AI yanıt kalitesi, kotalar ve canlı kayıt ayrıca cihazda doğrulanma
 ### Telefon için plan deneyimi
 
 - Hub’daki plan kartları ve “Yolculuğuna devam et” düğmesi detay ekranını açar.
-- Hub / Planlar / Cüzdan alt menüsü çalışır; topluluk sekmesi henüz yoktur.
-- Plan detayında Günlük plan, Rota ve Bütçe ayrı görünümlerdir.
+- Ana Sayfa / Planlar / Plan oluştur / Cüzdan / Topluluk alt menüsü çalışır.
+- Plan detayında Günlük plan, Rota, Bütçe ve Hazırlık ayrı görünümlerdir.
 - Gün seçimi yatay kaydırılır. Uzun durak açıklamaları “Devamını oku” ile açılır.
 - “Gezdim” ve gerçek harcama kayıtları Firestore’a yazılır. Eşzamanlı değişmiş
   duraklar üzerine yazmak yerine hata gösterilir; webin diğer alanları korunur.
@@ -395,11 +395,11 @@ Testler: `flutter.bat test test/mobile_push_test.dart`; kökten
 
 ## Ortak seyahat kontrol listesi
 
-Web kontrol listesi artık `users/{uid}/plans/{planId}/checklist/state` belgesini
+Web ve mobil kontrol listesi `users/{uid}/plans/{planId}/checklist/state` belgesini
 dinler. Eski tarayıcı localStorage kaydı ilk açılışta bir kez Firestore'a taşınır;
-sonraki değişiklikler web ve mobil için aynı güvenli veri modelinde tutulur. İstemci
-yalnızca tanımlı kontrol maddelerini yazabilir. Mobil kontrol listesi arayüzü sonraki
-frontend aşamasında bu belgeye bağlanacaktır.
+sonraki değişiklikler iki istemcide aynı güvenli veri modelinde tutulur. Mobilde plan
+detayındaki Hazırlık sekmesi 23 ortak maddeyi, grup ilerlemesini ve çevrimdışı senkron
+durumunu gösterir. İstemci yalnızca tanımlı kontrol maddelerini yazabilir.
 
 ## Plan bağlantıları
 

@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../data/plan_detail.dart';
-import '../data/travel_plans_repository.dart';
-import 'plan_route_map.dart';
-import '../data/plan_editing_repository.dart';
-import 'stop_editor_sheet.dart';
-import 'plan_journey_tools.dart';
+import '../../checklist/data/checklist_repository.dart';
+import '../../checklist/presentation/travel_checklist_panel.dart';
 import '../../wallet/data/wallet_repository.dart';
+import '../data/plan_detail.dart';
+import '../data/plan_editing_repository.dart';
 import '../data/travel_times_repository.dart';
+import '../data/travel_plans_repository.dart';
+import 'plan_journey_tools.dart';
+import 'plan_route_map.dart';
+import 'stop_editor_sheet.dart';
 import 'travel_time_strip.dart';
 
 String money(String symbol, double value) =>
@@ -44,6 +46,7 @@ class PlanDetailPage extends StatefulWidget {
     this.editingRepository,
     this.walletRepository,
     this.travelTimesRepository,
+    this.checklistRepository,
   });
   final String uid;
   final String planId;
@@ -52,6 +55,7 @@ class PlanDetailPage extends StatefulWidget {
   final PlanEditingRepository? editingRepository;
   final WalletRepository? walletRepository;
   final TravelTimesRepository? travelTimesRepository;
+  final ChecklistRepository? checklistRepository;
   @override
   State<PlanDetailPage> createState() => _PlanDetailPageState();
 }
@@ -65,6 +69,8 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
     widget.travelTimesRepository ?? FirebaseTravelTimesRepository(),
   );
   late final _wallet = widget.walletRepository ?? FirebaseWalletRepository();
+  late final _checklist =
+      widget.checklistRepository ?? FirebaseChecklistRepository();
   late final _editing =
       widget.editingRepository ?? FirebasePlanEditingRepository();
   final _history = <({PlanDay before, PlanDay after})>[];
@@ -296,6 +302,10 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
             icon: Icon(Icons.account_balance_wallet_outlined),
             label: 'Bütçe',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.checklist_rounded),
+            label: 'Hazırlık',
+          ),
         ],
       ),
       body: SafeArea(
@@ -358,7 +368,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                     ),
                   ),
                 ),
-                if (_tab != 2)
+                if (_tab < 2)
                   SizedBox(
                     height: _tab == 1 ? 60 : 72,
                     child: ListView.separated(
@@ -401,6 +411,14 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                             destination: plan.destination,
                             onDirections: (stop) =>
                                 _directions(stop, plan.destination),
+                          )
+                        : _tab == 3
+                        ? TravelChecklistPanel(
+                            key: ValueKey('checklist-${plan.id}'),
+                            uid: widget.uid,
+                            planId: widget.planId,
+                            destination: plan.destination,
+                            repository: _checklist,
                           )
                         : ListView(
                             key: ValueKey('$_tab-$selected'),

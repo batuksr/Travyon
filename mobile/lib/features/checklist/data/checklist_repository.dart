@@ -1,35 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/firebase/firebase_services.dart';
+import 'checklist_catalog.dart';
 
-const travelChecklistItemIds = <String>{
-  'passport',
-  'visa',
-  'ticket',
-  'hotel',
-  'insurance',
-  'emergency',
-  'cash',
-  'card',
-  'backup',
-  'medicine',
-  'firstaid',
-  'sunscreen',
-  'vaccine',
-  'charger',
-  'powerbank',
-  'simcard',
-  'offline',
-  'transport',
-  'clothes',
-  'shoes',
-  'lock',
-  'copies',
-  'notify',
-};
+class TravelChecklistState {
+  const TravelChecklistState({
+    required this.checkedIds,
+    this.fromCache = false,
+    this.hasPendingWrites = false,
+  });
+
+  final Set<String> checkedIds;
+  final bool fromCache;
+  final bool hasPendingWrites;
+}
+
+Set<String> normalizeTravelChecklistIds(Object? value) {
+  if (value is! List) return <String>{};
+  return value
+      .whereType<String>()
+      .where(travelChecklistItemIds.contains)
+      .toSet();
+}
 
 abstract interface class ChecklistRepository {
-  Stream<Set<String>> watch(String uid, String planId);
+  Stream<TravelChecklistState> watch(String uid, String planId);
   Future<void> toggle(String uid, String planId, String itemId, bool checked);
   Future<void> reset(String uid, String planId);
 }
@@ -45,14 +40,18 @@ class FirebaseChecklistRepository implements ChecklistRepository {
           .doc('state');
 
   @override
-  Stream<Set<String>> watch(String uid, String planId) =>
-      _state(uid, planId).snapshots().map((snapshot) {
-        final raw = snapshot.data()?['checkedIds'];
-        if (raw is! List) return <String>{};
-        return raw
-            .whereType<String>()
-            .where(travelChecklistItemIds.contains)
-            .toSet();
+  Stream<TravelChecklistState> watch(String uid, String planId) =>
+      _state(uid, planId).snapshots(includeMetadataChanges: true).map((
+        snapshot,
+      ) {
+        final checked = normalizeTravelChecklistIds(
+          snapshot.data()?['checkedIds'],
+        );
+        return TravelChecklistState(
+          checkedIds: checked,
+          fromCache: snapshot.metadata.isFromCache,
+          hasPendingWrites: snapshot.metadata.hasPendingWrites,
+        );
       });
 
   @override
