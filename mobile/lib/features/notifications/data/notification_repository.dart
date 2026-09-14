@@ -4,8 +4,13 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/firebase/firebase_services.dart';
+import '../../../core/preferences/unit_formatter.dart';
 import '../../plans/data/plan_detail.dart';
 import '../../plans/data/travel_plans_repository.dart';
+
+enum TravelNoticeKind { trip, ticket, budget, weather }
+
+enum NoticeDestination { plan, checklist, budget, weather }
 
 class TravelNotice {
   const TravelNotice({
@@ -14,12 +19,34 @@ class TravelNotice {
     required this.body,
     required this.planId,
     this.level = 2,
+    this.kind = TravelNoticeKind.trip,
+    this.destination = NoticeDestination.plan,
+    this.actionLabel = 'İlgili planı aç',
+    this.actionUri,
+    this.bodyValues = const {},
+    this.contextLabel = '',
+    this.sourceUri,
+    this.sourceLabel,
+    this.tips = const [],
   });
   final String id, title, body, planId;
 
   /// 0: important, 1: reminder, 2: information.
   final int level;
+  final TravelNoticeKind kind;
+  final NoticeDestination destination;
+  final String actionLabel, contextLabel;
+  final Uri? actionUri, sourceUri;
+  final String? sourceLabel;
+  final Map<String, Object?> bodyValues;
+  final List<String> tips;
 }
+
+Uri ticketSearchUri(String place, String destination) => Uri.https(
+  'www.getyourguide.com',
+  '/s/',
+  {'q': '$place, $destination', 'locale_autoredirect_optout': '1'},
+);
 
 DateTime calendarDay(DateTime value) =>
     DateTime.utc(value.year, value.month, value.day);
@@ -75,6 +102,7 @@ List<TravelNotice> buildTravelNotices(
   List<TravelPlanSummary> plans,
   DateTime now, {
   bool enabled = true,
+  UnitFormatter? formatter,
 }) {
   if (!enabled) return [];
   final notices = <TravelNotice>[];
@@ -93,6 +121,10 @@ List<TravelNotice> buildTravelNotices(
         TravelNotice(
           id: '${p.id}:${p.startDate}:$kind',
           planId: p.id,
+          kind: TravelNoticeKind.trip,
+          destination: NoticeDestination.checklist,
+          actionLabel: 'Hazırlık listesi',
+          contextLabel: p.destination,
           level: days <= 1
               ? 0
               : days <= 3
@@ -120,10 +152,14 @@ List<TravelNotice> buildTravelNotices(
           TravelNotice(
             id: '${p.id}:${p.startDate}:ticket:${bookable.name}',
             title: 'Rezervasyon gerekebilir',
-            body:
-                '${bookable.name} için resmi ziyaret ve bilet koşullarını kontrol et. Bu, mekan adına göre bir hatırlatmadır; rezervasyon zorunluluğu doğrulanmış değildir.',
+            body: '{place} için ziyaret saatlerini ve bilet seçeneklerini önceden kontrol et.',
+            bodyValues: {'place': bookable.name},
             planId: p.id,
             level: 1,
+            kind: TravelNoticeKind.ticket,
+            contextLabel: p.destination,
+            actionLabel: 'Bilet al',
+            actionUri: ticketSearchUri(bookable.name, p.destination),
           ),
         );
       }
@@ -146,8 +182,12 @@ List<TravelNotice> buildTravelNotices(
             id: '${p.id}:budget:$tier',
             title: 'Harcama takibi · %$percent',
             body:
-                '${p.destination}: ${p.currencySymbol}${spent.toStringAsFixed(0)} harcama / ${p.currencySymbol}${budget.toStringAsFixed(0)} ${p.estimatedCost > 0 ? 'tahmini plan maliyeti' : 'ayrılan bütçe'}.',
+                '${p.destination}: ${p.currencySymbol}${formatter?.number(spent, fractionDigits: 2) ?? spent.toStringAsFixed(0)} harcama / ${p.currencySymbol}${formatter?.number(budget, fractionDigits: 2) ?? budget.toStringAsFixed(0)} ${p.estimatedCost > 0 ? 'tahmini plan maliyeti' : 'ayrılan bütçe'}.',
             planId: p.id,
+            kind: TravelNoticeKind.budget,
+            destination: NoticeDestination.budget,
+            contextLabel: p.destination,
+            actionLabel: 'Bütçeyi incele',
             level: percent >= 80
                 ? 0
                 : percent >= 50
@@ -231,14 +271,48 @@ class TripWeather {
     return TravelNotice(
       id: '${plan.id}:weather:${observedAt.toIso8601String().substring(0, 10)}:$condition',
       planId: plan.id,
+      kind: TravelNoticeKind.weather,
+      destination: NoticeDestination.weather,
+      contextLabel: plan.destination,
+      actionLabel: 'Hava durumunu gör',
+      sourceLabel: 'Open-Meteo',
+      sourceUri: Uri.https('open-meteo.com', '/'),
+      tips: [
+        if ([95, 96, 99].contains(code))
+          'Fırtınalı günlerde kapalı mekânları tercih et'
+        else if ([71, 73, 75, 77, 85, 86].contains(code))
+          'Karlı havada su geçirmez bot giy; ulaşım için ek süre ayır.'
+        else if ([
+          51,
+          53,
+          55,
+          56,
+          57,
+          61,
+          63,
+          65,
+          66,
+          67,
+          80,
+          81,
+          82,
+        ].contains(code))
+          'Şemsiye veya yağmurluk',
+        if (celsius <= 2)
+          'Kalın mont, eldiven ve bereyle soğuğa hazırlan.'
+        else if (celsius < 10)
+          'Katmanlı giysiler ve sıcak tutan bir mont'
+        else if (celsius >= 35)
+          'Bol su iç; güneş kremi kullan ve gölgede mola ver.',
+      ],
       title: '$condition · $temp',
       level: severe
           ? 0
           : caution
           ? 1
           : 2,
-      body:
-          '${plan.destination} yakınındaki rota noktasının güncel hava bilgisi. Gelecekteki seyahat gününün tahmini değildir. Kaynak: Open-Meteo · ${observedAt.toLocal().toString().substring(0, 16)}',
+      body: 'Şu anki hava · {time}. Seyahat günlerinin tahminini ayrıca kontrol et.',
+      bodyValues: {'time': observedAt.toLocal().toString().substring(0, 16)},
     );
   }
 }

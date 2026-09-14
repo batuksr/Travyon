@@ -106,6 +106,14 @@ class _MobileHubPageState extends State<MobileHubPage>
         plansRepository: widget.plansRepository,
         repository: FirebaseNotificationRepository(),
         onOpen: _open,
+        onOpenDestination: (plan, destination) => _open(
+          plan,
+          initialTab: switch (destination) {
+            NoticeDestination.checklist => PlanDetailTab.checklist,
+            NoticeDestination.budget => PlanDetailTab.budget,
+            _ => PlanDetailTab.itinerary,
+          },
+        ),
         onSettings: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => SettingsEditor(
@@ -172,12 +180,16 @@ class _MobileHubPageState extends State<MobileHubPage>
     ),
   );
 
-  void _open(TravelPlanSummary plan) => Navigator.of(context).push(
+  void _open(
+    TravelPlanSummary plan, {
+    PlanDetailTab initialTab = PlanDetailTab.itinerary,
+  }) => Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => PlanDetailPage(
         uid: widget.session.uid,
         planId: plan.id,
         repository: widget.plansRepository,
+        initialTab: initialTab,
         initialDayIndex: isTravelingToday(plan, DateTime.now())
             ? plan.days.indexWhere((day) => day.date == dateKey(DateTime.now()))
             : 0,

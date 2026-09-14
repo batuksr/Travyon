@@ -5,6 +5,10 @@ import 'package:travyon/features/plans/data/plan_detail.dart';
 import 'package:travyon/features/plans/data/travel_plans_repository.dart';
 import 'package:travyon/features/plans/presentation/plan_detail_page.dart';
 import 'package:travyon/features/plans/presentation/plan_route_map.dart';
+import 'package:travyon/features/plans/presentation/plan_information_sheet.dart';
+import 'package:travyon/features/plans/presentation/plan_weather_sheet.dart';
+
+import 'plan_weather_test.dart' as weather_fixture;
 
 Map<String, dynamic> fixture() => {
   'destination': 'Roma, İtalya',
@@ -37,6 +41,97 @@ Map<String, dynamic> fixture() => {
 };
 
 void main() {
+  testWidgets(
+    'guide and weather open on demand and closing preserves the selected day',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final weather = weather_fixture.WeatherFake();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: PlanDetailPage(
+            uid: 'test',
+            planId: 'p1',
+            repository: DetailFake(),
+            initialDayIndex: 1,
+            weatherRepository: weather,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(weather.calls, 0);
+      await tester.tap(find.byKey(const ValueKey('plan-guide')));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlanGuideSheet), findsOneWidget);
+      expect(
+        find.text('Bu plan için rehber bilgisi bulunmuyor.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Kapat'));
+      await tester.pumpAndSettle();
+      expect(weather.calls, 0);
+      await tester.tap(find.byKey(const ValueKey('plan-weather')));
+      await tester.pump();
+      expect(weather.calls, 1);
+      weather.pending.complete(weather_fixture.report());
+      await tester.pumpAndSettle();
+      expect(find.byType(PlanWeatherSheet), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(PlanWeatherSheet), findsNothing);
+      expect(
+        tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).last.selected,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'full-screen route grows the map and back restores the selected day',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: PlanDetailPage(
+            uid: 'test',
+            planId: 'p1',
+            repository: DetailFake(),
+            initialDayIndex: 1,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rota'));
+      await tester.pumpAndSettle();
+      final viewport = find.byKey(const ValueKey('route-map-viewport'));
+      final normalHeight = tester.getSize(viewport).height;
+      await tester.tap(find.byTooltip('Tam ekran harita'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(tester.getSize(viewport).height, greaterThan(normalHeight + 80));
+      expect(find.text('Villa Borghese'), findsOneWidget);
+      expect(
+        tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).last.selected,
+        isTrue,
+      );
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(PlanRouteMap), findsOneWidget);
+      expect(tester.getSize(viewport).height, normalHeight);
+      expect(find.text('Villa Borghese'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('hub can open the current travel day directly', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

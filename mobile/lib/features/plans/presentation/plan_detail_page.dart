@@ -13,8 +13,14 @@ import '../data/plan_detail.dart';
 import '../data/plan_editing_repository.dart';
 import '../data/travel_times_repository.dart';
 import '../data/travel_plans_repository.dart';
+import '../data/plan_weather_repository.dart';
+import 'plan_information_sheet.dart';
+import 'plan_weather_sheet.dart';
 import 'plan_journey_tools.dart';
+import 'plan_budget_panel.dart';
+import 'plan_expense_sheet.dart';
 import 'plan_route_map.dart';
+import 'plan_stop_card.dart';
 import 'stop_editor_sheet.dart';
 import 'travel_time_strip.dart';
 
@@ -40,6 +46,8 @@ String dayDate(String raw) {
   return '${date.day} ${months[date.month - 1]}';
 }
 
+enum PlanDetailTab { itinerary, route, budget, checklist }
+
 class PlanDetailPage extends StatefulWidget {
   const PlanDetailPage({
     super.key,
@@ -47,19 +55,23 @@ class PlanDetailPage extends StatefulWidget {
     required this.planId,
     required this.repository,
     this.initialDayIndex = 0,
+    this.initialTab = PlanDetailTab.itinerary,
     this.editingRepository,
     this.walletRepository,
     this.travelTimesRepository,
     this.checklistRepository,
+    this.weatherRepository,
   });
   final String uid;
   final String planId;
   final TravelPlansRepository repository;
   final int initialDayIndex;
+  final PlanDetailTab initialTab;
   final PlanEditingRepository? editingRepository;
   final WalletRepository? walletRepository;
   final TravelTimesRepository? travelTimesRepository;
   final ChecklistRepository? checklistRepository;
+  final PlanWeatherRepository? weatherRepository;
   @override
   State<PlanDetailPage> createState() => _PlanDetailPageState();
 }
@@ -67,8 +79,9 @@ class PlanDetailPage extends StatefulWidget {
 class _PlanDetailPageState extends State<PlanDetailPage> {
   late Stream<List<TravelPlanSummary>> _stream;
   late int _day = widget.initialDayIndex;
-  int _tab = 0;
+  late int _tab = widget.initialTab.index;
   bool _saving = false;
+  bool _routeFullscreen = false;
   late final _travelTimes = TravelTimesCache(
     widget.travelTimesRepository ?? FirebaseTravelTimesRepository(),
   );
@@ -78,6 +91,8 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
   late final _editing =
       widget.editingRepository ?? FirebasePlanEditingRepository();
   final _history = <({PlanDay before, PlanDay after})>[];
+  late final _weather =
+      widget.weatherRepository ?? OpenMeteoPlanWeatherRepository();
 
   Future<void> _replace(PlanDay day, Map<String, dynamic> replacement) async {
     if (_saving) throw StateError('Diğer işlemin bitmesini bekle.');
@@ -236,13 +251,13 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
-  Future<void> _save(
+  Future<void> _persistStop(
     PlanDay day,
     PlanStop stop, {
     bool? completed,
     double? cost,
   }) async {
-    if (_saving) return;
+    if (_saving) throw StateError('Diğer işlemin bitmesini bekle.');
     setState(() => _saving = true);
     try {
       await widget.repository.updateStop(
@@ -253,6 +268,19 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         completed: completed,
         actualCost: cost,
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _save(
+    PlanDay day,
+    PlanStop stop, {
+    required bool completed,
+  }) async {
+    if (_saving) return;
+    try {
+      await _persistStop(day, stop, completed: completed);
       _message('Değişiklik kaydedildi.');
     } catch (error) {
       _message(
@@ -260,20 +288,28 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
             ? error.message.toString()
             : 'Kaydedilemedi. Bağlantını kontrol edip tekrar dene.',
       );
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _expense(PlanDay day, PlanStop stop, String symbol) async {
-    final value = await showModalBottomSheet<double>(
+    if (_saving) return;
+    final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => _ExpenseSheet(stop: stop, symbol: symbol),
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => PlanExpenseSheet(
+        stop: stop,
+        symbol: symbol,
+        save: (amount) => _persistStop(day, stop, cost: amount),
+      ),
     );
-    if (value != null && mounted) await _save(day, stop, cost: value);
+    if (saved == true && mounted) _message('Değişiklik kaydedildi.');
   }
 
   Future<void> _directions(PlanStop stop, String destination) async {
@@ -291,160 +327,255 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Yolculuğun'), centerTitle: true),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (value) => setState(() => _tab = value),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.view_day_outlined),
-            label: context.tr('Günlük plan'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.route_outlined),
-            label: context.tr('Rota'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            label: context.tr('Bütçe'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.checklist_rounded),
-            label: context.tr('Hazırlık'),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: StreamBuilder<List<TravelPlanSummary>>(
-          stream: _stream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _Status(
-                icon: Icons.cloud_off_outlined,
-                text: 'Plan getirilemedi. Bağlantını kontrol et.',
-                onRetry: () => setState(
-                  () => _stream = widget.repository.watchPlans(widget.uid),
-                ),
-              );
-            }
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final matches = snapshot.data!.where((p) => p.id == widget.planId);
-            if (matches.isEmpty) {
-              return const _Status(
-                icon: Icons.bookmark_remove_outlined,
-                text:
-                    'Bu plan artık bulunamıyor. Planlarına geri dönebilirsin.',
-              );
-            }
-            final plan = matches.first;
-            final days = plan.days;
-            if (days.isEmpty) {
-              return const _Status(
-                icon: Icons.route_outlined,
-                text: 'Bu plana henüz günlük rota eklenmemiş.',
-              );
-            }
-            final selected = _day.clamp(0, days.length - 1);
-            final day = days[selected];
-            return Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, _tab == 1 ? 4 : 12),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          plan.title,
-                          maxLines: _tab == 1 ? 2 : null,
-                          overflow: _tab == 1 ? TextOverflow.ellipsis : null,
-                          style: _tab == 1
-                              ? Theme.of(context).textTheme.titleLarge
-                              : Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${days.length} gün · ${plan.activityCount} durak',
-                          style: const TextStyle(color: AppColors.muted),
-                        ),
-                      ],
-                    ),
+    return PopScope(
+      canPop: !_routeFullscreen,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _routeFullscreen) {
+          setState(() => _routeFullscreen = false);
+        }
+      },
+      child: Scaffold(
+        appBar: _tab == 1
+            ? null
+            : AppBar(title: const Text('Yolculuğun'), centerTitle: true),
+        bottomNavigationBar: _routeFullscreen
+            ? null
+            : NavigationBar(
+                selectedIndex: _tab,
+                onDestinationSelected: (value) => setState(() => _tab = value),
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.view_day_outlined),
+                    label: context.tr('Günlük plan'),
                   ),
-                ),
-                if (_tab < 2)
-                  SizedBox(
-                    height: _tab == 1 ? 60 : 72,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: days.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (_, i) => ChoiceChip(
-                        selected: selected == i,
-                        labelStyle: TextStyle(
-                          fontFamily: AppTypography.body,
-                          color: selected == i ? Colors.white : AppColors.text,
-                        ),
-                        showCheckmark: false,
-                        label: Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: _tab == 1 ? 0 : 5,
+                  NavigationDestination(
+                    icon: const Icon(Icons.route_outlined),
+                    label: context.tr('Rota'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.account_balance_wallet_outlined),
+                    label: context.tr('Bütçe'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.checklist_rounded),
+                    label: context.tr('Hazırlık'),
+                  ),
+                ],
+              ),
+        body: SafeArea(
+          child: StreamBuilder<List<TravelPlanSummary>>(
+            stream: _stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _Status(
+                  icon: Icons.cloud_off_outlined,
+                  text: 'Plan getirilemedi. Bağlantını kontrol et.',
+                  onRetry: () => setState(
+                    () => _stream = widget.repository.watchPlans(widget.uid),
+                  ),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final matches = snapshot.data!.where(
+                (p) => p.id == widget.planId,
+              );
+              if (matches.isEmpty) {
+                return const _Status(
+                  icon: Icons.bookmark_remove_outlined,
+                  text: 'Bu plan artık bulunamıyor. Planlarına geri dönebilirsin.',
+                );
+              }
+              final plan = matches.first;
+              final days = plan.days;
+              if (days.isEmpty) {
+                return const _Status(
+                  icon: Icons.route_outlined,
+                  text: 'Bu plana henüz günlük rota eklenmemiş.',
+                );
+              }
+              final selected = _day.clamp(0, days.length - 1);
+              final day = days[selected];
+              return Column(
+                children: [
+                  if (_tab == 1 && !_routeFullscreen)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 4, 16, 6),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            tooltip: context.tr('Geri'),
+                            onPressed: () => Navigator.maybePop(context),
+                            icon: const Icon(Icons.arrow_back_rounded),
                           ),
-                          child: Text(
-                            '${i + 1}. Gün  ·  ${dayDate(days[i].date)}',
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  plan.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontSize: 20),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${days.length} gün · ${plan.activityCount} durak',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        onSelected: (_) => setState(() => _day = i),
+                        ],
                       ),
                     ),
-                  ),
-                if (_saving) const LinearProgressIndicator(minHeight: 2),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: MediaQuery.disableAnimationsOf(context)
-                        ? Duration.zero
-                        : const Duration(milliseconds: 220),
-                    child: _tab == 1
-                        ? PlanRouteMap(
-                            key: ValueKey('route-$selected'),
-                            day: day,
-                            destination: plan.destination,
-                            onDirections: (stop) =>
-                                _directions(stop, plan.destination),
-                          )
-                        : _tab == 3
-                        ? TravelChecklistPanel(
-                            key: ValueKey('checklist-${plan.id}'),
-                            uid: widget.uid,
-                            planId: widget.planId,
-                            destination: plan.destination,
-                            repository: _checklist,
-                          )
-                        : ListView(
-                            key: ValueKey('$_tab-$selected'),
-                            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-                            children: _tab == 2
-                                ? _budget(plan)
-                                : _itinerary(plan, day),
+                  if (_tab != 1)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        8,
+                        20,
+                        _tab == 1 ? 4 : 12,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              plan.title,
+                              maxLines: _tab == 1 ? 2 : null,
+                              overflow: _tab == 1
+                                  ? TextOverflow.ellipsis
+                                  : null,
+                              style: _tab == 1
+                                  ? Theme.of(context).textTheme.titleLarge
+                                  : Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${days.length} gün · ${plan.activityCount} durak',
+                              style: const TextStyle(color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (_tab < 2)
+                    SizedBox(
+                      height: _tab == 1
+                          ? (MediaQuery.textScalerOf(context).scale(12) + 44)
+                                .clamp(56.0, 84.0)
+                          : 72,
+                      child: ListView.separated(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: _tab == 1 ? 12 : 20,
+                          vertical: 8,
+                        ),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: days.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 10),
+                        itemBuilder: (_, i) => ChoiceChip(
+                          selected: selected == i,
+                          labelStyle: TextStyle(
+                            fontFamily: AppTypography.body,
+                            fontSize: _tab == 1 ? 12 : null,
+                            color: selected == i
+                                ? Colors.white
+                                : AppColors.text,
                           ),
+                          showCheckmark: false,
+                          label: Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: _tab == 1 ? 0 : 5,
+                            ),
+                            child: Text(
+                              '${i + 1}. Gün  ·  ${dayDate(days[i].date)}',
+                            ),
+                          ),
+                          onSelected: (_) => setState(() => _day = i),
+                        ),
+                      ),
+                    ),
+                  if (_saving) const LinearProgressIndicator(minHeight: 2),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                      child: _tab == 1
+                          ? PlanRouteMap(
+                              key: ValueKey('route-$selected'),
+                              day: day,
+                              destination: plan.destination,
+                              fullscreen: _routeFullscreen,
+                              onToggleFullscreen: () => setState(
+                                () => _routeFullscreen = !_routeFullscreen,
+                              ),
+                              onDirections: (stop) =>
+                                  _directions(stop, plan.destination),
+                            )
+                          : _tab == 3
+                          ? TravelChecklistPanel(
+                              key: ValueKey('checklist-${plan.id}'),
+                              uid: widget.uid,
+                              planId: widget.planId,
+                              destination: plan.destination,
+                              repository: _checklist,
+                            )
+                          : ListView(
+                              key: ValueKey('$_tab-$selected'),
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                12,
+                                20,
+                                28,
+                              ),
+                              children: _tab == 2
+                                  ? _budget(plan)
+                                  : _itinerary(plan, day),
+                            ),
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
   List<Widget> _itinerary(TravelPlanSummary plan, PlanDay day) => [
+    Wrap(
+      spacing: 10,
+      runSpacing: 6,
+      children: [
+        OutlinedButton.icon(
+          key: const ValueKey('plan-guide'),
+          onPressed: () =>
+              showPlanInformation(context, PlanGuideSheet(plan: plan)),
+          icon: const Icon(Icons.menu_book_outlined, size: 18),
+          label: const Text('Rehber'),
+        ),
+        OutlinedButton.icon(
+          key: const ValueKey('plan-weather'),
+          onPressed: () => showPlanInformation(
+            context,
+            PlanWeatherSheet(plan: plan, repository: _weather),
+          ),
+          icon: const Icon(Icons.cloud_outlined, size: 18),
+          label: const Text('Hava durumu'),
+        ),
+      ],
+    ),
+    const SizedBox(height: 12),
     PlanBudgetSummary(plan: plan, collapsible: true),
     const SizedBox(height: 12),
     _DayOverview(day: day, symbol: plan.currencySymbol),
@@ -493,7 +624,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
             ),
           ),
         ),
-      _StopCard(
+      PlanStopCard(
         key: ValueKey('${day.index}-${stop.index}-${stop.name}'),
         stop: stop,
         symbol: plan.currencySymbol,
@@ -522,65 +653,28 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
   ];
 
   List<Widget> _budget(TravelPlanSummary plan) {
-    final stops = plan.days.expand((day) => day.stops);
-    final count = stops.where((stop) => stop.actual != null).length;
     return [
-      PlanBudgetSummary(plan: plan),
-      const SizedBox(height: 14),
-      Text(
-        '$count / ${plan.activityCount} durağa harcama girildi.',
-        style: const TextStyle(color: AppColors.muted),
-      ),
-      const SizedBox(height: 24),
+      PlanBudgetOverview(plan: plan),
+      const SizedBox(height: 28),
       const Text(
         'Günlük harcamaların',
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+        style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: 6),
       const Text(
         'Bir durağa dokunarak ödediğin tutarı kaydet.',
-        style: TextStyle(color: AppColors.muted),
+        style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.5),
       ),
       for (final day in plan.days) ...[
-        Padding(
-          padding: const EdgeInsets.only(top: 22, bottom: 10),
-          child: Text(
-            '${day.index + 1}. Gün · ${dayDate(day.date)}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        _Paper(
-          child: Column(
-            children: [
-              for (final stop in day.stops)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    stop.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    stop.actual == null
-                        ? 'Harcama girilmedi'
-                        : money(plan.currencySymbol, stop.actual!),
-                  ),
-                  trailing: IconButton(
-                    key: ValueKey('expense-${day.index}-${stop.index}'),
-                    tooltip: context.tr('Harcama düzenle'),
-                    onPressed: _saving
-                        ? null
-                        : () => _expense(day, stop, plan.currencySymbol),
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                  leading: null,
-                  onTap: _saving
-                      ? null
-                      : () => _expense(day, stop, plan.currencySymbol),
-                  isThreeLine: false,
-                ),
-            ],
-          ),
+        const SizedBox(height: 14),
+        PlanBudgetDayCard(
+          key: PageStorageKey('budget-${plan.id}-${day.index}'),
+          day: day,
+          label: context.tr('${day.index + 1}. Gün · ${dayDate(day.date)}'),
+          symbol: plan.currencySymbol,
+          busy: _saving,
+          initiallyExpanded: day.index == 0,
+          onExpense: (stop) => _expense(day, stop, plan.currencySymbol),
         ),
       ],
     ];
@@ -650,127 +744,6 @@ class _DayOverview extends StatelessWidget {
   );
 }
 
-class _Number extends StatelessWidget {
-  const _Number({required this.stop});
-  final PlanStop stop;
-  @override
-  Widget build(BuildContext context) => CircleAvatar(
-    radius: 18,
-    backgroundColor: const Color(0xFFF6E6D7),
-    foregroundColor: AppColors.accent,
-    child: Text('${stop.index + 1}'),
-  );
-}
-
-class _StopCard extends StatelessWidget {
-  const _StopCard({
-    super.key,
-    required this.stop,
-    required this.symbol,
-    required this.busy,
-    required this.onComplete,
-    required this.onAction,
-    required this.canMoveUp,
-    required this.canMoveDown,
-  });
-  final PlanStop stop;
-  final String symbol;
-  final bool busy;
-  final VoidCallback onComplete;
-  final ValueChanged<String> onAction;
-  final bool canMoveUp, canMoveDown;
-  @override
-  Widget build(BuildContext context) => _Paper(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Number(stop: stop),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                stop.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            IconButton(
-              tooltip: context.tr(stop.completed ? 'Gezildi' : 'Gezdim'),
-              onPressed: busy ? null : onComplete,
-              style: IconButton.styleFrom(
-                backgroundColor: stop.completed
-                    ? AppColors.forest
-                    : AppColors.surface,
-                foregroundColor: stop.completed
-                    ? Colors.white
-                    : AppColors.forest,
-                side: BorderSide(
-                  color: stop.completed ? AppColors.forest : AppColors.divider,
-                ),
-              ),
-              icon: Icon(
-                stop.completed
-                    ? Icons.check_rounded
-                    : Icons.done_outline_rounded,
-                size: 21,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        if (stop.description.isNotEmpty)
-          _ExpandableText(text: stop.description),
-        if (stop.note.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              'Notun: ${stop.note}',
-              style: const TextStyle(color: AppColors.forest, height: 1.5),
-            ),
-          ),
-        const SizedBox(height: 12),
-        Text(
-          'Tahmini ${money(symbol, stop.estimated)}',
-          style: const TextStyle(color: AppColors.muted, fontSize: 13),
-        ),
-        const Divider(height: 28),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            TextButton.icon(
-              onPressed: busy ? null : () => onAction('note'),
-              icon: const Icon(Icons.note_alt_outlined, size: 19),
-              label: Text(stop.note.isEmpty ? 'Not ekle' : 'Notu düzenle'),
-            ),
-            IconButton.outlined(
-              tooltip: context.tr('Yukarı taşı'),
-              onPressed: busy || !canMoveUp ? null : () => onAction('up'),
-              icon: const Icon(Icons.arrow_upward_rounded, size: 19),
-            ),
-            IconButton.outlined(
-              tooltip: context.tr('Aşağı taşı'),
-              onPressed: busy || !canMoveDown ? null : () => onAction('down'),
-              icon: const Icon(Icons.arrow_downward_rounded, size: 19),
-            ),
-            IconButton.outlined(
-              tooltip: context.tr('Durağı sil'),
-              onPressed: busy ? null : () => onAction('delete'),
-              color: const Color(0xFF9B3020),
-              icon: const Icon(Icons.delete_outline_rounded, size: 19),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
 class _ExpandableText extends StatefulWidget {
   const _ExpandableText({required this.text, this.light = false});
   final String text;
@@ -819,75 +792,6 @@ class _ExpandableTextState extends State<_ExpandableText> {
         ],
       );
     },
-  );
-}
-
-class _ExpenseSheet extends StatefulWidget {
-  const _ExpenseSheet({required this.stop, required this.symbol});
-  final PlanStop stop;
-  final String symbol;
-  @override
-  State<_ExpenseSheet> createState() => _ExpenseSheetState();
-}
-
-class _ExpenseSheetState extends State<_ExpenseSheet> {
-  late final controller = TextEditingController(
-    text: widget.stop.actual?.toString() ?? '',
-  );
-  String? error;
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: EdgeInsets.fromLTRB(
-      24,
-      0,
-      24,
-      MediaQuery.viewInsetsOf(context).bottom + 28,
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Harcamanı kaydet',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        Text(widget.stop.name),
-        const SizedBox(height: 22),
-        TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: context.tr(
-              'Ödediğin tutar ({symbol})',
-              values: {'symbol': widget.symbol},
-            ),
-            errorText: error,
-          ),
-        ),
-        const SizedBox(height: 18),
-        FilledButton(
-          onPressed: () {
-            final value = double.tryParse(
-              controller.text.trim().replaceAll(',', '.'),
-            );
-            if (value == null || !value.isFinite || value < 0) {
-              setState(() => error = 'Geçerli bir tutar gir (ör. 12,50).');
-              return;
-            }
-            Navigator.pop(context, value);
-          },
-          child: const Text('Kaydet'),
-        ),
-      ],
-    ),
   );
 }
 

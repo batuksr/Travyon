@@ -43,7 +43,7 @@ void main() {
     ));
   });
   testWidgets(
-    'Google marker opens loading then reviews, without eager requests; day switches reset',
+    'markers select stops without requests, details open explicitly, and days reset',
     (tester) async {
       tester.view.physicalSize = const Size(360, 760);
       tester.view.devicePixelRatio = 1;
@@ -102,6 +102,16 @@ void main() {
       expect(find.text('Bu durağın konumu kayıtlı değil.'), findsOneWidget);
       expect(places.calls, 0);
       map!.markers.firstWhere((m) => m.markerId.value == 'stop-2').onTap!();
+      await tester.pumpAndSettle();
+      expect(find.text('Pantheon'), findsOneWidget);
+      expect(find.byType(GooglePlaceSheet), findsNothing);
+      expect(places.calls, 0);
+      expect(
+        map!.markers.firstWhere((m) => m.markerId.value == 'stop-2').zIndexInt,
+        2,
+      );
+      expect(map!.padding.bottom, greaterThan(100));
+      await tester.tap(find.byKey(const ValueKey('route-stop-details')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.byType(GooglePlaceSheet), findsOneWidget);
@@ -185,6 +195,53 @@ void main() {
     expect(find.text('Pantheon'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'stop list selects missing locations without opening place details',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final places = FakePlaces();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: PlanRouteMap(
+              day: PlanDay({
+                'activities': [
+                  point('Pantheon', 41.9, 12.47),
+                  {'placeName': 'Konumsuz durak'},
+                ],
+              }, 0),
+              onDirections: (_) {},
+              placesRepository: places,
+              mapBuilder: (_) => const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Duraklar'));
+      await tester.pumpAndSettle();
+      final entry = find.text('Konumsuz durak');
+      await tester.ensureVisible(entry);
+      await tester.pumpAndSettle();
+      await tester.tap(entry);
+      await tester.pumpAndSettle();
+      expect(find.byType(ListTile), findsNothing);
+      expect(find.text('Konumsuz durak'), findsOneWidget);
+      expect(find.text('Bu durağın konumu kayıtlı değil.'), findsOneWidget);
+      expect(places.calls, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('details error can retry and empty result is explicit', (
     tester,
   ) async {

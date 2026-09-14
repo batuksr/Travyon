@@ -1,18 +1,24 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide Text;
-
-import '../../../core/localization/localized_text.dart';
-import '../../../core/localization/app_localizations.dart';
-import '../../../core/preferences/unit_formatter.dart';
-
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/preferences/unit_formatter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/plan_detail.dart';
 import '../data/mobile_places_repository.dart';
 import 'google_place_sheet.dart';
+
+const _routeMapStyle = '''[
+  {"featureType":"poi.business","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.attraction","elementType":"labels.icon","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#e2ecdf"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9e2e4"}]},
+  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#68665f"}]}
+]''';
 
 class PlanRouteMap extends StatelessWidget {
   const PlanRouteMap({
@@ -22,14 +28,19 @@ class PlanRouteMap extends StatelessWidget {
     this.destination = '',
     this.placesRepository,
     this.mapBuilder,
+    this.fullscreen = false,
+    this.onToggleFullscreen,
   });
   final PlanDay day;
   final String destination;
   final ValueChanged<PlanStop> onDirections;
   final MobilePlacesRepository? placesRepository;
+  final bool fullscreen;
+  final VoidCallback? onToggleFullscreen;
 
   /// Allows tests to exercise markers without a native platform view.
   final Widget Function(GoogleMap)? mapBuilder;
+
   @override
   Widget build(BuildContext context) => _RouteCanvas(
     key: ValueKey(
@@ -37,9 +48,10 @@ class PlanRouteMap extends StatelessWidget {
     ),
     stops: day.stops,
     destination: destination,
-    onDirections: onDirections,
     places: placesRepository ?? FirebaseMobilePlacesRepository(),
     mapBuilder: mapBuilder,
+    fullscreen: fullscreen,
+    onToggleFullscreen: onToggleFullscreen,
   );
 }
 
@@ -48,15 +60,18 @@ class _RouteCanvas extends StatefulWidget {
     super.key,
     required this.stops,
     required this.destination,
-    required this.onDirections,
     required this.places,
+    required this.fullscreen,
+    this.onToggleFullscreen,
     this.mapBuilder,
   });
   final List<PlanStop> stops;
   final String destination;
-  final ValueChanged<PlanStop> onDirections;
   final MobilePlacesRepository places;
+  final bool fullscreen;
+  final VoidCallback? onToggleFullscreen;
   final Widget Function(GoogleMap)? mapBuilder;
+
   @override
   State<_RouteCanvas> createState() => _RouteCanvasState();
 }
@@ -65,7 +80,8 @@ class _RouteCanvasState extends State<_RouteCanvas> {
   GoogleMapController? _controller;
   int _selected = 0;
   bool _sheetOpen = false;
-  final Map<int, BitmapDescriptor> _icons = {};
+  final _icons =
+      <int, ({BitmapDescriptor normal, BitmapDescriptor selected})>{};
   List<PlanStop> get _located =>
       widget.stops.where((s) => s.location != null).toList();
   LatLng _point(PlanStop s) => LatLng(s.location!.lat, s.location!.lng);
@@ -81,62 +97,83 @@ class _RouteCanvasState extends State<_RouteCanvas> {
             ).isNotEmpty,
             _ => false,
           });
+
   @override
   void initState() {
     super.initState();
-    if (widget.mapBuilder == null) _makeIcons();
+    if (widget.mapBuilder == null && _configured) _makeIcons();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RouteCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.fullscreen != widget.fullscreen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fit();
+      });
+    }
+  }
+
+  Future<BitmapDescriptor> _markerIcon(
+    int number, {
+    required bool selected,
+  }) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawCircle(const Offset(48, 48), 46, Paint()..color = Colors.white);
+    canvas.drawCircle(
+      const Offset(48, 48),
+      39,
+      Paint()..color = selected ? AppColors.forest : AppColors.accent,
+    );
+    final text = TextPainter(
+      text: TextSpan(
+        text: '$number',
+        style: const TextStyle(
+          fontSize: 37,
+          fontFamily: AppTypography.body,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    text.paint(canvas, Offset(48 - text.width / 2, 48 - text.height / 2));
+    text.dispose();
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(96, 96);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    picture.dispose();
+    image.dispose();
+    return bytes == null
+        ? BitmapDescriptor.defaultMarkerWithHue(
+            selected ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueOrange,
+          )
+        : BitmapDescriptor.bytes(
+            bytes.buffer.asUint8List(),
+            width: selected ? 34 : 28,
+            height: selected ? 34 : 28,
+          );
   }
 
   Future<void> _makeIcons() async {
+    final icons =
+        <int, ({BitmapDescriptor normal, BitmapDescriptor selected})>{};
     for (final stop in _located) {
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-      canvas.drawCircle(
-        const Offset(48, 48),
-        46,
-        Paint()..color = Colors.white,
-      );
-      canvas.drawCircle(
-        const Offset(48, 48),
-        40,
-        Paint()..color = AppColors.accent,
-      );
-      final text = TextPainter(
-        text: TextSpan(
-          text: '${stop.index + 1}',
-          style: const TextStyle(
-            fontSize: 36,
-            fontFamily: AppTypography.body,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      text.paint(canvas, Offset(48 - text.width / 2, 48 - text.height / 2));
-      final picture = recorder.endRecording();
-      final image = await picture.toImage(96, 96);
-      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-      picture.dispose();
-      image.dispose();
+      final normal = await _markerIcon(stop.index + 1, selected: false);
       if (!mounted) return;
-      if (bytes != null) {
-        setState(
-          () => _icons[stop.index] = BitmapDescriptor.bytes(
-            bytes.buffer.asUint8List(),
-            width: 32,
-            height: 32,
-          ),
-        );
-      }
+      final selected = await _markerIcon(stop.index + 1, selected: true);
+      if (!mounted) return;
+      icons[stop.index] = (normal: normal, selected: selected);
     }
+    if (mounted) setState(() => _icons.addAll(icons));
   }
 
   Future<void> _camera(CameraUpdate update) async {
     try {
       await _controller?.animateCamera(update);
     } catch (_) {
-      /* View may close during day changes. */
+      // A day change can dispose the native view during a camera animation.
     }
   }
 
@@ -147,11 +184,11 @@ class _RouteCanvasState extends State<_RouteCanvas> {
         north = south,
         west = points.first.longitude,
         east = west;
-    for (final p in points) {
-      if (p.latitude < south) south = p.latitude;
-      if (p.latitude > north) north = p.latitude;
-      if (p.longitude < west) west = p.longitude;
-      if (p.longitude > east) east = p.longitude;
+    for (final point in points) {
+      if (point.latitude < south) south = point.latitude;
+      if (point.latitude > north) north = point.latitude;
+      if (point.longitude < west) west = point.longitude;
+      if (point.longitude > east) east = point.longitude;
     }
     if ((north - south).abs() < 0.0001 && (east - west).abs() < 0.0001) {
       _camera(CameraUpdate.newLatLngZoom(points.first, 15));
@@ -162,17 +199,17 @@ class _RouteCanvasState extends State<_RouteCanvas> {
             southwest: LatLng(south, west),
             northeast: LatLng(north, east),
           ),
-          48,
+          36,
         ),
       );
     }
   }
 
-  void _select(int index, {bool details = false}) {
+  void _select(int index) {
+    if (!mounted || index < 0 || index >= widget.stops.length) return;
     setState(() => _selected = index);
     final stop = widget.stops[index];
     if (stop.location != null) _camera(CameraUpdate.newLatLng(_point(stop)));
-    if (details) _showDetails(stop);
   }
 
   Future<void> _showDetails(PlanStop stop) async {
@@ -195,219 +232,482 @@ class _RouteCanvasState extends State<_RouteCanvas> {
     }
   }
 
+  Future<void> _chooseStop() async {
+    final index = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        builder: (context, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.tr('Duraklar'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                IconButton(
+                  tooltip: context.tr('Kapat'),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (final stop in widget.stops)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  selected: stop.index == _selected,
+                  selectedTileColor: const Color(0xFFEAF0E9),
+                  selectedColor: AppColors.forest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: stop.index == _selected
+                        ? AppColors.forest
+                        : const Color(0xFFF8EADC),
+                    foregroundColor: stop.index == _selected
+                        ? Colors.white
+                        : const Color(0xFFA74F21),
+                    child: Text(
+                      '${stop.index + 1}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    stop.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    context.tr(
+                      stop.location == null
+                          ? 'Bu durağın konumu kayıtlı değil.'
+                          : stop.period,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                  trailing: Icon(
+                    stop.index == _selected
+                        ? Icons.check_rounded
+                        : Icons.chevron_right_rounded,
+                    size: 20,
+                  ),
+                  onTap: () => Navigator.pop(context, stop.index),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (index != null && mounted) _select(index);
+  }
+
+  void _routeInfo() {
+    final missing = widget.stops.length - _located.length;
+    final distance = routeDistanceKm(widget.stops.map((stop) => stop.location));
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('Rota bilgisi')),
+        content: Text(
+          context.tr(
+            distance > 0 && missing > 0
+                ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+                : distance > 0
+                ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.'
+                : missing > 0
+                ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+                : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
+            values: {
+              'distance': UnitFormatter.of(context).distance(distance),
+              'count': missing,
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.tr('Kapat')),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.stops.isEmpty) {
-      return const Center(child: Text('Bu gün için henüz durak yok.'));
-    }
-    final located = _located;
-    final stop = widget.stops[_selected];
-    final missing = widget.stops.length - located.length;
-    final routeDistance = routeDistanceKm(
-      widget.stops.map((item) => item.location),
-    );
-    Widget map;
-    if (located.isEmpty) {
-      map = const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Bu günün duraklarında konum bilgisi yok.\nDurak kartına dokunarak mekân detaylarını açabilirsin.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    } else if (!_configured) {
-      map = const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Google Maps anahtarı yüklenmedi. Uygulamayı --dart-define-from-file=maps-config.local.json seçeneğiyle yeniden başlat.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    } else {
-      final googleMap = GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _point(located.first),
-          zoom: 14,
-        ),
-        onMapCreated: (controller) {
-          _controller = controller;
-          _fit();
-        },
-        mapToolbarEnabled: false,
-        myLocationButtonEnabled: false,
-        zoomControlsEnabled: false,
-        tiltGesturesEnabled: false,
-        markers: {
-          for (final place in located)
-            Marker(
-              markerId: MarkerId('stop-${place.index}'),
-              position: _point(place),
-              anchor: const Offset(0.5, 0.5),
-              icon:
-                  _icons[place.index] ??
-                  BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueOrange,
-                  ),
-              zIndexInt: _selected == place.index ? 2 : 1,
-              infoWindow: InfoWindow(
-                title: '${place.index + 1}. ${place.name}',
-              ),
-              consumeTapEvents: true,
-              onTap: () => _select(place.index, details: true),
-            ),
-        },
-        polylines: {
-          for (int i = 1; i < widget.stops.length; i++)
-            if (widget.stops[i - 1].location != null &&
-                widget.stops[i].location != null)
-              Polyline(
-                polylineId: PolylineId('leg-$i'),
-                points: [_point(widget.stops[i - 1]), _point(widget.stops[i])],
-                color: AppColors.forest,
-                width: 2,
-                patterns: [PatternItem.dot, PatternItem.gap(10)],
-              ),
-        },
-      );
-      map = Stack(
+      return Column(
         children: [
-          widget.mapBuilder?.call(googleMap) ?? googleMap,
-          Positioned(
-            top: 10,
-            right: 12,
-            child: IconButton.filled(
-              tooltip: context.tr('Tüm durakları göster'),
-              onPressed: _fit,
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.surface,
-                foregroundColor: AppColors.forest,
+          if (widget.fullscreen && widget.onToggleFullscreen != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: _control(
+                'Tam ekrandan çık',
+                Icons.fullscreen_exit_rounded,
+                widget.onToggleFullscreen,
               ),
-              icon: const Icon(Icons.fit_screen),
+            ),
+          Expanded(
+            child: Center(
+              child: Text(context.tr('Bu gün için henüz durak yok.')),
             ),
           ),
         ],
       );
     }
+    final located = _located;
+    final available = located.isNotEmpty && _configured;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: widget.fullscreen
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(10, 0, 10, 8),
       child: LayoutBuilder(
-        builder: (context, constraints) => Column(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                key: const ValueKey('route-map-viewport'),
-                borderRadius: BorderRadius.circular(24),
-                child: map,
+        builder: (context, constraints) {
+          final largeText = MediaQuery.textScalerOf(context).scale(14) > 20;
+          final panelHeight = (largeText ? 144.0 : 112.0).clamp(
+            0.0,
+            constraints.maxHeight * 0.32,
+          );
+          final mapPadding = EdgeInsets.fromLTRB(12, 64, 60, panelHeight + 28);
+          Widget map;
+          if (!available) {
+            map = ColoredBox(
+              color: const Color(0xFFE9EEE5),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 64, 20, panelHeight + 16),
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.map_outlined,
+                          color: AppColors.forest,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          context.tr(
+                            located.isEmpty
+                                ? 'Bu günün duraklarında konum bilgisi yok.\nDurak kartına dokunarak mekân detaylarını açabilirsin.'
+                                : 'Harita şu anda gösterilemiyor. Durak listesinden devam edebilirsin.',
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.forest,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: constraints.maxHeight * 0.30,
+            );
+          } else {
+            final googleMap = GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _point(located.first),
+                zoom: 14,
               ),
-              child: Material(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              onMapCreated: (controller) {
+                _controller = controller;
+                _fit();
+              },
+              style: _routeMapStyle,
+              padding: mapPadding,
+              mapToolbarEnabled: false,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              tiltGesturesEnabled: false,
+              rotateGesturesEnabled: false,
+              compassEnabled: false,
+              gestureRecognizers: {
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              },
+              markers: {
+                for (final place in located)
+                  Marker(
+                    markerId: MarkerId('stop-${place.index}'),
+                    position: _point(place),
+                    anchor: const Offset(0.5, 0.5),
+                    icon:
+                        (_selected == place.index
+                            ? _icons[place.index]?.selected
+                            : _icons[place.index]?.normal) ??
+                        BitmapDescriptor.defaultMarkerWithHue(
+                          _selected == place.index
+                              ? BitmapDescriptor.hueGreen
+                              : BitmapDescriptor.hueOrange,
+                        ),
+                    zIndexInt: _selected == place.index ? 2 : 1,
+                    infoWindow: InfoWindow(
+                      title: '${place.index + 1}. ${place.name}',
+                    ),
+                    consumeTapEvents: true,
+                    onTap: () => _select(place.index),
+                  ),
+              },
+              polylines: {
+                for (int i = 1; i < widget.stops.length; i++)
+                  if (widget.stops[i - 1].location != null &&
+                      widget.stops[i].location != null)
+                    Polyline(
+                      polylineId: PolylineId('leg-$i'),
+                      points: [
+                        _point(widget.stops[i - 1]),
+                        _point(widget.stops[i]),
+                      ],
+                      color: AppColors.forest.withValues(alpha: 0.75),
+                      width: 2,
+                      patterns: [PatternItem.dot, PatternItem.gap(10)],
+                    ),
+              },
+            );
+            map = widget.mapBuilder?.call(googleMap) ?? googleMap;
+          }
+          return ClipRRect(
+            key: const ValueKey('route-map-viewport'),
+            borderRadius: BorderRadius.circular(widget.fullscreen ? 0 : 24),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                map,
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  right: 10,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => _showDetails(stop),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${_selected + 1} / ${widget.stops.length} durak · ${stop.period}',
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      stop.name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ],
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Material(
+                            color: AppColors.surface,
+                            elevation: 2,
+                            shadowColor: Colors.black12,
+                            borderRadius: BorderRadius.circular(16),
+                            child: TextButton.icon(
+                              onPressed: _chooseStop,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
                                 ),
+                                textStyle: const TextStyle(
+                                  fontFamily: AppTypography.body,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.format_list_numbered_rounded,
+                                size: 19,
+                              ),
+                              label: Text(
+                                context.tr('Duraklar'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
-                          IconButton(
-                            tooltip: context.tr('Önceki durak'),
-                            onPressed: _selected > 0
-                                ? () => _select(_selected - 1)
-                                : null,
-                            icon: const Icon(Icons.chevron_left),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _control(
+                        'Rota bilgisi',
+                        Icons.info_outline_rounded,
+                        _routeInfo,
+                      ),
+                      if (widget.onToggleFullscreen != null) ...[
+                        const SizedBox(width: 8),
+                        _control(
+                          widget.fullscreen
+                              ? 'Tam ekrandan çık'
+                              : 'Tam ekran harita',
+                          widget.fullscreen
+                              ? Icons.fullscreen_exit_rounded
+                              : Icons.fullscreen_rounded,
+                          widget.onToggleFullscreen,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (available)
+                  Positioned(
+                    top: 68,
+                    right: 10,
+                    child: Column(
+                      children: [
+                        _control(
+                          'Tüm durakları göster',
+                          Icons.center_focus_strong_rounded,
+                          _fit,
+                        ),
+                        if (constraints.maxHeight >= 420) ...[
+                          const SizedBox(height: 10),
+                          _control(
+                            'Yakınlaştır',
+                            Icons.add_rounded,
+                            () => _camera(CameraUpdate.zoomIn()),
                           ),
-                          IconButton(
-                            tooltip: context.tr('Sonraki durak'),
-                            onPressed: _selected < widget.stops.length - 1
-                                ? () => _select(_selected + 1)
-                                : null,
-                            icon: const Icon(Icons.chevron_right),
+                          const SizedBox(height: 6),
+                          _control(
+                            'Uzaklaştır',
+                            Icons.remove_rounded,
+                            () => _camera(CameraUpdate.zoomOut()),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+                Positioned(
+                  left: 10,
+                  right: 10,
+                  bottom: 10,
+                  height: panelHeight,
+                  child: _stopPanel(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _control(String label, IconData icon, VoidCallback? onPressed) =>
+      Material(
+        color: AppColors.surface,
+        elevation: 2,
+        shadowColor: Colors.black12,
+        borderRadius: BorderRadius.circular(16),
+        child: IconButton(
+          tooltip: context.tr(label),
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            foregroundColor: AppColors.forest,
+          ),
+          icon: Icon(icon, size: 22),
+        ),
+      );
+
+  Widget _stopPanel() {
+    final stop = widget.stops[_selected];
+    return Material(
+      color: AppColors.surface,
+      elevation: 4,
+      shadowColor: Colors.black12,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              button: true,
+              child: InkWell(
+                key: const ValueKey('route-stop-details'),
+                onTap: () => _showDetails(stop),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.tr(
+                          '{current} / {total} durak',
+                          values: {
+                            'current': _selected + 1,
+                            'total': widget.stops.length,
+                          },
+                        ),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.muted,
+                        ),
                       ),
-                      if (stop.location == null)
-                        const Text(
-                          'Bu durağın konumu kayıtlı değil.',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 12,
-                          ),
+                      const SizedBox(height: 5),
+                      Text(
+                        stop.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.3,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text,
                         ),
-                      if (located.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4, top: 5),
-                          child: Text(
-                            context.tr(
-                              routeDistance > 0 && missing > 0
-                                  ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
-                                  : routeDistance > 0
-                                  ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.'
-                                  : missing > 0
-                                  ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
-                                  : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
-                              values: {
-                                'distance': UnitFormatter.of(context)
-                                    .distance(routeDistance),
-                                'count': missing,
-                              },
-                            ),
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 10,
-                              height: 1.3,
-                            ),
-                          ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        context.tr(
+                          stop.location == null
+                              ? 'Bu durağın konumu kayıtlı değil.'
+                              : 'Mekân detayları',
                         ),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.forest,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          IconButton(
+            tooltip: context.tr('Önceki durak'),
+            onPressed: _selected > 0 ? () => _select(_selected - 1) : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              tooltip: context.tr('Sonraki durak'),
+              onPressed: _selected < widget.stops.length - 1
+                  ? () => _select(_selected + 1)
+                  : null,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                backgroundColor: const Color(0xFFEAF0E9),
+                foregroundColor: AppColors.forest,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ),
+        ],
       ),
     );
   }

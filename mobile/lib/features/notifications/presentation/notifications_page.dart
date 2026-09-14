@@ -1,16 +1,21 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' hide Text;
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/preferences/app_unit_controller.dart';
+import '../../../core/preferences/unit_formatter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../community/presentation/community_page.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../../settings/data/settings_repository.dart';
 import '../data/notification_repository.dart';
+import '../../plans/data/plan_weather_repository.dart';
+import '../../plans/presentation/plan_information_sheet.dart';
+import '../../plans/presentation/plan_weather_sheet.dart';
+import 'travel_notice_card.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({
@@ -20,12 +25,18 @@ class NotificationsPage extends StatefulWidget {
     required this.repository,
     required this.onOpen,
     required this.onSettings,
+    this.onOpenDestination,
+    this.onOpenExternal,
+    this.weatherRepository,
   });
   final String uid;
   final TravelPlansRepository plansRepository;
   final NotificationRepository repository;
   final ValueChanged<TravelPlanSummary> onOpen;
   final VoidCallback onSettings;
+  final void Function(TravelPlanSummary, NoticeDestination)? onOpenDestination;
+  final Future<bool> Function(Uri)? onOpenExternal;
+  final PlanWeatherRepository? weatherRepository;
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
 }
@@ -43,6 +54,9 @@ class _NotificationsPageState extends State<NotificationsPage>
   TravelPlanSummary? _weatherPlan;
   DateTime? _fetchedAt;
   bool _busy = false, _storageReady = false;
+  String? _opening;
+  late final _forecast =
+      widget.weatherRepository ?? OpenMeteoPlanWeatherRepository();
   int _epoch = 0, _weatherRequest = 0;
   bool get _enabled => _prefs?['appPlanNotif'] != false;
   @override
@@ -68,6 +82,9 @@ class _NotificationsPageState extends State<NotificationsPage>
 
   void _load() {
     final epoch = ++_epoch;
+    ++_weatherRequest;
+    _weatherKey = null;
+    _fetchedAt = null;
     _planSub?.cancel();
     _prefSub?.cancel();
     setState(() {
@@ -76,6 +93,10 @@ class _NotificationsPageState extends State<NotificationsPage>
       _storageReady = false;
       _plans = null;
       _prefs = null;
+      _weather = null;
+      _weatherPlan = null;
+      _weatherError = null;
+      _dismissed = {};
     });
     void fail(Object e) {
       if (mounted && epoch == _epoch) setState(() => _error = settingsError(e));
@@ -107,6 +128,66 @@ class _NotificationsPageState extends State<NotificationsPage>
           }
         });
   }
+
+  Future<void> _external(Uri uri, String id) async {
+    if (_opening != null) return;
+    // Links are app-built HTTPS URLs; never launch a URI supplied by plan text.
+    if (uri.scheme != 'https' ||
+        !{'www.getyourguide.com', 'open-meteo.com'}.contains(uri.host) ||
+        uri.userInfo.isNotEmpty ||
+        uri.port != 443) {
+      return;
+    }
+    setState(() => _opening = id);
+    try {
+      final opened =
+          await (widget.onOpenExternal?.call(uri) ??
+              launchUrl(uri, mode: LaunchMode.externalApplication));
+      if (!opened) throw StateError('External link unavailable');
+    } catch (_) {
+      if (mounted) {
+        communityNotice(
+          context,
+          context.tr('Bağlantı açılamadı. Tekrar dene.'),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _opening = null);
+    }
+  }
+
+  void _action(TravelNotice notice, TravelPlanSummary plan) {
+    if (notice.actionUri != null) {
+      _external(notice.actionUri!, notice.id);
+    } else if (notice.destination == NoticeDestination.weather) {
+      showPlanInformation(
+        context,
+        PlanWeatherSheet(plan: plan, repository: _forecast),
+      );
+    } else if (widget.onOpenDestination != null) {
+      widget.onOpenDestination!(plan, notice.destination);
+    } else {
+      widget.onOpen(plan);
+    }
+  }
+
+  void _about() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(context.tr('Bildirimler hakkında')),
+      content: Text(
+        context.tr(
+          'Buradaki hatırlatmalar seyahat planlarından oluşturulur. Telefon bildirimleri ayarlardan ayrıca yönetilir. Kapatma tercihleri yalnızca bu cihazda saklanır.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(context.tr('Tamam')),
+        ),
+      ],
+    ),
+  );
 
   void _updateWeather({bool force = false}) {
     if (_plans == null || _prefs == null) return;
@@ -209,6 +290,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       _plans ?? [],
       DateTime.now(),
       enabled: _enabled,
+      formatter: UnitFormatter.of(context),
     );
     if (_enabled && _weather != null && _weatherPlan != null) {
       all.add(
@@ -224,7 +306,7 @@ class _NotificationsPageState extends State<NotificationsPage>
     final visible = all.where((n) => !_dismissed.contains(n.id)).toList();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bildirimler'),
+        title: Text(context.tr('Bildirimler')),
         actions: [
           IconButton(
             tooltip: context.tr('Bildirim ayarları'),
@@ -247,112 +329,245 @@ class _NotificationsPageState extends State<NotificationsPage>
           ? CommunityStatus(message: _error!, onRetry: _load)
           : _plans == null || _prefs == null
           ? const CommunityLoading()
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Text(
-                  'Yolculuğun için küçük hatırlatmalar',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Uygulama içi bildirimler · Telefonun kapalıyken push bildirimi gönderilmez. Kapatılan bildirimler yalnızca bu cihazda saklanır.',
-                ),
-                if (!_enabled)
-                  CommunityPanel(
-                    child: Column(
+          : SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                children: [
+                  Text(
+                    context.tr('Yolculuğun güncel kalsın'),
+                    style: const TextStyle(
+                      fontFamily: AppTypography.heading,
+                      fontSize: 26,
+                      color: AppColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.tr(
+                      'Biletlerin, hazırlıkların ve seyahatinden son bilgiler.',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.6,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (!_enabled)
+                    _NoticeBanner(
+                      message: context.tr(
+                        'Plan bildirimlerin ayarlardan kapalı.',
+                      ),
+                      onTap: widget.onSettings,
+                      action: context.tr('Tercihlerimi aç'),
+                    ),
+                  if (_storageError != null)
+                    _NoticeBanner(
+                      message: context.tr(
+                        'Bildirimler gösteriliyor ancak kapatma tercihin yüklenemedi. {error}',
+                        values: {'error': context.tr(_storageError!)},
+                      ),
+                      onTap: _load,
+                      action: context.tr('Tekrar dene'),
+                    ),
+                  if (_weatherError != null)
+                    _NoticeBanner(
+                      message: context.tr(_weatherError!),
+                      onTap: () => _updateWeather(force: true),
+                      action: context.tr('Tekrar dene'),
+                    ),
+                  if (visible.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Text('Plan bildirimlerin ayarlardan kapalı.'),
-                        TextButton(
-                          onPressed: widget.onSettings,
-                          child: const Text('Tercihlerimi aç'),
+                        Text(
+                          context.tr(
+                            '{count} hatırlatma',
+                            values: {'count': visible.length},
+                          ),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.forest,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                if (_storageError != null)
-                  CommunityStatus(
-                    message:
-                        'Bildirimler gösteriliyor ancak kapatma tercihin yüklenemedi. $_storageError',
-                  ),
-                if (_weatherError != null)
-                  CommunityStatus(
-                    message: _weatherError!,
-                    onRetry: () => _updateWeather(force: true),
-                  ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    TextButton.icon(
-                      onPressed: !_storageReady || _busy || visible.isEmpty
-                          ? null
-                          : () => _dismiss(visible.map((n) => n.id).toSet()),
-                      icon: const Icon(Icons.done_all),
-                      label: const Text('Tümünü kapat'),
-                    ),
-                    TextButton(
-                      onPressed: _busy ? null : _restore,
-                      child: const Text('Kapatılanları geri getir'),
-                    ),
-                  ],
-                ),
-                if (visible.isEmpty && _enabled)
-                  const CommunityStatus(
-                    message: 'Şimdilik yeni hatırlatma yok. Seyahat tarihin yaklaştığında burada görünecek.',
-                  ),
-                for (final n in visible)
-                  CommunityPanel(
-                    key: ValueKey(n.id),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8, right: 10),
-                              child: Icon(
-                                n.level == 0
-                                    ? Icons.priority_high
-                                    : Icons.notifications_none,
-                                color: n.level == 0
-                                    ? AppColors.accent
-                                    : AppColors.forest,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                n.title,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: context.tr('Bildirimi kapat'),
-                              onPressed: !_storageReady || _busy
-                                  ? null
-                                  : () => _dismiss({n.id}),
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                        Text(n.body),
-                        const SizedBox(height: 12),
                         TextButton.icon(
-                          onPressed: () {
-                            final plan = _plans!
-                                .where((p) => p.id == n.planId)
-                                .firstOrNull;
-                            if (plan != null) widget.onOpen(plan);
-                          },
-                          icon: const Icon(Icons.route_outlined),
-                          label: const Text('İlgili planı aç'),
+                          onPressed: !_storageReady || _busy
+                              ? null
+                              : () =>
+                                    _dismiss(visible.map((n) => n.id).toSet()),
+                          icon: const Icon(Icons.done_all_rounded, size: 17),
+                          label: Text(context.tr('Tümünü kapat')),
+                          style: TextButton.styleFrom(
+                            textStyle: const TextStyle(
+                              fontFamily: AppTypography.body,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (visible.isEmpty && _enabled)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 32,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.notifications_active_outlined,
+                            size: 32,
+                            color: AppColors.forest,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.tr('Her şey yolunda'),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.tr(
+                              'Şimdilik yeni hatırlatma yok. Seyahat tarihin yaklaştığında burada görünecek.',
+                            ),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  for (final notice in visible)
+                    Builder(
+                      builder: (_) {
+                        final plan = _plans!
+                            .where((plan) => plan.id == notice.planId)
+                            .firstOrNull;
+                        return TravelNoticeCard(
+                          key: ValueKey(notice.id),
+                          notice: notice,
+                          opening: _opening == notice.id,
+                          onAction: plan == null || _opening != null
+                              ? null
+                              : () => _action(notice, plan),
+                          onPlan:
+                              plan != null &&
+                                  (notice.destination !=
+                                          NoticeDestination.plan ||
+                                      notice.actionUri != null)
+                              ? () => widget.onOpen(plan)
+                              : null,
+                          onDismiss: !_storageReady || _busy
+                              ? null
+                              : () => _dismiss({notice.id}),
+                          onSource: notice.sourceUri == null || _opening != null
+                              ? null
+                              : () => _external(notice.sourceUri!, notice.id),
+                        );
+                      },
+                    ),
+                  if (_dismissed.isNotEmpty || _storageError != null)
+                    TextButton.icon(
+                      onPressed: _busy ? null : _restore,
+                      icon: const Icon(Icons.restore_rounded, size: 18),
+                      label: Text(context.tr('Kapatılanları geri getir')),
+                      style: TextButton.styleFrom(
+                        textStyle: const TextStyle(
+                          fontFamily: AppTypography.body,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  TextButton.icon(
+                    onPressed: _about,
+                    icon: const Icon(Icons.info_outline_rounded, size: 15),
+                    label: Text(context.tr('Bildirimler hakkında')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.muted,
+                      textStyle: const TextStyle(
+                        fontFamily: AppTypography.body,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
     );
   }
+}
+
+class _NoticeBanner extends StatelessWidget {
+  const _NoticeBanner({
+    required this.message,
+    required this.onTap,
+    required this.action,
+  });
+  final String message, action;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF7EDD5),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 18,
+              color: AppColors.forest,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: AppColors.text,
+                ),
+              ),
+            ),
+          ],
+        ),
+        TextButton(
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            textStyle: const TextStyle(
+              fontFamily: AppTypography.body,
+              fontSize: 12,
+            ),
+          ),
+          child: Text(action),
+        ),
+      ],
+    ),
+  );
 }
