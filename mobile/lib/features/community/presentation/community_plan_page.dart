@@ -1,294 +1,304 @@
-import 'package:flutter/material.dart' hide Text;
-
-import '../../../core/localization/localized_text.dart';
-import '../../../core/localization/app_localizations.dart';
-
+import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../plans/data/plan_detail.dart';
+import '../../plans/presentation/plan_information_sheet.dart';
 import '../../plans/presentation/plan_route_map.dart';
 import '../data/community_repository.dart';
 import 'community_page.dart';
+import 'community_route_widgets.dart';
 
-/// Public plans are read-only. No private-plan repository or wallet is exposed.
+/// Public plans remain read-only; ratings are the only mutation on this page.
 class CommunityPlanPage extends StatefulWidget {
   const CommunityPlanPage({
     super.key,
     required this.uid,
     required this.id,
     required this.repository,
+    this.mapBuilder,
+    this.onOpenDirections,
   });
   final String uid, id;
   final CommunityRepository repository;
+  final Widget Function(GoogleMap)? mapBuilder;
+  final Future<bool> Function(Uri)? onOpenDirections;
   @override
   State<CommunityPlanPage> createState() => _CommunityPlanPageState();
 }
 
 class _CommunityPlanPageState extends State<CommunityPlanPage> {
-  late final _plan = widget.repository.plan(widget.id);
+  late Stream<CommunityPlan?> _plan = widget.repository.plan(widget.id);
   int _day = 0, _tab = 0;
-  bool _busy = false;
+  bool _busy = false, _openingDirections = false;
   int? _myRating;
+
+  @override
+  void didUpdateWidget(covariant CommunityPlanPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.id != widget.id ||
+        oldWidget.repository != widget.repository) {
+      _plan = widget.repository.plan(widget.id);
+      _day = _tab = 0;
+      _myRating = null;
+      _busy = false;
+    }
+  }
+
+  void _retry() => setState(() => _plan = widget.repository.plan(widget.id));
+
   Future<void> _rate(int rating) async {
     if (_busy) return;
+    final id = widget.id;
     setState(() => _busy = true);
     try {
-      await widget.repository.rate(widget.id, rating);
-      if (mounted) {
+      await widget.repository.rate(id, rating);
+      if (mounted && widget.id == id) {
         setState(() => _myRating = rating);
         communityNotice(context, 'Değerlendirmen kaydedildi.');
       }
-    } catch (e) {
-      if (mounted) communityNotice(context, communityError(e));
+    } catch (error) {
+      if (mounted && widget.id == id) {
+        communityNotice(context, communityError(error));
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && widget.id == id) setState(() => _busy = false);
     }
   }
 
   Future<void> _directions(PlanStop stop, String destination) async {
+    if (_openingDirections) return;
+    _openingDirections = true;
     try {
-      if (!await launchUrl(
-        stop.directions(destination),
-        mode: LaunchMode.externalApplication,
-      )) {
-        throw StateError('url');
-      }
+      final uri = stop.directions(destination);
+      final opened =
+          await (widget.onOpenDirections?.call(uri) ??
+              launchUrl(uri, mode: LaunchMode.externalApplication));
+      if (!opened) throw StateError('url');
     } catch (_) {
       if (mounted) communityNotice(context, 'Yol tarifi açılamadı.');
+    } finally {
+      _openingDirections = false;
     }
   }
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Topluluk rotası')),
-    body: StreamBuilder<CommunityPlan?>(
-      stream: _plan,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return CommunityStatus(message: communityError(snapshot.error!));
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CommunityLoading();
-        }
-        final plan = snapshot.data;
-        if (plan == null) {
-          return const CommunityStatus(
-            message: 'Bu paylaşım kaldırılmış veya artık bulunamıyor.',
-          );
-        }
-        final days = plan.summary.days;
-        final selected = days.isEmpty
-            ? null
-            : days[_day.clamp(0, days.length - 1)];
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              plan.destination,
-              style: Theme.of(context).textTheme.headlineLarge,
+  void _author(CommunityPlan plan) {
+    if (!plan.profilePublic) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TravelerPage(
+          uid: widget.uid,
+          target: plan.owner,
+          repository: widget.repository,
+        ),
+      ),
+    );
+  }
+
+  Widget _tools(CommunityPlan plan) => Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    children: [
+      OutlinedButton.icon(
+        key: const ValueKey('community-guide'),
+        onPressed: () =>
+            showPlanInformation(context, PlanGuideSheet(plan: plan.summary)),
+        icon: const Icon(Icons.menu_book_outlined, size: 18),
+        label: Text(context.tr('Rehber')),
+      ),
+      OutlinedButton.icon(
+        key: const ValueKey('community-preferences'),
+        onPressed: () =>
+            showPlanInformation(context, CommunityPreferencesSheet(plan: plan)),
+        icon: const Icon(Icons.tune_rounded, size: 18),
+        label: Text(context.tr('Tercihler')),
+      ),
+    ],
+  );
+
+  Widget _days(List<PlanDay> days, int selected) => CommunityRouteDays(
+    days: days,
+    selected: selected,
+    onSelect: (index) => setState(() => _day = index),
+  );
+
+  Widget _itinerary(CommunityPlan plan, PlanDay? selected) {
+    final stops = selected?.stops ?? <PlanStop>[];
+    return ListView(
+      key: const PageStorageKey('community-route-scroll'),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      children: [
+        CommunityRouteOverview(
+          plan: plan,
+          onAuthor: plan.profilePublic ? () => _author(plan) : null,
+        ),
+        const SizedBox(height: 18),
+        _tools(plan),
+        const SizedBox(height: 22),
+        if (selected == null)
+          CommunityStatus(
+            message: context.tr('Bu planda günlük rota bulunamadı.'),
+          )
+        else ...[
+          _days(plan.summary.days, selected.index),
+          const SizedBox(height: 16),
+          CommunityDaySummary(
+            key: ValueKey('community-summary-${selected.index}'),
+            day: selected,
+            symbol: plan.summary.currencySymbol,
+          ),
+          const SizedBox(height: 20),
+          if (stops.isEmpty)
+            CommunityStatus(
+              message: context.tr('Bu gün için henüz durak yok.'),
             ),
-            TextButton.icon(
-              onPressed: plan.profilePublic
-                  ? () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => TravelerPage(
-                          uid: widget.uid,
-                          target: plan.owner,
-                          repository: widget.repository,
-                        ),
-                      ),
-                    )
-                  : null,
-              icon: const Icon(Icons.account_circle_outlined),
-              label: Text(plan.author),
-            ),
-            Text(
-              '${days.length} gün · ${plan.summary.activityCount} durak · ${plan.summary.currencySymbol}${plan.summary.estimatedCost.toStringAsFixed(0)} tahmini',
-            ),
-            const SizedBox(height: 14),
-            Text(
-              plan.data['planData'] is Map
-                  ? planMap(plan.data['planData'])['overallSummary']
-                            as String? ??
-                        ''
-                  : '',
-            ),
-            const SizedBox(height: 14),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final (i, title) in [
-                    'Günlük plan',
-                    'Harita',
-                    'Rehber',
-                    'Tercihler',
-                  ].indexed)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(title),
-                        selected: _tab == i,
-                        onSelected: (_) => setState(() => _tab = i),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (_tab <= 1) ...[
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final day in days)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text('${day.index + 1}. Gün'),
-                          selected: selected?.index == day.index,
-                          onSelected: (_) => setState(() => _day = day.index),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (selected == null)
-                const CommunityStatus(
-                  message: 'Bu planda günlük rota bulunamadı.',
-                )
-              else if (_tab == 1)
-                SizedBox(
-                  height: 520,
-                  child: PlanRouteMap(
-                    day: selected,
-                    destination: plan.destination,
-                    onDirections: (s) => _directions(s, plan.destination),
-                  ),
-                )
-              else ...[
-                Text(
-                  selected.summary,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 18),
-                for (final stop in selected.stops)
-                  CommunityPanel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${stop.index + 1} · ${context.tr(stop.period)}',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          stop.name,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(stop.description),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${plan.summary.currencySymbol}${stop.estimated.toStringAsFixed(0)} tahmini',
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _directions(stop, plan.destination),
-                          icon: const Icon(Icons.directions_outlined),
-                          label: const Text('Yol tarifi'),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ] else if (_tab == 2) ...[
-              for (final (key, title) in [
-                ('transportationTips', 'Ulaşım'),
-                ('localCustoms', 'Yerel kültür'),
-                ('generalAdvice', 'Gezgin notları'),
-              ])
-                CommunityPanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        planMap(
-                                  planMap(plan.data['planData'])['cityGuide'],
-                                )[key]
-                                as String? ??
-                            'Bu plan için rehber bilgisi yok.',
-                      ),
-                    ],
+          for (var index = 0; index < stops.length; index++) ...[
+            if (stops[index].period.trim().isNotEmpty &&
+                (index == 0 || stops[index - 1].period != stops[index].period))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 2, 4, 12),
+                child: Text(
+                  context.tr(stops[index].period),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.forest,
+                    letterSpacing: .4,
                   ),
                 ),
-            ] else ...[
-              for (final (key, title) in [
-                ('travelType', 'Yolculuk türü'),
-                ('peopleCount', 'Kişi sayısı'),
-                ('pace', 'Tempo'),
-                ('tripPurpose', 'Seyahat amacı'),
-                ('transport', 'Ulaşım tercihi'),
-                ('accommodation', 'Konaklama türü'),
-              ])
-                if (plan.data[key] != null &&
-                    plan.data[key].toString().isNotEmpty)
-                  CommunityPanel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        Text(communityPreference(plan.data[key])),
-                      ],
-                    ),
-                  ),
-            ],
-            const SizedBox(height: 20),
-            CommunityPanel(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '★ ${plan.rating.toStringAsFixed(1)} · ${plan.ratingCount} değerlendirme',
-                  ),
-                  if (plan.owner != widget.uid) ...[
-                    const SizedBox(height: 10),
-                    const Text('Bu rotayı nasıl buldun?'),
-                    Wrap(
-                      children: [
-                        for (var i = 1; i <= 5; i++)
-                          IconButton(
-                            tooltip: context.tr(
-                              '{count} yıldız ver',
-                              values: {'count': i},
-                            ),
-                            onPressed: _busy ? null : () => _rate(i),
-                            icon: Icon(
-                              i <= (_myRating ?? 0)
-                                  ? Icons.star_rounded
-                                  : Icons.star_outline_rounded,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const Text(
-                      'Yeni bir puan seçersen önceki değerlendirmen güncellenir.',
-                    ),
-                  ],
-                ],
               ),
+            CommunityRouteStop(
+              key: ValueKey(
+                'community-stop-${selected.index}-$index-${stops[index].name}',
+              ),
+              stop: stops[index],
+              symbol: plan.summary.currencySymbol,
+              onDirections: () => _directions(stops[index], plan.destination),
             ),
+            if (index + 1 < stops.length)
+              CommunityRouteDistance(from: stops[index], to: stops[index + 1]),
           ],
-        );
-      },
-    ),
+        ],
+        const SizedBox(height: 24),
+        CommunityRouteRating(
+          plan: plan,
+          busy: _busy,
+          myRating: _myRating,
+          onRate: plan.owner == widget.uid ? null : _rate,
+        ),
+      ],
+    );
+  }
+
+  Widget _map(CommunityPlan plan, PlanDay? selected) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+        child: Text(
+          plan.destination,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
+      if (selected != null) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 0, 14),
+          child: _days(plan.summary.days, selected.index),
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              Widget map(double height) => SizedBox(
+                height: height,
+                child: PlanRouteMap(
+                  day: selected,
+                  destination: plan.destination,
+                  mapBuilder: widget.mapBuilder,
+                  onDirections: (stop) => _directions(stop, plan.destination),
+                ),
+              );
+              // In landscape or at large text sizes, retain enough map space for
+              // controls and let the map region scroll instead of overflowing.
+              if (constraints.maxHeight < 380) {
+                return SingleChildScrollView(child: map(440));
+              }
+              return map(constraints.maxHeight);
+            },
+          ),
+        ),
+      ] else
+        Expanded(
+          child: SingleChildScrollView(
+            child: CommunityStatus(
+              message: context.tr('Bu planda günlük rota bulunamadı.'),
+            ),
+          ),
+        ),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) => StreamBuilder<CommunityPlan?>(
+    stream: _plan,
+    builder: (context, snapshot) {
+      final plan = snapshot.data;
+      final ready =
+          !snapshot.hasError &&
+          snapshot.connectionState != ConnectionState.waiting &&
+          plan != null;
+      final days = plan?.summary.days ?? <PlanDay>[];
+      final selected = days.isEmpty
+          ? null
+          : days[_day.clamp(0, days.length - 1)];
+      return Scaffold(
+        appBar: AppBar(title: Text(context.tr('Topluluk rotası'))),
+        bottomNavigationBar: ready
+            ? NavigationBar(
+                selectedIndex: _tab,
+                onDestinationSelected: (index) => setState(() => _tab = index),
+                destinations: [
+                  NavigationDestination(
+                    key: const ValueKey('community-tab-plan'),
+                    icon: const Icon(Icons.view_agenda_outlined),
+                    selectedIcon: const Icon(Icons.view_agenda_rounded),
+                    label: context.tr('Günlük plan'),
+                  ),
+                  NavigationDestination(
+                    key: const ValueKey('community-tab-map'),
+                    icon: const Icon(Icons.map_outlined),
+                    selectedIcon: const Icon(Icons.map_rounded),
+                    label: context.tr('Harita'),
+                  ),
+                ],
+              )
+            : null,
+        body: SafeArea(
+          top: false,
+          bottom: !ready,
+          child: snapshot.hasError
+              ? SingleChildScrollView(
+                  child: CommunityStatus(
+                    message: communityError(snapshot.error!),
+                    onRetry: _retry,
+                  ),
+                )
+              : snapshot.connectionState == ConnectionState.waiting
+              ? const CommunityLoading()
+              : plan == null
+              ? const SingleChildScrollView(
+                  child: CommunityStatus(
+                    message: 'Bu paylaşım kaldırılmış veya artık bulunamıyor.',
+                  ),
+                )
+              : _tab == 0
+              ? _itinerary(plan, selected)
+              : _map(plan, selected),
+        ),
+      );
+    },
   );
 }

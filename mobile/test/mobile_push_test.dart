@@ -191,7 +191,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('LOCAL modunda kapalı'), findsOneWidget);
-    expect(find.byType(SwitchListTile), findsNothing);
+    expect(find.byType(Switch), findsNothing);
     expect(device.tokens, 0);
     expect(device.prompts, 0);
     await tester.pumpWidget(const SizedBox());
@@ -217,11 +217,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(controller.busy, false);
-      expect(
-        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged,
-        isNotNull,
-      );
-      await tester.drag(find.byType(ListView), const Offset(0, -180));
+      expect(tester.widget<Switch>(find.byType(Switch)).onChanged, isNotNull);
+      await tester.ensureVisible(find.text('Telefon bildirimlerini aç'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Telefon bildirimlerini aç'));
       await tester.pump(const Duration(milliseconds: 500));

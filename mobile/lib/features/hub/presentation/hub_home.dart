@@ -93,9 +93,9 @@ class HubHome extends StatelessWidget {
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Bir şehir seç, gerisini birlikte planlayalım.',
-          style: TextStyle(color: AppColors.muted, height: 1.5),
+          style: TextStyle(color: context.colors.muted, height: 1.5),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -180,9 +180,9 @@ class HubHome extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Topluluktan gerçek rotalar.',
-                  style: TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: context.colors.muted),
                 ),
                 const SizedBox(height: 14),
                 for (final plan in items)
@@ -220,9 +220,9 @@ class HubHome extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.explore_outlined,
-                color: AppColors.accent,
+                color: context.colors.accent,
                 size: 32,
               ),
               const SizedBox(height: 16),
@@ -238,7 +238,7 @@ class HubHome extends StatelessWidget {
                 english
                     ? '${city.englishCaption}. Choose your dates and travel style to create a route tailored to you.'
                     : '${city.caption}. Tarihlerini ve seyahat tarzını seçerek sana özel bir rota hazırlayabilirsin.',
-                style: const TextStyle(color: AppColors.muted, height: 1.5),
+                style: TextStyle(color: context.colors.muted, height: 1.5),
               ),
               const SizedBox(height: 22),
               FilledButton(
@@ -393,8 +393,8 @@ class _LightButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FilledButton(
     style: FilledButton.styleFrom(
-      backgroundColor: AppColors.surface,
-      foregroundColor: AppColors.forest,
+      backgroundColor: context.colors.surface,
+      foregroundColor: context.colors.forest,
     ),
     onPressed: onTap,
     child: Wrap(
@@ -437,7 +437,7 @@ class _CityCard extends StatelessWidget {
                 city.imageUrl,
                 fit: BoxFit.cover,
                 cacheWidth: 600,
-                errorBuilder: (_, _, _) => const ColoredBox(
+                errorBuilder: (_, _, _) => ColoredBox(
                   color: AppColors.forest,
                   child: Center(
                     child: Icon(
@@ -449,12 +449,12 @@ class _CityCard extends StatelessWidget {
                 ),
                 loadingBuilder: (_, child, progress) => progress == null
                     ? child
-                    : const ColoredBox(
-                        color: AppColors.divider,
+                    : ColoredBox(
+                        color: context.colors.divider,
                         child: Center(
                           child: Icon(
                             Icons.landscape_outlined,
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           ),
                         ),
                       ),
@@ -476,18 +476,15 @@ class _CityCard extends StatelessWidget {
                     city.displayCountry(context.l10n.isEnglish),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: context.colors.muted, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     city.displayCaption(context.l10n.isEnglish),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.forest,
+                    style: TextStyle(
+                      color: context.colors.forest,
                       fontSize: 11,
                     ),
                   ),
@@ -519,23 +516,23 @@ class _QuickCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.accent),
+          Icon(icon, color: context.colors.accent),
           const SizedBox(height: 14),
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: context.colors.muted,
               fontSize: 12,
               height: 1.5,
             ),
           ),
           const SizedBox(height: 12),
-          const Icon(
+          Icon(
             Icons.arrow_forward_rounded,
             size: 18,
-            color: AppColors.accent,
+            color: context.colors.accent,
           ),
         ],
       ),
@@ -554,7 +551,7 @@ class _CommunityCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          const Icon(Icons.map_outlined, color: AppColors.forest, size: 28),
+          Icon(Icons.map_outlined, color: context.colors.forest, size: 28),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -567,8 +564,8 @@ class _CommunityCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${plan.summary.dayCount} gün · ${plan.author}',
-                  style: const TextStyle(
-                    color: AppColors.muted,
+                  style: TextStyle(
+                    color: context.colors.muted,
                     fontSize: 12,
                     height: 1.5,
                   ),
@@ -577,7 +574,7 @@ class _CommunityCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+          Icon(Icons.chevron_right_rounded, color: context.colors.muted),
         ],
       ),
     ),
@@ -590,10 +587,10 @@ class _SurfaceCard extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.surface,
+    color: context.colors.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(22),
-      side: const BorderSide(color: AppColors.divider),
+      side: BorderSide(color: context.colors.divider),
     ),
     clipBehavior: Clip.antiAlias,
     child: InkWell(onTap: onTap, child: child),
@@ -607,9 +604,9 @@ class _PlanUnavailable extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
+      Text(
         'Planlar şu anda getirilemedi. Bağlantını kontrol edebilirsin.',
-        style: TextStyle(color: AppColors.muted, height: 1.5),
+        style: TextStyle(color: context.colors.muted, height: 1.5),
       ),
       TextButton(onPressed: onPlans, child: const Text('Planlarıma git')),
       FilledButton(onPressed: onCreate, child: const Text('Yeni plan oluştur')),

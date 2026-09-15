@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/app_unit_controller.dart';
 import '../../../core/preferences/unit_formatter.dart';
 
@@ -171,22 +172,11 @@ class _NotificationsPageState extends State<NotificationsPage>
     }
   }
 
-  void _about() => showDialog<void>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(context.tr('Bildirimler hakkında')),
-      content: Text(
-        context.tr(
-          'Buradaki hatırlatmalar seyahat planlarından oluşturulur. Telefon bildirimleri ayarlardan ayrıca yönetilir. Kapatma tercihleri yalnızca bu cihazda saklanır.',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.tr('Tamam')),
-        ),
-      ],
-    ),
+  void _about() => showAppInformation(
+    context,
+    title: 'Bildirimler hakkında',
+    message: 'Buradaki hatırlatmalar seyahat planlarından oluşturulur. Telefon bildirimleri ayarlardan ayrıca yönetilir. Kapatma tercihleri yalnızca bu cihazda saklanır.',
+    icon: Icons.notifications_none_rounded,
   );
 
   void _updateWeather({bool force = false}) {
@@ -254,6 +244,8 @@ class _NotificationsPageState extends State<NotificationsPage>
       context,
       'Bildirimleri geri getir?',
       'Bu cihazda kapattığın bildirimler yeniden gösterilecek.',
+      confirmLabel: 'Geri getir',
+      icon: Icons.restore_rounded,
     )) {
       return;
     }
@@ -336,10 +328,10 @@ class _NotificationsPageState extends State<NotificationsPage>
                 children: [
                   Text(
                     context.tr('Yolculuğun güncel kalsın'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTypography.heading,
                       fontSize: 26,
-                      color: AppColors.text,
+                      color: context.colors.text,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -347,10 +339,10 @@ class _NotificationsPageState extends State<NotificationsPage>
                     context.tr(
                       'Biletlerin, hazırlıkların ve seyahatinden son bilgiler.',
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       height: 1.6,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -388,10 +380,10 @@ class _NotificationsPageState extends State<NotificationsPage>
                             '{count} hatırlatma',
                             values: {'count': visible.length},
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.forest,
+                            color: context.colors.forest,
                           ),
                         ),
                         TextButton.icon(
@@ -420,16 +412,16 @@ class _NotificationsPageState extends State<NotificationsPage>
                         vertical: 32,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: AppColors.divider),
+                        border: Border.all(color: context.colors.divider),
                       ),
                       child: Column(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.notifications_active_outlined,
                             size: 32,
-                            color: AppColors.forest,
+                            color: context.colors.forest,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -445,10 +437,10 @@ class _NotificationsPageState extends State<NotificationsPage>
                               'Şimdilik yeni hatırlatma yok. Seyahat tarihin yaklaştığında burada görünecek.',
                             ),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               height: 1.6,
-                              color: AppColors.muted,
+                              color: context.colors.muted,
                             ),
                           ),
                         ],
@@ -501,7 +493,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                     icon: const Icon(Icons.info_outline_rounded, size: 15),
                     label: Text(context.tr('Bildirimler hakkında')),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.muted,
+                      foregroundColor: context.colors.muted,
                       textStyle: const TextStyle(
                         fontFamily: AppTypography.body,
                         fontSize: 11,
@@ -530,7 +522,7 @@ class _NoticeBanner extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
     decoration: BoxDecoration(
-      color: const Color(0xFFF7EDD5),
+      color: context.colors.tone(const Color(0xFFF7EDD5)),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
@@ -539,19 +531,19 @@ class _NoticeBanner extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
+            Icon(
               Icons.info_outline_rounded,
               size: 18,
-              color: AppColors.forest,
+              color: context.colors.forest,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.5,
-                  color: AppColors.text,
+                  color: context.colors.text,
                 ),
               ),
             ),

@@ -25,7 +25,7 @@ class NextStopPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF0E8),
+        color: context.colors.tone(const Color(0xFFEAF0E8)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -37,10 +37,10 @@ class NextStopPanel extends StatelessWidget {
                       ? 'Henüz durak yok'
                       : 'Bugünün rotası tamamlandı')
                 : 'Sıradaki durak',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.forest,
+              color: context.colors.forest,
             ),
           ),
           if (next != null) ...[
@@ -143,9 +143,9 @@ class PlanBudgetSummary extends StatelessWidget {
                   children: [
                     Text(
                       item.$1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.muted,
+                        color: context.colors.muted,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -166,8 +166,8 @@ class PlanBudgetSummary extends StatelessWidget {
               value: (spent / budget).clamp(0, 1),
               color: remaining < 0
                   ? Theme.of(context).colorScheme.error
-                  : AppColors.forest,
-              backgroundColor: AppColors.divider,
+                  : context.colors.forest,
+              backgroundColor: context.colors.divider,
               borderRadius: BorderRadius.circular(4),
               minHeight: 5,
             ),
@@ -178,31 +178,35 @@ class PlanBudgetSummary extends StatelessWidget {
             style: TextStyle(
               color: hasBudget && remaining < 0
                   ? Theme.of(context).colorScheme.error
-                  : AppColors.forest,
+                  : context.colors.forest,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Gerçek harcama, duraklara girdiğin tutarların toplamıdır. Cüzdan belgeleri ayrıca ücret olarak eklenmez.',
-            style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.4),
+            style: TextStyle(
+              color: context.colors.muted,
+              fontSize: 11,
+              height: 1.4,
+            ),
           ),
         ],
       ),
     );
     return Material(
-      color: AppColors.surface,
+      color: context.colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.divider),
+        side: BorderSide(color: context.colors.divider),
       ),
       clipBehavior: Clip.antiAlias,
       child: collapsible
           ? ExpansionTile(
               key: const PageStorageKey('journey-budget'),
-              leading: const Icon(
+              leading: Icon(
                 Icons.account_balance_wallet_outlined,
-                color: AppColors.forest,
+                color: context.colors.forest,
               ),
               title: const Text(
                 'Seyahat bütçesi',
@@ -214,7 +218,7 @@ class PlanBudgetSummary extends StatelessWidget {
               ),
               subtitle: Text(
                 '${journeyMoney(plan.currencySymbol, spent)} harcandı · $status',
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: context.colors.muted),
               ),
               children: [content],
             )
@@ -286,15 +290,15 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
         widget.date,
       );
       return Material(
-        color: AppColors.surface,
+        color: context.colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.divider),
+          side: BorderSide(color: context.colors.divider),
         ),
         clipBehavior: Clip.antiAlias,
         child: ExpansionTile(
           key: PageStorageKey('day-wallet-${widget.planId}-${widget.date}'),
-          leading: const Icon(Icons.wallet_outlined, color: AppColors.forest),
+          leading: Icon(Icons.wallet_outlined, color: context.colors.forest),
           title: Text(
             context.tr(
               snapshot.hasData && !snapshot.hasError
@@ -324,10 +328,10 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                 child: CircularProgressIndicator(),
               )
             else if (entries.isEmpty)
-              const Text(
+              Text(
                 'Bu plana ve güne ait cüzdan kaydı yok. Cüzdan sekmesinden planına bilet veya rezervasyon ekleyebilirsin.',
                 style: TextStyle(
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                   fontSize: 13,
                   height: 1.5,
                 ),
@@ -348,10 +352,7 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                   ),
                   subtitle: Text(
                     '${context.tr(walletCategories[entry.category] ?? 'Diğer')}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: context.colors.muted),
                   ),
                   children: [
                     for (final item in [
@@ -392,9 +393,9 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
                   ],
                 ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Bunlar cüzdanındaki kayıtların görünümüdür; bütçeye tekrar eklenmez.',
-                style: TextStyle(color: AppColors.muted, fontSize: 11),
+                style: TextStyle(color: context.colors.muted, fontSize: 11),
               ),
             ],
           ],

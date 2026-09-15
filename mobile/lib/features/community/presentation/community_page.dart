@@ -2,12 +2,18 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/community_repository.dart';
 import 'community_plan_page.dart';
 import 'community_design.dart';
+import 'traveler_page.dart';
+import '../../settings/presentation/account_widgets.dart';
+import '../../settings/presentation/privacy_widgets.dart';
+
+export 'traveler_page.dart' show TravelerPage;
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({
@@ -64,6 +70,9 @@ class _CommunityPageState extends State<CommunityPage> {
       remove
           ? 'Planın topluluktan kaldırılır. Kendi kayıtlı planın ve cüzdanın korunur.'
           : 'Rotan, tarihlerin ve seyahat tercihlerin herkese açık olur. Cüzdan kayıtların, kişisel notların ve gerçek harcamaların paylaşılmaz.',
+      confirmLabel: remove ? 'Paylaşımı kaldır' : 'Planı paylaş',
+      icon: remove ? Icons.public_off_rounded : Icons.public_rounded,
+      tone: remove ? AppDialogTone.warning : AppDialogTone.standard,
     );
     if (!yes || !mounted) return;
     setState(() => _busy = true);
@@ -138,9 +147,13 @@ class _CommunityPageState extends State<CommunityPage> {
         ],
       ),
       const SizedBox(height: 4),
-      const Text(
+      Text(
         'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
-        style: TextStyle(color: AppColors.muted, fontSize: 14, height: 1.5),
+        style: TextStyle(
+          color: context.colors.muted,
+          fontSize: 14,
+          height: 1.5,
+        ),
       ),
       const SizedBox(height: 20),
       TextField(
@@ -379,15 +392,15 @@ class CommunityPlanCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 18),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Material(
-            color: const Color(0xFFEAF0E9),
+            color: context.colors.tone(const Color(0xFFEAF0E9)),
             child: InkWell(
               onTap: onOpen,
               child: Padding(
@@ -397,10 +410,10 @@ class CommunityPlanCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.route_rounded,
                           size: 22,
-                          color: AppColors.forest,
+                          color: context.colors.forest,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -408,17 +421,17 @@ class CommunityPlanCard extends StatelessWidget {
                             plan.purpose.isEmpty
                                 ? 'Topluluk rotası'
                                 : plan.purpose,
-                            style: const TextStyle(
-                              color: AppColors.forest,
+                            style: TextStyle(
+                              color: context.colors.forest,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.north_east_rounded,
                           size: 20,
-                          color: AppColors.forest,
+                          color: context.colors.forest,
                         ),
                       ],
                     ),
@@ -474,20 +487,22 @@ class CommunityPlanCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        icon: const CircleAvatar(
+                        icon: CircleAvatar(
                           radius: 16,
-                          backgroundColor: Color(0xFFF5E9DB),
+                          backgroundColor: context.colors.tone(
+                            const Color(0xFFF5E9DB),
+                          ),
                           child: Icon(
                             Icons.person_outline_rounded,
                             size: 20,
-                            color: AppColors.accent,
+                            color: context.colors.accent,
                           ),
                         ),
                         label: Text(
                           plan.author,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.text),
+                          style: TextStyle(color: context.colors.text),
                         ),
                       ),
                     ),
@@ -497,7 +512,7 @@ class CommunityPlanCard extends StatelessWidget {
                   plan.ratingCount == 0
                       ? 'Henüz değerlendirme yok'
                       : '★ ${plan.rating.toStringAsFixed(1)} · ${plan.ratingCount} değerlendirme',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -589,171 +604,6 @@ class _FollowingPeopleState extends State<_FollowingPeople> {
   );
 }
 
-class TravelerPage extends StatefulWidget {
-  const TravelerPage({
-    super.key,
-    required this.uid,
-    required this.target,
-    required this.repository,
-  });
-  final String uid, target;
-  final CommunityRepository repository;
-  @override
-  State<TravelerPage> createState() => _TravelerPageState();
-}
-
-class _TravelerPageState extends State<TravelerPage> {
-  late Future<TravelerProfile> _profile = widget.repository.profile(
-    widget.target,
-  );
-  late final _following = widget.repository.following(widget.uid);
-  late final _plans = widget.repository.sharedBy(widget.target);
-  bool _busy = false;
-  Future<void> _toggle(bool follows) async {
-    if (follows &&
-        !await confirmCommunity(
-          context,
-          'Takipten çık?',
-          'Bu gezgin takip ettiklerin listesinden kaldırılacak.',
-        )) {
-      return;
-    }
-    if (!mounted || _busy) return;
-    setState(() => _busy = true);
-    try {
-      await widget.repository.follow(widget.uid, widget.target, !follows);
-    } catch (e) {
-      if (mounted) communityNotice(context, communityError(e));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Gezgin kartı')),
-    body: FutureBuilder<TravelerProfile>(
-      future: _profile,
-      builder: (context, s) {
-        if (s.hasError) {
-          return CommunityStatus(
-            message: communityError(s.error!),
-            onRetry: () => setState(() {
-              _profile = widget.repository.profile(widget.target);
-            }),
-          );
-        }
-        if (!s.hasData) return const CommunityLoading();
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.forest,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.explore_outlined,
-                    color: Colors.white,
-                    size: 42,
-                  ),
-                  const SizedBox(height: 22),
-                  Text(
-                    s.data!.name,
-                    style: Theme.of(context).textTheme.headlineMedium
-                        ?.copyWith(color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    s.data!.visible
-                        ? 'TRAVYON · GEZGİN KARTI'
-                        : 'Bu profil herkese açık değil.',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-            if (widget.uid != widget.target)
-              StreamBuilder<Set<String>>(
-                stream: _following,
-                builder: (context, f) {
-                  if (f.hasError) {
-                    return CommunityStatus(message: communityError(f.error!));
-                  }
-                  final follows = f.data?.contains(widget.target) == true;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          !f.hasData || _busy || (!s.data!.visible && !follows)
-                          ? null
-                          : () => _toggle(follows),
-                      icon: Icon(
-                        follows
-                            ? Icons.person_remove_outlined
-                            : Icons.person_add_alt,
-                      ),
-                      label: Text(
-                        _busy
-                            ? 'İşleniyor…'
-                            : follows
-                            ? 'Takip ediliyor'
-                            : 'Takip et',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            if (s.data!.visible)
-              StreamBuilder<List<CommunityPlan>>(
-                stream: _plans,
-                builder: (context, p) {
-                  if (p.hasError) {
-                    return CommunityStatus(message: communityError(p.error!));
-                  }
-                  if (!p.hasData) return const CommunityLoading();
-                  if (p.data!.isEmpty) {
-                    return const CommunityStatus(
-                      message: 'Henüz herkese açık rota yok.',
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          '${p.data!.length} paylaşılan plan · ${p.data!.map((p) => p.destination).toSet().length} farklı şehir',
-                        ),
-                      ),
-                      for (final plan in p.data!)
-                        CommunityPlanCard(
-                          plan: plan,
-                          onOpen: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => CommunityPlanPage(
-                                uid: widget.uid,
-                                id: plan.id,
-                                repository: widget.repository,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-          ],
-        );
-      },
-    ),
-  );
-}
-
 class CommunityPrivacyPage extends StatefulWidget {
   const CommunityPrivacyPage({
     super.key,
@@ -769,7 +619,7 @@ class CommunityPrivacyPage extends StatefulWidget {
 class _CommunityPrivacyPageState extends State<CommunityPrivacyPage> {
   Map<String, bool>? _values;
   Object? _error;
-  bool _busy = false;
+  bool _busy = false, _dirty = false;
   @override
   void initState() {
     super.initState();
@@ -787,15 +637,19 @@ class _CommunityPrivacyPageState extends State<CommunityPrivacyPage> {
   }
 
   Future<void> _save() async {
+    if (_busy || _values == null) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await widget.repository.savePrivacy(_values!);
+      await widget.repository.savePrivacy(Map.of(_values!));
       if (mounted) {
+        setState(() => _dirty = false);
         communityNotice(context, 'Gizlilik ayarların kaydedildi.');
-        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && Navigator.of(context).canPop()) Navigator.pop(context);
+        });
       }
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -805,53 +659,79 @@ class _CommunityPrivacyPageState extends State<CommunityPrivacyPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Topluluk gizliliği')),
-    body: ListView(
-      padding: const EdgeInsets.all(20),
+  Widget build(BuildContext context) => AccountScreen(
+    title: 'Profil ve plan gizliliği',
+    busy: _busy,
+    dirty: _dirty,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Web ve mobilde aynı ayarlar kullanılır. Plan paylaşımını kapatmak mevcut paylaşımlarını bağlantıya özel yapar; bağlantıya sahip kişiler açabilir.',
+        const AccountHeader(
+          title: 'Ne paylaşacağına sen karar ver.',
+          subtitle: 'Profilinin görünürlüğünü, rota paylaşımını ve kimlerin seni takip edebileceğini seç.',
+          icon: Icons.visibility_outlined,
         ),
-        const SizedBox(height: 20),
-        if (_error != null)
+        if (_error != null && _values == null)
           CommunityStatus(
             message: communityError(_error!),
             onRetry: _values == null ? _load : null,
           ),
         if (_values == null && _error == null) const CommunityLoading(),
         if (_values != null) ...[
-          for (final (key, title, subtitle) in [
+          const PrivacySectionHeading(title: 'Toplulukta görünürlük'),
+          for (final (key, title, subtitle, icon) in [
             (
               'profilePublic',
               'Herkese açık profil',
               'Adın ve gezgin kartın toplulukta görünür.',
+              Icons.person_outline_rounded,
             ),
             (
               'plansPublic',
               'Plan paylaşımına izin ver',
               'Seçtiğin planları toplulukta paylaşabilirsin. Otomatik paylaşılmaz.',
+              Icons.route_outlined,
             ),
             (
               'followPublic',
               'Herkes takip edebilir',
               'Gezginler seni onaysız takip edebilir.',
+              Icons.people_outline_rounded,
             ),
           ])
-            CommunityPanel(
-              child: SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(title),
-                subtitle: Text(subtitle),
-                value: _values![key] == true,
-                onChanged: _busy
-                    ? null
-                    : (v) => setState(() => _values![key] = v),
-              ),
+            PrivacyToggleCard(
+              key: ValueKey('community-$key'),
+              title: title,
+              description: subtitle,
+              icon: icon,
+              value: _values![key] == true,
+              onChanged: _busy
+                  ? null
+                  : (v) => setState(() {
+                      _values![key] = v;
+                      _dirty = true;
+                      _error = null;
+                    }),
             ),
-          FilledButton(
-            onPressed: _busy ? null : _save,
-            child: Text(_busy ? 'Kaydediliyor…' : 'Kaydet ve uygula'),
+          if (_values!['plansPublic'] != true)
+            const PrivacyStatus(
+              title: 'Paylaşım kapalıyken',
+              message: 'Plan paylaşımını kapatmak mevcut paylaşımlarını bağlantıya özel yapar; bağlantıya sahip kişiler açabilir.',
+              icon: Icons.link_rounded,
+              warning: true,
+            ),
+          const AccountNotice(
+            message:
+                'Cüzdan kayıtların ve kişisel notların toplulukta paylaşılmaz.',
+            icon: Icons.lock_outline_rounded,
+          ),
+          if (_error != null)
+            AccountNotice(message: communityError(_error!), error: true),
+          AccountSaveButton(
+            key: const ValueKey('community-privacy-save'),
+            onPressed: _save,
+            busy: _busy,
+            label: 'Kaydet ve uygula',
           ),
         ],
       ],
@@ -867,9 +747,9 @@ class CommunityPanel extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 14),
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Material(color: Colors.transparent, child: child),
   );
@@ -884,7 +764,7 @@ class CommunityStatus extends StatelessWidget {
     padding: const EdgeInsets.all(24),
     child: Column(
       children: [
-        const Icon(Icons.explore_outlined, size: 36, color: AppColors.forest),
+        Icon(Icons.explore_outlined, size: 36, color: context.colors.forest),
         const SizedBox(height: 12),
         Text(message, textAlign: TextAlign.center),
         if (onRetry != null)
@@ -909,23 +789,17 @@ void communityNotice(BuildContext context, String message) =>
 Future<bool> confirmCommunity(
   BuildContext context,
   String title,
-  String message,
-) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Onayla'),
-          ),
-        ],
-      ),
-    ) ??
-    false;
+  String message, {
+  required String confirmLabel,
+  String cancelLabel = 'Vazgeç',
+  IconData icon = Icons.help_outline_rounded,
+  AppDialogTone tone = AppDialogTone.standard,
+}) => showAppConfirmation(
+  context,
+  title: title,
+  message: message,
+  confirmLabel: confirmLabel,
+  cancelLabel: cancelLabel,
+  icon: icon,
+  tone: tone,
+);

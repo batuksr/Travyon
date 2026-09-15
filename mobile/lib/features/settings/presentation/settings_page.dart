@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' hide Text;
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/app_unit_controller.dart';
 import '../../../core/preferences/unit_formatter.dart';
 
@@ -14,6 +15,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/firebase/firebase_environment.dart';
 import '../../community/data/community_repository.dart';
 import '../../community/presentation/community_page.dart';
@@ -22,6 +24,13 @@ import '../../plans/data/plan_detail.dart';
 import '../data/settings_fields.dart';
 import '../data/settings_repository.dart';
 import '../../notifications/presentation/mobile_push_page.dart';
+import '../../help/presentation/help_center_page.dart';
+import 'bug_report_page.dart';
+import 'account_profile_page.dart';
+import 'account_security_page.dart';
+import 'travel_preferences_page.dart';
+import 'notification_privacy_page.dart';
+import 'theme_settings_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
@@ -47,6 +56,29 @@ class _SettingsPageState extends State<SettingsPage> {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => page));
     if (mounted) _reload();
+  }
+
+  Future<void> _signOut() async {
+    if (_busy) return;
+    if (!await confirmCommunity(
+      context,
+      'Çıkış yapılsın mı?',
+      'Kayıtlı planların hesabında kalır.',
+      confirmLabel: 'Çıkış yap',
+      icon: Icons.logout_rounded,
+    )) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onSignOut();
+      if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    } catch (e) {
+      if (mounted) communityNotice(context, settingsError(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _photo() async {
@@ -79,6 +111,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context,
       'Verilerini dışa aktar?',
       'Dosya profil bilgilerini, kayıtlı planlarını, bu cihazdaki pasaport hatırlatıcını ve cüzdan kayıtlarını içerir. Yalnızca güvendiğin bir konuma kaydet. Web tarayıcısında kalan yerel veriler dahil değildir.',
+      confirmLabel: 'Dışa aktar',
+      icon: Icons.download_outlined,
     )) {
       return;
     }
@@ -115,7 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
     VoidCallback action, {
     String? subtitle,
   }) => ListTile(
-    leading: Icon(icon, color: AppColors.forest),
+    leading: Icon(icon, color: context.colors.forest),
     title: Text(title),
     subtitle: subtitle == null ? null : Text(subtitle),
     trailing: const Icon(Icons.chevron_right),
@@ -131,20 +165,45 @@ class _SettingsPageState extends State<SettingsPage> {
       CommunityPanel(child: Column(children: children)),
     ],
   );
+
+  Widget _preferenceTile(
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback action,
+  ) => ListTile(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+    leading: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: context.colors.forest.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, size: 22, color: context.colors.forest),
+    ),
+    title: Text(
+      title,
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          height: 1.5,
+          color: context.colors.muted,
+        ),
+      ),
+    ),
+    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+    onTap: _busy ? null : action,
+  );
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
     child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Ayarlar'),
-        actions: [
-          IconButton(
-            onPressed: _busy ? null : _reload,
-            tooltip: context.tr('Yenile'),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Ayarlar')),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _data,
         builder: (context, snapshot) {
@@ -169,6 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
               action: id,
               title: title,
               passwordProvider: data['passwordProvider'] == true,
+              currentEmail: data['email'] as String? ?? '',
               repository: widget.repository,
             ),
           );
@@ -268,38 +328,55 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ]),
               _group('SEYAHAT TERCİHLERİ', [
-                _tile(
+                _preferenceTile(
                   'Seyahat varsayılanları',
+                  'Bütçe, kişi sayısı ve gezi temposu',
                   Icons.tune,
                   () => section('travel'),
                 ),
-                _tile(
+                _preferenceTile(
                   'Pasaport hatırlatıcısı',
+                  'Son geçerlilik tarihi · Yalnızca bu cihazda',
                   Icons.badge_outlined,
                   () => section('passport'),
-                  subtitle: 'Yalnızca bu cihazda',
                 ),
-                _tile('Saat dilimi', Icons.schedule, () => section('timezone')),
-                _tile(
+                _preferenceTile(
+                  'Saat dilimi',
+                  'Şehir veya bölgeye göre seçim',
+                  Icons.schedule,
+                  () => section('timezone'),
+                ),
+                _preferenceTile(
                   'Dil ve birimler',
+                  'Türkçe / English · km / mi · °C / °F',
                   Icons.language,
                   () => section('appearance'),
                 ),
               ]),
+              _group('GÖRÜNÜM', [
+                _preferenceTile(
+                  'Tema',
+                  AppThemeScope.maybeOf(context)?.label ?? 'Sistem ayarı',
+                  Icons.palette_outlined,
+                  () => _open(const ThemeSettingsPage()),
+                ),
+              ]),
               _group('BİLDİRİMLER VE GİZLİLİK', [
-                _tile(
+                _preferenceTile(
                   'Telefon bildirimleri',
+                  'Cihaz izni ve bildirim durumu',
                   Icons.notifications_active_outlined,
                   () => _open(MobilePushPage(uid: widget.uid)),
-                  subtitle: 'Bu cihazın izni ve test gönderimi',
                 ),
-                _tile(
+                _preferenceTile(
                   'Bildirim tercihleri',
+                  'Planlar, topluluk ve e-postalar',
                   Icons.notifications_none,
                   () => section('notifications'),
                 ),
-                _tile(
+                _preferenceTile(
                   'Profil ve plan gizliliği',
+                  'Görünürlük, paylaşım ve takip',
                   Icons.visibility_outlined,
                   () => _open(
                     CommunityPrivacyPage(
@@ -308,8 +385,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                _tile(
+                _preferenceTile(
                   'Veri ve konum gizliliği',
+                  'Kullanım analizi ve konum bilgisi',
                   Icons.privacy_tip_outlined,
                   () => section('dataPrivacy'),
                 ),
@@ -331,16 +409,31 @@ class _SettingsPageState extends State<SettingsPage> {
                   () => section('billing'),
                 ),
               ]),
-              _group('DESTEK', [
+              _group('DESTEK VE YASAL', [
                 _tile(
                   'Sık sorulan sorular',
                   Icons.help_outline,
-                  () => _open(const SettingsFaqPage()),
+                  () => openHelpCenter(context),
                 ),
                 _tile(
-                  'Bize ulaş',
+                  'İletişim',
                   Icons.chat_bubble_outline,
-                  () => action('contact', 'Bize ulaş'),
+                  () => openHelpCenter(
+                    context,
+                    section: HelpSection.contact,
+                    name: data['displayName'] as String? ?? '',
+                    email: data['email'] as String? ?? '',
+                  ),
+                ),
+                _tile(
+                  'Gizlilik Politikası',
+                  Icons.shield_outlined,
+                  () => openHelpCenter(context, section: HelpSection.privacy),
+                ),
+                _tile(
+                  'Kullanım Koşulları',
+                  Icons.description_outlined,
+                  () => openHelpCenter(context, section: HelpSection.terms),
                 ),
                 _tile(
                   'Hata bildir',
@@ -348,7 +441,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () => action('bug', 'Hata bildir'),
                 ),
               ]),
-              _group('VERİLERİM VE OTURUM', [
+              _group('VERİLERİM', [
                 _tile(
                   'Verilerimi dışa aktar',
                   Icons.download_outlined,
@@ -359,30 +452,38 @@ class _SettingsPageState extends State<SettingsPage> {
                   Icons.delete_outline,
                   () => action('delete', 'Hesabımı sil'),
                 ),
-                _tile('Çıkış yap', Icons.logout, () async {
-                  if (!await confirmCommunity(
-                    context,
-                    'Çıkış yapılsın mı?',
-                    'Kayıtlı planların hesabında kalır.',
-                  )) {
-                    return;
-                  }
-                  if (!mounted) return;
-                  setState(() => _busy = true);
-                  try {
-                    await widget.onSignOut();
-                    if (context.mounted) {
-                      Navigator.of(context).popUntil((r) => r.isFirst);
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      communityNotice(context, settingsError(e));
-                    }
-                  } finally {
-                    if (mounted) setState(() => _busy = false);
-                  }
-                }),
               ]),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                key: const ValueKey('settings-sign-out'),
+                onPressed: _busy ? null : _signOut,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: context.colors.tone(const Color(0xFFB33E32)),
+                  backgroundColor: context.colors.tone(const Color(0xFFFFF0EB)),
+                  side: BorderSide(
+                    color: context.colors.tone(const Color(0xFFE5B8B1)),
+                  ),
+                  minimumSize: const Size.fromHeight(54),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  textStyle: const TextStyle(
+                    fontFamily: AppTypography.body,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                icon: const Icon(Icons.logout_rounded, size: 21),
+                label: Text(
+                  _busy ? 'İşleniyor…' : 'Çıkış yap',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           );
         },
@@ -412,7 +513,11 @@ class _SettingsEditorState extends State<SettingsEditor> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.section.id != 'profile' &&
+        !TravelPreferencesPage.supports(widget.section.id) &&
+        !NotificationPrivacyPage.supports(widget.section.id)) {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -522,186 +627,210 @@ class _SettingsEditorState extends State<SettingsEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_busy && !_dirty,
-    onPopInvokedWithResult: (didPop, result) async {
-      if (didPop || _busy || !_dirty) return;
-      if (await confirmCommunity(
-            context,
-            'Değişikliklerden vazgeç?',
-            'Kaydetmediğin değişiklikler kaybolacak.',
-          ) &&
-          context.mounted) {
-        setState(() => _dirty = false);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) Navigator.pop(context);
-        });
-      }
-    },
-    child: Scaffold(
-      appBar: AppBar(title: Text(widget.section.title)),
-      body: _loading
-          ? const CommunityLoading()
-          : _values.isEmpty
-          ? CommunityStatus(
-              message: _error ?? 'Ayarlar yüklenemedi.',
-              onRetry: _load,
-            )
-          : Form(
-              key: _form,
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  if (widget.section.note.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: Text(widget.section.note),
-                    ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        _error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  for (final f in widget.section.fields)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: f.toggle
-                          ? CommunityPanel(
-                              child: SwitchListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(f.label),
-                                value: _values[f.key] == true,
-                                onChanged: _busy
-                                    ? null
-                                    : (v) => setState(() {
-                                        _values[f.key] = v;
-                                        _dirty = true;
-                                      }),
+  Widget build(BuildContext context) => widget.section.id == 'profile'
+      ? AccountProfilePage(repository: widget.repository)
+      : NotificationPrivacyPage.supports(widget.section.id)
+      ? NotificationPrivacyPage(
+          section: widget.section,
+          repository: widget.repository,
+        )
+      : TravelPreferencesPage.supports(widget.section.id)
+      ? TravelPreferencesPage(
+          section: widget.section,
+          repository: widget.repository,
+        )
+      : PopScope(
+          canPop: !_busy && !_dirty,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop || _busy || !_dirty) return;
+            if (await confirmCommunity(
+                  context,
+                  'Değişikliklerden vazgeç?',
+                  'Kaydetmediğin değişiklikler kaybolacak.',
+                  confirmLabel: 'Kaydetmeden çık',
+                  cancelLabel: 'Düzenlemeye dön',
+                  icon: Icons.edit_note_rounded,
+                  tone: AppDialogTone.warning,
+                ) &&
+                context.mounted) {
+              setState(() => _dirty = false);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) Navigator.pop(context);
+              });
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(title: Text(widget.section.title)),
+            body: _loading
+                ? const CommunityLoading()
+                : _values.isEmpty
+                ? CommunityStatus(
+                    message: _error ?? 'Ayarlar yüklenemedi.',
+                    onRetry: _load,
+                  )
+                : Form(
+                    key: _form,
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        if (widget.section.note.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Text(widget.section.note),
+                          ),
+                        if (_error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Text(
+                              _error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
                               ),
-                            )
-                          : f.options != null
-                          ? DropdownButtonFormField<String>(
-                              initialValue: '${_values[f.key]}',
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: context.tr(f.label),
-                              ),
-                              items: f.options!.entries
-                                  .map(
-                                    (e) => DropdownMenuItem(
-                                      value: e.key,
-                                      child: Text(e.value),
+                            ),
+                          ),
+                        for (final f in widget.section.fields)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 18),
+                            child: f.toggle
+                                ? CommunityPanel(
+                                    child: SwitchListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      title: Text(f.label),
+                                      value: _values[f.key] == true,
+                                      onChanged: _busy
+                                          ? null
+                                          : (v) => setState(() {
+                                              _values[f.key] = v;
+                                              _dirty = true;
+                                            }),
                                     ),
                                   )
-                                  .toList(),
-                              onChanged: _busy
-                                  ? null
-                                  : (v) => setState(() {
-                                      _values[f.key] = v;
-                                      _dirty = true;
-                                    }),
-                            )
-                          : TextFormField(
-                              controller: _controllers[f.key],
-                              enabled: !_busy,
-                              readOnly: f.date,
-                              maxLength: f.max,
-                              keyboardType: f.number
-                                  ? const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    )
-                                  : TextInputType.text,
-                              decoration: InputDecoration(
-                                labelText: context.tr(f.label),
-                                suffixIcon: f.date
-                                    ? IconButton(
-                                        tooltip: context.tr('Tarihi temizle'),
-                                        onPressed: _busy
-                                            ? null
-                                            : () => setState(() {
-                                                _controllers[f.key]!.clear();
-                                                _dirty = true;
-                                              }),
-                                        icon: const Icon(Icons.close),
-                                      )
-                                    : null,
-                              ),
-                              onTap: f.date ? () => _date(f) : null,
-                              onChanged: (_) => setState(() => _dirty = true),
-                              validator: (v) {
-                                final error = validateSetting(f, v ?? '');
-                                return error == null ? null : context.tr(error);
-                              },
-                            ),
-                    ),
-                  if (widget.section.id == 'appearance') ...[
-                    Builder(
-                      builder: (context) {
-                        final formatter = UnitFormatter(
-                          distanceKm: _values['distanceKm'] != false,
-                          tempCelsius: _values['tempCelsius'] != false,
-                          english: context.l10n.isEnglish,
-                        );
-                        return CommunityPanel(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Önizleme',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 18,
-                                runSpacing: 8,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.route_outlined,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(formatter.distance(2.4)),
-                                    ],
+                                : f.options != null
+                                ? DropdownButtonFormField<String>(
+                                    initialValue: '${_values[f.key]}',
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: context.tr(f.label),
+                                    ),
+                                    items: f.options!.entries
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e.key,
+                                            child: Text(e.value),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: _busy
+                                        ? null
+                                        : (v) => setState(() {
+                                            _values[f.key] = v;
+                                            _dirty = true;
+                                          }),
+                                  )
+                                : TextFormField(
+                                    controller: _controllers[f.key],
+                                    enabled: !_busy,
+                                    readOnly: f.date,
+                                    maxLength: f.max,
+                                    keyboardType: f.number
+                                        ? const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          )
+                                        : TextInputType.text,
+                                    decoration: InputDecoration(
+                                      labelText: context.tr(f.label),
+                                      suffixIcon: f.date
+                                          ? IconButton(
+                                              tooltip: context.tr(
+                                                'Tarihi temizle',
+                                              ),
+                                              onPressed: _busy
+                                                  ? null
+                                                  : () => setState(() {
+                                                      _controllers[f.key]!
+                                                          .clear();
+                                                      _dirty = true;
+                                                    }),
+                                              icon: const Icon(Icons.close),
+                                            )
+                                          : null,
+                                    ),
+                                    onTap: f.date ? () => _date(f) : null,
+                                    onChanged: (_) =>
+                                        setState(() => _dirty = true),
+                                    validator: (v) {
+                                      final error = validateSetting(f, v ?? '');
+                                      return error == null
+                                          ? null
+                                          : context.tr(error);
+                                    },
                                   ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.thermostat_outlined,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(formatter.temperature(24)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                  ],
-                  FilledButton(
-                    onPressed: _busy ? null : _save,
-                    child: Text(
-                      _busy ? 'Kaydediliyor…' : 'Değişiklikleri kaydet',
+                        if (widget.section.id == 'appearance') ...[
+                          Builder(
+                            builder: (context) {
+                              final formatter = UnitFormatter(
+                                distanceKm: _values['distanceKm'] != false,
+                                tempCelsius: _values['tempCelsius'] != false,
+                                english: context.l10n.isEnglish,
+                              );
+                              return CommunityPanel(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Önizleme',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 18,
+                                      runSpacing: 8,
+                                      children: [
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.route_outlined,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(formatter.distance(2.4)),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.thermostat_outlined,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(formatter.temperature(24)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                        FilledButton(
+                          onPressed: _busy ? null : _save,
+                          child: Text(
+                            _busy ? 'Kaydediliyor…' : 'Değişiklikleri kaydet',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-    ),
-  );
+          ),
+        );
 }
 
 class SettingsActionPage extends StatefulWidget {
@@ -711,9 +840,11 @@ class SettingsActionPage extends StatefulWidget {
     required this.title,
     required this.passwordProvider,
     required this.repository,
+    this.currentEmail = '',
   });
   final String action, title;
   final bool passwordProvider;
+  final String currentEmail;
   final SettingsRepository repository;
   @override
   State<SettingsActionPage> createState() => _SettingsActionPageState();
@@ -742,7 +873,10 @@ class _SettingsActionPageState extends State<SettingsActionPage> {
         !await confirmCommunity(
           context,
           'Hesabın kalıcı olarak silinsin mi?',
-          'Web ve mobil hesabın, özel planların, cüzdanın ve paylaşımların silinir. Bu işlem geri alınamaz. Aktif abonelik varsa sunucu silmeyi engeller.',
+          'Hesabın, özel planların, cüzdanın ve paylaşımların silinir. Bu işlem geri alınamaz. Aktif abonelik varsa sunucu silmeyi engeller.',
+          confirmLabel: 'Hesabımı sil',
+          icon: Icons.person_remove_outlined,
+          tone: AppDialogTone.destructive,
         )) {
       return;
     }
@@ -784,132 +918,145 @@ class _SettingsActionPageState extends State<SettingsActionPage> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_busy,
-    child: Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            if (widget.action == 'delete' && FirebaseEnvironment.usesEmulators)
-              const Text(
-                'LOCAL geliştirme modunda hesap silme güvenlik nedeniyle kapalıdır. Giriş hesabın gerçek, diğer verilerin yereldir.',
-              ),
-            if (widget.action == 'delete')
-              const Text(
-                'Bu işlem web hesabını da siler. Devam etmek için aşağıya HESABIMI SİL yaz. Önce verilerini dışa aktarmanı öneririz.',
-              ),
-            if (!_support && !widget.passwordProvider)
-              const Text(
-                'İşlem sırasında Google hesabınla yeniden doğrulama istenecek.',
-              ),
-            const SizedBox(height: 18),
-            if (_status != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 18),
-                child: Text(_status!),
-              ),
-            TextFormField(
-              controller: _first,
-              enabled: !_busy,
-              obscureText: widget.action == 'password' && !_show,
-              maxLength: _support ? 200 : 150,
-              keyboardType: widget.action == 'email'
-                  ? TextInputType.emailAddress
-                  : TextInputType.text,
-              decoration: InputDecoration(
-                labelText: context.tr(switch (widget.action) {
-                  'email' => 'Yeni e-posta',
-                  'password' => 'Yeni şifre',
-                  'delete' => 'HESABIMI SİL',
-                  _ => 'Konu',
-                }),
-              ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return context.tr('Bu alanı doldur.');
-                }
-                final deletePhrase = context.l10n.isEnglish
-                    ? 'DELETE MY ACCOUNT'
-                    : 'HESABIMI SİL';
-                if (widget.action == 'delete' && v != deletePhrase) {
-                  return context.tr('Onay metnini aynen yaz.');
-                }
-                if (widget.action == 'email' &&
-                    !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())) {
-                  return context.tr('Geçerli bir e-posta gir.');
-                }
-                if (widget.action == 'password' && v.length < 8) {
-                  return context.tr('En az 8 karakter kullan.');
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            if (_support || widget.action == 'password')
-              TextFormField(
-                controller: _second,
-                enabled: !_busy,
-                obscureText: !_support && !_show,
-                maxLines: _support ? 6 : 1,
-                maxLength: _support ? 3000 : 150,
-                decoration: InputDecoration(
-                  labelText: context.tr(
-                    _support
-                        ? 'Mesajın (şifre veya rezervasyon kodu yazma)'
-                        : 'Yeni şifreyi tekrar yaz',
+  Widget build(BuildContext context) => widget.action == 'bug'
+      ? BugReportPage(repository: widget.repository)
+      : widget.action == 'email' || widget.action == 'password'
+      ? AccountSecurityPage(
+          emailMode: widget.action == 'email',
+          passwordProvider: widget.passwordProvider,
+          currentEmail: widget.currentEmail,
+          repository: widget.repository,
+        )
+      : PopScope(
+          canPop: !_busy,
+          child: Scaffold(
+            appBar: AppBar(title: Text(widget.title)),
+            body: Form(
+              key: _form,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  if (widget.action == 'delete' &&
+                      FirebaseEnvironment.usesEmulators)
+                    const Text(
+                      'LOCAL geliştirme modunda hesap silme güvenlik nedeniyle kapalıdır. Giriş hesabın gerçek, diğer verilerin yereldir.',
+                    ),
+                  if (widget.action == 'delete')
+                    const Text(
+                      'Hesabın kalıcı olarak silinir. Devam etmek için aşağıya HESABIMI SİL yaz. Önce verilerini dışa aktarmanı öneririz.',
+                    ),
+                  if (!_support && !widget.passwordProvider)
+                    const Text(
+                      'İşlem sırasında Google hesabınla yeniden doğrulama istenecek.',
+                    ),
+                  const SizedBox(height: 18),
+                  if (_status != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Text(_status!),
+                    ),
+                  TextFormField(
+                    controller: _first,
+                    enabled: !_busy,
+                    obscureText: widget.action == 'password' && !_show,
+                    maxLength: _support ? 200 : 150,
+                    keyboardType: widget.action == 'email'
+                        ? TextInputType.emailAddress
+                        : TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: context.tr(switch (widget.action) {
+                        'email' => 'Yeni e-posta',
+                        'password' => 'Yeni şifre',
+                        'delete' => 'HESABIMI SİL',
+                        _ => 'Konu',
+                      }),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return context.tr('Bu alanı doldur.');
+                      }
+                      final deletePhrase = context.l10n.isEnglish
+                          ? 'DELETE MY ACCOUNT'
+                          : 'HESABIMI SİL';
+                      if (widget.action == 'delete' && v != deletePhrase) {
+                        return context.tr('Onay metnini aynen yaz.');
+                      }
+                      if (widget.action == 'email' &&
+                          !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                              .hasMatch(v.trim())) {
+                        return context.tr('Geçerli bir e-posta gir.');
+                      }
+                      if (widget.action == 'password' && v.length < 8) {
+                        return context.tr('En az 8 karakter kullan.');
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? context.tr('Bu alanı doldur.')
-                    : !_support && v != _first.text
-                    ? context.tr('Şifreler eşleşmiyor.')
-                    : null,
-              ),
-            if (!_support && widget.passwordProvider) ...[
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _password,
-                enabled: !_busy,
-                obscureText: !_show,
-                decoration: InputDecoration(
-                  labelText: context.tr('Mevcut şifren'),
-                ),
-                validator: (v) => v == null || v.isEmpty
-                    ? context.tr('Mevcut şifreni gir.')
-                    : null,
-              ),
-            ],
-            if (!_support)
-              TextButton(
-                onPressed: () => setState(() => _show = !_show),
-                child: Text(_show ? 'Şifreleri gizle' : 'Şifreleri göster'),
-              ),
-            const SizedBox(height: 22),
-            FilledButton(
-              onPressed:
-                  _busy ||
-                      (widget.action == 'delete' &&
-                          FirebaseEnvironment.usesEmulators)
-                  ? null
-                  : _submit,
-              child: Text(
-                _busy
-                    ? 'İşleniyor…'
-                    : widget.action == 'delete'
-                    ? 'Hesabımı kalıcı olarak sil'
-                    : _support
-                    ? 'Gönder'
-                    : 'Devam et',
+                  const SizedBox(height: 16),
+                  if (_support || widget.action == 'password')
+                    TextFormField(
+                      controller: _second,
+                      enabled: !_busy,
+                      obscureText: !_support && !_show,
+                      maxLines: _support ? 6 : 1,
+                      maxLength: _support ? 3000 : 150,
+                      decoration: InputDecoration(
+                        labelText: context.tr(
+                          _support
+                              ? 'Mesajın (şifre veya rezervasyon kodu yazma)'
+                              : 'Yeni şifreyi tekrar yaz',
+                        ),
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? context.tr('Bu alanı doldur.')
+                          : !_support && v != _first.text
+                          ? context.tr('Şifreler eşleşmiyor.')
+                          : null,
+                    ),
+                  if (!_support && widget.passwordProvider) ...[
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _password,
+                      enabled: !_busy,
+                      obscureText: !_show,
+                      decoration: InputDecoration(
+                        labelText: context.tr('Mevcut şifren'),
+                      ),
+                      validator: (v) => v == null || v.isEmpty
+                          ? context.tr('Mevcut şifreni gir.')
+                          : null,
+                    ),
+                  ],
+                  if (!_support)
+                    TextButton(
+                      onPressed: () => setState(() => _show = !_show),
+                      child: Text(
+                        _show ? 'Şifreleri gizle' : 'Şifreleri göster',
+                      ),
+                    ),
+                  const SizedBox(height: 22),
+                  FilledButton(
+                    onPressed:
+                        _busy ||
+                            (widget.action == 'delete' &&
+                                FirebaseEnvironment.usesEmulators)
+                        ? null
+                        : _submit,
+                    child: Text(
+                      _busy
+                          ? 'İşleniyor…'
+                          : widget.action == 'delete'
+                          ? 'Hesabımı kalıcı olarak sil'
+                          : _support
+                          ? 'Gönder'
+                          : 'Devam et',
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    ),
-  );
+          ),
+        );
 }
 
 class SubscriptionInfoPage extends StatelessWidget {
@@ -931,10 +1078,10 @@ class SubscriptionInfoPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.workspace_premium_outlined,
                   size: 40,
-                  color: AppColors.accent,
+                  color: context.colors.accent,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -953,7 +1100,7 @@ class SubscriptionInfoPage extends StatelessWidget {
             ),
           ),
           const Text(
-            'Mevcut web aboneliğin aynı hesapla kullanılır. App Store / Google Play satın alma ve abonelik yönetimi henüz mobile bağlanmadı; bu ekranda ödeme alınmaz.',
+            'App Store / Google Play satın alma ve abonelik yönetimi henüz kullanılamıyor; bu ekranda ödeme alınmaz.',
           ),
         ],
       ),
@@ -1019,46 +1166,5 @@ class _PaymentsPageState extends State<PaymentsPage> {
 class SettingsFaqPage extends StatelessWidget {
   const SettingsFaqPage({super.key});
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Sık sorulan sorular')),
-    body: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        for (final (q, a) in [
-          (
-            'Webdeki planlarım burada görünür mü?',
-            'Aynı hesap ve aynı Firebase ortamındaysan kayıtlı planların web ve mobilde ortaktır.',
-          ),
-          (
-            'Tercihlerim eski planımı değiştirir mi?',
-            'Hayır. Seyahat varsayılanları yalnızca yeni oluşturduğun planın başlangıç seçimlerini belirler.',
-          ),
-          (
-            'Cüzdanım toplulukta görünür mü?',
-            'Hayır. Cüzdan kayıtları sana özeldir. Topluluk paylaşımı seçtiğin rotayı yayınlar.',
-          ),
-          (
-            'Pasaport bilgim eşitlenir mi?',
-            'Hayır. Ülke ve geçerlilik tarihi bu cihazda hesabına özel saklanır. Pasaport numarası istenmez.',
-          ),
-          (
-            'Harita neden açılmıyor?',
-            'İnternet bağlantını kontrol et. Geliştirme sürümünde Google Maps anahtarıyla yeniden başlatılması gerekebilir.',
-          ),
-        ])
-          CommunityPanel(
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text(q),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(a),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) => const HelpCenterPage();
 }

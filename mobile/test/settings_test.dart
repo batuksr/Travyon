@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -85,6 +86,86 @@ SettingsSection section(String id) =>
     settingsSections.firstWhere((s) => s.id == id);
 
 void main() {
+  for (final language in ['tr', 'en']) {
+    testWidgets(
+      'separate red sign-out footer confirms before exiting: $language',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 700);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        var exits = 0;
+        final pending = Completer<void>();
+        final strings = AppLocalizations(Locale(language));
+        await tester.pumpWidget(
+          host(
+            MediaQuery(
+              data: const MediaQueryData(
+                size: Size(320, 700),
+                textScaler: TextScaler.linear(1.6),
+              ),
+              child: SettingsPage(
+                uid: 'me',
+                repository: FakeSettings(),
+                onSignOut: () async {
+                  exits++;
+                  await pending.future;
+                },
+              ),
+            ),
+            locale: Locale(language),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final footer = find.byKey(const ValueKey('settings-sign-out'));
+        await tester.scrollUntilVisible(
+          footer,
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final button = tester.widget<OutlinedButton>(footer);
+        expect(
+          button.style!.foregroundColor!.resolve({}),
+          const Color(0xFFB33E32),
+        );
+        expect(
+          find.ancestor(of: footer, matching: find.byType(ListTile)),
+          findsNothing,
+        );
+        expect(
+          tester.getTopLeft(footer).dy,
+          greaterThan(
+            tester.getBottomLeft(find.text(strings.text('Hesabımı sil'))).dy,
+          ),
+        );
+        await tester.tap(footer);
+        await tester.pumpAndSettle();
+        expect(find.text(strings.text('Çıkış yapılsın mı?')), findsOneWidget);
+        expect(exits, 0);
+        await tester.tap(find.text(strings.text('Vazgeç')));
+        await tester.pumpAndSettle();
+        expect(exits, 0);
+        await tester.tap(footer);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Dialog),
+            matching: find.text(strings.text('Çıkış yap')),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(exits, 1);
+        expect(tester.widget<OutlinedButton>(footer).onPressed, isNull);
+        pending.complete();
+        await tester.pumpAndSettle();
+        expect(tester.widget<OutlinedButton>(footer).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   test('English catalog covers every settings field definition', () {
     const strings = AppLocalizations(Locale('en'));
     for (final section in settingsSections) {
@@ -142,16 +223,24 @@ void main() {
     expect(find.text('Türkiye'), findsNothing);
 
     await tester.enterText(find.byType(TextFormField).at(1), 'traveler');
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.drag(
+      find.byKey(const ValueKey('account-scroll')),
+      const Offset(0, -500),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Address'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Discard changes?'), findsOneWidget);
     expect(find.text('Your unsaved changes will be lost.'), findsOneWidget);
-    expect(find.text('Discard'), findsOneWidget);
-    expect(find.text('Confirm'), findsOneWidget);
+    expect(find.text('Keep editing'), findsOneWidget);
+    expect(find.text('Leave without saving'), findsOneWidget);
     expect(find.textContaining('Değişiklik'), findsNothing);
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(find.text('traveler'), findsOneWidget);
+    expect(repo.lastSave, isNull);
   });
 
   test('missing device plugin does not block cloud settings or hide missing passport data', () async {
@@ -247,9 +336,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Batu'), findsOneWidget);
     expect(find.text('Profil bilgileri'), findsOneWidget);
-    await tester.tap(find.byTooltip('Yenile'));
-    await tester.pumpAndSettle();
-    expect(find.text('Batu'), findsOneWidget);
+    expect(tester.widget<AppBar>(find.byType(AppBar)).actions, isNull);
     expect(tester.takeException(), isNull);
   });
   testWidgets('travel save validates budget and retains edits after failure', (
@@ -290,11 +377,20 @@ void main() {
         ),
       ),
     );
-    await tester.enterText(find.byType(TextFormField).at(0), 'password123');
-    await tester.enterText(find.byType(TextFormField).at(1), 'different123');
-    await tester.enterText(find.byType(TextFormField).at(2), 'oldPassword');
-    await tester.ensureVisible(find.text('Devam et'));
-    await tester.tap(find.text('Devam et'));
+    await tester.enterText(
+      find.byKey(const ValueKey('account-current')),
+      'oldPassword',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('account-new')),
+      'password123',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('account-repeat')),
+      'different123',
+    );
+    await tester.ensureVisible(find.text('Şifreyi güncelle'));
+    await tester.tap(find.text('Şifreyi güncelle'));
     await tester.pumpAndSettle();
     expect(find.text('Şifreler eşleşmiyor.'), findsOneWidget);
     expect(repo.changes, 0);
@@ -356,17 +452,22 @@ void main() {
       find.byType(TextFormField).last,
       'Haritayı açınca boş ekran görüyorum.',
     );
-    await tester.ensureVisible(find.text('Gönder'));
-    await tester.tap(find.text('Gönder'));
+    await tester.ensureVisible(find.text('Raporu gönder'));
+    await tester.tap(find.text('Raporu gönder'));
     await tester.pumpAndSettle();
-    expect(find.text('Gönderilemedi.'), findsOneWidget);
+    expect(
+      find.text(
+        'Rapor gönderilemedi. Yazdıkların burada; bağlantını kontrol edip tekrar dene.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Harita sorunu'), findsOneWidget);
     repo.fail = false;
-    await tester.ensureVisible(find.text('Gönder'));
-    await tester.tap(find.text('Gönder'));
+    await tester.ensureVisible(find.text('Raporu gönder'));
+    await tester.tap(find.text('Raporu gönder'));
     await tester.pumpAndSettle();
     expect(repo.sends, 2);
-    expect(find.text('Mesajın gönderildi.'), findsOneWidget);
+    expect(find.text('Raporun bize ulaştı.'), findsOneWidget);
     expect(find.text('Harita sorunu'), findsNothing);
   });
 
@@ -379,6 +480,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('2030-10-01'), findsOneWidget);
+      await tester.ensureVisible(find.text('Değişiklikleri kaydet'));
       await tester.tap(find.text('Değişiklikleri kaydet'));
       await tester.pumpAndSettle();
       expect(repo.lastSave, {'country': 'Türkiye', 'expiry': '2030-10-01'});

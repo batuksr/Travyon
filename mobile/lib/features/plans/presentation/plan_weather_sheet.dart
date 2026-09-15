@@ -146,16 +146,16 @@ class _PlanWeatherSheetState extends State<PlanWeatherSheet> {
           return ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              const Icon(
+              Icon(
                 Icons.cloud_off_outlined,
                 size: 36,
-                color: AppColors.forest,
+                color: context.colors.forest,
               ),
               const SizedBox(height: 16),
               Text(
                 context.tr(message),
                 textAlign: TextAlign.center,
-                style: const TextStyle(height: 1.6, color: AppColors.muted),
+                style: TextStyle(height: 1.6, color: context.colors.muted),
               ),
               if (reason != PlanWeatherFailure.dates &&
                   reason != PlanWeatherFailure.tooFar)
@@ -189,10 +189,10 @@ class _PlanWeatherSheetState extends State<PlanWeatherSheet> {
               const SizedBox(height: 8),
               Text(
                 context.tr('Bavul önerileri'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.forest,
+                  color: context.colors.forest,
                 ),
               ),
               const SizedBox(height: 12),
@@ -202,7 +202,7 @@ class _PlanWeatherSheetState extends State<PlanWeatherSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(tip.$1, size: 20, color: AppColors.forest),
+                      Icon(tip.$1, size: 20, color: context.colors.forest),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -226,17 +226,17 @@ class _PlanWeatherSheetState extends State<PlanWeatherSheet> {
                 'Tahminler değişebilir. Geçmiş tarihler için geçmiş hava verileri gösterilir.',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 height: 1.5,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
             ),
             TextButton(
               key: const ValueKey('weather-attribution'),
               onPressed: () => _open(Uri.https('open-meteo.com', '/')),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6A625A),
+                foregroundColor: context.colors.tone(const Color(0xFF6A625A)),
                 minimumSize: const Size(48, 48),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 textStyle: const TextStyle(
@@ -275,9 +275,9 @@ class _WeatherDayCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,9 +290,9 @@ class _WeatherDayCard extends StatelessWidget {
                   children: [
                     Text(
                       context.tr('{number}. Gün', values: {'number': number}),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.muted,
+                        color: context.colors.muted,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -311,7 +311,11 @@ class _WeatherDayCard extends StatelessWidget {
               ),
               if (w != null) ...[
                 const SizedBox(width: 10),
-                Icon(_weatherIcon(w.code), size: 34, color: AppColors.accent),
+                Icon(
+                  _weatherIcon(w.code),
+                  size: 34,
+                  color: context.colors.accent,
+                ),
               ],
             ],
           ),
@@ -323,16 +327,16 @@ class _WeatherDayCard extends StatelessWidget {
                     ? 'Bu tarih için tahmin henüz hazır değil.'
                     : 'Bu gün için hava verisi bulunmuyor.',
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.5,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
             )
           else ...[
             Text(
               context.tr(_conditions[w.code] ?? 'Hava koşulu bilinmiyor'),
-              style: const TextStyle(color: AppColors.forest, fontSize: 13),
+              style: TextStyle(color: context.colors.forest, fontSize: 13),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -341,15 +345,15 @@ class _WeatherDayCard extends StatelessWidget {
               children: [
                 Text(
                   formatter.temperature(w.maximum),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.text,
+                    color: context.colors.text,
                   ),
                 ),
                 Text(
                   '/ ${formatter.temperature(w.minimum)}',
-                  style: const TextStyle(fontSize: 19, color: AppColors.muted),
+                  style: TextStyle(fontSize: 19, color: context.colors.muted),
                 ),
               ],
             ),
@@ -392,7 +396,7 @@ class _WeatherDayCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 context.tr('Geçmiş hava verisi'),
-                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                style: TextStyle(fontSize: 11, color: context.colors.muted),
               ),
             ],
           ],
@@ -410,12 +414,12 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 15, color: AppColors.forest),
+      Icon(icon, size: 15, color: context.colors.forest),
       const SizedBox(width: 5),
       Flexible(
         child: Text(
           text,
-          style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          style: TextStyle(fontSize: 12, color: context.colors.muted),
         ),
       ),
     ],

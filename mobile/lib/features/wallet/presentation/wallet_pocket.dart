@@ -1,10 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart' hide Text;
+import 'package:flutter/material.dart';
 
-import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
-
 import '../../../core/theme/app_theme.dart';
 import '../data/wallet_repository.dart';
 
@@ -16,12 +14,14 @@ IconData walletIcon(String category) => switch (category) {
   'document' => Icons.description_outlined,
   _ => Icons.explore_outlined,
 };
-Color walletCardColor(String category) => switch (category) {
-  'flight' => const Color(0xFFD7E8ED),
-  'stay' => const Color(0xFFEAD6C4),
-  'ticket' => const Color(0xFFF2E4AE),
-  _ => const Color(0xFFE4E8D4),
-};
+
+/// Physical paper stays white in both themes; its ink never inherits dark text.
+Color walletCardColor(String category) => Colors.white;
+
+String walletRecordCount(BuildContext context, int count) => context.tr(
+  count == 1 ? '1 kayıt' : '{count} kayıt',
+  values: {'count': count},
+);
 
 class WalletPocket extends StatelessWidget {
   const WalletPocket({
@@ -34,39 +34,41 @@ class WalletPocket extends StatelessWidget {
   });
   final List<WalletEntry> entries;
   final String city;
-  final ValueChanged<WalletEntry> onOpen;
-  final VoidCallback onAdd;
+  final ValueChanged<WalletEntry>? onOpen;
+  final VoidCallback? onAdd;
   final String? highlightId;
+
   @override
   Widget build(BuildContext context) {
     final cards = entries.take(3).toList();
-    // Increase exposed card height with system text scaling; the pocket stays
-    // decorative and the full accessible list is always available below it.
-    final cardHeight =
-        68.0 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.8);
-    final count = cards.isEmpty ? 1 : cards.length;
-    final height = 170 + cardHeight * count;
+    // Two title lines remain visible above the leather, even at 200% text.
+    final scaler = MediaQuery.textScalerOf(context);
+    final exposedHeight = 26 + scaler.scale(10) * 1.3 + scaler.scale(14) * 2.5;
+    final count = math.max(1, cards.length);
+    final frontTop = 4 + exposedHeight * count;
+    final frontHeight = 126 + math.max(0, scaler.scale(12) - 12) * 2;
     return Semantics(
       label: context.tr('Seyahat cüzdanı'),
       child: SizedBox(
-        height: height + 16,
+        key: const ValueKey('wallet-pocket'),
+        height: frontTop + frontHeight + 12,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Positioned(
               left: 10,
               right: 10,
-              top: 24,
-              bottom: 24,
+              top: 22,
+              bottom: 20,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF20382C),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: const [
+                  color: const Color(0xFF203A2F),
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x30315142),
-                      blurRadius: 25,
-                      offset: Offset(0, 16),
+                      color: Colors.black.withValues(alpha: .12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
@@ -74,99 +76,114 @@ class WalletPocket extends StatelessWidget {
             ),
             if (cards.isEmpty)
               Positioned(
-                left: 20,
-                right: 20,
-                top: 6,
+                left: 16,
+                right: 16,
+                top: 4,
                 child: _PocketCard(
-                  height: cardHeight + 55,
-                  color: walletCardColor('ticket'),
-                  title: 'İlk biletini ekle',
-                  label: 'YENİ BİR YOLCULUK',
-                  icon: Icons.add,
+                  cardKey: const ValueKey('wallet-pocket-add'),
+                  height: exposedHeight + 28,
+                  title: context.tr('İlk kaydını ekle'),
+                  label: context.tr('Bilet · Rezervasyon · Belge'),
+                  icon: Icons.add_rounded,
                   onTap: onAdd,
                 ),
               ),
             for (var i = 0; i < cards.length; i++)
               Positioned(
-                left: 20,
-                right: 20,
-                top: 6 + i * cardHeight,
+                left: 16,
+                right: 16,
+                top: 4 + exposedHeight * i,
                 child: TweenAnimationBuilder<double>(
                   key: ValueKey('${cards[i].id}-$highlightId'),
                   tween: Tween(
-                    begin: cards[i].id == highlightId ? -32 : -10,
+                    begin: cards[i].id == highlightId ? -16 : 0,
                     end: 0,
                   ),
                   duration: MediaQuery.disableAnimationsOf(context)
                       ? Duration.zero
-                      : Duration(milliseconds: 380 + i * 90),
+                      : const Duration(milliseconds: 280),
                   curve: Curves.easeOutCubic,
                   builder: (context, offset, child) => Transform.translate(
                     offset: Offset(0, offset),
                     child: child,
                   ),
                   child: _PocketCard(
-                    height: cardHeight + 55,
-                    color: walletCardColor(cards[i].category),
+                    cardKey: ValueKey('wallet-pocket-${cards[i].id}'),
+                    height: exposedHeight + 28,
                     title: cards[i].title,
-                    label: context
-                        .tr(walletCategories[cards[i].category]!)
-                        .toUpperCase(),
+                    label: context.tr(
+                      walletCategories[cards[i].category] ?? 'Diğer',
+                    ),
                     icon: walletIcon(cards[i].category),
-                    onTap: () => onOpen(cards[i]),
+                    onTap: onOpen == null ? null : () => onOpen!(cards[i]),
                   ),
                 ),
               ),
             Positioned(
               left: 0,
               right: 0,
-              top: count * cardHeight + 7,
-              bottom: 16,
+              top: frontTop,
+              bottom: 12,
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14),
-                  topRight: Radius.circular(14),
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(28),
+                  bottomRight: Radius.circular(28),
                 ),
                 child: CustomPaint(
-                  painter: _LeatherPainter(),
+                  painter: const _LeatherPainter(),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        const ExcludeSemantics(
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.near_me_outlined,
+                                color: Color(0xFFEAE5CC),
+                                size: 23,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'travyon',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: Color(0xFFEAE5CC),
+                                  fontFamily: AppTypography.heading,
+                                  fontSize: 25,
+                                  letterSpacing: -.7,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
                           children: [
-                            Icon(
-                              Icons.near_me_outlined,
-                              color: Color(0xFFE1DFC2),
-                              size: 28,
+                            Expanded(
+                              child: Text(
+                                city,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFFEAE5CC),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Text(
-                              'travyon',
-                              textScaler: TextScaler.noScaling,
-                              style: TextStyle(
-                                color: Color(0xFFE1DFC2),
-                                fontFamily: AppTypography.heading,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: -1,
+                              walletRecordCount(context, entries.length),
+                              style: const TextStyle(
+                                color: Color(0xFFCBD5BF),
+                                fontSize: 11,
                               ),
                             ),
                           ],
-                        ),
-                        const Spacer(),
-                        Text(
-                          context.tr(city).toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFFDFDFC5),
-                            fontSize: 11,
-                            letterSpacing: 2,
-                          ),
                         ),
                       ],
                     ),
@@ -175,31 +192,31 @@ class WalletPocket extends StatelessWidget {
               ),
             ),
             Positioned(
-              right: -4,
-              top: count * cardHeight + 28,
+              right: -3,
+              top: frontTop + 20,
               child: ExcludeSemantics(
                 child: Container(
-                  width: 50,
-                  height: 48,
+                  width: 44,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF405C45),
+                    color: const Color(0xFF466149),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF6A7952)),
+                    border: Border.all(color: const Color(0xFF798362)),
                   ),
                   child: Center(
                     child: Container(
-                      width: 22,
-                      height: 22,
+                      width: 17,
+                      height: 17,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [Color(0xFFE5D394), Color(0xFF9C8848)],
+                          colors: [Color(0xFFE9D8A4), Color(0xFFB09A59)],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x55000000),
+                            color: Color(0x33000000),
                             blurRadius: 3,
-                            offset: Offset(1, 2),
+                            offset: Offset(0, 2),
                           ),
                         ],
                       ),
@@ -217,58 +234,83 @@ class WalletPocket extends StatelessWidget {
 
 class _PocketCard extends StatelessWidget {
   const _PocketCard({
+    required this.cardKey,
     required this.height,
-    required this.color,
     required this.title,
     required this.label,
     required this.icon,
     required this.onTap,
   });
+  final Key cardKey;
   final double height;
-  final Color color;
   final String title, label;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) => Material(
-    color: color,
-    borderRadius: BorderRadius.circular(16),
+    key: cardKey,
+    color: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+      side: const BorderSide(color: Color(0xFFE7E7E2)),
+    ),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: onTap,
       child: SizedBox(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(14, 13, 14, 0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: AppColors.forest, size: 22),
-              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F3EE),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, color: AppColors.forest, size: 19),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 10,
-                        letterSpacing: 1.4,
-                        color: AppColors.forest,
+                        height: 1.3,
+                        color: Color(0xFF596659),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Text(
                       title,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.text,
                         fontSize: 14,
+                        height: 1.25,
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Icon(
+                  Icons.north_east_rounded,
+                  color: AppColors.forest,
+                  size: 16,
                 ),
               ),
             ],
@@ -280,6 +322,7 @@ class _PocketCard extends StatelessWidget {
 }
 
 class _LeatherPainter extends CustomPainter {
+  const _LeatherPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
@@ -289,32 +332,19 @@ class _LeatherPainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF435E45), Color(0xFF2B4433)],
+          colors: [Color(0xFF42634B), Color(0xFF294536)],
         ).createShader(rect),
     );
-    final grain = Paint()
-      ..color = const Color(0x227E9065)
-      ..strokeWidth = .7;
-    for (double y = 0; y < size.height; y += 5) {
-      for (double x = 0; x < size.width; x += 5) {
-        final offset = (y.toInt() % 2) * 2.0;
-        canvas.drawLine(
-          Offset(x + offset, y),
-          Offset(x + offset + 1, y + 2),
-          grain,
-        );
-      }
-    }
     final path = Path()
       ..addRRect(
-        RRect.fromRectAndRadius(rect.deflate(9), const Radius.circular(22)),
+        RRect.fromRectAndRadius(rect.deflate(9), const Radius.circular(20)),
       );
     final stitch = Paint()
-      ..color = const Color(0x667F9467)
+      ..color = const Color(0x557F9467)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = .8;
     for (final metric in path.computeMetrics()) {
-      for (double d = 0; d < metric.length; d += 6) {
+      for (double d = 0; d < metric.length; d += 7) {
         canvas.drawPath(
           metric.extractPath(d, math.min(d + 3, metric.length)),
           stitch,

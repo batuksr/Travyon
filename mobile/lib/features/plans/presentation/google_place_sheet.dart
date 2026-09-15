@@ -142,11 +142,11 @@ class _GooglePlaceSheetState extends State<GooglePlaceSheet> {
                     onRefresh: () => setState(_load),
                   )
                 else
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
                       'Bu mekân için fotoğraf bulunmuyor.',
-                      style: TextStyle(color: AppColors.muted),
+                      style: TextStyle(color: context.colors.muted),
                     ),
                   ),
                 Text(
@@ -161,8 +161,8 @@ class _GooglePlaceSheetState extends State<GooglePlaceSheet> {
                   place['rating'] is num
                       ? '★ ${place['rating']}  ·  ${place['userRatingCount'] ?? 0} değerlendirme'
                       : 'Henüz puan bilgisi yok',
-                  style: const TextStyle(
-                    color: AppColors.forest,
+                  style: TextStyle(
+                    color: context.colors.forest,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -189,9 +189,9 @@ class _GooglePlaceSheetState extends State<GooglePlaceSheet> {
                   'Google yorumları',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
-                const Text(
+                Text(
                   'Google’ın sağladığı, alaka düzeyine göre sıralanmış yorumlar.',
-                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
                 if (reviews.isEmpty)
                   const Padding(
@@ -244,7 +244,7 @@ class _GooglePlaceSheetState extends State<GooglePlaceSheet> {
           ),
           Text(
             '★ ${review['rating'] ?? '—'} · ${review['relativePublishTimeDescription'] ?? ''}',
-            style: const TextStyle(color: AppColors.muted),
+            style: TextStyle(color: context.colors.muted),
           ),
           const SizedBox(height: 8),
           Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,6 +12,7 @@ import '../../plans/data/travel_plans_repository.dart';
 import '../data/wallet_repository.dart';
 import 'wallet_editor.dart';
 import 'wallet_pocket.dart';
+import 'wallet_design.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({
@@ -32,7 +34,23 @@ class _WalletPageState extends State<WalletPage> {
       .watchPlans(widget.uid);
   String _planId = 'general';
   String? _highlight;
+  String? _category;
   bool _busy = false;
+  bool _editing = false;
+
+  @override
+  void didUpdateWidget(covariant WalletPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.uid != widget.uid ||
+        oldWidget.repository != widget.repository ||
+        oldWidget.plansRepository != widget.plansRepository) {
+      _entries = widget.repository.watch(widget.uid);
+      _plans = widget.plansRepository.watchPlans(widget.uid);
+      _planId = 'general';
+      _category = _highlight = null;
+    }
+  }
+
   void _notice(String text) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -40,44 +58,43 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   Future<void> _edit([WalletEntry? entry, String? selectedPlanId]) async {
-    final id = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => WalletEditor(
-          uid: widget.uid,
-          planId: selectedPlanId ?? _planId,
-          entry: entry,
-          repository: widget.repository,
+    if (_editing || _busy) return;
+    _editing = true;
+    final uid = widget.uid;
+    try {
+      final id = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => WalletEditor(
+            uid: widget.uid,
+            planId: selectedPlanId ?? _planId,
+            entry: entry,
+            repository: widget.repository,
+          ),
         ),
-      ),
-    );
-    if (id != null && mounted) {
-      setState(() => _highlight = id);
-      _notice('Cüzdanın kaydedildi.');
+      );
+      if (id != null && mounted && widget.uid == uid) {
+        setState(() {
+          _highlight = id;
+          _category = null;
+        });
+        _notice('Cüzdanın kaydedildi.');
+      }
+    } finally {
+      _editing = false;
     }
   }
 
   Future<void> _remove(WalletEntry entry) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Kayıt silinsin mi?'),
-        content: Text(
-          context.tr(
-            '“{title}” web ve mobil cüzdanından kaldırılacak. Bu işlem geri alınamaz.',
-            values: {'title': entry.title},
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Vazgeç'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Sil'),
-          ),
-        ],
+    final confirmed = await showAppConfirmation(
+      context,
+      title: 'Kayıt silinsin mi?',
+      message: context.tr(
+        '“{title}” cüzdanından kaldırılacak. Bu işlem geri alınamaz.',
+        values: {'title': entry.title},
       ),
+      confirmLabel: 'Sil',
+      icon: Icons.delete_outline_rounded,
+      tone: AppDialogTone.destructive,
     );
     if (confirmed != true || !mounted || _busy) return;
     setState(() => _busy = true);
@@ -109,7 +126,7 @@ class _WalletPageState extends State<WalletPage> {
           children: [
             Row(
               children: [
-                Icon(walletIcon(entry.category), color: AppColors.forest),
+                Icon(walletIcon(entry.category), color: context.colors.forest),
                 const SizedBox(width: 12),
                 Expanded(child: Text(walletCategories[entry.category]!)),
                 IconButton(
@@ -126,9 +143,9 @@ class _WalletPageState extends State<WalletPage> {
             ),
             const SizedBox(height: 20),
             if (entry.reference.isNotEmpty) ...[
-              const Text(
+              Text(
                 'Rezervasyon / bilet kodu',
-                style: TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
               Row(
                 children: [
@@ -172,13 +189,22 @@ class _WalletPageState extends State<WalletPage> {
                     children: [
                       Text(
                         field.key,
-                        style: const TextStyle(
-                          color: AppColors.muted,
+                        style: TextStyle(
+                          color: context.colors.muted,
                           fontSize: 12,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      SelectableText(field.value),
+                      SelectableText(
+                        field.key == 'Tarih' ||
+                                walletDateFields.any(
+                                  (key) =>
+                                      walletFields[entry.category]?[key] ==
+                                      field.key,
+                                )
+                            ? walletDisplayDate(c, field.value)
+                            : field.value,
+                      ),
                     ],
                   ),
                 ),
@@ -207,6 +233,9 @@ class _WalletPageState extends State<WalletPage> {
             ),
             TextButton.icon(
               onPressed: () => Navigator.pop(c, 'delete'),
+              style: TextButton.styleFrom(
+                foregroundColor: context.colors.danger,
+              ),
               icon: const Icon(Icons.delete_outline),
               label: const Text('Kaydı sil'),
             ),
@@ -221,41 +250,49 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) => StreamBuilder<List<TravelPlanSummary>>(
+    key: ValueKey(widget.uid),
     stream: _plans,
     builder: (context, plans) => StreamBuilder<List<WalletEntry>>(
       stream: _entries,
       builder: (context, wallet) {
-        final all = wallet.data ?? [];
+        final all = wallet.data ?? <WalletEntry>[];
         final trips = <String, String>{
-          'general': 'Genel cüzdan',
+          'general': context.tr('Genel cüzdan'),
           for (final p in plans.data ?? <TravelPlanSummary>[]) p.id: p.title,
           for (final e in all)
             if (!(plans.data ?? <TravelPlanSummary>[]).any(
                   (p) => p.id == e.planId,
                 ) &&
                 e.planId != 'general')
-              e.planId: 'Arşivlenmiş seyahat',
+              e.planId: context.tr('Arşivlenmiş seyahat'),
         };
         final selected = trips.containsKey(_planId) ? _planId : 'general';
         final entries = sortedWalletEntries(
           all.where((e) => e.planId == selected),
         );
+        final category = entries.any((e) => e.category == _category)
+            ? _category
+            : null;
+        final filtered = category == null
+            ? entries
+            : entries.where((e) => e.category == category).toList();
         final loading = wallet.connectionState == ConnectionState.waiting;
         return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          key: PageStorageKey('wallet-scroll-${widget.uid}'),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
           children: [
             Text('Cüzdan', style: Theme.of(context).textTheme.headlineLarge),
-            const SizedBox(height: 8),
-            const Text(
-              'Biletlerin, rezervasyonların ve yolculuk detayların bir arada.',
+            const SizedBox(height: 6),
+            Text(
+              'Bilet ve rezervasyonların, elinin altında.',
               style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 14,
+                color: context.colors.muted,
+                fontSize: 13,
                 height: 1.5,
               ),
             ),
-            if (trips.length > 1) const SizedBox(height: 24),
-            if (trips.length > 1)
+            const SizedBox(height: 24),
+            if (trips.length > 1) ...[
               DropdownButtonFormField<String>(
                 key: ValueKey('wallet-trip-$selected-${trips.keys.join()}'),
                 initialValue: selected,
@@ -270,180 +307,126 @@ class _WalletPageState extends State<WalletPage> {
                         value: e.key,
                         child: Text(
                           e.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontFamily: AppTypography.body,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     )
                     .toList(),
                 onChanged: _busy
                     ? null
-                    : (v) => setState(() {
-                        _planId = v!;
-                        _highlight = null;
-                      }),
+                    : (value) {
+                        if (value != null) {
+                          setState(() {
+                            _planId = value;
+                            _highlight = _category = null;
+                          });
+                        }
+                      },
               ),
-            if (plans.hasError)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: Text(
-                  'Seyahat listesi alınamadı. Genel cüzdanı kullanabilir veya tekrar deneyebilirsin.',
-                ),
-              ),
-            const SizedBox(height: 20),
-            if (loading)
-              const SizedBox(
-                height: 240,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (wallet.hasError) ...[
-              const Text(
-                'Cüzdan yüklenemedi. Bağlantını kontrol et. Yerel modda güncel Firestore kuralları yüklenmiş olmalı.',
-              ),
-              TextButton(
-                onPressed: () => setState(() {
-                  _entries = widget.repository.watch(widget.uid);
+              const SizedBox(height: 24),
+            ],
+            if (plans.hasError) ...[
+              WalletLoadError(
+                key: const ValueKey('wallet-plans-error'),
+                message: 'Seyahat listesi alınamadı. Mevcut cüzdan kayıtlarını kullanabilirsin.',
+                onRetry: () => setState(() {
                   _plans = widget.plansRepository.watchPlans(widget.uid);
                 }),
-                child: const Text('Tekrar dene'),
               ),
-            ] else ...[
+              const SizedBox(height: 16),
+            ],
+            if (wallet.hasError)
+              WalletLoadError(
+                key: const ValueKey('wallet-load-error'),
+                message:
+                    'Cüzdan yüklenemedi. Bağlantını kontrol edip tekrar dene.',
+                onRetry: () => setState(() {
+                  _entries = widget.repository.watch(widget.uid);
+                }),
+              )
+            else if (loading)
+              const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...[
               WalletPocket(
                 entries: entries,
                 city: trips[selected]!,
-                onOpen: _busy ? (_) {} : _open,
-                onAdd: () {
-                  if (!_busy) _edit(null, selected);
-                },
+                onOpen: _busy ? null : _open,
+                onAdd: _busy ? null : () => _edit(null, selected),
                 highlightId: _highlight,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               FilledButton.icon(
                 key: const ValueKey('wallet-add'),
                 onPressed: _busy ? null : () => _edit(null, selected),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded, size: 21),
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(54),
+                  minimumSize: const Size.fromHeight(52),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-                label: const Text('Cüzdanına ekle'),
-              ),
-              if (entries.isEmpty) ...[
-                const SizedBox(height: 24),
-                const _WalletGettingStarted(),
-              ],
-              if (entries.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                Text(
-                  'Tüm kayıtlar · ${entries.length}',
-                  style: const TextStyle(
+                  textStyle: const TextStyle(
+                    fontFamily: AppTypography.body,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.muted,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
-              ],
-              for (final entry in entries)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Material(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    clipBehavior: Clip.antiAlias,
-                    child: ListTile(
-                      key: ValueKey('wallet-entry-${entry.id}'),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                label: const Text('Yeni kayıt ekle'),
+              ),
+              const SizedBox(height: 26),
+              if (entries.isEmpty)
+                const WalletEmptyGuide()
+              else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Kayıtların',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      leading: CircleAvatar(
-                        backgroundColor: walletCardColor(entry.category),
-                        child: Icon(
-                          walletIcon(entry.category),
-                          color: AppColors.forest,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      walletRecordCount(context, filtered.length),
+                      style: TextStyle(
+                        color: context.colors.muted,
+                        fontSize: 12,
                       ),
-                      title: Text(
-                        entry.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        '${context.tr(walletCategories[entry.category] ?? 'Diğer')} · ${entry.date.isEmpty ? context.tr('Tarih eklenmedi') : entry.date}${entry.details['time']?.isNotEmpty == true ? ' · ${entry.details['time']}' : ''}',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _busy ? null : () => _open(entry),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (entries.map((e) => e.category).toSet().length > 1) ...[
+                  WalletCategories(
+                    entries: entries,
+                    selected: category,
+                    onSelect: (value) => setState(() => _category = value),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                for (final entry in filtered)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: WalletRecordCard(
+                      entry: entry,
+                      highlight: entry.id == _highlight,
+                      onOpen: _busy ? null : () => _open(entry),
                     ),
                   ),
-                ),
+              ],
               if (_busy) const LinearProgressIndicator(),
             ],
           ],
         );
       },
-    ),
-  );
-}
-
-class _WalletGettingStarted extends StatelessWidget {
-  const _WalletGettingStarted();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.divider),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Neler ekleyebilirsin?',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 18,
-          runSpacing: 12,
-          children: [
-            for (final item in const [
-              (Icons.flight_takeoff_rounded, 'Bilet bilgileri'),
-              (Icons.hotel_outlined, 'Rezervasyonlar'),
-              (Icons.description_outlined, 'Belge bilgileri'),
-            ])
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(item.$1, size: 18, color: AppColors.forest),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      item.$2,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.forest,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          'Türünü seç, tarihini ve rezervasyon kodunu gir. Kaydettiğin detayları cüzdanındaki karta dokunarak açabilirsin.',
-          style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.6),
-        ),
-      ],
     ),
   );
 }

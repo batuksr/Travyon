@@ -1,78 +1,214 @@
-import 'package:flutter/material.dart' hide Text;
+import 'package:flutter/material.dart';
 
-import '../../../core/localization/localized_text.dart';
-
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../help/presentation/help_center_page.dart';
+import 'welcome_travel_scene.dart';
 
 class MobileBootstrapPage extends StatelessWidget {
   const MobileBootstrapPage({
     super.key,
     this.initializationError,
     this.onStart,
+    this.onRegister,
   });
 
   final Object? initializationError;
-  final VoidCallback? onStart;
+  final VoidCallback? onStart, onRegister;
 
   @override
   Widget build(BuildContext context) {
-    final firebaseReady = initializationError == null;
+    final ready = initializationError == null;
+    const actionText = TextStyle(
+      fontFamily: AppTypography.body,
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      height: 1.3,
+    );
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _Wordmark(),
-              const Spacer(),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(26),
-                decoration: BoxDecoration(
-                  color: AppColors.forest,
-                  borderRadius: BorderRadius.circular(30),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            key: const ValueKey('welcome-scroll'),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 480,
+                  minHeight: constraints.maxHeight,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _RouteMark(),
-                    const SizedBox(height: 28),
-                    Text(
-                      'Hayalindeki seyahat artık cebinde.',
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(color: AppColors.surface),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Webdeki planların, seyahat cüzdanın ve topluluğun aynı hesapla burada olacak.',
-                      style: Theme.of(context).textTheme.bodyLarge
-                          ?.copyWith(color: const Color(0xFFDCE5DC)),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(child: _Wordmark()),
+                          IconButton(
+                            key: const ValueKey('welcome-help'),
+                            tooltip: context.tr('Yardım ve yasal'),
+                            onPressed: () => openHelpCenter(context),
+                            icon: Icon(
+                              Icons.help_outline_rounded,
+                              color: context.colors.forest,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 22),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: (constraints.maxHeight * 0.30).clamp(
+                                160.0,
+                                230.0,
+                              ),
+                              width: double.infinity,
+                              child: const WelcomeTravelScene(),
+                            ),
+                            const SizedBox(height: 26),
+                            Text(
+                              context.tr('Planla. Keşfet. Yola çık.'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: context.colors.forest,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                context.tr('Bir sonraki yolculuğun burada.'),
+                                style: TextStyle(
+                                  fontFamily: AppTypography.heading,
+                                  fontSize: 32,
+                                  height: 1.2,
+                                  color: context.colors.text,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              context.tr(
+                                'Sana özel rotalar, biletlerin ve keşiflerin. Hepsi tek bir yerde.',
+                              ),
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.6,
+                                color: context.colors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (!ready) ...[
+                            Semantics(
+                              liveRegion: true,
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: context.colors.tone(
+                                    const Color(0xFFF8E6E2),
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_off_outlined,
+                                      size: 20,
+                                      color: context.colors.tone(
+                                        const Color(0xFFA83E35),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        context.tr(
+                                          'Şu anda bağlantı kurulamıyor. Uygulamayı kapatıp yeniden açmayı dene.',
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          height: 1.5,
+                                          color: context.colors.tone(
+                                            const Color(0xFF873D35),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                          FilledButton(
+                            key: const ValueKey('welcome-sign-in'),
+                            onPressed: ready ? onStart : null,
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(54),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 16,
+                              ),
+                              textStyle: actionText,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    context.tr('Giriş yap'),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton(
+                            key: const ValueKey('welcome-register'),
+                            onPressed: ready ? onRegister : null,
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: context.colors.surface,
+                              foregroundColor: context.colors.forest,
+                              minimumSize: const Size.fromHeight(54),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              textStyle: actionText,
+                            ),
+                            child: Text(
+                              context.tr('Hesap oluştur'),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 22),
-              _ConnectionStatus(firebaseReady: firebaseReady),
-              const SizedBox(height: 22),
-              FilledButton.icon(
-                onPressed: firebaseReady ? onStart : null,
-                icon: const Icon(Icons.arrow_forward_rounded),
-                label: Text(
-                  firebaseReady
-                      ? 'Mobil yolculuğa başla'
-                      : 'Bağlantı bekleniyor',
-                ),
-              ),
-              const Spacer(),
-              const Center(
-                child: Text(
-                  'Android ve iOS için ilk mobil temel hazır',
-                  style: TextStyle(color: AppColors.muted, fontSize: 12),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -84,123 +220,23 @@ class _Wordmark extends StatelessWidget {
   const _Wordmark();
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      header: true,
-      child: const Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: 'trav',
-              style: TextStyle(color: AppColors.text),
-            ),
-            TextSpan(
-              text: 'yon',
-              style: TextStyle(color: AppColors.accent),
-            ),
-          ],
-        ),
-        style: TextStyle(
-          fontFamily: AppTypography.heading,
-          fontSize: 32,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-    );
-  }
-}
-
-class _RouteMark extends StatelessWidget {
-  const _RouteMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 70,
-      child: Row(
+  Widget build(BuildContext context) => Semantics(
+    label: 'Travyon',
+    excludeSemantics: true,
+    child: Text.rich(
+      TextSpan(
         children: [
-          const Icon(Icons.flight_takeoff_rounded, color: AppColors.surface),
-          const SizedBox(width: 12),
-          Expanded(child: CustomPaint(painter: _DottedLinePainter())),
-          const SizedBox(width: 12),
-          const Icon(Icons.location_on_rounded, color: AppColors.accent),
+          TextSpan(
+            text: 'trav',
+            style: TextStyle(color: context.colors.text),
+          ),
+          TextSpan(
+            text: 'yon',
+            style: TextStyle(color: context.colors.accent),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _DottedLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF9FAF9E)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    for (double x = 0; x < size.width; x += 12) {
-      canvas.drawLine(
-        Offset(x, size.height / 2),
-        Offset(x + 4, size.height / 2),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ConnectionStatus extends StatelessWidget {
-  const _ConnectionStatus({required this.firebaseReady});
-
-  final bool firebaseReady;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.divider),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              firebaseReady
-                  ? Icons.cloud_done_outlined
-                  : Icons.cloud_off_outlined,
-              color: firebaseReady ? AppColors.forest : AppColors.accent,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    firebaseReady
-                        ? 'Firebase bağlantısı hazır'
-                        : 'Firebase başlatılamadı',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    firebaseReady
-                        ? 'Web ve mobil aynı Travyon backend’ini kullanıyor.'
-                        : 'Yapılandırmayı kontrol edip yeniden deneyeceğiz.',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      style: TextStyle(fontFamily: AppTypography.heading, fontSize: 32),
+    ),
+  );
 }

@@ -103,11 +103,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Your dream trip is now in your pocket.'), findsOneWidget);
-    expect(find.text('Firebase connection is ready'), findsOneWidget);
-    expect(find.text('Start your mobile journey'), findsOneWidget);
+    expect(find.text('Your next journey starts here.'), findsOneWidget);
+    expect(find.text('Firebase connection is ready'), findsNothing);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Create an account'), findsOneWidget);
 
-    await tester.tap(find.text('Start your mobile journey'));
+    await tester.ensureVisible(find.byKey(const ValueKey('welcome-sign-in')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Sign in'), findsNWidgets(2));
@@ -131,11 +134,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Mobil yolculuğa başla'), findsOneWidget);
+    expect(find.text('Hesap oluştur'), findsOneWidget);
 
     await locale.setLanguage('English', persist: false);
     await tester.pumpAndSettle();
-    expect(find.text('Start your mobile journey'), findsOneWidget);
+    expect(find.text('Create an account'), findsOneWidget);
   });
 
   testWidgets('English locale covers the authenticated app shell', (

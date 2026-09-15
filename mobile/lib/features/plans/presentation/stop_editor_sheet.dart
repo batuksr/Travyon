@@ -93,7 +93,7 @@ class _StopEditorSheetState extends State<StopEditorSheet> {
             const SizedBox(height: 12),
             Text(
               _isNote ? 'Notunu temizleyip kaydederek silebilirsin.' : 'Mekânın konumu bulunup seçili güne eklenecek. Tutar, planın para birimindedir.',
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: context.colors.muted),
             ),
             const SizedBox(height: 20),
             TextField(

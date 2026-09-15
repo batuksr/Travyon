@@ -96,7 +96,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   _message!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _error ? const Color(0xFF9B3535) : AppColors.forest,
+                    color: _error
+                        ? context.colors.tone(const Color(0xFF9B3535))
+                        : context.colors.forest,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

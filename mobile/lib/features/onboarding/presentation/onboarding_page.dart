@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/unit_formatter.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -146,22 +147,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return;
     }
     if (_edited) {
-      final leave = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Planlamadan çıkılsın mı?'),
-          content: const Text('Bu formdaki seçimlerin kaybolacak.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Devam et'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Çık'),
-            ),
-          ],
-        ),
+      final leave = await showAppConfirmation(
+        context,
+        title: 'Planlamadan çıkılsın mı?',
+        message: 'Bu formdaki seçimlerin kaybolacak.',
+        confirmLabel: 'Planlamadan çık',
+        cancelLabel: 'Planlamaya dön',
+        icon: Icons.route_outlined,
+        tone: AppDialogTone.warning,
       );
       if (leave != true || !mounted) return;
     }
@@ -262,7 +255,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * .9,
       ),
@@ -338,15 +331,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFE9E3),
+                              color: context.colors.tone(
+                                const Color(0xFFFFE9E3),
+                              ),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Semantics(
                               liveRegion: true,
                               child: Text(
                                 _error!,
-                                style: const TextStyle(
-                                  color: Color(0xFF9B3020),
+                                style: TextStyle(
+                                  color: context.colors.tone(
+                                    const Color(0xFF9B3020),
+                                  ),
                                 ),
                               ),
                             ),
@@ -361,7 +358,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           const SizedBox(height: 8),
                           Text(
                             subtitles[_step],
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(color: context.colors.muted),
                           ),
                           const SizedBox(height: 24),
                           ...switch (_step) {
@@ -382,9 +379,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           : SafeArea(
               top: false,
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(top: BorderSide(color: AppColors.divider)),
+                decoration: BoxDecoration(
+                  color: context.colors.surface,
+                  border: Border(
+                    top: BorderSide(color: context.colors.divider),
+                  ),
                 ),
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
                 child: FilledButton.icon(
@@ -440,7 +439,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 24),
           Text(
             'Geçen süre: $_elapsed sn',
-            style: const TextStyle(color: AppColors.muted),
+            style: TextStyle(color: context.colors.muted),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -463,7 +462,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             padding: const EdgeInsets.only(top: 5),
             child: Text(
               hint,
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: context.colors.muted, fontSize: 13),
             ),
           ),
       ],
@@ -561,8 +560,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
               padding: const EdgeInsets.only(top: 12),
               child: Text(
                 '${data.dayCount} gün · ${data.dayCount - 1} gece',
-                style: const TextStyle(
-                  color: AppColors.forest,
+                style: TextStyle(
+                  color: context.colors.forest,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -645,21 +644,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   label: Text('${currency.key} · ${currency.value}'),
                   labelStyle: TextStyle(
                     color: data.currencyCode == currency.key
-                        ? const Color(0xFF8C491A)
-                        : AppColors.text,
+                        ? context.colors.tone(const Color(0xFF8C491A))
+                        : context.colors.text,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.colors.surface,
                   side: BorderSide(
                     color: data.currencyCode == currency.key
-                        ? AppColors.accent
-                        : AppColors.divider,
+                        ? context.colors.accent
+                        : context.colors.divider,
                   ),
                   selected: data.currencyCode == currency.key,
                   onSelected: (_) =>
                       _change(() => data.currencyCode = currency.key),
-                  selectedColor: const Color(0xFFFFE4D1),
+                  selectedColor: context.colors.tone(const Color(0xFFFFE4D1)),
                   showCheckmark: false,
                 ),
             ],
@@ -675,8 +674,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         '${currencies[data.currencyCode]}${(data.budget / data.dayCount / data.peopleCount).toStringAsFixed(0)}',
                   },
                 ),
-                style: const TextStyle(
-                  color: AppColors.muted,
+                style: TextStyle(
+                  color: context.colors.muted,
                   fontSize: 12,
                   height: 1.5,
                 ),
@@ -737,9 +736,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.divider),
+        side: BorderSide(color: context.colors.divider),
       ),
-      tileColor: AppColors.surface,
+      tileColor: context.colors.surface,
       secondary: const OnboardingEmoji('🌅'),
       title: const Text('Erken kalkmayı severim'),
       subtitle: const Text('Sabah erken aktivite planlanabilir'),
@@ -846,9 +845,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       },
     ),
     const SizedBox(height: 20),
-    const Text(
+    Text(
       'Plan oluşturulduktan sonra gözden geçirip kaydedebilirsin.',
-      style: TextStyle(color: AppColors.muted),
+      style: TextStyle(color: context.colors.muted),
     ),
   ];
   List<Widget> _preview() => [
@@ -903,12 +902,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
         margin: const EdgeInsets.only(top: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF0E5),
+          color: context.colors.tone(const Color(0xFFFFF0E5)),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: const Text(
+        child: Text(
           'Tahmini maliyet ayırdığın bütçeyi aşıyor. Kaydetmeden önce tercihlerini gözden geçirebilirsin.',
-          style: TextStyle(color: Color(0xFF8C491A), height: 1.5),
+          style: TextStyle(
+            color: context.colors.tone(const Color(0xFF8C491A)),
+            height: 1.5,
+          ),
         ),
       ),
     _section(
@@ -924,9 +926,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.colors.divider),
       ),
       child: ExpansionTile(
         key: ValueKey('preview-day-${day['dayNumber']}'),
@@ -942,7 +944,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           padding: const EdgeInsets.only(top: 6),
           child: Text(
             '${stops.length} durak',
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
         ),
         children: [
@@ -951,7 +953,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               padding: const EdgeInsets.only(bottom: 14),
               child: Text(
                 day['daySummary'] as String,
-                style: const TextStyle(color: AppColors.muted, height: 1.5),
+                style: TextStyle(color: context.colors.muted, height: 1.5),
               ),
             ),
           for (var i = 0; i < stops.length; i++)
@@ -964,15 +966,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     width: 26,
                     height: 26,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFFFF0E5),
+                      color: context.colors.tone(const Color(0xFFFFF0E5)),
                     ),
                     child: Text(
                       '${i + 1}',
                       textScaler: TextScaler.noScaling,
-                      style: const TextStyle(
-                        color: AppColors.accent,
+                      style: TextStyle(
+                        color: context.colors.accent,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -985,8 +987,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       children: [
                         Text(
                           planMap(stops[i])['period'] as String? ?? '',
-                          style: const TextStyle(
-                            color: AppColors.muted,
+                          style: TextStyle(
+                            color: context.colors.muted,
                             fontSize: 11,
                           ),
                         ),

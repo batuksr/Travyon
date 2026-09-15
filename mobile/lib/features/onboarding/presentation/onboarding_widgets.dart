@@ -104,11 +104,13 @@ class OnboardingProgress extends StatelessWidget {
                     color: i < step
                         ? AppColors.forest
                         : i == step
-                        ? AppColors.accent
-                        : AppColors.surface,
+                        ? context.colors.accent
+                        : context.colors.surface,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: i <= step ? Colors.transparent : AppColors.divider,
+                      color: i <= step
+                          ? Colors.transparent
+                          : context.colors.divider,
                     ),
                   ),
                   alignment: Alignment.center,
@@ -122,7 +124,9 @@ class OnboardingProgress extends StatelessWidget {
                           '${i + 1}',
                           textScaler: TextScaler.noScaling,
                           style: TextStyle(
-                            color: i == step ? Colors.white : AppColors.muted,
+                            color: i == step
+                                ? context.colors.onAccent
+                                : context.colors.muted,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -133,7 +137,9 @@ class OnboardingProgress extends StatelessWidget {
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),
                     height: 2,
-                    color: i < step ? AppColors.forest : AppColors.divider,
+                    color: i < step
+                        ? context.colors.forest
+                        : context.colors.divider,
                   ),
                 ),
             ],
@@ -144,15 +150,15 @@ class OnboardingProgress extends StatelessWidget {
           children: [
             Text(
               'Adım ${step + 1} / 4',
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 labels[step],
                 textAlign: TextAlign.end,
-                style: const TextStyle(
-                  color: AppColors.forest,
+                style: TextStyle(
+                  color: context.colors.forest,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -182,9 +188,9 @@ class OnboardingSection extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 18),
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +198,7 @@ class OnboardingSection extends StatelessWidget {
         Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20, color: AppColors.accent),
+              Icon(icon, size: 20, color: context.colors.accent),
               const SizedBox(width: 10),
             ],
             Expanded(
@@ -207,8 +213,8 @@ class OnboardingSection extends StatelessWidget {
           const SizedBox(height: 7),
           Text(
             hint!,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: context.colors.muted,
               fontSize: 12,
               height: 1.5,
             ),
@@ -255,14 +261,14 @@ class OnboardingChoices extends StatelessWidget {
                 selected: selected.contains(entry.key),
                 child: Material(
                   color: selected.contains(entry.key)
-                      ? const Color(0xFFFFF0E5)
-                      : AppColors.surface,
+                      ? context.colors.tone(const Color(0xFFFFF0E5))
+                      : context.colors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                     side: BorderSide(
                       color: selected.contains(entry.key)
-                          ? AppColors.accent
-                          : AppColors.divider,
+                          ? context.colors.accent
+                          : context.colors.divider,
                       width: selected.contains(entry.key) ? 1.5 : 1,
                     ),
                   ),
@@ -306,10 +312,10 @@ class OnboardingChoices extends StatelessWidget {
                                         ),
                                 )
                               else
-                                const Icon(
+                                Icon(
                                   Icons.circle_outlined,
                                   size: 22,
-                                  color: AppColors.divider,
+                                  color: context.colors.divider,
                                 ),
                             ],
                           ),
@@ -321,17 +327,17 @@ class OnboardingChoices extends StatelessWidget {
                               fontSize: 14,
                               height: 1.4,
                               color: selected.contains(entry.key)
-                                  ? const Color(0xFF8C491A)
-                                  : AppColors.text,
+                                  ? context.colors.tone(const Color(0xFF8C491A))
+                                  : context.colors.text,
                             ),
                           ),
                           if (hints[entry.key] != null) ...[
                             const SizedBox(height: 6),
                             Text(
                               hints[entry.key]!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.muted,
+                                color: context.colors.muted,
                                 height: 1.5,
                               ),
                             ),
@@ -362,7 +368,7 @@ class OnboardingValueTile extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Material(
-    color: const Color(0xFFF6EFE3),
+    color: context.colors.tone(const Color(0xFFF6EFE3)),
     borderRadius: BorderRadius.circular(16),
     child: InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -372,11 +378,11 @@ class OnboardingValueTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: AppColors.forest, size: 20),
+            Icon(icon, color: context.colors.forest, size: 20),
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+              style: TextStyle(fontSize: 11, color: context.colors.muted),
             ),
             const SizedBox(height: 4),
             Text(

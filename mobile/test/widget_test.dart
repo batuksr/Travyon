@@ -70,9 +70,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hayalindeki seyahat artık cebinde.'), findsOneWidget);
-    expect(find.text('Firebase bağlantısı hazır'), findsOneWidget);
-    expect(find.text('Mobil yolculuğa başla'), findsOneWidget);
+    expect(find.text('Bir sonraki yolculuğun burada.'), findsOneWidget);
+    expect(find.text('Firebase bağlantısı hazır'), findsNothing);
+    expect(find.text('Giriş yap'), findsOneWidget);
+    expect(find.text('Hesap oluştur'), findsOneWidget);
   });
 
   testWidgets('opens sign in and registration flow', (tester) async {
@@ -81,7 +82,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Mobil yolculuğa başla'));
+    await tester.ensureVisible(find.byKey(const ValueKey('welcome-sign-in')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
 
     expect(find.text('Tekrar hoş geldin'), findsOneWidget);
@@ -180,8 +183,18 @@ void main() {
       TravyonApp(initializationError: StateError('test')),
     );
 
-    expect(find.text('Firebase başlatılamadı'), findsOneWidget);
-    expect(find.text('Bağlantı bekleniyor'), findsOneWidget);
+    expect(
+      find.text(
+        'Şu anda bağlantı kurulamıyor. Uygulamayı kapatıp yeniden açmayı dene.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('welcome-sign-in')))
+          .onPressed,
+      isNull,
+    );
   });
 }
 

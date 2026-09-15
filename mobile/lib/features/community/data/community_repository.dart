@@ -27,7 +27,15 @@ class CommunityPlan {
   bool get profilePublic => data['profilePublic'] == true;
   String get author =>
       profilePublic ? data['userDisplayName'] as String? ?? 'Gezgin' : 'Gezgin';
-  String get destination => data['destination'] as String? ?? 'Yolculuk';
+  String get destination {
+    final title = data['destination'];
+    if (title is String && title.trim().isNotEmpty) return title.trim();
+    final nested = planMap(data['planData'])['destination'];
+    return nested is String && nested.trim().isNotEmpty
+        ? nested.trim()
+        : 'Yolculuk';
+  }
+
   String get purpose => communityPreference(data['tripPurpose']);
   bool get visible => data['feedVisible'] == true;
   double get rating => planNumber(data['avgRating']);
@@ -43,8 +51,22 @@ class TravelerProfile {
   final String uid;
   final Map<String, dynamic> data;
   bool get visible => data['exists'] == true && data['isPublic'] == true;
-  String get name =>
-      visible ? data['displayName'] as String? ?? 'Gezgin' : 'Gizli profil';
+  String get name {
+    if (!visible) return 'Gizli profil';
+    final name = data['displayName'];
+    return name is String && name.trim().isNotEmpty ? name.trim() : 'Gezgin';
+  }
+
+  String? get photoUrl {
+    if (!visible || data['photoURL'] is! String) return null;
+    final uri = Uri.tryParse((data['photoURL'] as String).trim());
+    return uri != null &&
+            uri.scheme == 'https' &&
+            uri.host.isNotEmpty &&
+            uri.userInfo.isEmpty
+        ? uri.toString()
+        : null;
+  }
 }
 
 abstract interface class CommunityRepository {

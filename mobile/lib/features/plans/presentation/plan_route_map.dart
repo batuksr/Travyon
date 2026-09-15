@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/unit_formatter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/plan_detail.dart';
@@ -18,6 +19,19 @@ const _routeMapStyle = '''[
   {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#e2ecdf"}]},
   {"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9e2e4"}]},
   {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#68665f"}]}
+]''';
+
+const _darkRouteMapStyle = '''[
+  {"elementType":"geometry","stylers":[{"color":"#2b241d"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#baaFA1"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#211c17"}]},
+  {"featureType":"poi.business","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.attraction","elementType":"labels.icon","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#303c2d"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#51463a"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#66503c"}]},
+  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#f2e8da"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#1b3036"}]}
 ]''';
 
 class PlanRouteMap extends StatelessWidget {
@@ -238,7 +252,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       builder: (context) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.55,
@@ -269,18 +283,20 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   selected: stop.index == _selected,
-                  selectedTileColor: const Color(0xFFEAF0E9),
-                  selectedColor: AppColors.forest,
+                  selectedTileColor: context.colors.tone(
+                    const Color(0xFFEAF0E9),
+                  ),
+                  selectedColor: context.colors.forest,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   leading: CircleAvatar(
                     backgroundColor: stop.index == _selected
                         ? AppColors.forest
-                        : const Color(0xFFF8EADC),
+                        : context.colors.tone(const Color(0xFFF8EADC)),
                     foregroundColor: stop.index == _selected
                         ? Colors.white
-                        : const Color(0xFFA74F21),
+                        : context.colors.tone(const Color(0xFFA74F21)),
                     child: Text(
                       '${stop.index + 1}',
                       style: const TextStyle(
@@ -303,10 +319,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                           ? 'Bu durağın konumu kayıtlı değil.'
                           : stop.period,
                     ),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: context.colors.muted),
                   ),
                   trailing: Icon(
                     stop.index == _selected
@@ -327,31 +340,22 @@ class _RouteCanvasState extends State<_RouteCanvas> {
   void _routeInfo() {
     final missing = widget.stops.length - _located.length;
     final distance = routeDistanceKm(widget.stops.map((stop) => stop.location));
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Rota bilgisi')),
-        content: Text(
-          context.tr(
-            distance > 0 && missing > 0
-                ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
-                : distance > 0
-                ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.'
-                : missing > 0
-                ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
-                : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
-            values: {
-              'distance': UnitFormatter.of(context).distance(distance),
-              'count': missing,
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Kapat')),
-          ),
-        ],
+    showAppInformation(
+      context,
+      title: 'Rota bilgisi',
+      icon: Icons.route_outlined,
+      message: context.tr(
+        distance > 0 && missing > 0
+            ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+            : distance > 0
+            ? 'Noktalar arası yaklaşık {distance}. Çizgiler durak sırasıdır, yol tarifi değildir.'
+            : missing > 0
+            ? 'Çizgiler durak sırasıdır, yol tarifi değildir. {count} konum eksik.'
+            : 'Çizgiler durak sırasıdır, yol tarifi değildir.',
+        values: {
+          'distance': UnitFormatter.of(context).distance(distance),
+          'count': missing,
+        },
       ),
     );
   }
@@ -395,7 +399,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
           Widget map;
           if (!available) {
             map = ColoredBox(
-              color: const Color(0xFFE9EEE5),
+              color: context.colors.tone(const Color(0xFFE9EEE5)),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(20, 64, 20, panelHeight + 16),
                 child: Center(
@@ -403,9 +407,9 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.map_outlined,
-                          color: AppColors.forest,
+                          color: context.colors.forest,
                           size: 32,
                         ),
                         const SizedBox(height: 12),
@@ -416,8 +420,8 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                                 : 'Harita şu anda gösterilemiyor. Durak listesinden devam edebilirsin.',
                           ),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.forest,
+                          style: TextStyle(
+                            color: context.colors.forest,
                             fontSize: 13,
                             height: 1.5,
                           ),
@@ -438,7 +442,9 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                 _controller = controller;
                 _fit();
               },
-              style: _routeMapStyle,
+              style: context.colors.isDark
+                  ? _darkRouteMapStyle
+                  : _routeMapStyle,
               padding: mapPadding,
               mapToolbarEnabled: false,
               myLocationButtonEnabled: false,
@@ -484,7 +490,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         _point(widget.stops[i - 1]),
                         _point(widget.stops[i]),
                       ],
-                      color: AppColors.forest.withValues(alpha: 0.75),
+                      color: context.colors.forest.withValues(alpha: 0.75),
                       width: 2,
                       patterns: [PatternItem.dot, PatternItem.gap(10)],
                     ),
@@ -509,7 +515,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: Material(
-                            color: AppColors.surface,
+                            color: context.colors.surface,
                             elevation: 2,
                             shadowColor: Colors.black12,
                             borderRadius: BorderRadius.circular(16),
@@ -604,7 +610,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
 
   Widget _control(String label, IconData icon, VoidCallback? onPressed) =>
       Material(
-        color: AppColors.surface,
+        color: context.colors.surface,
         elevation: 2,
         shadowColor: Colors.black12,
         borderRadius: BorderRadius.circular(16),
@@ -613,7 +619,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
           onPressed: onPressed,
           style: IconButton.styleFrom(
             minimumSize: const Size(48, 48),
-            foregroundColor: AppColors.forest,
+            foregroundColor: context.colors.forest,
           ),
           icon: Icon(icon, size: 22),
         ),
@@ -622,7 +628,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
   Widget _stopPanel() {
     final stop = widget.stops[_selected];
     return Material(
-      color: AppColors.surface,
+      color: context.colors.surface,
       elevation: 4,
       shadowColor: Colors.black12,
       borderRadius: BorderRadius.circular(20),
@@ -648,9 +654,9 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                             'total': widget.stops.length,
                           },
                         ),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.muted,
+                          color: context.colors.muted,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -658,11 +664,11 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         stop.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           height: 1.3,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.text,
+                          color: context.colors.text,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -672,9 +678,9 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                               ? 'Bu durağın konumu kayıtlı değil.'
                               : 'Mekân detayları',
                         ),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.forest,
+                          color: context.colors.forest,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -698,8 +704,8 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                   : null,
               style: IconButton.styleFrom(
                 minimumSize: const Size(48, 48),
-                backgroundColor: const Color(0xFFEAF0E9),
-                foregroundColor: AppColors.forest,
+                backgroundColor: context.colors.tone(const Color(0xFFEAF0E9)),
+                foregroundColor: context.colors.forest,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

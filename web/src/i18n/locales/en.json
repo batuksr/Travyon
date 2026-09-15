@@ -569,7 +569,7 @@
         {
           "category": "Technical",
           "items": [
-            { "q": "Is there a mobile app?", "a": "We currently run as a web app. A mobile app (iOS & Android) is coming soon — you can sign up to be notified." },
+            { "q": "Is there a mobile app?", "a": "A Travyon mobile app is also in development. In the mobile app, you can sign in with your web account and access your saved plans, travel wallet and preferences using the same account." },
             { "q": "Which browsers are supported?", "a": "It runs smoothly on up-to-date versions of Chrome, Firefox, Safari and Edge. Chrome is recommended for the best experience." },
             { "q": "Do I need an internet connection?", "a": "An internet connection is required to create plans and view maps. Offline support for viewing saved plans is coming soon." }
           ]

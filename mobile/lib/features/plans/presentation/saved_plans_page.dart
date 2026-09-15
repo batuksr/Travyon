@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 import 'package:flutter/services.dart';
 
@@ -61,6 +62,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
     if (action == 'rename') {
       await showDialog<void>(
         context: context,
+        barrierColor: AppColors.text.withValues(alpha: 0.42),
         builder: (_) => _RenameDialog(
           plan: p,
           save: (name) => widget.management.rename(widget.uid, p, name),
@@ -70,7 +72,10 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
       if (!await confirmCommunity(
         context,
         '“${p.title}” silinsin mi?',
-        'Plan web ve mobil hesabından silinir; varsa paylaşımı kaldırılır. Cüzdan kayıtların arşivlenmiş plan grubunda korunur. Plan silme geri alınamaz.',
+        'Plan hesabından silinir; varsa paylaşımı kaldırılır. Cüzdan kayıtların arşivlenmiş plan grubunda korunur. Plan silme geri alınamaz.',
+        confirmLabel: 'Planı sil',
+        icon: Icons.delete_outline_rounded,
+        tone: AppDialogTone.destructive,
       )) {
         return;
       }
@@ -86,6 +91,8 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
         context,
         'Plan bağlantısını oluştur?',
         'Bağlantıya sahip kişiler giriş yaparak paylaşılan rotayı görebilir. Cüzdan, kişisel notlar ve gerçek harcamalar aktarılmaz. Zaten toplulukta olan paylaşımın görünürlüğü değişmez.',
+        confirmLabel: 'Bağlantı oluştur',
+        icon: Icons.link_rounded,
       )) {
         return;
       }
@@ -144,7 +151,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
             ready && all.isNotEmpty
                 ? '${all.length} yolculuk, keşfedilecek yeni hikâyeler.'
                 : 'Bir sonraki yolculuğuna buradan devam et.',
-            style: const TextStyle(color: AppColors.muted, height: 1.5),
+            style: TextStyle(color: context.colors.muted, height: 1.5),
           ),
           const SizedBox(height: 24),
           if (snapshot.hasError)
@@ -164,7 +171,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
             _message(
               icon: Icons.route_outlined,
               title: 'İlk rotana yer aç',
-              description: 'Keşfetmek istediğin şehri seç. Kaydettiğin yolculuklar burada, webde ve telefonunda seni beklesin.',
+              description: 'Keşfetmek istediğin şehri seç, ilk rotanı birlikte oluşturalım.',
               action: 'İlk planımı oluştur',
               onAction: widget.onCreate,
             )
@@ -205,12 +212,12 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
                           fontFamily: AppTypography.body,
                           color: _filter == value
                               ? Colors.white
-                              : AppColors.text,
+                              : context.colors.text,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                         selectedColor: AppColors.forest,
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: context.colors.surface,
                         showCheckmark: false,
                         selected: _filter == value,
                         onSelected: (_) => setState(() => _filter = value),
@@ -227,7 +234,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
               children: [
                 Text(
                   '${filtered.length} plan',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
                 TextButton.icon(
                   onPressed: () => setState(() => _byDate = !_byDate),
@@ -296,19 +303,19 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
   }) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Column(
       children: [
         Container(
           padding: const EdgeInsets.all(18),
-          decoration: const BoxDecoration(
-            color: Color(0xFFEAF0E8),
+          decoration: BoxDecoration(
+            color: context.colors.tone(const Color(0xFFEAF0E8)),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.forest, size: 32),
+          child: Icon(icon, color: context.colors.forest, size: 32),
         ),
         const SizedBox(height: 22),
         Text(
@@ -320,8 +327,8 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
         Text(
           description,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.muted,
+          style: TextStyle(
+            color: context.colors.muted,
             height: 1.6,
             fontSize: 14,
           ),
@@ -380,8 +387,14 @@ class _RenameDialogState extends State<_RenameDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
-      title: const Text('Planın adı'),
+    child: AppDialog(
+      title: 'Planın adı',
+      icon: Icons.edit_outlined,
+      confirmLabel: _busy ? 'Kaydediliyor…' : 'Kaydet',
+      cancelLabel: 'Vazgeç',
+      busy: _busy,
+      onConfirm: _busy ? null : _save,
+      onCancel: _busy ? null : () => Navigator.pop(context),
       content: TextField(
         controller: _name,
         enabled: !_busy,
@@ -391,16 +404,6 @@ class _RenameDialogState extends State<_RenameDialog> {
           errorText: _error == null ? null : context.tr(_error!),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Vazgeç'),
-        ),
-        FilledButton(
-          onPressed: _busy ? null : _save,
-          child: Text(_busy ? 'Kaydediliyor…' : 'Kaydet'),
-        ),
-      ],
     ),
   );
 }

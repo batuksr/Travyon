@@ -11,7 +11,7 @@ Future<void> showPlanInformation(BuildContext context, Widget sheet) async {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: AppColors.background,
+    backgroundColor: context.colors.background,
     builder: (_) => FractionallySizedBox(heightFactor: 0.92, child: sheet),
   );
 }
@@ -40,19 +40,16 @@ class PlanInformationSheet extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTypography.heading,
                       fontSize: 23,
-                      color: AppColors.text,
+                      color: context.colors.text,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     destination,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.muted,
-                    ),
+                    style: TextStyle(fontSize: 13, color: context.colors.muted),
                   ),
                 ],
               ),
@@ -107,31 +104,31 @@ class PlanGuideSheet extends StatelessWidget {
           if (sections.isEmpty)
             Text(
               context.tr('Bu plan için rehber bilgisi bulunmuyor.'),
-              style: const TextStyle(color: AppColors.muted, height: 1.6),
+              style: TextStyle(color: context.colors.muted, height: 1.6),
             ),
           for (final section in sections)
             Container(
               margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: context.colors.divider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(section.$3, color: AppColors.forest, size: 22),
+                      Icon(section.$3, color: context.colors.forest, size: 22),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           context.tr(section.$2),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
+                            color: context.colors.forest,
                           ),
                         ),
                       ),
@@ -141,10 +138,10 @@ class PlanGuideSheet extends StatelessWidget {
                   // Saved AI/user content stays in its original language, as on web.
                   Text(
                     (guide[section.$1] as String).trim(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       height: 1.7,
-                      color: AppColors.text,
+                      color: context.colors.text,
                     ),
                   ),
                 ],

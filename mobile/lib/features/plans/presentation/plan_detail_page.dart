@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -198,27 +199,16 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
       return;
     }
     if (action == 'delete') {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Durak silinsin mi?'),
-          content: Text(
-            context.tr(
-              '“{name}” notu ve durağa girilen harcamayla birlikte plandan kaldırılacak. Ayrı cüzdan kayıtların silinmez. Bu ekrandayken geri alabilirsin.',
-              values: {'name': stop.name},
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Durağı sil'),
-            ),
-          ],
+      final confirmed = await showAppConfirmation(
+        context,
+        title: 'Durak silinsin mi?',
+        message: context.tr(
+          '“{name}” notu ve durağa girilen harcamayla birlikte plandan kaldırılacak. Ayrı cüzdan kayıtların silinmez. Bu ekrandayken geri alabilirsin.',
+          values: {'name': stop.name},
         ),
+        confirmLabel: 'Durağı sil',
+        icon: Icons.delete_outline_rounded,
+        tone: AppDialogTone.destructive,
       );
       if (confirmed != true || !mounted) return;
     }
@@ -299,7 +289,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
       useSafeArea: true,
       isDismissible: false,
       enableDrag: false,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -424,9 +414,9 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                                 const SizedBox(height: 3),
                                 Text(
                                   '${days.length} gün · ${plan.activityCount} durak',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.muted,
+                                    color: context.colors.muted,
                                   ),
                                 ),
                               ],
@@ -461,7 +451,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                             const SizedBox(height: 6),
                             Text(
                               '${days.length} gün · ${plan.activityCount} durak',
-                              style: const TextStyle(color: AppColors.muted),
+                              style: TextStyle(color: context.colors.muted),
                             ),
                           ],
                         ),
@@ -488,7 +478,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                             fontSize: _tab == 1 ? 12 : null,
                             color: selected == i
                                 ? Colors.white
-                                : AppColors.text,
+                                : context.colors.text,
                           ),
                           showCheckmark: false,
                           label: Padding(
@@ -617,8 +607,8 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
           padding: const EdgeInsets.only(bottom: 10, top: 4),
           child: Text(
             stop.period.isEmpty ? 'KEŞİF ZAMANI' : stop.period,
-            style: const TextStyle(
-              color: AppColors.forest,
+            style: TextStyle(
+              color: context.colors.forest,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.1,
             ),
@@ -661,9 +651,13 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: 6),
-      const Text(
+      Text(
         'Bir durağa dokunarak ödediğin tutarı kaydet.',
-        style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.5),
+        style: TextStyle(
+          color: context.colors.muted,
+          fontSize: 13,
+          height: 1.5,
+        ),
       ),
       for (final day in plan.days) ...[
         const SizedBox(height: 14),
@@ -687,11 +681,11 @@ class _Paper extends StatelessWidget {
   final bool dark;
   @override
   Widget build(BuildContext context) => Material(
-    color: dark ? AppColors.forest : AppColors.surface,
+    color: dark ? AppColors.forest : context.colors.surface,
     clipBehavior: Clip.antiAlias,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
-      side: BorderSide(color: dark ? AppColors.forest : AppColors.divider),
+      side: BorderSide(color: dark ? AppColors.forest : context.colors.divider),
     ),
     child: Container(
       width: double.infinity,
@@ -758,7 +752,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final style = TextStyle(
-        color: widget.light ? AppColors.surface : AppColors.muted,
+        color: widget.light ? AppColors.surface : context.colors.muted,
         fontSize: 14,
         height: 1.6,
       );
@@ -784,7 +778,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
               style: TextButton.styleFrom(
                 foregroundColor: widget.light
                     ? const Color(0xFFE7B478)
-                    : AppColors.accent,
+                    : context.colors.accent,
               ),
               onPressed: () => setState(() => expanded = !expanded),
               child: Text(expanded ? 'Daha az' : 'Devamını oku'),
@@ -807,7 +801,7 @@ class _Status extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 36, color: AppColors.forest),
+          Icon(icon, size: 36, color: context.colors.forest),
           const SizedBox(height: 16),
           Text(text, textAlign: TextAlign.center),
           if (onRetry != null)

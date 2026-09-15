@@ -118,13 +118,21 @@ yerine Flutter uygulamasını durdurup normal LOCAL komutuyla yeniden başlatın
 
 ### Seyahat cüzdanı
 
-- Cüzdan sekmesinde dokulu yeşil cüzdan, üstten görünen en fazla üç kart ve
-  tarihe/saate göre tüm kayıtların listesi bulunur. Kartlar detay panelini açar.
+- Cüzdan sekmesinde kompakt yeşil cüzdan ve üstten görünen en fazla üç beyaz
+  kart bulunur. Fiziksel kartlar karanlık temada da beyaz, yazıları koyu kalır.
+  Kayıt listesi tarihe/saate göre sıralanır ve kategoriye göre filtrelenebilir.
+  Kartlar detay panelini açar; tarihler seçili dile göre gösterilir. Uzun boş
+  durum kutusu yerine kısa bir açıklama ve kayıt türleri gösterilir.
 - Genel cüzdan veya bir seyahat seçilebilir. Silinmiş planların kayıtları
   arşivlenmiş seyahat olarak erişilebilir kalır.
 - Uçuş, konaklama, etkinlik, sigorta, belge bilgisi ve diğer kayıtlar eklenebilir,
   düzenlenebilir, onayla silinebilir. Rezervasyon kodu kopyalanabilir; yalnızca
   http(s) bağlantıları açılır. Dosya yükleme veya bilet satın alma yapılmaz.
+- Kayıt formunda ikonlu tür seçimi, kalıcı alan başlıkları ve webdekiyle aynı
+  türe özel örnekler bulunur (PNR: `TRV123`, uçuş: `TK1861`, otel: `HTL456`).
+  Örnekler yalnızca placeholder'dır, kayda yazılmaz; yalnızca başlık zorunludur.
+  Türkçe/İngilizce, açık/koyu tema ve büyük yazı desteklenir. Kaydırılıp ekrandan
+  çıkan alanlar da kaydetmeden önce doğrulanır.
 - Web ve mobil `users/{uid}/wallet/{entryId}` koleksiyonunu paylaşır. Kayıtlar
   sahibine özeldir; planı toplulukta paylaşmak cüzdanı paylaşmaz.
 - Webde eskiden kayıtlar yalnızca localStorage içindeydi. Güncel web uygulaması
@@ -193,7 +201,18 @@ Alt menüdeki **Topluluk**, web ile aynı `publicPlans`, `userFollows` ve
 üzerinden gösterilir; bağlantıya özel planlar akışa dahil edilmez.
 
 - Şehir/gezgin arama, takip edilen gezginler ve herkese açık gezgin kartları.
+- Gezgin profili webdeki pasaport kartını kullanır: profil fotoğrafı/baş harfler,
+  kart içinde takip eylemi, paylaşılan rota-planlanan gün-şehir özeti ve şehir
+  etiketleri. Kompakt rota listesinde gezgin adı tekrar edilmez. İstatistikler
+  yalnızca listelenen paylaşımlardan hesaplanır; gizli profil bilgileri ve özel
+  planlar gösterilmez. Takipten çıkış onay ister; veri hataları yeniden denenebilir.
 - Salt okunur günlük rota, Google haritası/yer detayları, rehber ve tercihler.
+- Topluluk rotasında şehir/gezgin başlığı, süre-durak-maliyet özeti ve
+  genişletilebilir durak kartları; altta günlük plan/harita geçişi. Harita ayrı
+  görünümde alanı kullanır, gün seçimi iki görünüm arasında korunur. Rehber ve
+  herkese açık rota tercihleri alt panellerde açılır. Açık/koyu tema, Türkçe/
+  İngilizce arayüz ve kilometre/mil tercihi desteklenir; kayıtlı rota metinleri
+  özgün dilinde kalır.
 - 1–5 yıldız değerlendirme; tekrar puan vermek mevcut değerlendirmeyi günceller.
 - Paylaşımlarım: kayıtlı planı onayla paylaşma/güncelleme ve paylaşımı kaldırma.
 - Ayar simgesi: web ile ortak profil, plan paylaşımı ve takip gizliliği.
@@ -211,7 +230,7 @@ onaylamalıdır. Bu izin açılınca planlar kendiliğinden yayınlanmaz. Mobil 
 ve gerçek harcamaları göndermez. Rota metinlerinde kendin yazdığın kişisel bilgileri
 paylaşmadan önce gözden geçir. Özel planın aslı değiştirilmez.
 
-Kontrol: `flutter.bat test test/community_test.dart`.
+Kontrol: `flutter.bat test test/community_test.dart test/community_route_design_test.dart test/traveler_profile_test.dart`.
 
 ## Mobil ayarlar
 
@@ -273,6 +292,89 @@ cihazdaki galeri/sistem paylaşım ekranı ayrıca doğrulanmalıdır.
 Paket kaynakları: [image_picker](https://pub.dev/packages/image_picker),
 [share_plus](https://pub.dev/packages/share_plus),
 [SharedPreferencesAsync](https://pub.dev/documentation/shared_preferences/latest/shared_preferences/SharedPreferencesAsync-class.html).
+
+## Bildirimler ve gizlilik ekranları
+
+Telefon bildirimleri izin/durum kartı, cihaz anahtarı ve test gönderimini ayrı
+bölümlerde gösterir. Ekranı açmak izin istemez; izin yalnızca kullanıcı
+bildirimleri açtığında istenir. Test sonucu teslim garantisi olarak sunulmaz.
+Mevcut LOCAL/production etkinleştirme koşulları değişmez.
+
+Bildirim tercihleri uygulama ve e-posta olarak gruplanır; e-posta gönderiminin
+henüz aktif olmadığı açıklanır. Profil/plan görünürlüğü anahtarları diğer konum
+ve analiz tercihlerini korur. Konum geçmişi toplanmadığı ve analiz seçiminin
+telefonun konum iznini değiştirmediği belirtilir. Kaydedilmemiş değişikliklerde
+geri çıkış onaylanır; hatalı yüklemede varsayılanlarla kaydetmeye izin verilmez.
+
+Testler: `flutter.bat test test/privacy_pages_test.dart test/mobile_push_test.dart`.
+
+## Seyahat tercihleri ekranları
+
+Ayarlar içindeki seyahat varsayılanları, pasaport hatırlatıcısı, saat dilimi ve
+dil/birimler ekranları ortak kart ve form tasarımını kullanır. Tempo kartları,
+1–15 kişilik sayaç ve şehirle aranabilen saat dilimi seçimi webdeki kayıt
+anahtarlarını korur; mevcut özel saat dilimi değerleri de düzenlenebilir.
+Saat dilimi listesindeki eski UTC etiketleri güncel saat farkı olarak gösterilmez.
+
+Dil ve birimlerin önizlemesi taslak seçimi gösterir. Uygulama dili ve birimleri
+ancak başarılı kayıt sonrası uygulanır; başarısız kayıtta düzenlemeler korunur.
+Pasaport yalnızca cihazdaki hesaba özel depoda kalır. Tarih durumu bir takvim
+hatırlatıcısıdır, vize/giriş uygunluğu veya otomatik push bildirimi değildir.
+Yüklenemeyen pasaport verisinin üzerine varsayılan değerler yazılmaz.
+
+Testler: `flutter.bat test test/travel_preferences_test.dart test/settings_test.dart`.
+
+## Hesabım ekranları
+
+Profil bilgileri, e-posta adresi ve şifre/güvenlik ekranları ortak mobil kart,
+başlık, alan, durum ve işlem düğmesi tasarımını kullanır. Profil kişisel/iletişim
+alanlarına ayrılır; aynı yedi web profil alanı ve mevcut doğrulamalar korunur.
+Doğum tarihi takvimi gelecek tarihleri seçtirmez. Kayıt hatasında düzenlemeler
+korunur, sayfadan çıkarken kaydedilmemiş değişiklikler için onay istenir.
+
+E-posta ekranı mevcut adresi gösterir ve yeni adresin doğrulanması gerektiğini
+açıklar; mevcut `verifyBeforeUpdateEmail` akışı değişmemiştir. Şifre ekranında
+alan bazlı göster/gizle düğmeleri, uzunluk/eşleşme/farklılık ipuçları bulunur.
+Parolalı hesaplarda mevcut parola gerekir; Google hesapları mevcut repository
+üzerinden aynı Google hesabıyla yeniden doğrulanır. Başarılı işlemde parola
+alanları temizlenir; arka uç kuralları veya kimlik doğrulama gevşetilmez.
+
+`flutter.bat test test/account_pages_test.dart` yerleşim, dil, doğrulama, hata,
+taslak ve provider ayrımını sahte servislerle denetler. Gerçek e-posta, parola
+veya profil değişikliği yapmaz.
+
+## Yardım ve yasal sayfalar
+
+- Karşılama ve giriş ekranındaki yardım simgesinden, giriş yapmadan erişilir.
+  Ayarlar → Destek ve yasal bölümünde SSS, iletişim, gizlilik politikası ve
+  kullanım koşulları bulunur. Ayarlar yüklenemese bile üstteki yardım simgesi çalışır.
+- Kayıt formundaki koşul/gizlilik bağlantıları tam metni açar; forma dönüldüğünde
+  girilen bilgiler ve onay kutusunun durumu değişmez.
+- Webdeki 12 SSS yanıtı, 10 gizlilik maddesi, 11 kullanım koşulu maddesi ve tüm
+  iletişim bilgileri Türkçe/İngilizce olarak uygulamaya gömülür; okumak için internet
+  veya Firebase bağlantısı gerekmez. Mobile özel 4 SSS yanıtı da korunur.
+- Kaynak `web/src/i18n/locales/{tr,en}.json` içindeki `legal` bölümüdür. İçerik
+  değiştiğinde depo kökünden `npm.cmd run mobile:help:sync` çalıştırılır;
+  `npm.cmd run mobile:help:check` iki platform arasındaki farkları denetler.
+  CI bu denetimi çalıştırır. Üretilen `help_content.generated.dart` elle düzenlenmez.
+- İletişim formu webdeki `submitContactMessage` callable işlevini kullanır.
+  Giriş şartı yoktur; mevcut App Check, alan sınırları ve sunucu bekleme süresi
+  korunur. E-posta/adres/saat bilgileri ve e-posta uygulamasını açan bağlantı bulunur.
+  Mesaj yalnızca Gönder'e basıldığında iletilir; başarı sunucunun `ok: true`
+  yanıtından sonra gösterilir. Hata durumunda taslak silinmez, sekme değiştirirken
+  korunur ve sayfadan çıkarken onay istenir. Mesaj göndermek internet gerektirir.
+- Yasal metinler web sürümüyle aynıdır; web/tarayıcı/ödeme hakkındaki maddeler
+  korunmuştur. Bu aktarım yeni bir hukuki değerlendirme veya politika değişikliği değildir.
+
+Kontrol: `flutter.bat test test/help_center_test.dart`. Form testleri sahte servisle
+çalışır; gerçek destek adresine e-posta göndermez.
+
+Hata bildir ekranı aynı krem/orman yeşili/turuncu tasarımını kullanır. Ayrı başlık
+ve üstten başlayan açıklama alanı, yazım ipucu, hassas bilgi uyarısı ve başarı
+ekranı vardır. Gönderim mevcut `submitBugReport` akışını kullanır; ek cihaz verisi
+veya günlük göndermez. Hatalı gönderimde taslak korunur, geri çıkarken onay alınır.
+`flutter.bat test test/bug_report_test.dart` Türkçe/İngilizce, büyük metin/klavye,
+alan sınırları, çift gönderim ve taslak korumasını gerçek rapor oluşturmadan denetler.
 
 ## Planlarım ve uygulama içi bildirimler
 
@@ -415,6 +517,23 @@ dinler. Eski tarayıcı localStorage kaydı ilk açılışta bir kez Firestore'a
 sonraki değişiklikler iki istemcide aynı güvenli veri modelinde tutulur. Mobilde plan
 detayındaki Hazırlık sekmesi 23 ortak maddeyi, grup ilerlemesini ve çevrimdışı senkron
 durumunu gösterir. İstemci yalnızca tanımlı kontrol maddelerini yazabilir.
+
+## Tema ve görünüm
+
+Ayarlar → Görünüm → Tema altında **Sistem ayarı**, **Açık** ve **Karanlık**
+seçenekleri bulunur. Ayarlar başlığında yalnızca geri düğmesi vardır; tema ve
+yardım sayfaları aşağıdaki menülerden açılır. Varsayılan sistemdir; tercih
+cihazda saklanır ve uygulanması sunucu bağlantısı gerektirmez. Tema değişimi açık sayfayı ve form taslaklarını
+korur. Dil/birim ayarlarının hesapla eşitlenme davranışı değişmez.
+
+Yeni ekranlarda `AppTheme` ve `context.colors` kullanın. Sabit `AppColors`
+yalnızca marka çizimleri, koyu yeşil kartlar üzerindeki açık yazılar ve harita
+işaretçileri gibi temadan bağımsız öğeler içindir. Kartlar, alanlar, diyaloglar,
+alt menü, tarih seçimi ve rota haritası açık/koyu görünüme uyum sağlar.
+
+`flutter test test/theme_test.dart` tercih kaydını, sistem parlaklığı değişimini,
+rota korunmasını, Türkçe/İngilizce büyük metin yerleşimlerini ve koyu tema
+kontrastını kontrol eder.
 
 ## Plan bağlantıları
 

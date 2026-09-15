@@ -275,7 +275,7 @@ void main() {
       repo.fail = true;
       await tester.tap(find.text('Paylaş'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Onayla'));
+      await tester.tap(find.text('Planı paylaş'));
       await tester.pumpAndSettle();
       expect(repo.shares, 1);
       expect(find.textContaining('İşlem tamamlanamadı'), findsOneWidget);
@@ -292,6 +292,16 @@ void main() {
       host(CommunityPlanPage(uid: 'me', id: 'plan1', repository: repo)),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Kolezyum'),
+      220,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const PageStorageKey('community-route-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Kolezyum'), findsOneWidget);
     expect(find.text('PRIVATE'), findsNothing);
     await tester.scrollUntilVisible(
@@ -322,6 +332,7 @@ void main() {
         host(CommunityPrivacyPage(uid: 'me', repository: repo)),
       );
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Plan paylaşımına izin ver'));
       await tester.tap(find.text('Plan paylaşımına izin ver'));
       await tester.ensureVisible(find.text('Kaydet ve uygula'));
       await tester.tap(find.text('Kaydet ve uygula'));

@@ -54,7 +54,7 @@ void main() {
 
     expect(find.text('Seyahat listesi'), findsOneWidget);
     expect(find.text('0 / 23 tamamlandı'), findsOneWidget);
-    expect(find.text('Web ve telefonla senkronize'), findsOneWidget);
+    expect(find.text('Web ve telefonla senkronize'), findsNothing);
 
     await tester.tap(find.text('Pasaport / Kimlik kartı'));
     await tester.pumpAndSettle();

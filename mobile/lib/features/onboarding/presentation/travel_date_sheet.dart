@@ -106,9 +106,9 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Önce gidiş, sonra dönüş gününü seç.',
-                    style: TextStyle(color: AppColors.muted, height: 1.5),
+                    style: TextStyle(color: context.colors.muted, height: 1.5),
                   ),
                   const SizedBox(height: 18),
                   OnboardingPair(
@@ -184,7 +184,7 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                               textAlign: TextAlign.center,
                               textScaler: TextScaler.noScaling,
                               style: TextStyle(
-                                color: AppColors.muted,
+                                color: context.colors.muted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -227,9 +227,9 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 3),
                           child: Material(
                             color: edge
-                                ? AppColors.accent
+                                ? context.colors.accent
                                 : inside
-                                ? const Color(0xFFFFE4D1)
+                                ? context.colors.tone(const Color(0xFFFFE4D1))
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(edge ? 14 : 0),
                             child: InkWell(
@@ -246,10 +246,12 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                                         ? FontWeight.w700
                                         : FontWeight.w500,
                                     color: disabled
-                                        ? AppColors.muted.withValues(alpha: .35)
+                                        ? context.colors.muted.withValues(
+                                            alpha: .35,
+                                          )
                                         : edge
-                                        ? Colors.white
-                                        : AppColors.text,
+                                        ? context.colors.onAccent
+                                        : context.colors.text,
                                   ),
                                 ),
                               ),
@@ -269,8 +271,8 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                             _count > 0
                                 ? '$_count gün · ${_count - 1} gece'
                                 : 'Dönüş gününü seç',
-                            style: const TextStyle(
-                              color: AppColors.forest,
+                            style: TextStyle(
+                              color: context.colors.forest,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -293,8 +295,8 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                         liveRegion: true,
                         child: Text(
                           _error!,
-                          style: const TextStyle(
-                            color: Color(0xFF9B3020),
+                          style: TextStyle(
+                            color: context.colors.tone(const Color(0xFF9B3020)),
                             height: 1.5,
                           ),
                         ),

@@ -61,9 +61,9 @@ class SavedPlanCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.colors.divider),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -71,20 +71,20 @@ class SavedPlanCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
-            color: const Color(0xFFEAF0E8),
+            color: context.colors.tone(const Color(0xFFEAF0E8)),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.route_outlined,
                   size: 18,
-                  color: AppColors.forest,
+                  color: context.colors.forest,
                 ),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
                     savedPlanStatus(plan, DateTime.now()),
-                    style: const TextStyle(
-                      color: AppColors.forest,
+                    style: TextStyle(
+                      color: context.colors.forest,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                       height: 1.4,
@@ -100,7 +100,7 @@ class SavedPlanCard extends StatelessWidget {
                     plan.isFavorite
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
-                    color: AppColors.accent,
+                    color: context.colors.accent,
                   ),
                 ),
               ],
@@ -116,24 +116,24 @@ class SavedPlanCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     plan.destination,
-                    style: const TextStyle(color: AppColors.muted, height: 1.4),
+                    style: TextStyle(color: context.colors.muted, height: 1.4),
                   ),
                 ],
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
                       size: 16,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         dates.isEmpty ? 'Tarih belirtilmedi' : dates,
-                        style: const TextStyle(
-                          color: AppColors.muted,
+                        style: TextStyle(
+                          color: context.colors.muted,
                           fontSize: 12,
                           height: 1.5,
                         ),
@@ -159,14 +159,14 @@ class SavedPlanCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Tahmini toplam · ${plan.currencySymbol}${plan.estimatedCost.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: AppColors.forest,
+                  style: TextStyle(
+                    color: context.colors.forest,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Divider(height: 1, color: AppColors.divider),
+                Divider(height: 1, color: context.colors.divider),
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -196,7 +196,7 @@ class SavedPlanCard extends StatelessWidget {
                         tooltip: context.tr('Plan işlemleri'),
                         onSelected: onAction,
                         icon: const Icon(Icons.more_horiz_rounded),
-                        itemBuilder: (_) => const [
+                        itemBuilder: (_) => [
                           PopupMenuItem(
                             value: 'rename',
                             child: Text('Adını değiştir'),
@@ -209,7 +209,11 @@ class SavedPlanCard extends StatelessWidget {
                             value: 'delete',
                             child: Text(
                               'Planı sil',
-                              style: TextStyle(color: Color(0xFF9B3020)),
+                              style: TextStyle(
+                                color: context.colors.tone(
+                                  const Color(0xFF9B3020),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -233,15 +237,15 @@ class _Detail extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
     decoration: BoxDecoration(
-      color: const Color(0xFFF6EFE3),
+      color: context.colors.tone(const Color(0xFFF6EFE3)),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: AppColors.forest),
+        Icon(icon, size: 15, color: context.colors.forest),
         const SizedBox(width: 6),
-        Text(text, style: const TextStyle(color: AppColors.text, fontSize: 12)),
+        Text(text, style: TextStyle(color: context.colors.text, fontSize: 12)),
       ],
     ),
   );

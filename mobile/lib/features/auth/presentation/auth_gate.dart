@@ -34,9 +34,9 @@ class AuthGate extends StatelessWidget {
       stream: repository.watchSession(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+              child: CircularProgressIndicator(color: context.colors.accent),
             ),
           );
         }
@@ -47,6 +47,14 @@ class AuthGate extends StatelessWidget {
             onStart: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => AuthPage(repository: repository),
+              ),
+            ),
+            onRegister: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AuthPage(
+                  repository: repository,
+                  initialMode: AuthMode.register,
+                ),
               ),
             ),
           );

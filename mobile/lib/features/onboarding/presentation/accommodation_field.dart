@@ -177,7 +177,7 @@ class _AccommodationFieldState extends State<AccommodationField> {
       if (_error != null) ...[
         Semantics(
           liveRegion: true,
-          child: Text(_error!, style: const TextStyle(color: AppColors.muted)),
+          child: Text(_error!, style: TextStyle(color: context.colors.muted)),
         ),
         Align(
           alignment: Alignment.centerLeft,
@@ -188,16 +188,16 @@ class _AccommodationFieldState extends State<AccommodationField> {
         ),
       ],
       if (_searched && _suggestions.isEmpty)
-        const Text(
+        Text(
           'Sonuç bulunamadı. Otel adıyla birlikte semt veya sokak adını yaz.',
-          style: TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
       if (_suggestions.isNotEmpty)
         Material(
-          color: AppColors.surface,
+          color: context.colors.surface,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            side: const BorderSide(color: AppColors.divider),
+            side: BorderSide(color: context.colors.divider),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -211,7 +211,7 @@ class _AccommodationFieldState extends State<AccommodationField> {
                   subtitle: row.subtitle.isEmpty ? null : Text(row.subtitle),
                   onTap: () => _select(row),
                 ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(12),
                 child: Text(
                   'Google Maps',
@@ -219,7 +219,7 @@ class _AccommodationFieldState extends State<AccommodationField> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF5E5E5E),
+                    color: context.colors.tone(const Color(0xFF5E5E5E)),
                   ),
                 ),
               ),
@@ -227,11 +227,14 @@ class _AccommodationFieldState extends State<AccommodationField> {
           ),
         ),
       if (widget.confirmed && !_loading)
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(top: 6),
           child: Text(
             'Konaklama konumu seçildi · Google Maps',
-            style: TextStyle(fontSize: 12, color: Color(0xFF5E5E5E)),
+            style: TextStyle(
+              fontSize: 12,
+              color: context.colors.tone(const Color(0xFF5E5E5E)),
+            ),
           ),
         ),
     ],

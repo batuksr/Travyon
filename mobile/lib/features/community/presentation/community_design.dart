@@ -49,14 +49,14 @@ class CommunityTabs extends StatelessWidget {
                     minimumSize: const Size(48, 48),
                     backgroundColor: selected == i
                         ? AppColors.forest
-                        : AppColors.surface,
+                        : context.colors.surface,
                     foregroundColor: selected == i
                         ? AppColors.surface
-                        : AppColors.text,
+                        : context.colors.text,
                     side: BorderSide(
                       color: selected == i
-                          ? AppColors.forest
-                          : AppColors.divider,
+                          ? context.colors.forest
+                          : context.colors.divider,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -75,7 +75,7 @@ class CommunityTabs extends StatelessWidget {
                             fontSize: 12,
                             color: selected == i
                                 ? AppColors.surface
-                                : AppColors.text,
+                                : context.colors.text,
                           ),
                         ),
                       ),
@@ -109,19 +109,19 @@ class CommunityEmptyState extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Column(
       children: [
         Container(
           padding: const EdgeInsets.all(18),
-          decoration: const BoxDecoration(
-            color: Color(0xFFEAF0E9),
+          decoration: BoxDecoration(
+            color: context.colors.tone(const Color(0xFFEAF0E9)),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 30, color: AppColors.forest),
+          child: Icon(icon, size: 30, color: context.colors.forest),
         ),
         const SizedBox(height: 18),
         Text(
@@ -133,8 +133,8 @@ class CommunityEmptyState extends StatelessWidget {
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.muted,
+          style: TextStyle(
+            color: context.colors.muted,
             fontSize: 13,
             height: 1.6,
           ),
@@ -160,14 +160,14 @@ class CommunityMetric extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 16, color: AppColors.forest),
+      Icon(icon, size: 16, color: context.colors.forest),
       const SizedBox(width: 6),
       Flexible(
         child: Text(
           context.tr(label),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppColors.muted,
+            color: context.colors.muted,
             fontWeight: FontWeight.w500,
           ),
         ),

@@ -50,11 +50,11 @@ class _PlanStopCardState extends State<PlanStopCard> {
         ],
       ),
       child: Material(
-        color: AppColors.surface,
+        color: context.colors.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: AppColors.divider),
+          side: BorderSide(color: context.colors.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,14 +74,14 @@ class _PlanStopCardState extends State<PlanStopCard> {
                         ),
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8EADC),
+                          color: context.colors.tone(const Color(0xFFF8EADC)),
                           borderRadius: BorderRadius.circular(11),
                         ),
                         child: Text(
                           '${stop.index + 1}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFFA74F21),
+                          style: TextStyle(
+                            color: context.colors.tone(const Color(0xFFA74F21)),
                             fontSize: 14,
                             height: 1.4,
                             fontWeight: FontWeight.w700,
@@ -94,8 +94,8 @@ class _PlanStopCardState extends State<PlanStopCard> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             stop.name,
-                            style: const TextStyle(
-                              color: AppColors.text,
+                            style: TextStyle(
+                              color: context.colors.text,
                               fontSize: 18,
                               height: 1.35,
                               fontWeight: FontWeight.w700,
@@ -118,13 +118,13 @@ class _PlanStopCardState extends State<PlanStopCard> {
                             minimumSize: const Size(48, 48),
                             backgroundColor: stop.completed
                                 ? AppColors.forest
-                                : const Color(0xFFF3EFE7),
+                                : context.colors.tone(const Color(0xFFF3EFE7)),
                             foregroundColor: stop.completed
                                 ? Colors.white
-                                : AppColors.muted,
+                                : context.colors.muted,
                             disabledBackgroundColor: stop.completed
-                                ? AppColors.forest.withValues(alpha: 0.5)
-                                : const Color(0xFFF3EFE7),
+                                ? context.colors.forest.withValues(alpha: 0.5)
+                                : context.colors.tone(const Color(0xFFF3EFE7)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -141,7 +141,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0E7),
+                      color: context.colors.tone(const Color(0xFFF5F0E7)),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Wrap(
@@ -149,22 +149,22 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.payments_outlined,
                           size: 16,
-                          color: AppColors.muted,
+                          color: context.colors.muted,
                         ),
                         Text(
                           context.tr('Tahmini maliyet'),
-                          style: const TextStyle(
-                            color: AppColors.muted,
+                          style: TextStyle(
+                            color: context.colors.muted,
                             fontSize: 12,
                           ),
                         ),
                         Text(
                           '${widget.symbol}$amount',
-                          style: const TextStyle(
-                            color: AppColors.text,
+                          style: TextStyle(
+                            color: context.colors.text,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
@@ -182,7 +182,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDF2EC),
+                        color: context.colors.tone(const Color(0xFFEDF2EC)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -190,8 +190,8 @@ class _PlanStopCardState extends State<PlanStopCard> {
                         children: [
                           Text(
                             context.tr('Notun'),
-                            style: const TextStyle(
-                              color: AppColors.forest,
+                            style: TextStyle(
+                              color: context.colors.forest,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
@@ -201,8 +201,8 @@ class _PlanStopCardState extends State<PlanStopCard> {
                             stop.note,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.forest,
+                            style: TextStyle(
+                              color: context.colors.forest,
                               fontSize: 13,
                               height: 1.5,
                             ),
@@ -214,7 +214,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: context.colors.divider),
             _actions(context),
           ],
         ),
@@ -225,8 +225,8 @@ class _PlanStopCardState extends State<PlanStopCard> {
   Widget _description(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final style = DefaultTextStyle.of(context).style.merge(
-        const TextStyle(
-          color: AppColors.muted,
+        TextStyle(
+          color: context.colors.muted,
           fontFamily: AppTypography.body,
           fontSize: 14,
           height: 1.6,
@@ -253,7 +253,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
             TextButton.icon(
               onPressed: () => setState(() => _expanded = !_expanded),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFA74F21),
+                foregroundColor: context.colors.tone(const Color(0xFFA74F21)),
                 padding: EdgeInsets.zero,
                 textStyle: const TextStyle(
                   fontFamily: AppTypography.body,
@@ -276,14 +276,14 @@ class _PlanStopCardState extends State<PlanStopCard> {
   );
 
   Widget _actions(BuildContext context) => Container(
-    color: const Color(0xFFFAF6EE),
+    color: context.colors.tone(const Color(0xFFFAF6EE)),
     padding: const EdgeInsets.all(12),
     child: LayoutBuilder(
       builder: (context, constraints) {
         final note = TextButton.icon(
           onPressed: widget.busy ? null : () => widget.onAction('note'),
           style: TextButton.styleFrom(
-            backgroundColor: const Color(0xFFEAF0E9),
+            backgroundColor: context.colors.tone(const Color(0xFFEAF0E9)),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -309,8 +309,8 @@ class _PlanStopCardState extends State<PlanStopCard> {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.divider),
+                color: context.colors.surface,
+                border: Border.all(color: context.colors.divider),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -321,7 +321,11 @@ class _PlanStopCardState extends State<PlanStopCard> {
                     Icons.arrow_upward_rounded,
                     widget.canMoveUp ? () => widget.onAction('up') : null,
                   ),
-                  Container(width: 1, height: 18, color: AppColors.divider),
+                  Container(
+                    width: 1,
+                    height: 18,
+                    color: context.colors.divider,
+                  ),
                   _actionIcon(
                     'Aşağı taşı',
                     Icons.arrow_downward_rounded,
@@ -374,8 +378,12 @@ class _PlanStopCardState extends State<PlanStopCard> {
     onPressed: widget.busy ? null : onPressed,
     style: IconButton.styleFrom(
       minimumSize: const Size(48, 48),
-      foregroundColor: destructive ? const Color(0xFF9B3020) : AppColors.muted,
-      backgroundColor: destructive ? const Color(0xFFF9EDE7) : null,
+      foregroundColor: destructive
+          ? context.colors.tone(const Color(0xFF9B3020))
+          : context.colors.muted,
+      backgroundColor: destructive
+          ? context.colors.tone(const Color(0xFFF9EDE7))
+          : null,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     icon: Icon(icon, size: 19),

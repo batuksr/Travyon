@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/checklist_catalog.dart';
@@ -77,24 +78,14 @@ class _TravelChecklistPanelState extends State<TravelChecklistPanel> {
 
   Future<void> _reset(Set<String> checked) async {
     if (_resetting || checked.isEmpty) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Liste sıfırlansın mı?'),
-        content: const Text(
+    final confirmed = await showAppConfirmation(
+      context,
+      title: 'Liste sıfırlansın mı?',
+      message:
           'Tamamlandı olarak işaretlediğin tüm hazırlıklar yeniden açılacak.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sıfırla'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Sıfırla',
+      icon: Icons.restart_alt_rounded,
+      tone: AppDialogTone.warning,
     );
     if (confirmed != true || !mounted) return;
     setState(() => _resetting = true);
@@ -272,9 +263,9 @@ class _ProgressCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Column(
       children: [
@@ -283,8 +274,8 @@ class _ProgressCard extends StatelessWidget {
             Expanded(
               child: Text(
                 progress == 100 ? 'Hazırsın!' : '$checked / $total tamamlandı',
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: context.colors.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -307,8 +298,10 @@ class _ProgressCard extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 9,
             value: progress / 100,
-            backgroundColor: const Color(0xFFECE5DA),
-            color: progress == 100 ? const Color(0xFF39956A) : AppColors.accent,
+            backgroundColor: context.colors.tone(const Color(0xFFECE5DA)),
+            color: progress == 100
+                ? context.colors.tone(const Color(0xFF39956A))
+                : context.colors.accent,
           ),
         ),
       ],
@@ -340,10 +333,10 @@ class _ChecklistGroupCard extends StatelessWidget {
         .length;
     final allDone = completed == group.items.length;
     return Material(
-      color: AppColors.surface,
+      color: context.colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
-        side: const BorderSide(color: AppColors.divider),
+        side: BorderSide(color: context.colors.divider),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -358,13 +351,13 @@ class _ChecklistGroupCard extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: AppColors.forest.withValues(alpha: 0.09),
+                      color: context.colors.forest.withValues(alpha: 0.09),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       _groupIcon(group.id),
                       size: 20,
-                      color: AppColors.forest,
+                      color: context.colors.forest,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -381,16 +374,16 @@ class _ChecklistGroupCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: allDone
-                          ? const Color(0xFFE3F4EA)
-                          : const Color(0xFFF2EADF),
+                          ? context.colors.tone(const Color(0xFFE3F4EA))
+                          : context.colors.tone(const Color(0xFFF2EADF)),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '$completed/${group.items.length}',
                       style: TextStyle(
                         color: allDone
-                            ? const Color(0xFF28734E)
-                            : AppColors.muted,
+                            ? context.colors.tone(const Color(0xFF28734E))
+                            : context.colors.muted,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -400,16 +393,16 @@ class _ChecklistGroupCard extends StatelessWidget {
                   AnimatedRotation(
                     turns: open ? 0.5 : 0,
                     duration: const Duration(milliseconds: 180),
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          if (open) const Divider(height: 1, color: AppColors.divider),
+          if (open) Divider(height: 1, color: context.colors.divider),
           if (open)
             for (var index = 0; index < group.items.length; index++) ...[
               _ChecklistRow(
@@ -422,7 +415,7 @@ class _ChecklistGroupCard extends StatelessWidget {
                 ),
               ),
               if (index < group.items.length - 1)
-                const Divider(height: 1, indent: 54, color: AppColors.divider),
+                Divider(height: 1, indent: 54, color: context.colors.divider),
             ],
         ],
       ),
@@ -470,8 +463,8 @@ class _ChecklistRow extends StatelessWidget {
                           : Icons.radio_button_unchecked_rounded,
                       size: 22,
                       color: checked
-                          ? const Color(0xFF39956A)
-                          : AppColors.muted,
+                          ? context.colors.tone(const Color(0xFF39956A))
+                          : context.colors.muted,
                     ),
             ),
             const SizedBox(width: 12),
@@ -482,7 +475,9 @@ class _ChecklistRow extends StatelessWidget {
                   Text(
                     item.label,
                     style: TextStyle(
-                      color: checked ? AppColors.muted : AppColors.text,
+                      color: checked
+                          ? context.colors.muted
+                          : context.colors.text,
                       fontWeight: FontWeight.w600,
                       decoration: checked ? TextDecoration.lineThrough : null,
                     ),
@@ -491,8 +486,8 @@ class _ChecklistRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       item.tip,
-                      style: const TextStyle(
-                        color: AppColors.muted,
+                      style: TextStyle(
+                        color: context.colors.muted,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -515,18 +510,19 @@ class _SyncStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!state.hasPendingWrites && !state.fromCache) {
+      return const SizedBox.shrink();
+    }
     final (icon, text, color) = state.hasPendingWrites
-        ? (Icons.sync_rounded, 'Değişiklikler kaydediliyor', AppColors.muted)
-        : state.fromCache
         ? (
-            Icons.cloud_off_outlined,
-            'Çevrimdışı · bağlantı gelince eşitlenecek',
-            AppColors.accent,
+            Icons.sync_rounded,
+            'Değişiklikler kaydediliyor',
+            context.colors.muted,
           )
         : (
-            Icons.cloud_done_outlined,
-            'Web ve telefonla senkronize',
-            AppColors.forest,
+            Icons.cloud_off_outlined,
+            'Çevrimdışı · bağlantı gelince eşitlenecek',
+            context.colors.accent,
           );
     return Padding(
       padding: const EdgeInsets.only(top: 6),
@@ -568,14 +564,14 @@ class _ChecklistStatus extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 38, color: AppColors.forest),
+          Icon(icon, size: 38, color: context.colors.forest),
           const SizedBox(height: 14),
           Text(text, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
             detail,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted),
+            style: TextStyle(color: context.colors.muted),
           ),
           const SizedBox(height: 10),
           TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),

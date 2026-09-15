@@ -109,9 +109,9 @@ void main() {
     );
     expect(find.text('Wallet'), findsOneWidget);
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
-    expect(find.text('A NEW JOURNEY'), findsOneWidget);
-    expect(find.text('Add your first ticket'), findsOneWidget);
-    expect(find.text('GENERAL WALLET'), findsOneWidget);
+    expect(find.text('Tickets · Bookings · Documents'), findsOneWidget);
+    expect(find.text('Add your first item'), findsOneWidget);
+    expect(find.text('General wallet'), findsOneWidget);
     expect(find.text('Seyahatin'), findsNothing);
     expect(find.text('Genel cüzdan'), findsNothing);
   });
@@ -153,7 +153,7 @@ void main() {
           plansRepository: FakeTravelPlansRepository([]),
         ),
       );
-      expect(find.text('İlk biletini ekle'), findsOneWidget);
+      expect(find.text('İlk kaydını ekle'), findsOneWidget);
       await see(tester, find.byKey(const ValueKey('wallet-add')));
       await tester.tap(find.byKey(const ValueKey('wallet-add')));
       await tester.pumpAndSettle();

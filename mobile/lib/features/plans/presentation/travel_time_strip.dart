@@ -122,8 +122,8 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
                 child: Text(
                   '↕ $distance',
                   key: const ValueKey('segment-distance'),
-                  style: const TextStyle(
-                    color: AppColors.muted,
+                  style: TextStyle(
+                    color: context.colors.muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -132,7 +132,7 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
               if (loading)
                 Text(
                   context.tr('Ulaşım süreleri hesaplanıyor…'),
-                  style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                  style: TextStyle(color: context.colors.muted, fontSize: 11),
                 )
               else if (snapshot.hasError || times.isEmpty)
                 Tooltip(
@@ -152,7 +152,7 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
                   ),
                 )
               else ...[
-                const Text('·', style: TextStyle(color: AppColors.muted)),
+                Text('·', style: TextStyle(color: context.colors.muted)),
                 for (final mode in travelModes)
                   if (times.containsKey(mode))
                     Tooltip(
@@ -173,15 +173,15 @@ class _TravelTimeStripState extends State<TravelTimeStrip> {
                           shape: const StadiumBorder(),
                           side: BorderSide(
                             color: times[mode] == fastest
-                                ? AppColors.accent.withValues(alpha: 0.4)
-                                : AppColors.divider,
+                                ? context.colors.accent.withValues(alpha: 0.4)
+                                : context.colors.divider,
                           ),
                           backgroundColor: times[mode] == fastest
-                              ? const Color(0xFFFFE5D3)
-                              : AppColors.surface,
+                              ? context.colors.tone(const Color(0xFFFFE5D3))
+                              : context.colors.surface,
                           foregroundColor: times[mode] == fastest
-                              ? const Color(0xFF98491C)
-                              : AppColors.muted,
+                              ? context.colors.tone(const Color(0xFF98491C))
+                              : context.colors.muted,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 4,

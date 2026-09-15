@@ -5,13 +5,19 @@ import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../help/presentation/help_center_page.dart';
 
 enum AuthMode { signIn, register }
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key, required this.repository});
+  const AuthPage({
+    super.key,
+    required this.repository,
+    this.initialMode = AuthMode.signIn,
+  });
 
   final AuthRepository repository;
+  final AuthMode initialMode;
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -22,7 +28,7 @@ class _AuthPageState extends State<AuthPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  AuthMode _mode = AuthMode.signIn;
+  late AuthMode _mode = widget.initialMode;
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
   bool _loading = false;
@@ -149,6 +155,13 @@ class _AuthPageState extends State<AuthPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          IconButton(
+            tooltip: context.tr('Yardım ve yasal'),
+            onPressed: _loading ? null : () => openHelpCenter(context),
+            icon: const Icon(Icons.help_outline_rounded),
+          ),
+        ],
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back_rounded),
@@ -180,7 +193,7 @@ class _AuthPageState extends State<AuthPage> {
                 const SizedBox(height: 10),
                 Text(
                   registering
-                      ? 'Hesabını oluştur, planlarına her cihazdan ulaş.'
+                      ? 'Hesabını oluştur, bir sonraki yolculuğunu planla.'
                       : 'Planlarına ve seyahat cüzdanına devam et.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
@@ -269,10 +282,18 @@ class _AuthPageState extends State<AuthPage> {
                               setState(() => _acceptedTerms = value ?? false),
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text(
+                    title: Text(
                       'Kullanım Koşulları ve Gizlilik Politikası’nı kabul ediyorum.',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.colors.muted,
+                      ),
                     ),
+                  ),
+                if (registering)
+                  HelpLinks(
+                    sections: const [HelpSection.terms, HelpSection.privacy],
+                    enabled: !_loading,
                   ),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
@@ -301,10 +322,10 @@ class _AuthPageState extends State<AuthPage> {
                 OutlinedButton.icon(
                   onPressed: _loading ? null : _signInWithGoogle,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.text,
-                    backgroundColor: AppColors.surface,
+                    foregroundColor: context.colors.text,
+                    backgroundColor: context.colors.surface,
                     minimumSize: const Size.fromHeight(54),
-                    side: const BorderSide(color: AppColors.divider),
+                    side: BorderSide(color: context.colors.divider),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -313,14 +334,10 @@ class _AuthPageState extends State<AuthPage> {
                   icon: const _GoogleMark(),
                   label: const Text('Google ile devam et'),
                 ),
-                const SizedBox(height: 16),
-                Center(
-                  child: Text(
-                    'Webde kullandığın hesapla giriş yapabilirsin.',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: AppColors.muted),
-                  ),
-                ),
+                if (!registering) ...[
+                  const SizedBox(height: 12),
+                  HelpLinks(enabled: !_loading),
+                ],
               ],
             ),
           ),
@@ -335,22 +352,22 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: context.colors.divider)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             'VEYA',
             style: TextStyle(
-              color: AppColors.muted,
+              color: context.colors.muted,
               fontSize: 11,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: context.colors.divider)),
       ],
     );
   }
@@ -383,8 +400,8 @@ class _ModeSwitch extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.divider),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.divider),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -433,7 +450,7 @@ class _ModeButton extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: selected ? Colors.white : AppColors.muted,
+              color: selected ? Colors.white : context.colors.muted,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -451,7 +468,9 @@ class _FeedbackMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = error ? const Color(0xFF9B3535) : AppColors.forest;
+    final color = error
+        ? context.colors.tone(const Color(0xFF9B3535))
+        : context.colors.forest;
     return Semantics(
       liveRegion: true,
       child: Container(
@@ -473,16 +492,16 @@ class _AuthWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text.rich(
+    return Text.rich(
       TextSpan(
         children: [
           TextSpan(
             text: 'trav',
-            style: TextStyle(color: AppColors.text),
+            style: TextStyle(color: context.colors.text),
           ),
           TextSpan(
             text: 'yon',
-            style: TextStyle(color: AppColors.accent),
+            style: TextStyle(color: context.colors.accent),
           ),
         ],
       ),

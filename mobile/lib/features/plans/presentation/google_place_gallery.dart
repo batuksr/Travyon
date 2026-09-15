@@ -42,7 +42,7 @@ class _GooglePlaceGalleryState extends State<GooglePlaceGallery> {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.broken_image_outlined, color: AppColors.muted),
+        Icon(Icons.broken_image_outlined, color: context.colors.muted),
         const Text('Fotoğraf yüklenemedi.'),
         TextButton(
           onPressed: widget.onRefresh,
@@ -70,7 +70,7 @@ class _GooglePlaceGalleryState extends State<GooglePlaceGallery> {
               ),
               Text(
                 '${_index + 1} / ${widget.photos.length}',
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
             ],
           ),
@@ -78,7 +78,7 @@ class _GooglePlaceGalleryState extends State<GooglePlaceGallery> {
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: ColoredBox(
-              color: AppColors.background,
+              color: context.colors.background,
               child: SizedBox(
                 height: 210,
                 child: PageView.builder(
@@ -130,11 +130,11 @@ class _GooglePlaceGalleryState extends State<GooglePlaceGallery> {
             ),
           ),
           if (widget.photos.length > 1)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 6),
               child: Text(
                 'Diğer fotoğraflar için kaydır',
-                style: TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: context.colors.muted),
               ),
             ),
           // Attribution stays next to its photo, including when there are multiple authors.

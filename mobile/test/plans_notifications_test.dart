@@ -277,7 +277,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Planı sil'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Onayla'));
+      await tester.tap(find.text('Planı sil'));
       await tester.pumpAndSettle();
       expect(manager.deleted, 1);
     },
@@ -302,7 +302,7 @@ void main() {
       expect(repo.hidden, isNotEmpty);
       await tester.tap(find.text('Kapatılanları geri getir'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Onayla'));
+      await tester.tap(find.text('Geri getir'));
       await tester.pumpAndSettle();
       expect(find.text('Bugün yola çıkıyorsun!'), findsOneWidget);
     },

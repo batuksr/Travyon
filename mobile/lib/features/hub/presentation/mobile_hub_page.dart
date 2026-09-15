@@ -338,16 +338,16 @@ class _Wordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text.rich(
+    return Text.rich(
       TextSpan(
         children: [
           TextSpan(
             text: 'trav',
-            style: TextStyle(color: AppColors.text),
+            style: TextStyle(color: context.colors.text),
           ),
           TextSpan(
             text: 'yon',
-            style: TextStyle(color: AppColors.accent),
+            style: TextStyle(color: context.colors.accent),
           ),
         ],
       ),

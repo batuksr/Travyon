@@ -35,16 +35,28 @@ class TravelNoticeCard extends StatelessWidget {
       TravelNoticeKind.weather => (Icons.cloud_outlined, 'Hava durumu'),
     };
     final (color, background, level) = switch (n.level) {
-      0 => (const Color(0xFFA54A24), const Color(0xFFFBE7DC), 'Önemli'),
-      1 => (const Color(0xFF82611A), const Color(0xFFF6EDCF), 'Hatırlatma'),
-      _ => (AppColors.forest, const Color(0xFFE8EFE8), 'Bilgi'),
+      0 => (
+        context.colors.tone(const Color(0xFFA54A24)),
+        context.colors.tone(const Color(0xFFFBE7DC)),
+        'Önemli',
+      ),
+      1 => (
+        context.colors.tone(const Color(0xFF82611A)),
+        context.colors.tone(const Color(0xFFF6EDCF)),
+        'Hatırlatma',
+      ),
+      _ => (
+        context.colors.forest,
+        context.colors.tone(const Color(0xFFE8EFE8)),
+        'Bilgi',
+      ),
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -105,9 +117,9 @@ class TravelNoticeCard extends StatelessWidget {
                           n.contextLabel,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           ),
                         ),
                       ],
@@ -118,27 +130,27 @@ class TravelNoticeCard extends StatelessWidget {
                   tooltip: context.tr('Bildirimi kapat'),
                   onPressed: onDismiss,
                   icon: const Icon(Icons.close_rounded, size: 18),
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
               context.tr(n.title),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 height: 1.4,
-                color: AppColors.text,
+                color: context.colors.text,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               context.tr(n.body, values: n.bodyValues),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.6,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
             ),
             for (final tip in n.tips)
@@ -146,16 +158,16 @@ class TravelNoticeCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   context.tr(tip),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     height: 1.5,
-                    color: AppColors.forest,
+                    color: context.colors.forest,
                   ),
                 ),
               ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1, color: AppColors.divider),
+              child: Divider(height: 1, color: context.colors.divider),
             ),
             Wrap(
               spacing: 8,
@@ -230,14 +242,14 @@ class TravelNoticeCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 context.tr('GetYourGuide · Bilet ve tur seçenekleri'),
-                style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                style: TextStyle(fontSize: 10, color: context.colors.muted),
               ),
             ],
             if (n.sourceLabel != null && onSource != null)
               TextButton(
                 onPressed: onSource,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.muted,
+                  foregroundColor: context.colors.muted,
                   textStyle: const TextStyle(
                     fontFamily: AppTypography.body,
                     fontSize: 11,

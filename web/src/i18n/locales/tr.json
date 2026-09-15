@@ -569,7 +569,7 @@
         {
           "category": "Teknik",
           "items": [
-            { "q": "Mobil uygulama var mı?", "a": "Şu an web tabanlı çalışıyoruz. Mobil uygulama (iOS & Android) yakında geliyor — bildirim almak için kayıt olabilirsin." },
+            { "q": "Mobil uygulama var mı?", "a": "Travyon'un mobil uygulaması da geliştiriliyor. Mobil uygulamada webdeki hesabınla giriş yapabilir; kayıtlı planlarına, seyahat cüzdanına ve tercihlerine aynı hesapla erişebilirsin." },
             { "q": "Hangi tarayıcılar destekleniyor?", "a": "Chrome, Firefox, Safari ve Edge'in güncel sürümlerinde sorunsuz çalışır. En iyi deneyim için Chrome önerilir." },
             { "q": "İnternet bağlantısı şart mı?", "a": "Plan oluşturma ve harita görüntüleme için internet bağlantısı gereklidir. Kayıtlı planlarını çevrimdışı görüntülemek için yakında offline destek eklenecek." }
           ]

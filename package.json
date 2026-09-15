@@ -11,6 +11,8 @@
     "lint": "eslint web functions/src",
     "test": "vitest run --config web/vitest.config.ts",
     "test:watch": "vitest --config web/vitest.config.ts",
+    "mobile:help:sync": "node mobile/tool/sync_help_content.cjs",
+    "mobile:help:check": "node mobile/tool/sync_help_content.cjs --check",
     "emulators": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode hybrid",
     "emulators:hybrid": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode hybrid",
     "emulators:full": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-emulators.ps1 -Mode full",

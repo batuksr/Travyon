@@ -97,12 +97,12 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF0E9),
+                  color: context.colors.tone(const Color(0xFFEAF0E9)),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.receipt_long_outlined,
-                  color: AppColors.forest,
+                  color: context.colors.forest,
                 ),
               ),
               const Spacer(),
@@ -121,8 +121,8 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
           const SizedBox(height: 8),
           Text(
             widget.stop.name,
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: context.colors.muted,
               fontSize: 14,
               height: 1.5,
             ),
@@ -143,10 +143,10 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
                 });
               }
             },
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w600,
-              color: AppColors.text,
+              color: context.colors.text,
             ),
             decoration: InputDecoration(
               labelText: context.tr('Ödediğin tutar'),
@@ -162,8 +162,8 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
           const SizedBox(height: 10),
           Text(
             context.tr('Bu durak için toplam ödediğin tutarı gir.'),
-            style: const TextStyle(
-              color: AppColors.muted,
+            style: TextStyle(
+              color: context.colors.muted,
               fontSize: 12,
               height: 1.5,
             ),
@@ -172,7 +172,7 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F0E7),
+              color: context.colors.tone(const Color(0xFFF5F0E7)),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Wrap(
@@ -182,12 +182,12 @@ class _PlanExpenseSheetState extends State<PlanExpenseSheet> {
               children: [
                 Text(
                   context.tr('Tahmini maliyet'),
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  style: TextStyle(color: context.colors.muted, fontSize: 13),
                 ),
                 Text(
                   budgetMoney(context, widget.symbol, widget.stop.estimated),
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),

@@ -99,7 +99,7 @@ const settingsSections = [
       ),
       SettingField('expiry', 'Son geçerlilik tarihi', date: true),
     ],
-    note: 'Yalnızca bu cihazda, hesabına özel tutulur; web ile eşitlenmez. Pasaport numaranı kaydetmiyoruz. Bu alan vize veya giriş koşullarını doğrulamaz.',
+    note: 'Yalnızca bu cihazda, hesabına özel tutulur. Pasaport numaranı kaydetmiyoruz. Bu alan vize veya giriş koşullarını doğrulamaz.',
   ),
   SettingsSection(
     'timezone',
@@ -113,33 +113,29 @@ const settingsSections = [
         required: true,
       ),
     ],
-    note: 'Web ile ortak hesap tercihi. Mobil planlardaki tarihler destinasyonun plan tarihleri olarak gösterilir. Örnek: Europe/Istanbul (UTC+3).',
+    note:
+        'Planlardaki tarihler destinasyonun plan tarihleri olarak gösterilir.',
   ),
-  SettingsSection(
-    'appearance',
-    'Dil ve birimler',
-    [
-      SettingField(
-        'language',
-        'Hesap dili',
-        initial: 'Türkçe',
-        options: {'Türkçe': 'Türkçe', 'English': 'English'},
-      ),
-      SettingField(
-        'distanceKm',
-        'Mesafeleri kilometre göster',
-        initial: true,
-        toggle: true,
-      ),
-      SettingField(
-        'tempCelsius',
-        'Sıcaklığı Celsius göster',
-        initial: true,
-        toggle: true,
-      ),
-    ],
-    note: 'Bu tercihler web hesabında da saklanır ve iki uygulama arasında eşitlenir. Dil, rota mesafeleri, hava durumu ve bildirimler seçtiğin biçime hemen geçer.',
-  ),
+  SettingsSection('appearance', 'Dil ve birimler', [
+    SettingField(
+      'language',
+      'Hesap dili',
+      initial: 'Türkçe',
+      options: {'Türkçe': 'Türkçe', 'English': 'English'},
+    ),
+    SettingField(
+      'distanceKm',
+      'Mesafeleri kilometre göster',
+      initial: true,
+      toggle: true,
+    ),
+    SettingField(
+      'tempCelsius',
+      'Sıcaklığı Celsius göster',
+      initial: true,
+      toggle: true,
+    ),
+  ], note: 'Dil ve birim seçimlerin kaydettikten sonra uygulanır.'),
   SettingsSection(
     'notifications',
     'Bildirim tercihleri',
@@ -196,21 +192,16 @@ const settingsSections = [
     ],
     note: 'Mobil uygulama şu anda konum geçmişi toplamaz. Bu tercih cihazın konum iznini değiştirmez. Diğer gizlilik tercihlerin korunur.',
   ),
-  SettingsSection(
-    'billing',
-    'Fatura bilgileri',
-    [
-      SettingField(
-        'identityNumber',
-        'T.C. kimlik numarası',
-        max: 11,
-        number: true,
-        required: true,
-      ),
-      SettingField('billingCity', 'Fatura şehri', required: true),
-    ],
-    note: 'Webdeki faturalandırma alanlarıyla ortaktır. Yalnızca fatura düzenlenmesi için gerekiyorsa doldur.',
-  ),
+  SettingsSection('billing', 'Fatura bilgileri', [
+    SettingField(
+      'identityNumber',
+      'T.C. kimlik numarası',
+      max: 11,
+      number: true,
+      required: true,
+    ),
+    SettingField('billingCity', 'Fatura şehri', required: true),
+  ], note: 'Yalnızca fatura düzenlenmesi için gerekiyorsa doldur.'),
 ];
 
 String? validateSetting(SettingField field, String value) {

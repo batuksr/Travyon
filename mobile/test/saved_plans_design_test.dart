@@ -82,9 +82,7 @@ void main() {
     expect(find.text('Continue your next journey from here.'), findsOneWidget);
     expect(find.text('Start your first route'), findsOneWidget);
     expect(
-      find.text(
-        'Choose a city to explore. Your saved journeys will be waiting here, on the web and on your phone.',
-      ),
+      find.text('Choose a city to explore and let’s create your first route.'),
       findsOneWidget,
     );
     expect(find.text('Create my first plan'), findsOneWidget);

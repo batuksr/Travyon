@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/unit_formatter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/plan_detail.dart';
@@ -76,22 +77,11 @@ class PlanBudgetOverview extends StatelessWidget {
                     tooltip: context.tr('Bütçe nasıl hesaplanır?'),
                     color: const Color(0xFFDCE7DF),
                     icon: const Icon(Icons.info_outline_rounded, size: 20),
-                    onPressed: () => showDialog<void>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(context.tr('Bütçe nasıl hesaplanır?')),
-                        content: Text(
-                          context.tr(
-                            'Gerçek harcama, duraklara girdiğin tutarların toplamıdır. Cüzdan belgeleri ayrıca ücret olarak eklenmez.',
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(context.tr('Kapat')),
-                          ),
-                        ],
-                      ),
+                    onPressed: () => showAppInformation(
+                      context,
+                      title: 'Bütçe nasıl hesaplanır?',
+                      message: 'Gerçek harcama, duraklara girdiğin tutarların toplamıdır. Cüzdan belgeleri ayrıca ücret olarak eklenmez.',
+                      icon: Icons.account_balance_wallet_outlined,
                     ),
                   ),
                 ],
@@ -205,12 +195,12 @@ class PlanBudgetOverview extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 2),
               child: Icon(
                 Icons.receipt_outlined,
                 size: 17,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
             ),
             const SizedBox(width: 8),
@@ -219,8 +209,8 @@ class PlanBudgetOverview extends StatelessWidget {
                 context.tr(
                   '$entered / ${stops.length} durağa harcama girildi.',
                 ),
-                style: const TextStyle(
-                  color: AppColors.muted,
+                style: TextStyle(
+                  color: context.colors.muted,
                   fontSize: 12,
                   height: 1.5,
                 ),
@@ -246,19 +236,19 @@ class _BudgetMetric extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppColors.divider),
+      border: Border.all(color: context.colors.divider),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.forest),
+        Icon(icon, size: 20, color: context.colors.forest),
         const SizedBox(height: 12),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.muted,
+          style: TextStyle(
+            color: context.colors.muted,
             fontSize: 12,
             height: 1.4,
           ),
@@ -266,8 +256,8 @@ class _BudgetMetric extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           amount,
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: context.colors.text,
             fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
@@ -300,18 +290,18 @@ class PlanBudgetDayCard extends StatelessWidget {
       (sum, stop) => sum + (stop.actual ?? 0),
     );
     return Material(
-      color: AppColors.surface,
+      color: context.colors.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.divider),
+        side: BorderSide(color: context.colors.divider),
       ),
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
         shape: const Border(),
         collapsedShape: const Border(),
-        iconColor: AppColors.forest,
-        collapsedIconColor: AppColors.muted,
+        iconColor: context.colors.forest,
+        collapsedIconColor: context.colors.muted,
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         title: Text(
           label,
@@ -329,28 +319,28 @@ class PlanBudgetDayCard extends StatelessWidget {
               '{amount} harcandı',
               values: {'amount': budgetMoney(context, symbol, spent)},
             ),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.forest,
+              color: context.colors.forest,
             ),
           ),
         ),
         children: [
-          const Divider(height: 1, color: AppColors.divider),
+          Divider(height: 1, color: context.colors.divider),
           if (day.stops.isEmpty)
             Padding(
               padding: const EdgeInsets.all(18),
               child: Text(
                 context.tr('Bu gün için durak eklenmemiş.'),
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                style: TextStyle(color: context.colors.muted, fontSize: 13),
               ),
             ),
           for (final stop in day.stops) ...[
             if (stop.index > 0)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: AppColors.divider),
+                child: Divider(height: 1, color: context.colors.divider),
               ),
             InkWell(
               onTap: busy ? null : () => onExpense(stop),
@@ -364,8 +354,8 @@ class PlanBudgetDayCard extends StatelessWidget {
                         children: [
                           Text(
                             stop.name,
-                            style: const TextStyle(
-                              color: AppColors.text,
+                            style: TextStyle(
+                              color: context.colors.text,
                               fontSize: 14,
                               height: 1.4,
                               fontWeight: FontWeight.w600,
@@ -384,8 +374,12 @@ class PlanBudgetDayCard extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: stop.actual == null
-                                      ? const Color(0xFFF5F0E7)
-                                      : const Color(0xFFEAF0E9),
+                                      ? context.colors.tone(
+                                          const Color(0xFFF5F0E7),
+                                        )
+                                      : context.colors.tone(
+                                          const Color(0xFFEAF0E9),
+                                        ),
                                   borderRadius: BorderRadius.circular(7),
                                 ),
                                 child: Text(
@@ -398,8 +392,8 @@ class PlanBudgetDayCard extends StatelessWidget {
                                         ),
                                   style: TextStyle(
                                     color: stop.actual == null
-                                        ? AppColors.muted
-                                        : AppColors.forest,
+                                        ? context.colors.muted
+                                        : context.colors.forest,
                                     fontSize: 12,
                                     fontWeight: stop.actual == null
                                         ? FontWeight.w400
@@ -411,8 +405,8 @@ class PlanBudgetDayCard extends StatelessWidget {
                                 context.tr(
                                   'Tahmini ${budgetMoney(context, symbol, stop.estimated)}',
                                 ),
-                                style: const TextStyle(
-                                  color: AppColors.muted,
+                                style: TextStyle(
+                                  color: context.colors.muted,
                                   fontSize: 11,
                                 ),
                               ),
@@ -433,11 +427,11 @@ class PlanBudgetDayCard extends StatelessWidget {
                       style: IconButton.styleFrom(
                         minimumSize: const Size(48, 48),
                         backgroundColor: stop.actual == null
-                            ? const Color(0xFFFBE8D8)
-                            : const Color(0xFFEAF0E9),
+                            ? context.colors.tone(const Color(0xFFFBE8D8))
+                            : context.colors.tone(const Color(0xFFEAF0E9)),
                         foregroundColor: stop.actual == null
-                            ? const Color(0xFFA74F21)
-                            : AppColors.forest,
+                            ? context.colors.tone(const Color(0xFFA74F21))
+                            : context.colors.forest,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
