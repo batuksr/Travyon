@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/firebase/firebase_services.dart';
 import '../../plans/data/plan_detail.dart';
 import 'onboarding_data.dart';
+import 'route_optimization.dart';
 
 abstract interface class PlanCreationRepository {
   Future<Map<String, dynamic>> defaults(String uid);
@@ -30,7 +31,6 @@ Map<String, dynamic> parseCreatedPlan(String text, OnboardingData data) {
     throw const FormatException('Plan günleri tarihlerle uyuşmuyor.');
   }
   double total = 0;
-  const periods = ['Sabah', 'Öğle', 'Öğleden Sonra', 'Akşam', 'Gece'];
   final normalized = <Map<String, dynamic>>[];
   for (int i = 0; i < days.length; i++) {
     final day = planMap(days[i]);
@@ -53,7 +53,7 @@ Map<String, dynamic> parseCreatedPlan(String text, OnboardingData data) {
       if (stop['placeName'] is! String ||
           (stop['placeName'] as String).trim().isEmpty ||
           location == null ||
-          !periods.contains(stop['period'])) {
+          !routePeriods.contains(stop['period'])) {
         throw const FormatException(
           'Planın mekân bilgileri eksik. Tekrar deneyebilirsin.',
         );
@@ -72,11 +72,9 @@ Map<String, dynamic> parseCreatedPlan(String text, OnboardingData data) {
         'estimatedCost': cost,
       });
     }
-    // Stable period ordering, retaining the AI's within-period route order.
-    final sorted = [
-      for (final period in periods)
-        ...stops.where((s) => s['period'] == period),
-    ];
+    // Optimize once, before preview and persistence. Opening saved plans or
+    // retrying a failed save must preserve the order the user already saw.
+    final sorted = optimizeDayRoute(stops);
     final cost = sorted.fold<double>(
       0,
       (sum, s) => sum + (s['estimatedCost'] as double),

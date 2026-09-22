@@ -30,10 +30,10 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  late var _feed = widget.repository.feed();
-  late var _following = widget.repository.following(widget.uid);
-  late var _own = widget.repository.sharedBy(widget.uid, own: true);
-  late var _saved = widget.plansRepository.watchPlans(widget.uid);
+  late final _feed = widget.repository.feed();
+  late final _following = widget.repository.following(widget.uid);
+  late final _own = widget.repository.sharedBy(widget.uid, own: true);
+  late final _saved = widget.plansRepository.watchPlans(widget.uid);
   int _tab = 0;
   String _query = '';
   bool _busy = false;
@@ -43,13 +43,6 @@ class _CommunityPageState extends State<CommunityPage> {
     _tab = tab;
     _query = '';
     _search.clear();
-  });
-
-  void _refresh() => setState(() {
-    _feed = widget.repository.feed();
-    _following = widget.repository.following(widget.uid);
-    _own = widget.repository.sharedBy(widget.uid, own: true);
-    _saved = widget.plansRepository.watchPlans(widget.uid);
   });
 
   void _clearSearch() => setState(() {
@@ -119,33 +112,7 @@ class _CommunityPageState extends State<CommunityPage> {
     key: const PageStorageKey('community-feed'),
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
     children: [
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Topluluk',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-          ),
-          IconButton(
-            tooltip: context.tr('Topluluğu yenile'),
-            onPressed: _busy ? null : _refresh,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-          IconButton(
-            tooltip: context.tr('Topluluk gizliliği'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => CommunityPrivacyPage(
-                  uid: widget.uid,
-                  repository: widget.repository,
-                ),
-              ),
-            ),
-            icon: const Icon(Icons.tune_rounded),
-          ),
-        ],
-      ),
+      Text('Topluluk', style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 4),
       Text(
         'Yeni rotalar keşfet, kendi hikâyeni paylaş.',

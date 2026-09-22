@@ -131,21 +131,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
         key: const PageStorageKey('saved-plans'),
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Planlarım',
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-              ),
-              IconButton(
-                tooltip: context.tr('Planları yenile'),
-                onPressed: _refresh,
-                icon: const Icon(Icons.refresh_rounded),
-              ),
-            ],
-          ),
+          Text('Planlarım', style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 6),
           Text(
             ready && all.isNotEmpty

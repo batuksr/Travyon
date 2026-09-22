@@ -7,6 +7,7 @@ import '../../../core/widgets/app_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../assistant/presentation/assistant_launcher.dart';
 import '../../checklist/data/checklist_repository.dart';
 import '../../checklist/presentation/travel_checklist_panel.dart';
 import '../../wallet/data/wallet_repository.dart';
@@ -422,6 +423,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                               ],
                             ),
                           ),
+                          AssistantLauncher(uid: widget.uid, plan: plan),
                         ],
                       ),
                     ),
@@ -438,15 +440,20 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              plan.title,
-                              maxLines: _tab == 1 ? 2 : null,
-                              overflow: _tab == 1
-                                  ? TextOverflow.ellipsis
-                                  : null,
-                              style: _tab == 1
-                                  ? Theme.of(context).textTheme.titleLarge
-                                  : Theme.of(context).textTheme.headlineMedium,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    plan.title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                AssistantLauncher(uid: widget.uid, plan: plan),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(

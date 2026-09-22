@@ -8,6 +8,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/firebase/auth_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/navigation/travyon_deep_links.dart';
+import '../../assistant/presentation/assistant_launcher.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../../plans/presentation/plan_detail_page.dart';
 import '../../onboarding/data/plan_creation_repository.dart';
@@ -210,6 +211,7 @@ class _MobileHubPageState extends State<MobileHubPage>
               surfaceTintColor: Colors.transparent,
               title: const _Wordmark(),
               actions: [
+                AssistantLauncher(uid: widget.session.uid, tonal: false),
                 IconButton(
                   tooltip: context.tr('Bildirimler'),
                   icon: const Icon(Icons.notifications_none_rounded),

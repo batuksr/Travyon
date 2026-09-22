@@ -151,13 +151,21 @@ void main() {
             emailVerified: true,
           ),
         ),
-        travelPlansRepository: FakeTravelPlansRepository(const [
+        travelPlansRepository: FakeTravelPlansRepository([
           TravelPlanSummary(
             id: 'plan-1',
             destination: 'Sevilla, İspanya',
             customName: 'Endülüs Kaçamağı',
-            startDate: '2026-09-18',
-            endDate: '2026-09-20',
+            startDate: DateTime.now()
+                .add(const Duration(days: 7))
+                .toIso8601String()
+                .split('T')
+                .first,
+            endDate: DateTime.now()
+                .add(const Duration(days: 9))
+                .toIso8601String()
+                .split('T')
+                .first,
             dayCount: 3,
             activityCount: 12,
             estimatedCost: 190,

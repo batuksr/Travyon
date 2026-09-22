@@ -51,6 +51,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.refresh_rounded), findsNothing);
+    expect(find.byTooltip('Planları yenile'), findsNothing);
   }
 
   Future<void> reveal(WidgetTester tester, Finder finder) async {

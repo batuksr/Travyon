@@ -157,6 +157,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.refresh_rounded), findsNothing);
+      expect(find.byIcon(Icons.tune_rounded), findsNothing);
       expect(tester.takeException(), isNull);
       final feedScroll = find
           .descendant(
@@ -235,6 +237,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Roma'), findsOneWidget);
+    expect(find.byTooltip('Topluluğu yenile'), findsNothing);
+    expect(find.byTooltip('Topluluk gizliliği'), findsNothing);
+    expect(find.byIcon(Icons.refresh_rounded), findsNothing);
+    expect(find.byIcon(Icons.tune_rounded), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.enterText(find.byType(TextField), 'Paris');
     await tester.pumpAndSettle();

@@ -85,8 +85,16 @@ kontrollerinden geçirilir. Önizlemeden **Kaydet ve rotayı aç** ile
 hatasında aynı plan kimliğiyle tekrar denenir; AI yeniden çağrılmaz. LOCAL
 modda Functions ve Firestore emülatörlerinin açık olması gerekir.
 
-Mobil prompt aynı tercihleri işler, ancak webdeki sonradan rota optimizasyonu
-ve arka planda durak koordinatı düzeltme işlemleri henüz port edilmedi.
+Yeni planlar önizlemeden önce otomatik olarak rota optimizasyonundan geçer.
+Webdeki en yakın komşu + 2-opt yaklaşımı kullanılır; her günün Sabah/Öğle/
+Öğleden Sonra/Akşam/Gece grupları korunur. Yemekler webdeki gibi gündüz grubun
+başında, akşam/gece sonunda tutulur. İlk grubun ilk durağı başlangıçtır;
+gruplar arası geçişler de dahil kuş uçuşu mesafe, bu kurallara göre sıralanmış
+başlangıç rotasından daha uzun hale getirilmez. Canlı trafik ve açılış saatleri
+hesaba katılmaz. Duraklar, tarihler ve maliyetler korunur; ek API çağrısı yoktur.
+Kayıtlı plan açılışı, elle sıralama ve başarısız kaydı tekrar deneme optimizasyonu
+yeniden çalıştırmaz. Test: `flutter test test/route_optimization_test.dart test/onboarding_test.dart`.
+Webdeki arka planda durak koordinatı düzeltme işlemi henüz port edilmedi.
 Gerçek AI yanıt kalitesi, kotalar ve canlı kayıt ayrıca cihazda doğrulanmalıdır.
 
 ### Telefon için plan deneyimi
@@ -544,6 +552,33 @@ Android intent filter ve test cihazının SHA-256 değeriyle Hosting
 Play'in release SHA-256 değeri de eklenmelidir. iOS özel `travyon` şeması hazırdır;
 HTTPS Universal Link için Apple Developer hesabı açıldıktan sonra Associated Domains
 capability, Team ID ve `apple-app-site-association` dosyası tamamlanmalıdır.
+
+## Yapay zekâ seyahat asistanı
+
+Ana sayfanın üst çubuğunda, bildirim zilinin yanındaki **ışıltı simgesi** genel seyahat sohbetini, plan başlığındaki
+ışıltı simgesi o yolculuğun bağlamındaki sohbeti açar. Türkçe/İngilizce örnek sorular,
+akış halinde yanıt, takip soruları, yeniden deneme ve onaylı sohbet temizleme vardır.
+Arayüz açık/koyu tema, büyük metin ve klavyeye uyumludur.
+
+Mobil istemci mevcut `askTravelAssistant` Firebase callable fonksiyonunu kullanır;
+Gemini anahtarı yalnızca sunucudadır. Bu özellik yeni backend deploy'u gerektirmez;
+seçili Firebase ortamında mevcut fonksiyonun ve Gemini yapılandırmasının çalışması
+gerekir. Uygulamaya bir yapay zekâ API anahtarı eklemeyin.
+
+Sohbet, giriş düğmesi ekranda kaldığı sürece bellekte tutulur; Firestore veya yerel
+depolamaya yazılmaz. Hesap/plan değişiminde temizlenir. Plan bağlamı yalnızca
+destinasyon, tahmini toplam, günler ve durak adları/zaman dilimlerinden oluşur.
+Cüzdan, rezervasyon kodu, kişisel notlar ve gerçek harcamalar otomatik gönderilmez.
+Son tamamlanan sohbet turları sınırlı bağlama eklenir; yarım/hatalı yanıtlar eklenmez.
+Gönderilen veri hakkında açıklama sohbet başlığındaki bilgi simgesinden açılır.
+Sohbetin boş durumu ortalanmış kısa bir başlık ve üç küçük öneri düğmesinden oluşur;
+tanıtım kartı, uzun açıklama ve dekoratif ikon bulunmaz. Plan sohbetinde destinasyon
+sade bir metinle gösterilir. Temizleme düğmesi yalnızca mesaj varsa görünür.
+Asistan planı değiştirmez.
+
+`flutter test test/assistant_test.dart test/assistant_design_test.dart` bağlam sınırını,
+veri seçimini, akış/hata/iptal davranışını, hesap ayrımını, giriş noktalarını ve dar
+ekranlarda iki dil/temayı doğrular. Bu testler gerçek Gemini isteği göndermez.
 
 ## Yayına hazırlıkta kalan işler
 
