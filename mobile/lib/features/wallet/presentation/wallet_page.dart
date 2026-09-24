@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/wallet_repository.dart';
 import 'wallet_editor.dart';
@@ -364,18 +365,7 @@ class _WalletPageState extends State<WalletPage> {
           key: PageStorageKey('wallet-scroll-${widget.uid}'),
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
           children: [
-            Text('Cüzdan', style: Theme.of(context).textTheme.headlineLarge),
-            if (entries.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                'Bilet ve rezervasyonların, elinin altında.',
-                style: TextStyle(
-                  color: context.colors.muted,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-            ],
+            _WalletIntro(hasEntries: entries.isNotEmpty),
             const SizedBox(height: 22),
             if (trips.length > 1) ...[
               DropdownButtonFormField<String>(
@@ -513,5 +503,42 @@ class _WalletPageState extends State<WalletPage> {
         );
       },
     ),
+  );
+}
+
+class _WalletIntro extends StatelessWidget {
+  const _WalletIntro({required this.hasEntries});
+
+  final bool hasEntries;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const TravyonIconBadge(
+        icon: Icons.account_balance_wallet_outlined,
+        size: 46,
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Cüzdan', style: Theme.of(context).textTheme.headlineLarge),
+            if (hasEntries) ...[
+              const SizedBox(height: 5),
+              Text(
+                'Bilet ve rezervasyonların, elinin altında.',
+                style: TextStyle(
+                  color: context.colors.muted,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ],
   );
 }

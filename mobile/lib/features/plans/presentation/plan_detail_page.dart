@@ -7,6 +7,7 @@ import '../../../core/widgets/app_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../assistant/presentation/assistant_launcher.dart';
 import '../../checklist/data/checklist_repository.dart';
 import '../../checklist/presentation/travel_checklist_panel.dart';
@@ -428,44 +429,19 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                     ),
                   if (_tab != 1)
                     Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        20,
+                      padding: const EdgeInsets.fromLTRB(
+                        TravyonSpace.page,
+                        10,
+                        TravyonSpace.page,
                         8,
-                        20,
-                        _tab == 1 ? 4 : 12,
                       ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    plan.title,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium,
-                                  ),
-                                ),
-                                if (_tab == 0) ...[
-                                  const SizedBox(width: 8),
-                                  AssistantLauncher(
-                                    uid: widget.uid,
-                                    plan: plan,
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '${days.length} gün · ${plan.activityCount} durak',
-                              style: TextStyle(color: context.colors.muted),
-                            ),
-                          ],
-                        ),
+                      child: _PlanHeader(
+                        title: plan.title,
+                        dayCount: days.length,
+                        stopCount: plan.activityCount,
+                        trailing: _tab == 0
+                            ? AssistantLauncher(uid: widget.uid, plan: plan)
+                            : null,
                       ),
                     ),
                   if (_tab < 2)
@@ -564,6 +540,11 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
               showPlanInformation(context, PlanGuideSheet(plan: plan)),
           icon: const Icon(Icons.menu_book_outlined, size: 18),
           label: const Text('Rehber'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            backgroundColor: context.colors.surface,
+          ),
         ),
         OutlinedButton.icon(
           key: const ValueKey('plan-weather'),
@@ -573,6 +554,11 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
           ),
           icon: const Icon(Icons.cloud_outlined, size: 18),
           label: const Text('Hava durumu'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            backgroundColor: context.colors.surface,
+          ),
         ),
       ],
     ),
@@ -686,24 +672,100 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
   }
 }
 
+class _PlanHeader extends StatelessWidget {
+  const _PlanHeader({
+    required this.title,
+    required this.dayCount,
+    required this.stopCount,
+    this.trailing,
+  });
+
+  final String title;
+  final int dayCount;
+  final int stopCount;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const TravyonIconBadge(icon: Icons.location_on_outlined, size: 46),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.headlineMedium
+                  ?.copyWith(fontSize: 28, letterSpacing: -.5),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: context.colors.muted,
+                ),
+                Text(
+                  '$dayCount gün · $stopCount durak',
+                  style: TextStyle(
+                    color: context.colors.muted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+    ],
+  );
+}
+
 class _Paper extends StatelessWidget {
   const _Paper({required this.child, this.dark = false});
   final Widget child;
   final bool dark;
   @override
-  Widget build(BuildContext context) => Material(
-    color: dark ? AppColors.forest : context.colors.surface,
-    clipBehavior: Clip.antiAlias,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
-      side: BorderSide(color: dark ? AppColors.forest : context.colors.divider),
-    ),
-    child: Container(
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final radius = BorderRadius.circular(TravyonRadius.panel);
+    return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      child: child,
-    ),
-  );
+      decoration: BoxDecoration(
+        color: dark ? null : colors.surface,
+        gradient: dark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: colors.isDark
+                    ? const [Color(0xFF613523), Color(0xFF3A241A)]
+                    : const [Color(0xFFB65C32), Color(0xFF843C22)],
+              )
+            : null,
+        borderRadius: radius,
+        border: Border.all(color: dark ? Colors.transparent : colors.divider),
+        boxShadow: dark
+            ? [
+                BoxShadow(
+                  color: AppColors.text.withValues(alpha: .1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 9),
+                ),
+              ]
+            : null,
+      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: child),
+    );
+  }
 }
 
 class _DayOverview extends StatelessWidget {
@@ -726,7 +788,7 @@ class _DayOverview extends StatelessWidget {
             ),
             Text(
               'Tahmini ${money(symbol, day.estimated)}',
-              style: const TextStyle(color: Color(0xFFDCE5DC)),
+              style: const TextStyle(color: Color(0xFFFFE4D2)),
             ),
           ],
         ),
@@ -735,7 +797,7 @@ class _DayOverview extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: day.stops.isEmpty ? 0 : day.completed / day.stops.length,
-            color: const Color(0xFFE7B478),
+            color: const Color(0xFFFFCEAC),
             backgroundColor: Colors.white12,
             minHeight: 5,
           ),
@@ -788,7 +850,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
             TextButton(
               style: TextButton.styleFrom(
                 foregroundColor: widget.light
-                    ? const Color(0xFFE7B478)
+                    ? const Color(0xFFFFCEAC)
                     : context.colors.accent,
               ),
               onPressed: () => setState(() => expanded = !expanded),

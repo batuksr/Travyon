@@ -40,7 +40,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: AppColors.text.withValues(alpha: 0.035),
@@ -53,7 +53,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
         color: context.colors.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: context.colors.divider),
         ),
         child: Column(
@@ -74,14 +74,14 @@ class _PlanStopCardState extends State<PlanStopCard> {
                         ),
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: context.colors.tone(const Color(0xFFF8EADC)),
+                          color: context.colors.orangeTint,
                           borderRadius: BorderRadius.circular(11),
                         ),
                         child: Text(
                           '${stop.index + 1}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: context.colors.tone(const Color(0xFFA74F21)),
+                            color: context.colors.forest,
                             fontSize: 14,
                             height: 1.4,
                             fontWeight: FontWeight.w700,
@@ -118,13 +118,13 @@ class _PlanStopCardState extends State<PlanStopCard> {
                             minimumSize: const Size(48, 48),
                             backgroundColor: stop.completed
                                 ? AppColors.forest
-                                : context.colors.tone(const Color(0xFFF3EFE7)),
+                                : context.colors.orangeTint,
                             foregroundColor: stop.completed
                                 ? Colors.white
                                 : context.colors.muted,
                             disabledBackgroundColor: stop.completed
                                 ? context.colors.forest.withValues(alpha: 0.5)
-                                : context.colors.tone(const Color(0xFFF3EFE7)),
+                                : context.colors.orangeTint,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -141,7 +141,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: context.colors.tone(const Color(0xFFF5F0E7)),
+                      color: context.colors.orangeTint,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Wrap(
@@ -182,7 +182,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: context.colors.tone(const Color(0xFFEDF2EC)),
+                        color: context.colors.orangeTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -276,14 +276,14 @@ class _PlanStopCardState extends State<PlanStopCard> {
   );
 
   Widget _actions(BuildContext context) => Container(
-    color: context.colors.tone(const Color(0xFFFAF6EE)),
+    color: context.colors.background,
     padding: const EdgeInsets.all(12),
     child: LayoutBuilder(
       builder: (context, constraints) {
         final note = TextButton.icon(
           onPressed: widget.busy ? null : () => widget.onAction('note'),
           style: TextButton.styleFrom(
-            backgroundColor: context.colors.tone(const Color(0xFFEAF0E9)),
+            backgroundColor: context.colors.orangeTint,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

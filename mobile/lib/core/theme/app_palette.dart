@@ -19,25 +19,27 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final bool isDark;
 
   static const light = AppPalette(
-    background: Color(0xFFF4E8D4),
-    surface: Color(0xFFFFFBF5),
-    text: Color(0xFF251F1B),
-    muted: Color(0xFF756D65),
-    forest: Color(0xFF315142),
-    accent: Color(0xFFCE7137),
-    divider: Color(0xFFDED2C1),
+    // Travyon's visual anchor: warm paper, charcoal type and one confident
+    // clay-orange family. Keeping the rest neutral avoids a noisy rainbow UI.
+    background: Color(0xFFFCF8F4),
+    surface: Color(0xFFFFFFFF),
+    text: Color(0xFF2B2521),
+    muted: Color(0xFF7A7068),
+    forest: Color(0xFFA94B27),
+    accent: Color(0xFFD86731),
+    divider: Color(0xFFEBDDD2),
     isDark: false,
   );
 
   // Matches the website's warm dark surfaces, with readable sage accents.
   static const dark = AppPalette(
-    background: Color(0xFF211C17),
-    surface: Color(0xFF2B241D),
-    text: Color(0xFFF2E8DA),
-    muted: Color(0xFFBAAFA1),
-    forest: Color(0xFFB6C795),
-    accent: Color(0xFFE08A4F),
-    divider: Color(0xFF51463A),
+    background: Color(0xFF211914),
+    surface: Color(0xFF2C211B),
+    text: Color(0xFFF9F1EA),
+    muted: Color(0xFFCDBDB1),
+    forest: Color(0xFFF0B18D),
+    accent: Color(0xFFFFA978),
+    divider: Color(0xFF59453A),
     isDark: true,
   );
 
@@ -45,11 +47,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
   Color get danger =>
       isDark ? const Color(0xFFFFAEA2) : const Color(0xFF9F3730);
   Color get greenTint =>
-      isDark ? const Color(0xFF303C2D) : const Color(0xFFE8EFE8);
+      isDark ? const Color(0xFF4B3328) : const Color(0xFFFFF0E7);
   Color get orangeTint =>
-      isDark ? const Color(0xFF493122) : const Color(0xFFF8E9DC);
+      isDark ? const Color(0xFF4B3328) : const Color(0xFFFFE8D9);
   Color get redTint =>
-      isDark ? const Color(0xFF492A26) : const Color(0xFFF8E6E2);
+      isDark ? const Color(0xFF4A2926) : const Color(0xFFFFE9E4);
 
   /// Existing feature-specific tones retain their light appearance and share
   /// a small set of dark semantic pairs. Unlisted colors belong to artwork or

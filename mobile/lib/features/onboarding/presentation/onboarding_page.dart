@@ -384,14 +384,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ? null
           : SafeArea(
               top: false,
+              minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Container(
                 decoration: BoxDecoration(
                   color: context.colors.surface,
-                  border: Border(
-                    top: BorderSide(color: context.colors.divider),
-                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: context.colors.divider),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.colors.text.withValues(alpha: .07),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+                clipBehavior: Clip.antiAlias,
+                padding: const EdgeInsets.all(12),
                 child: FilledButton.icon(
                   key: const ValueKey('onboarding-next'),
                   onPressed: _busy

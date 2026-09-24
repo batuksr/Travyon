@@ -5,18 +5,23 @@ import 'app_palette.dart';
 export 'app_palette.dart';
 
 abstract final class AppColors {
-  static const background = Color(0xFFF4E8D4);
-  static const surface = Color(0xFFFFFBF5);
-  static const text = Color(0xFF251F1B);
-  static const muted = Color(0xFF756D65);
-  static const forest = Color(0xFF315142);
-  static const accent = Color(0xFFCE7137);
-  static const divider = Color(0xFFDED2C1);
+  static const background = Color(0xFFFCF8F4);
+  static const surface = Color(0xFFFFFFFF);
+  static const text = Color(0xFF2B2521);
+  static const muted = Color(0xFF7A7068);
+  static const forest = Color(0xFFA94B27);
+  static const accent = Color(0xFFD86731);
+  static const divider = Color(0xFFEBDDD2);
 }
 
 abstract final class AppTypography {
   static const body = 'Inter';
   static const heading = 'Travyon Display';
+}
+
+abstract final class AppMotion {
+  static const quick = Duration(milliseconds: 160);
+  static const standard = Duration(milliseconds: 220);
 }
 
 abstract final class AppTheme {
@@ -74,10 +79,11 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: colors.forest.withValues(alpha: 0.10),
-        height: 64,
+        elevation: 0,
+        indicatorColor: colors.forest.withValues(alpha: 0.09),
+        height: 68,
         labelTextStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 10.5, height: 1, fontWeight: FontWeight.w600),
+          TextStyle(fontSize: 10, height: 1.1, fontWeight: FontWeight.w600),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -96,7 +102,8 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(44, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           foregroundColor: colors.forest,
           textStyle: const TextStyle(
             fontFamily: AppTypography.heading,
@@ -106,9 +113,15 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          // `Size.fromHeight` carries an infinite width. That breaks compact
+          // outlined controls placed inside horizontal scrollers (for example
+          // route day selectors), so only make the touch height mandatory.
+          minimumSize: const Size(0, 54),
           foregroundColor: colors.forest,
           side: BorderSide(color: colors.divider),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
             fontFamily: AppTypography.heading,
             fontWeight: FontWeight.w400,
@@ -133,15 +146,15 @@ abstract final class AppTheme {
         ),
         headlineLarge: TextStyle(
           color: colors.text,
-          fontSize: 30,
-          height: 1.2,
+          fontSize: 31,
+          height: 1.16,
           fontFamily: AppTypography.heading,
           fontWeight: FontWeight.w400,
         ),
         headlineMedium: TextStyle(
           color: colors.text,
           fontSize: 26,
-          height: 1.2,
+          height: 1.18,
           fontFamily: AppTypography.heading,
           fontWeight: FontWeight.w400,
         ),
@@ -154,6 +167,8 @@ abstract final class AppTheme {
           color: colors.text,
           fontFamily: AppTypography.heading,
           fontWeight: FontWeight.w400,
+          fontSize: 21,
+          height: 1.22,
         ),
         titleMedium: TextStyle(
           color: colors.text,
@@ -166,14 +181,23 @@ abstract final class AppTheme {
           fontWeight: FontWeight.w700,
         ),
         bodyLarge: TextStyle(color: colors.muted, fontSize: 16, height: 1.5),
+        bodyMedium: TextStyle(color: colors.muted, fontSize: 14, height: 1.45),
+        labelLarge: TextStyle(
+          color: colors.text,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -.1,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colors.accent,
           foregroundColor: colors.onAccent,
-          minimumSize: const Size.fromHeight(54),
+          minimumSize: const Size.fromHeight(56),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontFamily: AppTypography.heading,
@@ -198,13 +222,20 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         color: colors.surface,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: colors.divider),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
-          vertical: 17,
+          vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -222,6 +253,12 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: colors.danger),
         ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.text,
+        contentTextStyle: TextStyle(color: colors.surface, fontSize: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

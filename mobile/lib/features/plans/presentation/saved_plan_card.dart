@@ -4,6 +4,7 @@ import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../data/travel_plans_repository.dart';
 
 String savedPlanDate(String raw) {
@@ -58,28 +59,24 @@ class SavedPlanCard extends StatelessWidget {
       savedPlanDate(plan.startDate),
       savedPlanDate(plan.endDate),
     ].where((s) => s.isNotEmpty).toSet().join(' – ');
-    return Container(
+    return TravyonSurface(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.colors.divider),
-      ),
-      clipBehavior: Clip.antiAlias,
+      padding: EdgeInsets.zero,
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
-            color: context.colors.tone(const Color(0xFFEAF0E8)),
+            padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+            color: context.colors.orangeTint,
             child: Row(
               children: [
-                Icon(
-                  Icons.route_outlined,
-                  size: 18,
-                  color: context.colors.forest,
+                const TravyonIconBadge(
+                  icon: Icons.route_outlined,
+                  size: 36,
+                  background: Colors.white,
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     savedPlanStatus(plan, DateTime.now()),
@@ -107,11 +104,17 @@ class SavedPlanCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(plan.title, style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  plan.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontSize: 23, letterSpacing: -.25),
+                ),
                 if (plan.title != plan.destination) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -173,8 +176,8 @@ class SavedPlanCard extends StatelessWidget {
                     Expanded(
                       child: FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.forest,
-                          foregroundColor: Colors.white,
+                          backgroundColor: context.colors.accent,
+                          foregroundColor: context.colors.onAccent,
                         ),
                         onPressed: busy ? null : onOpen,
                         icon: const Icon(Icons.arrow_forward_rounded, size: 18),
@@ -237,7 +240,7 @@ class _Detail extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
     decoration: BoxDecoration(
-      color: context.colors.tone(const Color(0xFFF6EFE3)),
+      color: context.colors.orangeTint,
       borderRadius: BorderRadius.circular(12),
     ),
     child: Row(

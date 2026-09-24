@@ -5,6 +5,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/community_repository.dart';
 import 'community_plan_page.dart';
@@ -112,16 +113,7 @@ class _CommunityPageState extends State<CommunityPage> {
     key: const PageStorageKey('community-feed'),
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
     children: [
-      Text('Topluluk', style: Theme.of(context).textTheme.headlineLarge),
-      const SizedBox(height: 4),
-      Text(
-        'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
-        style: TextStyle(
-          color: context.colors.muted,
-          fontSize: 14,
-          height: 1.5,
-        ),
-      ),
+      const _CommunityIntro(),
       const SizedBox(height: 20),
       TextField(
         controller: _search,
@@ -336,6 +328,36 @@ class _CommunityPageState extends State<CommunityPage> {
   );
 }
 
+class _CommunityIntro extends StatelessWidget {
+  const _CommunityIntro();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const TravyonIconBadge(icon: Icons.people_alt_outlined, size: 46),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Topluluk', style: Theme.of(context).textTheme.headlineLarge),
+            const SizedBox(height: 5),
+            Text(
+              'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
+              style: TextStyle(
+                color: context.colors.muted,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 class CommunityPlanCard extends StatelessWidget {
   const CommunityPlanCard({
     super.key,
@@ -355,34 +377,32 @@ class CommunityPlanCard extends StatelessWidget {
       opacity: MediaQuery.disableAnimationsOf(context) ? 1 : value,
       child: child,
     ),
-    child: Container(
+    child: TravyonSurface(
       margin: const EdgeInsets.only(bottom: 18),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.colors.divider),
-      ),
+      padding: EdgeInsets.zero,
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Material(
-            color: context.colors.tone(const Color(0xFFEAF0E9)),
+            color: context.colors.orangeTint,
             child: InkWell(
               onTap: onOpen,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.route_rounded,
-                          size: 22,
-                          color: context.colors.forest,
+                        TravyonIconBadge(
+                          icon: Icons.route_rounded,
+                          size: 38,
+                          background: context.colors.surface.withValues(
+                            alpha: .72,
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             plan.purpose.isEmpty
@@ -402,7 +422,7 @@ class CommunityPlanCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 20),
                     Text(
                       plan.destination,
                       style: Theme.of(context).textTheme.headlineSmall,

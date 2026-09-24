@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Text;
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 
 /// Shared visual elements for the community feed. No data or navigation state.
 class CommunityTabs extends StatelessWidget {
@@ -105,23 +106,15 @@ class CommunityEmptyState extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
+  Widget build(BuildContext context) => TravyonSurface(
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-    decoration: BoxDecoration(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: context.colors.divider),
-    ),
+    borderRadius: 24,
     child: Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: context.colors.tone(const Color(0xFFEAF0E9)),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 30, color: context.colors.forest),
+        TravyonIconBadge(
+          icon: icon,
+          size: 64,
+          background: context.colors.orangeTint,
         ),
         const SizedBox(height: 18),
         Text(

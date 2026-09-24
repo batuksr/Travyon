@@ -227,7 +227,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('2. Gün  ·  12 Eylül'));
       await tester.pumpAndSettle();
-      expect(find.text('Villa Borghese'), findsWidgets);
+      expect(
+        tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).last.selected,
+        isTrue,
+      );
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Rota'));
       await tester.pumpAndSettle();

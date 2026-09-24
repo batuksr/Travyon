@@ -6,6 +6,7 @@ import '../../../core/localization/localized_text.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../wallet/data/wallet_repository.dart';
 import '../data/travel_plans_repository.dart';
 import '../data/plan_detail.dart';
@@ -22,43 +23,62 @@ class NextStopPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final remaining = day.stops.where((stop) => !stop.completed);
     final next = remaining.isEmpty ? null : remaining.first;
-    return Container(
+    return TravyonSurface(
+      color: context.colors.orangeTint,
+      borderRadius: 22,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colors.tone(const Color(0xFFEAF0E8)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            next == null
-                ? (day.stops.isEmpty
-                      ? 'Henüz durak yok'
-                      : 'Bugünün rotası tamamlandı')
-                : 'Sıradaki durak',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: context.colors.forest,
+          TravyonIconBadge(
+            icon: next == null
+                ? Icons.check_circle_outline_rounded
+                : Icons.near_me_outlined,
+            size: 42,
+            background: context.colors.surface.withValues(alpha: .7),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  next == null
+                      ? (day.stops.isEmpty
+                            ? 'Henüz durak yok'
+                            : 'Bugünün rotası tamamlandı')
+                      : 'Sıradaki durak',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.forest,
+                  ),
+                ),
+                if (next != null) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    next.name,
+                    style: TextStyle(
+                      color: context.colors.text,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  TextButton.icon(
+                    onPressed: () => onDirections(next),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.only(right: 10),
+                    ),
+                    icon: const Icon(Icons.arrow_outward_rounded, size: 18),
+                    label: const Text('Yol tarifi al'),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (next != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              next.name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 1.4,
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () => onDirections(next),
-              icon: const Icon(Icons.near_me_outlined, size: 18),
-              label: const Text('Yol tarifi al'),
-            ),
-          ],
         ],
       ),
     );
@@ -194,19 +214,19 @@ class PlanBudgetSummary extends StatelessWidget {
         ],
       ),
     );
-    return Material(
-      color: context.colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: context.colors.divider),
-      ),
-      clipBehavior: Clip.antiAlias,
+    return TravyonSurface(
+      padding: EdgeInsets.zero,
+      borderRadius: 22,
       child: collapsible
           ? ExpansionTile(
               key: const PageStorageKey('journey-budget'),
-              leading: Icon(
-                Icons.account_balance_wallet_outlined,
-                color: context.colors.forest,
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              leading: const TravyonIconBadge(
+                icon: Icons.account_balance_wallet_outlined,
+                size: 40,
               ),
               title: const Text(
                 'Seyahat bütçesi',
@@ -289,16 +309,16 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
         widget.planId,
         widget.date,
       );
-      return Material(
-        color: context.colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: context.colors.divider),
-        ),
-        clipBehavior: Clip.antiAlias,
+      return TravyonSurface(
+        padding: EdgeInsets.zero,
+        borderRadius: 22,
         child: ExpansionTile(
           key: PageStorageKey('day-wallet-${widget.planId}-${widget.date}'),
-          leading: Icon(Icons.wallet_outlined, color: context.colors.forest),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: const TravyonIconBadge(
+            icon: Icons.wallet_outlined,
+            size: 40,
+          ),
           title: Text(
             context.tr(
               snapshot.hasData && !snapshot.hasError

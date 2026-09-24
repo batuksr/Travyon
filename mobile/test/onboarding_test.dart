@@ -9,6 +9,7 @@ import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/onboarding/data/onboarding_data.dart';
 import 'package:travyon/features/onboarding/data/plan_creation_repository.dart';
 import 'package:travyon/features/onboarding/presentation/onboarding_page.dart';
+import 'package:travyon/features/onboarding/presentation/onboarding_widgets.dart';
 
 import 'widget_test.dart' show FakeTravelPlansRepository;
 
@@ -147,11 +148,11 @@ Future<void> choose(WidgetTester tester, String key) async {
 
 void main() {
   testWidgets(
-    'currency labels stay dark when selected and headers have no large emoji',
+    'currency labels stay dark when selected and choices use line icons',
     (tester) async {
       final data = answers();
       await mount(tester, data, CreationFake());
-      expect(find.text('🌍'), findsNothing);
+      expect(find.byIcon(Icons.backpack_outlined), findsNothing);
       await choose(tester, 'currency-EUR');
       for (final entry in currencies.entries) {
         final label = find.text('${entry.key} · ${entry.value}');
@@ -170,8 +171,8 @@ void main() {
         expect(contrast, greaterThanOrEqualTo(4.5));
       }
       await next(tester);
-      expect(find.text('🧭'), findsNothing); // No emoji above the step title.
-      expect(find.text('🎒'), findsOneWidget); // Choice emojis are preserved.
+      expect(find.byIcon(Icons.explore_outlined), findsNothing);
+      expect(find.byIcon(Icons.backpack_outlined), findsOneWidget);
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('pace-esnek')),
         180,
@@ -179,13 +180,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.text('🧭'),
+        find.byIcon(Icons.explore_outlined),
         findsOneWidget,
       ); // Flexible pace card only, not header.
       await next(tester);
-      expect(find.text('🍽️'), findsOneWidget); // Halal choice only.
+      expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
       await next(tester);
-      expect(find.text('🛎️'), findsNothing);
+      expect(find.byType(OnboardingEmoji), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

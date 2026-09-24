@@ -7,6 +7,7 @@ import '../../../core/widgets/app_dialog.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../community/presentation/community_page.dart';
 import '../../settings/data/settings_repository.dart';
 import '../data/plan_management_repository.dart';
@@ -131,13 +132,10 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
         key: const PageStorageKey('saved-plans'),
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
         children: [
-          Text('Planlarım', style: Theme.of(context).textTheme.headlineLarge),
-          const SizedBox(height: 6),
-          Text(
-            ready && all.isNotEmpty
+          _PlansIntro(
+            subtitle: ready && all.isNotEmpty
                 ? '${all.length} yolculuk, keşfedilecek yeni hikâyeler.'
                 : 'Bir sonraki yolculuğuna buradan devam et.',
-            style: TextStyle(color: context.colors.muted, height: 1.5),
           ),
           const SizedBox(height: 24),
           if (snapshot.hasError)
@@ -286,22 +284,15 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
     required String description,
     required String action,
     required VoidCallback onAction,
-  }) => Container(
+  }) => TravyonSurface(
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-    decoration: BoxDecoration(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: context.colors.divider),
-    ),
+    borderRadius: 28,
     child: Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: context.colors.tone(const Color(0xFFEAF0E8)),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: context.colors.forest, size: 32),
+        TravyonIconBadge(
+          icon: icon,
+          size: 64,
+          background: context.colors.orangeTint,
         ),
         const SizedBox(height: 22),
         Text(
@@ -323,6 +314,34 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
         FilledButton(onPressed: onAction, child: Text(action)),
       ],
     ),
+  );
+}
+
+class _PlansIntro extends StatelessWidget {
+  const _PlansIntro({required this.subtitle});
+
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const TravyonIconBadge(icon: Icons.explore_outlined, size: 46),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Planlarım', style: Theme.of(context).textTheme.headlineLarge),
+            const SizedBox(height: 5),
+            Text(
+              subtitle,
+              style: TextStyle(color: context.colors.muted, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 

@@ -64,7 +64,7 @@ class WalletPocket extends StatelessWidget {
               bottom: 20,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF203A2F),
+                  color: const Color(0xFF512B1D),
                   borderRadius: BorderRadius.circular(26),
                   boxShadow: [
                     BoxShadow(
@@ -145,7 +145,7 @@ class WalletPocket extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.near_me_outlined,
-                                color: Color(0xFFEAE5CC),
+                                color: Color(0xFFFFE4D1),
                                 size: 23,
                               ),
                               SizedBox(width: 8),
@@ -153,7 +153,7 @@ class WalletPocket extends StatelessWidget {
                                 'travyon',
                                 textScaler: TextScaler.noScaling,
                                 style: TextStyle(
-                                  color: Color(0xFFEAE5CC),
+                                  color: Color(0xFFFFE4D1),
                                   fontFamily: AppTypography.heading,
                                   fontSize: 25,
                                   letterSpacing: -.7,
@@ -172,7 +172,7 @@ class WalletPocket extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: Color(0xFFEAE5CC),
+                                  color: Color(0xFFFFE4D1),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 1.1,
@@ -190,7 +190,7 @@ class WalletPocket extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
                                 style: const TextStyle(
-                                  color: Color(0xFFCBD5BF),
+                                  color: Color(0xFFF2BE9C),
                                   fontSize: 9,
                                   letterSpacing: .8,
                                 ),
@@ -212,9 +212,9 @@ class WalletPocket extends StatelessWidget {
                   width: 44,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF466149),
+                    color: const Color(0xFFB45A32),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF798362)),
+                    border: Border.all(color: const Color(0xFFE09B72)),
                   ),
                   child: Center(
                     child: Container(
@@ -223,7 +223,7 @@ class WalletPocket extends StatelessWidget {
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [Color(0xFFE9D8A4), Color(0xFFB09A59)],
+                          colors: [Color(0xFFFFD69B), Color(0xFFD4934F)],
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -282,7 +282,7 @@ class _PocketCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0F3EE),
+                  color: const Color(0xFFFFF0E7),
                   borderRadius: BorderRadius.circular(11),
                 ),
                 child: Icon(icon, color: AppColors.forest, size: 19),
@@ -299,7 +299,7 @@ class _PocketCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 10,
                         height: 1.3,
-                        color: Color(0xFF596659),
+                        color: Color(0xFF7A7068),
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -345,7 +345,7 @@ class _LeatherPainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF42634B), Color(0xFF294536)],
+          colors: [Color(0xFFB85C33), Color(0xFF7C371F)],
         ).createShader(rect),
     );
     final path = Path()
@@ -353,7 +353,7 @@ class _LeatherPainter extends CustomPainter {
         RRect.fromRectAndRadius(rect.deflate(9), const Radius.circular(20)),
       );
     final stitch = Paint()
-      ..color = const Color(0x557F9467)
+      ..color = const Color(0x55E8A57C)
       ..style = PaintingStyle.stroke
       ..strokeWidth = .8;
     for (final metric in path.computeMetrics()) {

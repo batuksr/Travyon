@@ -4,6 +4,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/unit_formatter.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../data/plan_detail.dart';
 import '../data/travel_plans_repository.dart';
 
@@ -47,10 +48,23 @@ class PlanBudgetOverview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            color: AppColors.forest,
-            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: context.colors.isDark
+                  ? const [Color(0xFF613523), Color(0xFF3A241A)]
+                  : const [Color(0xFFB65C32), Color(0xFF843C22)],
+            ),
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.text.withValues(alpha: .10),
+                blurRadius: 20,
+                offset: const Offset(0, 9),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +73,7 @@ class PlanBudgetOverview extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.account_balance_wallet_outlined,
-                    color: Color(0xFFF0D6A5),
+                    color: Color(0xFFFFD0B2),
                     size: 22,
                   ),
                   const SizedBox(width: 10),
@@ -67,7 +81,7 @@ class PlanBudgetOverview extends StatelessWidget {
                     child: Text(
                       context.tr('Harcama özeti'),
                       style: const TextStyle(
-                        color: Color(0xFFDCE7DF),
+                        color: Color(0xFFFFE7D8),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -75,7 +89,7 @@ class PlanBudgetOverview extends StatelessWidget {
                   ),
                   IconButton(
                     tooltip: context.tr('Bütçe nasıl hesaplanır?'),
-                    color: const Color(0xFFDCE7DF),
+                    color: const Color(0xFFFFE7D8),
                     icon: const Icon(Icons.info_outline_rounded, size: 20),
                     onPressed: () => showAppInformation(
                       context,
@@ -89,7 +103,7 @@ class PlanBudgetOverview extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 context.tr('Gerçek harcama'),
-                style: const TextStyle(color: Color(0xFFDCE7DF), fontSize: 13),
+                style: const TextStyle(color: Color(0xFFFFE7D8), fontSize: 13),
               ),
               const SizedBox(height: 4),
               Text(
@@ -108,7 +122,7 @@ class PlanBudgetOverview extends StatelessWidget {
                   value: (spent / plan.allocatedBudget).clamp(0, 1),
                   color: overBudget
                       ? const Color(0xFFFFB5A5)
-                      : const Color(0xFFF0D6A5),
+                      : const Color(0xFFFFD0B2),
                   backgroundColor: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
                   minHeight: 7,
@@ -127,7 +141,7 @@ class PlanBudgetOverview extends StatelessWidget {
                     style: TextStyle(
                       color: overBudget
                           ? const Color(0xFFFFC9BB)
-                          : const Color(0xFFF0D6A5),
+                          : const Color(0xFFFFD0B2),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -139,7 +153,7 @@ class PlanBudgetOverview extends StatelessWidget {
                         values: {'percent': used},
                       ),
                       style: const TextStyle(
-                        color: Color(0xFFDCE7DF),
+                        color: Color(0xFFFFE7D8),
                         fontSize: 11,
                       ),
                     ),
@@ -233,18 +247,14 @@ class _BudgetMetric extends StatelessWidget {
   final String label, amount;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => TravyonSurface(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: context.colors.divider),
-    ),
+    borderRadius: 20,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: context.colors.forest),
-        const SizedBox(height: 12),
+        TravyonIconBadge(icon: icon, size: 38),
+        const SizedBox(height: 14),
         Text(
           label,
           style: TextStyle(
@@ -289,20 +299,16 @@ class PlanBudgetDayCard extends StatelessWidget {
       0,
       (sum, stop) => sum + (stop.actual ?? 0),
     );
-    return Material(
-      color: context.colors.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: context.colors.divider),
-      ),
+    return TravyonSurface(
+      padding: EdgeInsets.zero,
+      borderRadius: 22,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
         shape: const Border(),
         collapsedShape: const Border(),
         iconColor: context.colors.forest,
         collapsedIconColor: context.colors.muted,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
         title: Text(
           label,
           style: const TextStyle(
@@ -377,9 +383,7 @@ class PlanBudgetDayCard extends StatelessWidget {
                                       ? context.colors.tone(
                                           const Color(0xFFF5F0E7),
                                         )
-                                      : context.colors.tone(
-                                          const Color(0xFFEAF0E9),
-                                        ),
+                                      : context.colors.orangeTint,
                                   borderRadius: BorderRadius.circular(7),
                                 ),
                                 child: Text(
@@ -428,7 +432,7 @@ class PlanBudgetDayCard extends StatelessWidget {
                         minimumSize: const Size(48, 48),
                         backgroundColor: stop.actual == null
                             ? context.colors.tone(const Color(0xFFFBE8D8))
-                            : context.colors.tone(const Color(0xFFEAF0E9)),
+                            : context.colors.orangeTint,
                         foregroundColor: stop.actual == null
                             ? context.colors.tone(const Color(0xFFA74F21))
                             : context.colors.forest,

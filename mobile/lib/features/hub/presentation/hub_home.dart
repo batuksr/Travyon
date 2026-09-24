@@ -6,6 +6,7 @@ import '../../../core/localization/localized_text.dart';
 import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../community/data/community_repository.dart';
 import '../../onboarding/data/onboarding_data.dart';
 import '../../plans/data/travel_plans_repository.dart';
@@ -41,18 +42,23 @@ class HubHome extends StatelessWidget {
     final weekend = weekendDraft(today);
     return ListView(
       key: const PageStorageKey('hub-home'),
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+      padding: const EdgeInsets.fromLTRB(
+        TravyonSpace.page,
+        12,
+        TravyonSpace.page,
+        40,
+      ),
       children: [
         Text(
           'Merhaba, $name!',
-          style: Theme.of(context).textTheme.headlineLarge,
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 7),
         Text(
-          'Bir sonraki keşfin seni bekliyor.',
-          style: Theme.of(context).textTheme.bodyLarge,
+          'Yolculuğunu planlamaya hazır mısın?',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 15),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         if (plans.hasError)
           _PlanUnavailable(onPlans: onPlans, onCreate: () => onCreate(null))
         else if (plans.connectionState == ConnectionState.waiting &&
@@ -87,15 +93,10 @@ class HubHome extends StatelessWidget {
             ],
           ),
         ],
-        const SizedBox(height: 28),
-        Text(
-          'Nereye gitmek istersin?',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Bir şehir seç, gerisini birlikte planlayalım.',
-          style: TextStyle(color: context.colors.muted, height: 1.5),
+        const SizedBox(height: TravyonSpace.section),
+        TravyonSectionHeader(
+          title: 'Nereye gitmek istersin?',
+          subtitle: 'Bir şehir seç, gerisini birlikte planlayalım.',
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -120,11 +121,8 @@ class HubHome extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(height: 28),
-        Text(
-          'Küçük bir kaçamak?',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        const SizedBox(height: TravyonSpace.section),
+        const TravyonSectionHeader(title: 'Küçük bir kaçamak?'),
         const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -265,24 +263,51 @@ class _WelcomeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _ForestCard(
     children: [
-      const Icon(
-        Icons.flight_takeoff_rounded,
-        color: Color(0xFFE7BA8D),
-        size: 30,
+      Wrap(
+        spacing: 12,
+        runSpacing: 10,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.flight_takeoff_rounded,
+              color: Color(0xFFFFC7A7),
+              size: 22,
+            ),
+          ),
+          const Text(
+            'SANA ÖZEL ROTA',
+            style: TextStyle(
+              color: Color(0xFFFFE3D1),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 24),
       Text(
         'İlk yolculuğun\nnereden başlasın?',
         style: Theme.of(context).textTheme.headlineSmall
-            ?.copyWith(color: AppColors.surface, height: 1.25),
+            ?.copyWith(color: AppColors.surface, height: 1.18),
       ),
       const SizedBox(height: 12),
       const Text(
         'Şehrini seç. Zevklerine ve tempona göre günlük rotanı birlikte hazırlayalım.',
-        style: TextStyle(color: Color(0xFFDCE5DC), height: 1.6),
+        style: TextStyle(color: Color(0xFFFFE5D4), height: 1.6),
       ),
       const SizedBox(height: 24),
-      _LightButton(label: 'İlk planımı oluştur', onTap: onCreate),
+      SizedBox(
+        width: double.infinity,
+        child: _LightButton(label: 'İlk planımı oluştur', onTap: onCreate),
+      ),
     ],
   );
 }
@@ -318,11 +343,11 @@ class _JourneyCard extends StatelessWidget {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            const Icon(Icons.route_outlined, color: Color(0xFFE7BA8D)),
+            const Icon(Icons.route_outlined, color: Color(0xFFFFC9A6)),
             Text(
               hubTripLabel(plan, now),
               style: const TextStyle(
-                color: Color(0xFFDCE5DC),
+                color: Color(0xFFFFE5D4),
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -330,7 +355,7 @@ class _JourneyCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         Text(
           plan.title,
           style: Theme.of(context).textTheme.headlineSmall
@@ -340,28 +365,41 @@ class _JourneyCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             plan.destination,
-            style: const TextStyle(color: Color(0xFFDCE5DC)),
+            style: const TextStyle(color: Color(0xFFFFE5D4)),
           ),
         ],
-        const SizedBox(height: 16),
-        Text(
-          '${dates.isEmpty ? 'Tarih belirtilmedi' : dates}\n${plan.dayCount} gün · ${plan.activityCount} durak',
-          style: const TextStyle(color: Color(0xFFDCE5DC), height: 1.7),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _JourneyDetail(
+              icon: Icons.calendar_today_outlined,
+              label: dates.isEmpty ? 'Tarih belirtilmedi' : dates,
+            ),
+            _JourneyDetail(
+              icon: Icons.route_outlined,
+              label: '${plan.dayCount} gün · ${plan.activityCount} durak',
+            ),
+          ],
         ),
         if (!active && daysLeft != null && daysLeft > 0) ...[
           const SizedBox(height: 10),
           Text(
             'Yolculuğuna $daysLeft gün kaldı',
             style: const TextStyle(
-              color: Color(0xFFE7BA8D),
+              color: Color(0xFFFFC9A6),
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
-        const SizedBox(height: 22),
-        _LightButton(
-          label: active ? 'Bugünkü planı aç' : 'Planı aç',
-          onTap: onOpen,
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: _LightButton(
+            label: active ? 'Bugünkü planı aç' : 'Planı aç',
+            onTap: onOpen,
+          ),
         ),
       ],
     );
@@ -375,13 +413,76 @@ class _ForestCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(24),
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: AppColors.forest,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFB55A31), Color(0xFF78341E)],
+      ),
       borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: Colors.white.withValues(alpha: .10)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF6E301D).withValues(alpha: .24),
+          blurRadius: 24,
+          offset: const Offset(0, 12),
+        ),
+      ],
     ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+    child: Stack(
+      children: [
+        Positioned(
+          right: -70,
+          top: -88,
+          child: Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: .08),
+                width: 28,
+              ),
+            ),
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ],
+    ),
+  );
+}
+
+class _JourneyDetail extends StatelessWidget {
+  const _JourneyDetail({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 34),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .10),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: const Color(0xFFFFE3D1)),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFFFE5D4),
+            fontSize: 12,
+            height: 1.2,
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -516,8 +617,23 @@ class _QuickCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: context.colors.accent),
-          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TravyonIconBadge(
+                icon: icon,
+                size: 40,
+                color: context.colors.accent,
+                background: context.colors.orangeTint,
+              ),
+              Icon(
+                Icons.arrow_outward_rounded,
+                size: 18,
+                color: context.colors.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
@@ -527,12 +643,6 @@ class _QuickCard extends StatelessWidget {
               fontSize: 12,
               height: 1.5,
             ),
-          ),
-          const SizedBox(height: 12),
-          Icon(
-            Icons.arrow_forward_rounded,
-            size: 18,
-            color: context.colors.accent,
           ),
         ],
       ),
@@ -551,7 +661,7 @@ class _CommunityCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          Icon(Icons.map_outlined, color: context.colors.forest, size: 28),
+          const TravyonIconBadge(icon: Icons.map_outlined),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -586,15 +696,8 @@ class _SurfaceCard extends StatelessWidget {
   final VoidCallback onTap;
   final Widget child;
   @override
-  Widget build(BuildContext context) => Material(
-    color: context.colors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(22),
-      side: BorderSide(color: context.colors.divider),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(onTap: onTap, child: child),
-  );
+  Widget build(BuildContext context) =>
+      TravyonSurface(onTap: onTap, borderRadius: 22, child: child);
 }
 
 class _PlanUnavailable extends StatelessWidget {
