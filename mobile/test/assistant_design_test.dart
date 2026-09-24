@@ -101,6 +101,15 @@ void main() {
           await tester.pump();
           expect(tester.getBottomRight(input).dy, lessThanOrEqualTo(460));
           await tester.tap(find.byKey(const ValueKey('assistant-send')));
+          await tester.pumpAndSettle();
+          expect(repository.calls, isEmpty);
+          tester.view.resetViewInsets();
+          await tester.pumpAndSettle();
+          final consent = find.text(
+            language == 'en' ? 'Accept and send' : 'Kabul et ve gönder',
+          );
+          await tester.ensureVisible(consent);
+          await tester.tap(consent);
           await tester.pump();
           expect(repository.calls.single.language, language);
           expect(repository.calls.single.context == null, !dark);
@@ -196,6 +205,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('My days'));
+      await tester.pumpAndSettle();
+      expect(repository.calls, isEmpty);
+      await tester.tap(find.text('Accept and send'));
       await tester.pump();
       expect(repository.calls.single.question, 'Which of my days is busiest?');
       repository.streams.last.addError(Exception('PRIVATE'));
@@ -235,6 +247,9 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Özel mesaj');
       await tester.pump();
       await tester.tap(find.byKey(const ValueKey('assistant-send')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kabul et ve gönder'));
+      await tester.pump();
       repository.streams.last.add('Özel yanıt');
       repository.streams.last.close();
       await tester.pumpAndSettle();
@@ -270,6 +285,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Old conversation');
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('assistant-send')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kabul et ve gönder'));
     await tester.pump();
     final old = repository.streams.single;
     expect(old.hasListener, isTrue);
@@ -354,6 +371,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      final launcher = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.auto_awesome_rounded),
+      );
+      expect(launcher.style?.backgroundColor?.resolve({}), isNull);
       await tester.tap(find.byTooltip('Asistana sor'));
       await tester.pumpAndSettle();
       final page = tester.widget<TravelAssistantPage>(
@@ -368,6 +389,12 @@ void main() {
         tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).last.selected,
         isTrue,
       );
+      await tester.tap(find.text('Rota'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Asistana sor'), findsNothing);
+      await tester.tap(find.text('Günlük plan'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Asistana sor'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

@@ -19,6 +19,7 @@ import '../data/plan_creation_repository.dart';
 import '../data/accommodation_repository.dart';
 import 'accommodation_field.dart';
 import 'onboarding_widgets.dart';
+import 'plan_loading_view.dart';
 import 'travel_date_sheet.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -303,18 +304,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (!didPop) _back();
     },
     child: Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: context.tr('Geri'),
-          onPressed: _busy ? null : _back,
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: const Text('Yeni yolculuğun'),
-        centerTitle: true,
-      ),
+      appBar: _generating
+          ? null
+          : AppBar(
+              leading: IconButton(
+                tooltip: context.tr('Geri'),
+                onPressed: _busy ? null : _back,
+                icon: const Icon(Icons.arrow_back),
+              ),
+              title: const Text('Yeni yolculuğun'),
+              centerTitle: true,
+            ),
       body: SafeArea(
         child: _generating
-            ? _loading()
+            ? PlanLoadingView(
+                destination: data.destination,
+                elapsedSeconds: _elapsed,
+              )
             : Column(
                 children: [
                   if (_plan == null)
@@ -416,38 +422,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
             ),
-    ),
-  );
-
-  Widget _loading() => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 28),
-          Text(
-            'Planın hazırlanıyor',
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${data.destination} için tercihlerine uygun günlük rotan hazırlanıyor.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Geçen süre: $_elapsed sn',
-            style: TextStyle(color: context.colors.muted),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Bu işlem birkaç dakika sürebilir. Lütfen ekranı açık tut.',
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     ),
   );
 

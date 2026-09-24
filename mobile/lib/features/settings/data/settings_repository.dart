@@ -159,6 +159,8 @@ class FirebaseSettingsRepository implements SettingsRepository {
       );
     } else if (user.providerData.any((p) => p.providerId == 'google.com')) {
       await FirebaseAuthRepository().reauthenticateGoogle(uid);
+    } else if (user.providerData.any((p) => p.providerId == 'apple.com')) {
+      await FirebaseAuthRepository().reauthenticateApple(uid);
     } else {
       throw StateError('Bu işlem için yeniden giriş yapmalısın.');
     }

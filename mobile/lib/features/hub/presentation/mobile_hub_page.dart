@@ -211,7 +211,7 @@ class _MobileHubPageState extends State<MobileHubPage>
               surfaceTintColor: Colors.transparent,
               title: const _Wordmark(),
               actions: [
-                AssistantLauncher(uid: widget.session.uid, tonal: false),
+                AssistantLauncher(uid: widget.session.uid),
                 IconButton(
                   tooltip: context.tr('Bildirimler'),
                   icon: const Icon(Icons.notifications_none_rounded),

@@ -442,16 +442,26 @@ void main() {
     final data = answers();
     final repo = CreationFake()..pending = Completer<Map<String, dynamic>>();
     await mount(tester, data, repo);
+    expect(find.byType(AppBar), findsOneWidget);
     for (var i = 0; i < 3; i++) {
       await next(tester);
     }
     await tester.tap(find.byKey(const ValueKey('onboarding-next')));
     await tester.pump();
-    expect(find.text('Planın hazırlanıyor'), findsOneWidget);
+    expect(find.text('Roma, İtalya için rotan hazırlanıyor…'), findsOneWidget);
     expect(find.byKey(const ValueKey('onboarding-next')), findsNothing);
     expect(repo.generations, 1);
+    await tester.pump(const Duration(seconds: 65));
+    expect(find.text('Roma, İtalya için rotan hazırlanıyor…'), findsOneWidget);
+    expect(find.text('01:05'), findsOneWidget);
+    expect(repo.generations, 1);
+    expect(repo.ids, isEmpty);
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Yeni yolculuğun'), findsNothing);
+    expect(find.byIcon(Icons.arrow_back), findsNothing);
     repo.pending!.complete(parseCreatedPlan(jsonEncode(generated(data)), data));
     await tester.pumpAndSettle();
     expect(find.text('Planın hazır'), findsOneWidget);
+    expect(find.byType(AppBar), findsOneWidget);
   });
 }

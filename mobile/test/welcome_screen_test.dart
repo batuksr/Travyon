@@ -5,26 +5,31 @@ import 'package:travyon/app/travyon_app.dart';
 import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/bootstrap/presentation/mobile_bootstrap_page.dart';
-import 'package:travyon/features/bootstrap/presentation/welcome_travel_scene.dart';
 
 import 'widget_test.dart' show FakeAuthRepository;
 
-Widget host(Widget child, {String language = 'tr', double scale = 1}) =>
-    MaterialApp(
-      theme: AppTheme.light,
-      locale: Locale(language),
-      supportedLocales: const [Locale('tr'), Locale('en')],
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(scale)),
-        child: child!,
-      ),
-      home: child,
-    );
+Widget host(
+  Widget child, {
+  String language = 'tr',
+  double scale = 1,
+  bool reduceMotion = true,
+}) => MaterialApp(
+  theme: AppTheme.light,
+  locale: Locale(language),
+  supportedLocales: const [Locale('tr'), Locale('en')],
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    ...GlobalMaterialLocalizations.delegates,
+  ],
+  builder: (context, child) => MediaQuery(
+    data: MediaQuery.of(context).copyWith(
+      textScaler: TextScaler.linear(scale),
+      disableAnimations: reduceMotion,
+    ),
+    child: child!,
+  ),
+  home: child,
+);
 
 void main() {
   for (final language in ['tr', 'en']) {
@@ -52,7 +57,11 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.byType(WelcomeTravelScene), findsOneWidget);
+          expect(
+            find.byKey(const ValueKey('welcome-logo-animation')),
+            findsOneWidget,
+          );
+          expect(find.text('Planla. Keşfet. Yola çık.'), findsNothing);
           expect(find.textContaining('Firebase'), findsNothing);
           expect(find.textContaining('backend'), findsNothing);
           expect(
@@ -61,7 +70,7 @@ void main() {
                   ? 'Your next journey starts here.'
                   : 'Bir sonraki yolculuğun burada.',
             ),
-            findsOneWidget,
+            findsNothing,
           );
           for (final key in ['welcome-sign-in', 'welcome-register']) {
             final button = find.byKey(ValueKey(key));
@@ -108,9 +117,7 @@ void main() {
       );
       expect(
         tester
-            .widget<OutlinedButton>(
-              find.byKey(const ValueKey('welcome-register')),
-            )
+            .widget<TextButton>(find.byKey(const ValueKey('welcome-register')))
             .onPressed,
         isNull,
       );
@@ -125,21 +132,56 @@ void main() {
       await tester.pumpWidget(
         TravyonApp(authRepository: FakeAuthRepository(session: null)),
       );
-      await tester.pumpAndSettle();
+      // The welcome sheen repeats; advance frames without waiting for idle.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       final register = find.byKey(const ValueKey('welcome-register'));
       await tester.ensureVisible(register);
-      await tester.pumpAndSettle();
+      await tester.pump();
       await tester.tap(register);
       await tester.pumpAndSettle();
-      expect(find.text('Yolculuğun burada başlıyor'), findsOneWidget);
+      expect(find.text('Hesap oluştur'), findsOneWidget);
       expect(find.text('Ad soyad'), findsOneWidget);
       expect(
         tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value,
         isFalse,
       );
       await tester.tap(find.byTooltip('Geri'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(MobileBootstrapPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'welcome sheen keeps moving after a cycle and respects reduced motion',
+    (tester) async {
+      final logo = find.byKey(const ValueKey('welcome-logo-animation'));
+      AnimationController controller() =>
+          tester.widget<AnimatedBuilder>(logo).animation as AnimationController;
+      await tester.pumpWidget(
+        host(const MobileBootstrapPage(), reduceMotion: false),
+      );
+      await tester.pump(const Duration(seconds: 9));
+      expect(controller().isAnimating, isTrue);
+      final progress = controller().value;
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(controller().value, isNot(progress));
+
+      await tester.pumpWidget(host(const MobileBootstrapPage()));
+      await tester.pumpAndSettle();
+      expect(controller().isAnimating, isFalse);
+      expect(tester.binding.hasScheduledFrame, isFalse);
+
+      await tester.pumpWidget(
+        host(const MobileBootstrapPage(), reduceMotion: false),
+      );
+      await tester.pump();
+      expect(controller().isAnimating, isTrue);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      expect(tester.binding.hasScheduledFrame, isFalse);
       expect(tester.takeException(), isNull);
     },
   );

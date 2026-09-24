@@ -68,9 +68,10 @@ void main() {
     await tester.pumpWidget(
       TravyonApp(authRepository: FakeAuthRepository(session: null)),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Bir sonraki yolculuğun burada.'), findsOneWidget);
+    expect(find.text('Bir sonraki yolculuğun burada.'), findsNothing);
     expect(find.text('Firebase bağlantısı hazır'), findsNothing);
     expect(find.text('Giriş yap'), findsOneWidget);
     expect(find.text('Hesap oluştur'), findsOneWidget);
@@ -80,21 +81,23 @@ void main() {
     await tester.pumpWidget(
       TravyonApp(authRepository: FakeAuthRepository(session: null)),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     await tester.ensureVisible(find.byKey(const ValueKey('welcome-sign-in')));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
 
     expect(find.text('Tekrar hoş geldin'), findsOneWidget);
-    expect(find.text('Giriş yap'), findsNWidgets(2));
+    expect(find.text('Giriş yap'), findsOneWidget);
     expect(find.text('Google ile devam et'), findsOneWidget);
 
-    await tester.tap(find.text('Kayıt ol'));
+    await tester.ensureVisible(find.byKey(const ValueKey('auth-switch-mode')));
+    await tester.tap(find.byKey(const ValueKey('auth-switch-mode')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Yolculuğun burada başlıyor'), findsOneWidget);
+    expect(find.text('Hesap oluştur'), findsOneWidget);
     expect(find.text('Ad soyad'), findsOneWidget);
   });
 
@@ -238,6 +241,9 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> signInWithGoogle() async {}
+
+  @override
+  Future<void> signInWithApple() async {}
 
   @override
   Future<void> signOut() async {}

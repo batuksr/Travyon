@@ -101,24 +101,26 @@ void main() {
         authRepository: _SignedOutAuthRepository(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Your next journey starts here.'), findsOneWidget);
+    expect(find.text('Your next journey starts here.'), findsNothing);
     expect(find.text('Firebase connection is ready'), findsNothing);
     expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Create an account'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const ValueKey('welcome-sign-in')));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
     expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.text('Sign in'), findsNWidgets(2));
+    expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
 
-    await tester.tap(find.text('Sign up'));
+    await tester.ensureVisible(find.byKey(const ValueKey('auth-switch-mode')));
+    await tester.tap(find.byKey(const ValueKey('auth-switch-mode')));
     await tester.pumpAndSettle();
-    expect(find.text('Your journey starts here'), findsOneWidget);
+    expect(find.text('Create an account'), findsOneWidget);
     expect(find.text('Full name'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -133,11 +135,13 @@ void main() {
         authRepository: _SignedOutAuthRepository(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Hesap oluştur'), findsOneWidget);
 
     await locale.setLanguage('English', persist: false);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Create an account'), findsOneWidget);
   });
 
@@ -197,6 +201,9 @@ class _SignedOutAuthRepository implements AuthRepository {
 
   @override
   Future<void> signInWithGoogle() async {}
+
+  @override
+  Future<void> signInWithApple() async {}
 
   @override
   Future<void> signOut() async {}

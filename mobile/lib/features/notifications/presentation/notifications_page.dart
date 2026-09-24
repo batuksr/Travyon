@@ -297,26 +297,7 @@ class _NotificationsPageState extends State<NotificationsPage>
     all.sort((a, b) => a.level.compareTo(b.level));
     final visible = all.where((n) => !_dismissed.contains(n.id)).toList();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('Bildirimler')),
-        actions: [
-          IconButton(
-            tooltip: context.tr('Bildirim ayarları'),
-            onPressed: widget.onSettings,
-            icon: const Icon(Icons.tune),
-          ),
-          IconButton(
-            tooltip: context.tr('Bildirimleri yenile'),
-            onPressed: _busy
-                ? null
-                : () {
-                    _weatherKey = null;
-                    _load();
-                  },
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(context.tr('Bildirimler'))),
       body: _error != null
           ? CommunityStatus(message: _error!, onRetry: _load)
           : _plans == null || _prefs == null
@@ -326,15 +307,6 @@ class _NotificationsPageState extends State<NotificationsPage>
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
-                  Text(
-                    context.tr('Yolculuğun güncel kalsın'),
-                    style: TextStyle(
-                      fontFamily: AppTypography.heading,
-                      fontSize: 26,
-                      color: context.colors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   Text(
                     context.tr(
                       'Biletlerin, hazırlıkların ve seyahatinden son bilgiler.',

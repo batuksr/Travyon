@@ -37,6 +37,8 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   bool _scrollQueued = false;
+  bool _dataSharingApproved = false;
+  bool _consentPromptOpen = false;
 
   @override
   void initState() {
@@ -79,12 +81,29 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
 
   String get _language => context.l10n.isEnglish ? 'en' : 'tr';
 
-  void _send([String? question]) {
-    if (widget.controller.send(
-      question ?? _input.text,
-      language: _language,
-      plan: widget.plan,
-    )) {
+  Future<void> _send([String? question]) async {
+    final text = question ?? _input.text;
+    if (text.trim().isEmpty || widget.controller.busy) return;
+    if (!_dataSharingApproved) {
+      if (_consentPromptOpen) return;
+      FocusManager.instance.primaryFocus?.unfocus();
+      _consentPromptOpen = true;
+      final hasPlan = widget.plan != null;
+      final approved = await showAppConfirmation(
+        context,
+        title: 'Yapay zekâ ile veri paylaşımı',
+        message: hasPlan
+            ? 'Yazdığın mesaj ve planının rota özeti, yanıt üretmek için Google Gemini ile paylaşılacak. Hassas bilgi yazma.'
+            : 'Yazdığın mesaj, yanıt üretmek için Google Gemini ile paylaşılacak. Hassas bilgi yazma.',
+        confirmLabel: 'Kabul et ve gönder',
+        cancelLabel: 'Vazgeç',
+        icon: Icons.security_outlined,
+      );
+      _consentPromptOpen = false;
+      if (!mounted || !approved) return;
+      _dataSharingApproved = true;
+    }
+    if (widget.controller.send(text, language: _language, plan: widget.plan)) {
       _input.clear();
       _toBottom();
     }
@@ -157,7 +176,7 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
                           hasScrollBody: false,
                           child: _EmptyConversation(
                             plan: widget.plan,
-                            onQuestion: _send,
+                            onQuestion: (question) => _send(question),
                           ),
                         )
                       : SliverList.list(

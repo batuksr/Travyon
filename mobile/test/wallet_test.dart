@@ -109,9 +109,17 @@ void main() {
     );
     expect(find.text('Wallet'), findsOneWidget);
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
-    expect(find.text('Tickets · Bookings · Documents'), findsOneWidget);
+    expect(find.text('Your next journey'), findsOneWidget);
     expect(find.text('Add your first item'), findsOneWidget);
-    expect(find.text('General wallet'), findsOneWidget);
+    expect(find.text('PERSONAL TRAVEL WALLET'), findsOneWidget);
+    expect(find.text('GENERAL TRAVEL'), findsOneWidget);
+    expect(find.text('Carry your journey with you.'), findsNothing);
+    expect(
+      find.text(
+        'Keep your tickets, bookings, and notes together. Add an item and its card will slip into your wallet.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Seyahatin'), findsNothing);
     expect(find.text('Genel cüzdan'), findsNothing);
   });
@@ -153,7 +161,7 @@ void main() {
           plansRepository: FakeTravelPlansRepository([]),
         ),
       );
-      expect(find.text('İlk kaydını ekle'), findsOneWidget);
+      expect(find.text('İlk kaydı ekle'), findsWidgets);
       await see(tester, find.byKey(const ValueKey('wallet-add')));
       await tester.tap(find.byKey(const ValueKey('wallet-add')));
       await tester.pumpAndSettle();

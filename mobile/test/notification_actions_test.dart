@@ -100,6 +100,18 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.tune), findsNothing);
+      expect(find.byIcon(Icons.refresh), findsNothing);
+      expect(find.text('Yolculuğun güncel kalsın'), findsNothing);
+      expect(find.text('Stay on top of your trip'), findsNothing);
+      expect(
+        find.text(
+          english
+              ? 'Your tickets, preparations and travel updates.'
+              : 'Biletlerin, hazırlıkların ve seyahatinden son bilgiler.',
+        ),
+        findsOneWidget,
+      );
       final list = find
           .descendant(
             of: find.byType(ListView).first,

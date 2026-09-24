@@ -13,12 +13,10 @@ class AssistantLauncher extends StatefulWidget {
     required this.uid,
     this.plan,
     this.repository,
-    this.tonal = true,
   });
   final String uid;
   final TravelPlanSummary? plan;
   final TravelAssistantRepository? repository;
-  final bool tonal;
 
   @override
   State<AssistantLauncher> createState() => _AssistantLauncherState();
@@ -84,15 +82,9 @@ class _AssistantLauncherState extends State<AssistantLauncher> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.tonal
-      ? IconButton.filledTonal(
-          tooltip: context.tr('Asistana sor'),
-          onPressed: _show,
-          icon: const Icon(Icons.auto_awesome_rounded, size: 21),
-        )
-      : IconButton(
-          tooltip: context.tr('Asistana sor'),
-          onPressed: _show,
-          icon: const Icon(Icons.auto_awesome_rounded, size: 21),
-        );
+  Widget build(BuildContext context) => IconButton(
+    tooltip: context.tr('Asistana sor'),
+    onPressed: _show,
+    icon: const Icon(Icons.auto_awesome_rounded, size: 21),
+  );
 }

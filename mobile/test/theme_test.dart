@@ -163,7 +163,8 @@ void main() {
           themeController: controller,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       expect(
         Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
         Brightness.dark,

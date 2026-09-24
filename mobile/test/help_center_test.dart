@@ -6,7 +6,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travyon/features/auth/presentation/auth_page.dart';
-import 'package:travyon/features/bootstrap/presentation/mobile_bootstrap_page.dart';
 import 'package:travyon/features/help/data/contact_repository.dart';
 import 'package:travyon/features/help/data/help_content.dart';
 import 'package:travyon/features/help/data/help_content.generated.dart';
@@ -186,22 +185,21 @@ void main() {
     );
   }
 
-  testWidgets(
-    'welcome exposes help without Firebase even when initialization fails',
-    (tester) async {
-      await tester.pumpWidget(
-        host(
-          MobileBootstrapPage(initializationError: StateError('offline')),
-          language: 'en',
-        ),
-      );
-      await tapVisible(tester, find.byKey(const ValueKey('welcome-help')));
-      expect(find.text('Frequently Asked Questions'), findsOneWidget);
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
-      expect(find.byType(MobileBootstrapPage), findsOneWidget);
-    },
-  );
+  testWidgets('sign in exposes help without requiring a Firebase connection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        AuthPage(repository: FakeAuthRepository(session: null)),
+        language: 'en',
+      ),
+    );
+    await tapVisible(tester, find.byTooltip('Help & legal'));
+    expect(find.text('Frequently Asked Questions'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AuthPage), findsOneWidget);
+  });
 
   testWidgets(
     'registration links open full policies without accepting terms or losing input',

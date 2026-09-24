@@ -103,6 +103,8 @@ void main() {
               host(page(repo), language: language, dark: dark, scale: 2),
             );
             await tester.pumpAndSettle();
+            expect(find.byType(WalletEmptyGuide), findsOneWidget);
+            expect(find.text('Neler ekleyebilirsin?'), findsNothing);
             await reveal(
               tester,
               find.byKey(const ValueKey('wallet-pocket-add')),
@@ -116,14 +118,14 @@ void main() {
               Colors.white,
             );
             final title = tester.widget<Text>(
-              find.text(
-                language == 'en' ? 'Add your first item' : 'İlk kaydını ekle',
+              find.descendant(
+                of: find.byKey(const ValueKey('wallet-pocket-add')),
+                matching: find.text(
+                  language == 'en' ? 'Add your first item' : 'İlk kaydı ekle',
+                ),
               ),
             );
             expect(title.style!.color!.computeLuminance(), lessThan(.1));
-            expect(tester.takeException(), isNull);
-            await reveal(tester, find.byType(WalletEmptyGuide));
-            expect(find.text('Neler ekleyebilirsin?'), findsNothing);
             expect(tester.takeException(), isNull);
             repo.entries = [flight, stay, ticket];
             repo.changes.add(repo.entries);
@@ -151,6 +153,92 @@ void main() {
       }
     }
   }
+
+  testWidgets('empty wallet shows its benefits above the pocket', (
+    tester,
+  ) async {
+    viewport(tester, const Size(390, 820));
+    final repo = FakeWallet();
+    addTearDown(repo.changes.close);
+    await tester.pumpWidget(host(page(repo)));
+    await tester.pumpAndSettle();
+
+    final firstBenefit = find.text('Uçuşların ve rezervasyon kodların');
+    final pocket = find.byKey(const ValueKey('wallet-pocket'));
+    expect(find.text('Yolculuğunu cebine koy.'), findsNothing);
+    expect(
+      find.textContaining('Biletlerin, rezervasyonların ve notların'),
+      findsOneWidget,
+    );
+    expect(firstBenefit, findsOneWidget);
+    expect(
+      find.text('Konaklama bilgilerin ve giriş tarihlerin'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Etkinlik biletlerin ve seyahat notların'),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(firstBenefit).dy,
+      lessThan(tester.getTopLeft(pocket).dy),
+    );
+    expect(find.byKey(const ValueKey('wallet-intro-add')), findsNothing);
+    expect(find.byKey(const ValueKey('wallet-add')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'wallet stack stays fixed after three cards and exposes the list',
+    (tester) async {
+      viewport(tester, const Size(390, 820));
+      final extras = List.generate(
+        4,
+        (index) => WalletEntry(
+          id: 'extra-$index',
+          planId: 'general',
+          category: 'document',
+          title: 'Ek belge ${index + 1}',
+          createdAt: 10 + index,
+        ),
+      );
+      final repo = FakeWallet()..entries = [flight, stay, ticket];
+      addTearDown(repo.changes.close);
+      await tester.pumpWidget(host(page(repo)));
+      await tester.pumpAndSettle();
+      await reveal(tester, find.byKey(const ValueKey('wallet-pocket')));
+      final threeCardHeight = tester
+          .getSize(find.byKey(const ValueKey('wallet-pocket')))
+          .height;
+
+      repo.entries = [flight, stay, ticket, ...extras];
+      repo.changes.add(repo.entries);
+      await tester.pumpAndSettle();
+      await reveal(tester, find.byKey(const ValueKey('wallet-pocket')));
+
+      expect(
+        tester.getSize(find.byKey(const ValueKey('wallet-pocket'))).height,
+        threeCardHeight,
+      );
+      expect(find.byKey(const ValueKey('wallet-pocket-f1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('wallet-pocket-s1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('wallet-pocket-t1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('wallet-pocket-extra-0')), findsNothing);
+      expect(find.byKey(const ValueKey('wallet-hidden-count')), findsNothing);
+      expect(find.text('+4 kayıt'), findsNothing);
+      expect(
+        tester.getTopLeft(find.byKey(const ValueKey('wallet-pocket-f1'))).dy,
+        greaterThan(
+          tester.getTopLeft(find.byKey(const ValueKey('wallet-pocket-s1'))).dy,
+        ),
+      );
+      await reveal(tester, find.byKey(const ValueKey('wallet-view-items')));
+      await tester.tap(find.byKey(const ValueKey('wallet-view-items')));
+      await tester.pumpAndSettle();
+      expect(find.text('Kayıtların'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'category filters affect list only and reset when the category disappears',

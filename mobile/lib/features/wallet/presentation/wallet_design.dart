@@ -212,54 +212,70 @@ class WalletCategories extends StatelessWidget {
 
 class WalletEmptyGuide extends StatelessWidget {
   const WalletEmptyGuide({super.key});
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        context.tr('Yolculuğuna ait her şey, tek yerde.'),
-        style: TextStyle(
-          color: context.colors.text,
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-          height: 1.4,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
         context.tr(
-          'Bilet ve rezervasyon bilgilerini ekle; ihtiyaç duyduğunda kartına dokun.',
+          'Biletlerin, rezervasyonların ve notların burada bir araya gelsin. Bir kayıt ekle, kartın cüzdanına yerleşsin.',
         ),
         style: TextStyle(
           color: context.colors.muted,
-          fontSize: 12,
+          fontSize: 13,
           height: 1.6,
         ),
       ),
-      const SizedBox(height: 16),
-      Wrap(
-        spacing: 16,
-        runSpacing: 10,
-        children: [
-          for (final category in ['flight', 'stay', 'document'])
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  walletIcon(category),
-                  size: 17,
-                  color: context.colors.forest,
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    context.tr(walletCategories[category]!),
-                    style: TextStyle(color: context.colors.muted, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-        ],
+      const SizedBox(height: 20),
+      _WalletBenefit(
+        icon: Icons.flight_takeoff_rounded,
+        label: context.tr('Uçuşların ve rezervasyon kodların'),
+      ),
+      const SizedBox(height: 12),
+      _WalletBenefit(
+        icon: Icons.hotel_outlined,
+        label: context.tr('Konaklama bilgilerin ve giriş tarihlerin'),
+      ),
+      const SizedBox(height: 12),
+      _WalletBenefit(
+        icon: Icons.confirmation_number_outlined,
+        label: context.tr('Etkinlik biletlerin ve seyahat notların'),
+      ),
+    ],
+  );
+}
+
+class _WalletBenefit extends StatelessWidget {
+  const _WalletBenefit({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: context.colors.greenTint,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: context.colors.divider),
+        ),
+        child: Icon(icon, size: 20, color: context.colors.forest),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Text(
+          label,
+          style: TextStyle(
+            color: context.colors.text,
+            fontSize: 13,
+            height: 1.45,
+          ),
+        ),
       ),
     ],
   );

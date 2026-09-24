@@ -45,6 +45,36 @@ Fiziksel Android telefonda geliştirici seçenekleri ve USB hata ayıklama açı
 `flutter.bat devices` ile cihaz kimliği görülebilir. iOS derlemesi ve App Store
 yayını için macOS üzerinde Xcode gerekir.
 
+## iOS hazırlığı
+
+iOS, Android'den ayrı bir Flutter arayüzü değildir; `lib/` altındaki aynı ekranlar
+iki platformda da çalışır. Bundle ID `com.travyon.app`, Firebase iOS seçenekleri,
+Google giriş dönüş şeması, Maps anahtar aktarımı, fotoğraf izni ve arka plan bildirim
+modu projede hazırdır. Apple ile giriş yalnızca iPhone/iPad'de gösterilir. Debug
+imzası geliştirme APNs ortamını, Profile/Release imzası production APNs ortamını
+kullanır. App Store simgeleri `scripts/build-ios-app-icons.ps1` ile Travyon'un
+turuncu/krem kâğıt uçak işaretinden tekrar üretilebilir.
+
+İlk Mac/Xcode oturumunda yapılacaklar:
+
+1. Apple Developer'da `com.travyon.app` App ID'sini oluştur; **Sign in with Apple**
+   ve **Push Notifications** yeteneklerini aç. Xcode'da Runner hedefi için kendi
+   Team hesabını seçip otomatik imzalamayı çalıştır.
+2. Firebase Authentication'da Apple sağlayıcısını aç ve Apple Developer'dan alınan
+   Service ID/Team ID/Key ID/private key bilgilerini tanımla. Firebase'in Apple özel
+   e-posta adreslerine doğrulama gönderebilmesi için private email relay ayarını yap.
+3. Firebase App Check'te iOS uygulamasını DeviceCheck ile kaydet. Bildirim
+   kullanılacaksa APNs anahtarını Firebase Cloud Messaging'e yükle.
+4. `maps-config.local.json` içindeki iOS anahtarını `com.travyon.app` ve yalnızca
+   Maps SDK for iOS ile sınırla. Gerçek cihazda Apple/Google girişini, haritayı,
+   fotoğraf seçimini ve bildirim izin akışını test et.
+5. Xcode doğrulamasından sonra `flutter build ipa --release
+   --dart-define-from-file=maps-config.local.json` ile arşiv oluşturup önce
+   TestFlight'a gönder. Anahtarları veya `.p8` dosyasını Git'e ekleme.
+
+Apple Developer/Firebase konsol ayarları hesap sahipliği ve gizli anahtar gerektirdiği
+için Windows'taki kaynak koddan otomatik tamamlanamaz.
+
 ## Mimari notu
 
 Web arayüzü `web/src/` altında yaşamaya devam eder. `mobile/` yalnızca Android ve
@@ -84,6 +114,13 @@ kontrollerinden geçirilir. Önizlemeden **Kaydet ve rotayı aç** ile
 `users/{uid}/plans` koleksiyonuna, web ile aynı alanlarla kaydedilir. Kayıt
 hatasında aynı plan kimliğiyle tekrar denenir; AI yeniden çağrılmaz. LOCAL
 modda Functions ve Firestore emülatörlerinin açık olması gerekir.
+
+Plan hazırlanırken ortada 160 px genişliğinde travyon logosu gösterilir;
+turuncu bölümden yavaşça bir ışık geçer. Altında destinasyon ve dakika/saniye
+biçiminde geçen süre, ekranın altında kısa bir açık tutma notu bulunur.
+Animasyon ilerleme yüzdesi değildir. Hareket azaltma/erişilebilir gezinme
+açıkken durur; ekran kapandığında animasyon kaynağı temizlenir. Küçük ekran,
+büyük yazı, Türkçe/İngilizce ve iki tema desteklenir.
 
 Yeni planlar önizlemeden önce otomatik olarak rota optimizasyonundan geçer.
 Webdeki en yakın komşu + 2-opt yaklaşımı kullanılır; her günün Sabah/Öğle/
@@ -126,8 +163,10 @@ yerine Flutter uygulamasını durdurup normal LOCAL komutuyla yeniden başlatın
 
 ### Seyahat cüzdanı
 
-- Cüzdan sekmesinde kompakt yeşil cüzdan ve üstten görünen en fazla üç beyaz
-  kart bulunur. Fiziksel kartlar karanlık temada da beyaz, yazıları koyu kalır.
+- Cüzdanın boş durumunda üç kullanım alanı önce, yeşil cüzdan ise bunların
+  altında gösterilir. Cüzdanın üstünden en fazla üç
+  beyaz kart sabit yükseklikte ve iç içe görünür. Fiziksel kartlar karanlık
+  temada da beyaz, yazıları koyu kalır.
   Kayıt listesi tarihe/saate göre sıralanır ve kategoriye göre filtrelenebilir.
   Kartlar detay panelini açar; tarihler seçili dile göre gösterilir. Uzun boş
   durum kutusu yerine kısa bir açıklama ve kayıt türleri gösterilir.
@@ -184,7 +223,7 @@ Kaynaklar: [Google Maps Flutter kurulumu](https://developers.google.com/maps/flu
 [Places API kullanım ve atıf kuralları](https://developers.google.com/maps/documentation/places/web-service/policies).
 
 - Web hesabıyla e-posta/şifre girişi
-- Google hesabıyla giriş ve kayıt
+- Google hesabıyla giriş ve kayıt; iOS'ta Apple ile giriş ve yeniden doğrulama
 - Yeni hesap oluşturma ve `users/{uid}` profil belgesini web ile aynı yapıda açma
 - Şifre yenileme e-postası
 - E-posta doğrulama bağlantısı ve doğrulama kontrolü
@@ -353,7 +392,7 @@ veya profil değişikliği yapmaz.
 
 ## Yardım ve yasal sayfalar
 
-- Karşılama ve giriş ekranındaki yardım simgesinden, giriş yapmadan erişilir.
+- Giriş ekranındaki yardım simgesinden, giriş yapmadan erişilir.
   Ayarlar → Destek ve yasal bölümünde SSS, iletişim, gizlilik politikası ve
   kullanım koşulları bulunur. Ayarlar yüklenemese bile üstteki yardım simgesi çalışır.
 - Kayıt formundaki koşul/gizlilik bağlantıları tam metni açar; forma dönüldüğünde
@@ -571,6 +610,8 @@ destinasyon, tahmini toplam, günler ve durak adları/zaman dilimlerinden oluşu
 Cüzdan, rezervasyon kodu, kişisel notlar ve gerçek harcamalar otomatik gönderilmez.
 Son tamamlanan sohbet turları sınırlı bağlama eklenir; yarım/hatalı yanıtlar eklenmez.
 Gönderilen veri hakkında açıklama sohbet başlığındaki bilgi simgesinden açılır.
+Her sohbet ekranındaki ilk gönderimden önce, Gemini'ye aktarılacak veri ayrıca
+açıklanır ve kullanıcı açıkça kabul etmeden istek başlatılmaz.
 Sohbetin boş durumu ortalanmış kısa bir başlık ve üç küçük öneri düğmesinden oluşur;
 tanıtım kartı, uzun açıklama ve dekoratif ikon bulunmaz. Plan sohbetinde destinasyon
 sade bir metinle gösterilir. Temizleme düğmesi yalnızca mesaj varsa görünür.

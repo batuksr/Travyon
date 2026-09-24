@@ -26,6 +26,11 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Apple signing secrets must stay out of version control.
+*.p8
+*.p12
+*.mobileprovision
+
 # Web uygulamasında kullanılan optimize videolar web/public/videos altında versionlanır.
 # Sıkıştırılmamış orijinal video yedekleri ise asla commit edilmez.
 web/public/videos_originals/

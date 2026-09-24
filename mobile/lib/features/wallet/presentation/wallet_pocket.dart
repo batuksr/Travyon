@@ -41,11 +41,13 @@ class WalletPocket extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = entries.take(3).toList();
-    // Two title lines remain visible above the leather, even at 200% text.
     final scaler = MediaQuery.textScalerOf(context);
-    final exposedHeight = 26 + scaler.scale(10) * 1.3 + scaler.scale(14) * 2.5;
+    // Earlier cards expose only a compact header. The first sorted card stays
+    // at the front, while the stack stops growing after three visible cards.
+    final peekHeight = 34 + math.max(0, scaler.scale(11) - 11) * 1.3;
+    final activeHeight = 78 + math.max(0, scaler.scale(14) - 14) * 2.5;
     final count = math.max(1, cards.length);
-    final frontTop = 4 + exposedHeight * count;
+    final frontTop = 4 + activeHeight + peekHeight * (count - 1);
     final frontHeight = 126 + math.max(0, scaler.scale(12) - 12) * 2;
     return Semantics(
       label: context.tr('Seyahat cüzdanı'),
@@ -81,18 +83,18 @@ class WalletPocket extends StatelessWidget {
                 top: 4,
                 child: _PocketCard(
                   cardKey: const ValueKey('wallet-pocket-add'),
-                  height: exposedHeight + 28,
-                  title: context.tr('İlk kaydını ekle'),
-                  label: context.tr('Bilet · Rezervasyon · Belge'),
+                  height: activeHeight + 28,
+                  title: context.tr('İlk kaydı ekle'),
+                  label: context.tr('Bir sonraki yolculuğun'),
                   icon: Icons.add_rounded,
                   onTap: onAdd,
                 ),
               ),
-            for (var i = 0; i < cards.length; i++)
+            for (var i = cards.length - 1; i >= 0; i--)
               Positioned(
                 left: 16,
                 right: 16,
-                top: 4 + exposedHeight * i,
+                top: 4 + peekHeight * (cards.length - 1 - i),
                 child: TweenAnimationBuilder<double>(
                   key: ValueKey('${cards[i].id}-$highlightId'),
                   tween: Tween(
@@ -109,7 +111,7 @@ class WalletPocket extends StatelessWidget {
                   ),
                   child: _PocketCard(
                     cardKey: ValueKey('wallet-pocket-${cards[i].id}'),
-                    height: exposedHeight + 28,
+                    height: activeHeight + 28,
                     title: cards[i].title,
                     label: context.tr(
                       walletCategories[cards[i].category] ?? 'Diğer',
@@ -164,23 +166,34 @@ class WalletPocket extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
+                              flex: 3,
                               child: Text(
-                                city,
+                                context.tr('KİŞİSEL SEYAHAT CÜZDANI'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Color(0xFFEAE5CC),
-                                  fontSize: 12,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w500,
+                                  letterSpacing: 1.1,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              walletRecordCount(context, entries.length),
-                              style: const TextStyle(
-                                color: Color(0xFFCBD5BF),
-                                fontSize: 11,
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                city == context.tr('Genel cüzdan')
+                                    ? context.tr('GENEL SEYAHAT')
+                                    : city,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                  color: Color(0xFFCBD5BF),
+                                  fontSize: 9,
+                                  letterSpacing: .8,
+                                ),
                               ),
                             ),
                           ],

@@ -1,9 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../help/presentation/help_center_page.dart';
-import 'welcome_travel_scene.dart';
 
 class MobileBootstrapPage extends StatelessWidget {
   const MobileBootstrapPage({
@@ -26,185 +27,110 @@ class MobileBootstrapPage extends StatelessWidget {
       height: 1.3,
     );
 
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            key: const ValueKey('welcome-scroll'),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 480,
-                  minHeight: constraints.maxHeight,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const Expanded(child: _Wordmark()),
-                          IconButton(
-                            key: const ValueKey('welcome-help'),
-                            tooltip: context.tr('Yardım ve yasal'),
-                            onPressed: () => openHelpCenter(context),
-                            icon: Icon(
-                              Icons.help_outline_rounded,
-                              color: context.colors.forest,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 22),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              height: (constraints.maxHeight * 0.30).clamp(
-                                160.0,
-                                230.0,
-                              ),
-                              width: double.infinity,
-                              child: const WelcomeTravelScene(),
-                            ),
-                            const SizedBox(height: 26),
-                            Text(
-                              context.tr('Planla. Keşfet. Yola çık.'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: context.colors.forest,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                context.tr('Bir sonraki yolculuğun burada.'),
-                                style: TextStyle(
-                                  fontFamily: AppTypography.heading,
-                                  fontSize: 32,
-                                  height: 1.2,
-                                  color: context.colors.text,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              context.tr(
-                                'Sana özel rotalar, biletlerin ve keşiflerin. Hepsi tek bir yerde.',
-                              ),
-                              style: TextStyle(
-                                fontSize: 14,
-                                height: 1.6,
-                                color: context.colors.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.accent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.accent,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              key: const ValueKey('welcome-scroll'),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 480,
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (!ready) ...[
-                            Semantics(
-                              liveRegion: true,
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: context.colors.tone(
-                                    const Color(0xFFF8E6E2),
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
+                          SizedBox(
+                            height: math.max(
+                              24,
+                              constraints.maxHeight / 2 - 28,
+                            ),
+                          ),
+                          const Center(child: _AnimatedWordmark()),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 32,
+                                  bottom: 24,
                                 ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    Icon(
-                                      Icons.cloud_off_outlined,
-                                      size: 20,
-                                      color: context.colors.tone(
-                                        const Color(0xFFA83E35),
+                                    if (!ready) ...[
+                                      _InitializationNotice(
+                                        colors: context.colors,
+                                      ),
+                                      const SizedBox(height: 14),
+                                    ],
+                                    FilledButton(
+                                      key: const ValueKey('welcome-sign-in'),
+                                      onPressed: ready ? onStart : null,
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: AppColors.surface,
+                                        foregroundColor: AppColors.text,
+                                        disabledBackgroundColor: AppColors
+                                            .surface
+                                            .withValues(alpha: .35),
+                                        disabledForegroundColor: AppColors.text
+                                            .withValues(alpha: .6),
+                                        minimumSize: const Size.fromHeight(54),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 22,
+                                          vertical: 16,
+                                        ),
+                                        textStyle: actionText,
+                                      ),
+                                      child: Text(
+                                        context.tr('Giriş yap'),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                      key: const ValueKey('welcome-register'),
+                                      onPressed: ready ? onRegister : null,
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.text,
+                                        disabledForegroundColor: AppColors.text
+                                            .withValues(alpha: .6),
+                                        minimumSize: const Size.fromHeight(52),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 22,
+                                          vertical: 14,
+                                        ),
+                                        textStyle: actionText,
+                                      ),
                                       child: Text(
-                                        context.tr(
-                                          'Şu anda bağlantı kurulamıyor. Uygulamayı kapatıp yeniden açmayı dene.',
-                                        ),
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          height: 1.5,
-                                          color: context.colors.tone(
-                                            const Color(0xFF873D35),
-                                          ),
-                                        ),
+                                        context.tr('Hesap oluştur'),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
-                          ],
-                          FilledButton(
-                            key: const ValueKey('welcome-sign-in'),
-                            onPressed: ready ? onStart : null,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(54),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
-                                vertical: 16,
-                              ),
-                              textStyle: actionText,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    context.tr('Giriş yap'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          OutlinedButton(
-                            key: const ValueKey('welcome-register'),
-                            onPressed: ready ? onRegister : null,
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: context.colors.surface,
-                              foregroundColor: context.colors.forest,
-                              minimumSize: const Size.fromHeight(54),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              textStyle: actionText,
-                            ),
-                            child: Text(
-                              context.tr('Hesap oluştur'),
-                              textAlign: TextAlign.center,
-                            ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -216,27 +142,144 @@ class MobileBootstrapPage extends StatelessWidget {
   }
 }
 
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
+class _InitializationNotice extends StatelessWidget {
+  const _InitializationNotice({required this.colors});
+
+  final AppPalette colors;
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Travyon',
-    excludeSemantics: true,
-    child: Text.rich(
-      TextSpan(
+    liveRegion: true,
+    child: Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.tone(const Color(0xFFF8E6E2)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextSpan(
-            text: 'trav',
-            style: TextStyle(color: context.colors.text),
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 20,
+            color: colors.tone(const Color(0xFFA83E35)),
           ),
-          TextSpan(
-            text: 'yon',
-            style: TextStyle(color: context.colors.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.tr(
+                'Şu anda bağlantı kurulamıyor. Uygulamayı kapatıp yeniden açmayı dene.',
+              ),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: colors.tone(const Color(0xFF873D35)),
+              ),
+            ),
           ),
         ],
       ),
-      style: TextStyle(fontFamily: AppTypography.heading, fontSize: 32),
     ),
   );
+}
+
+class _AnimatedWordmark extends StatefulWidget {
+  const _AnimatedWordmark();
+
+  @override
+  State<_AnimatedWordmark> createState() => _AnimatedWordmarkState();
+}
+
+class _AnimatedWordmarkState extends State<_AnimatedWordmark>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+  bool _reduceMotion = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion =
+        MediaQuery.disableAnimationsOf(context) ||
+        MediaQuery.accessibleNavigationOf(context);
+    if (_reduceMotion) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontFamily: AppTypography.heading,
+      fontSize: 48,
+      fontWeight: FontWeight.w400,
+      height: 1.1,
+    );
+    return Semantics(
+      label: 'Travyon',
+      excludeSemantics: true,
+      child: RepaintBoundary(
+        child: SizedBox(
+          width: 190,
+          height: 56,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: AnimatedBuilder(
+              key: const ValueKey('welcome-logo-animation'),
+              animation: _controller,
+              child: Text.rich(
+                const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'trav',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    TextSpan(text: 'yon'),
+                  ],
+                ),
+                textScaler: TextScaler.noScaling,
+                style: style.copyWith(color: AppColors.background),
+              ),
+              builder: (context, child) => ShaderMask(
+                blendMode: BlendMode.srcATop,
+                shaderCallback: (bounds) {
+                  // Sweep across the entire wordmark, then pause offscreen.
+                  final progress = const Interval(
+                    0,
+                    .75,
+                    curve: Curves.easeInOut,
+                  ).transform(_controller.value);
+                  return LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: _reduceMotion ? 0 : .95),
+                      Colors.transparent,
+                    ],
+                  ).createShader(
+                    Rect.fromLTWH(
+                      bounds.left + bounds.width * (1.6 * progress - .45),
+                      bounds.top,
+                      bounds.width * .45,
+                      bounds.height,
+                    ),
+                  );
+                },
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -5,35 +5,56 @@ import 'app_translations.generated.dart';
 /// Turkish remains the canonical fallback so a missing entry is readable in
 /// production and easy to detect in localization coverage tests.
 const mobileEnglishTranslations = <String, String>{
+  'Adın ve soyadın': 'Your full name',
+  'Şifreni gir': 'Enter your password',
+  'Hesabın yok mu?': 'New here?',
+  'Zaten hesabın var mı?': 'Already have an account?',
+  '{destination} için rotan hazırlanıyor…':
+      'Preparing your itinerary for {destination}…',
+  'Lütfen ekranı açık tut.': 'Please keep the screen open.',
+  'Geçen süre: {time}': 'Time elapsed: {time}',
   'Asistana sor': 'Ask the assistant',
   'Asistan hakkında': 'About the assistant',
+  'Yapay zekâ ile veri paylaşımı': 'Share data with AI',
+  'Yazdığın mesaj ve planının rota özeti, yanıt üretmek için Google Gemini ile paylaşılacak. Hassas bilgi yazma.': 'Your message and itinerary summary will be shared with Google Gemini to generate a response. Do not enter sensitive information.',
+  'Yazdığın mesaj, yanıt üretmek için Google Gemini ile paylaşılacak. Hassas bilgi yazma.': 'Your message will be shared with Google Gemini to generate a response. Do not enter sensitive information.',
+  'Kabul et ve gönder': 'Accept and send',
   'Nereye gidelim?': 'Where shall we go?',
   'Rotanı konuşalım.': 'Let’s talk about your trip.',
   'Şehir öner': 'City ideas',
   'Günlerim': 'My days',
   'İpuçları': 'Tips',
-  'İlk seyahatim için birkaç pratik ipucu ver.': 'Give me a few practical tips for my first trip.',
+  'İlk seyahatim için birkaç pratik ipucu ver.':
+      'Give me a few practical tips for my first trip.',
   'Sohbeti temizle': 'Clear chat',
   'Sohbet temizlensin mi?': 'Clear this chat?',
-  'Bu sohbetteki mesajlar temizlenecek.': 'The messages in this conversation will be cleared.',
-  'Bu sohbet seçtiğin yolculuğun rota özetini kullanır.': 'This chat uses the itinerary summary of your selected trip.',
+  'Bu sohbetteki mesajlar temizlenecek.':
+      'The messages in this conversation will be cleared.',
+  'Bu sohbet seçtiğin yolculuğun rota özetini kullanır.':
+      'This chat uses the itinerary summary of your selected trip.',
   'Mesajların ve planının özeti, yanıt için Google Gemini ile paylaşılır.': 'Your messages and itinerary summary are shared with Google Gemini to answer your questions.',
-  'Mesajların, yanıt için Google Gemini ile paylaşılır.': 'Your messages are shared with Google Gemini to answer your questions.',
+  'Mesajların, yanıt için Google Gemini ile paylaşılır.':
+      'Your messages are shared with Google Gemini to answer your questions.',
   'Rotanı birlikte keşfedelim.': 'Let’s explore your itinerary.',
   'Aklında nasıl bir yolculuk var?': 'What kind of trip do you have in mind?',
-  'Günlerini, duraklarını ve seyahat önerilerini sor.': 'Ask about your days, stops, and travel tips.',
+  'Günlerini, duraklarını ve seyahat önerilerini sor.':
+      'Ask about your days, stops, and travel tips.',
   'Destinasyon, bütçe veya ulaşım. İlk sorunu sor, gerisini birlikte düşünelim.': 'Destinations, budgets, or getting around. Ask your first question and let’s work it out together.',
   'Avrupa için en iyi 3 şehir?': 'Best 3 cities in Europe?',
   '1.000€ ile nereye gidebilirim?': 'Where can I go with €1,000?',
   "Ocak'ta sıcak tatil yerleri?": 'Warm destinations in January?',
   'Solo seyahat için neresi ideal?': 'Best places for solo travel?',
-  'Türk pasaportu ile vizesiz ülkeler?': 'Visa-free countries for a Turkish passport?',
-  'Balayı için en romantik destinasyonlar?': 'Most romantic honeymoon destinations?',
+  'Türk pasaportu ile vizesiz ülkeler?':
+      'Visa-free countries for a Turkish passport?',
+  'Balayı için en romantik destinasyonlar?':
+      'Most romantic honeymoon destinations?',
   'Hangi günüm en yoğun?': 'Which of my days is busiest?',
   'Planıma ne ekleyebilirim?': 'What can I add to my plan?',
-  'Bu rotanın bütçesini nasıl azaltabilirim?': 'How can I reduce the cost of this itinerary?',
+  'Bu rotanın bütçesini nasıl azaltabilirim?':
+      'How can I reduce the cost of this itinerary?',
   'Planımdaki yemek seçimleri nasıl?': 'How are the food choices in my plan?',
-  'Bu şehirde en pratik ulaşım nasıl?': 'What’s the best way to get around this city?',
+  'Bu şehirde en pratik ulaşım nasıl?':
+      'What’s the best way to get around this city?',
   'Gitmeden bilmem gereken şeyler?': 'Anything I should know before I go?',
   'Daha detay ver': 'Tell me more',
   'Bütçe ne olmalı?': 'What should my budget be?',
@@ -42,45 +63,55 @@ const mobileEnglishTranslations = <String, String>{
   'Planın hakkında sor…': 'Ask about your plan…',
   'Bir şey sor…': 'Ask something…',
   'Yanıt hazırlanıyor…': 'Preparing your answer…',
-  'Yanıt gecikti. Tekrar deneyebilirsin.': 'The response timed out. You can try again.',
-  'Sohbete devam etmek için yeniden giriş yap.': 'Sign in again to continue chatting.',
-  'Kısa sürede çok fazla soru sordun. Biraz sonra tekrar dene.': 'You’ve asked too many questions in a short time. Try again shortly.',
-  'Asistana ulaşılamadı. Bağlantını kontrol edip tekrar dene.': 'The assistant is unavailable. Check your connection and try again.',
+  'Yanıt gecikti. Tekrar deneyebilirsin.':
+      'The response timed out. You can try again.',
+  'Sohbete devam etmek için yeniden giriş yap.':
+      'Sign in again to continue chatting.',
+  'Kısa sürede çok fazla soru sordun. Biraz sonra tekrar dene.':
+      'You’ve asked too many questions in a short time. Try again shortly.',
+  'Asistana ulaşılamadı. Bağlantını kontrol edip tekrar dene.':
+      'The assistant is unavailable. Check your connection and try again.',
   'Asistan erişimi doğrulanamadı. Oturumunu kontrol edip tekrar dene.': 'Access to the assistant could not be verified. Check your session and try again.',
-  'Yanıt alınamadı. Sorunu tekrar gönderebilirsin.': 'No complete answer was received. You can send your question again.',
+  'Yanıt alınamadı. Sorunu tekrar gönderebilirsin.':
+      'No complete answer was received. You can send your question again.',
   'Örn. İstanbul – Roma uçuşu': 'e.g. Istanbul – Rome flight',
   'PNR / rezervasyon kodu': 'PNR / booking code',
   'Örn. TRV123': 'e.g. TRV123',
   'Kalkış tarihi': 'Departure date',
   'Uçuş bilgileri': 'Flight details',
   'havayolu.com/rezervasyonum': 'airline.com/my-booking',
-  'Transfer, özel bagaj veya uçuş hatırlatması…': 'Transfer, special baggage, or flight reminder…',
+  'Transfer, özel bagaj veya uçuş hatırlatması…':
+      'Transfer, special baggage, or flight reminder…',
   'Örn. Roma merkez oteli': 'e.g. Central Rome hotel',
   'Rezervasyon kodu': 'Booking code',
   'Örn. HTL456': 'e.g. HTL456',
   'Giriş tarihi': 'Check-in date',
   'Konaklama bilgileri': 'Accommodation details',
   'otel.com/rezervasyonum': 'hotel.com/my-booking',
-  'Kahvaltı, giriş talebi veya resepsiyon notu…': 'Breakfast, check-in request, or reception note…',
+  'Kahvaltı, giriş talebi veya resepsiyon notu…':
+      'Breakfast, check-in request, or reception note…',
   'Örn. Kolezyum giriş bileti': 'e.g. Colosseum entry ticket',
   'Bilet / sipariş kodu': 'Ticket / order code',
   'Örn. BİLET-789': 'e.g. TICKET-789',
   'Etkinlik tarihi': 'Event date',
   'bilet.com/siparisim': 'tickets.com/my-order',
-  'Buluşma noktası veya giriş hatırlatması…': 'Meeting point or entry reminder…',
+  'Buluşma noktası veya giriş hatırlatması…':
+      'Meeting point or entry reminder…',
   'Örn. Avrupa seyahat sigortası': 'e.g. Europe travel insurance',
   'Poliçe numarası': 'Policy number',
   'Örn. POL-456789': 'e.g. POL-456789',
   'Poliçe başlangıç tarihi': 'Policy start date',
   'Sigorta bilgileri': 'Insurance details',
   'sigorta.com/policem': 'insurance.com/my-policy',
-  'Kapsam veya acil durumda izlenecek adımlar…': 'Coverage or steps to follow in an emergency…',
+  'Kapsam veya acil durumda izlenecek adımlar…':
+      'Coverage or steps to follow in an emergency…',
   'Örn. Pasaport bilgisi': 'e.g. Passport details',
   'Belge referansı / son 4 hane': 'Document reference / last 4 digits',
   'Tam belge numarasını kaydetme': 'Do not save the full document number',
   'Düzenlenme tarihi': 'Issue date',
   'resmî doğrulama bağlantısı': 'official verification link',
-  'Belgenin kendisini ya da hassas bilgileri yazma…': 'Do not enter the document itself or sensitive details…',
+  'Belgenin kendisini ya da hassas bilgileri yazma…':
+      'Do not enter the document itself or sensitive details…',
   'Örn. Havaalanı transferi': 'e.g. Airport transfer',
   'Referans kodu': 'Reference code',
   'Varsa referans kodu': 'Reference code, if any',
@@ -125,21 +156,41 @@ const mobileEnglishTranslations = <String, String>{
   'Son geçerlilik tarihi': 'Expiry date',
   'Düzenleyen kurum': 'Issuing authority',
   'Örn. İstanbul Valiliği': 'e.g. Istanbul Governor\'s Office',
-  'Bir başlık ekle; diğer alanları ihtiyacına göre doldur.': 'Add a title, then fill in any other details you need.',
+  'Bir başlık ekle; diğer alanları ihtiyacına göre doldur.':
+      'Add a title, then fill in any other details you need.',
   'Temel bilgiler': 'Basic details',
-  'Bu kayda ait bilgileri ekleyebilirsin.': 'Add any details you want to keep with this item.',
+  'Bu kayda ait bilgileri ekleyebilirsin.':
+      'Add any details you want to keep with this item.',
   'İlk kaydını ekle': 'Add your first item',
+  'İlk kaydı ekle': 'Add your first item',
+  'Bir sonraki yolculuğun': 'Your next journey',
+  'KİŞİSEL SEYAHAT CÜZDANI': 'PERSONAL TRAVEL WALLET',
+  'GENEL SEYAHAT': 'GENERAL TRAVEL',
   'Bilet · Rezervasyon · Belge': 'Tickets · Bookings · Documents',
-  'Bilet ve rezervasyonların, elinin altında.': 'Your tickets and bookings, close at hand.',
+  'Bilet ve rezervasyonların, elinin altında.':
+      'Your tickets and bookings, close at hand.',
   '1 kayıt': '1 item',
   '{count} kayıt': '{count} items',
   'Kod kayıtlı': 'Code saved',
   'Yeni kayıt ekle': 'Add a new item',
+  'Kart ekle': 'Add item',
+  'Kartlar ({count})': 'Items ({count})',
   'Kayıtların': 'Your items',
-  'Yolculuğuna ait her şey, tek yerde.': 'Everything for your trip, in one place.',
-  'Bilet ve rezervasyon bilgilerini ekle; ihtiyaç duyduğunda kartına dokun.': 'Add your ticket and booking details. Tap a card whenever you need them.',
-  'Seyahat listesi alınamadı. Mevcut cüzdan kayıtlarını kullanabilirsin.': 'Could not load trips. You can still use your existing wallet items.',
-  'Cüzdan yüklenemedi. Bağlantını kontrol edip tekrar dene.': 'Could not load your wallet. Check your connection and try again.',
+  'Biletlerin, rezervasyonların ve notların burada bir araya gelsin. Bir kayıt ekle, kartın cüzdanına yerleşsin.': 'Keep your tickets, bookings, and notes together. Add an item and its card will slip into your wallet.',
+  'Uçuşların ve rezervasyon kodların': 'Your flights and booking codes',
+  'Konaklama bilgilerin ve giriş tarihlerin': 'Your stays and check-in dates',
+  'Etkinlik biletlerin ve seyahat notların':
+      'Your event tickets and travel notes',
+  'İlk kartın için cüzdanında yer hazır.':
+      'Your wallet is ready for its first card.',
+  'Yolculuğuna ait her şey, tek yerde.':
+      'Everything for your trip, in one place.',
+  'Bilet ve rezervasyon bilgilerini ekle; ihtiyaç duyduğunda kartına dokun.':
+      'Add your ticket and booking details. Tap a card whenever you need them.',
+  'Seyahat listesi alınamadı. Mevcut cüzdan kayıtlarını kullanabilirsin.':
+      'Could not load trips. You can still use your existing wallet items.',
+  'Cüzdan yüklenemedi. Bağlantını kontrol edip tekrar dene.':
+      'Could not load your wallet. Check your connection and try again.',
   'Gezgin kartı': 'Traveler card',
   'Her rota, yeni bir hikâye': 'Every route, a new story',
   'Paylaşılan rota': 'Shared routes',
@@ -151,12 +202,15 @@ const mobileEnglishTranslations = <String, String>{
   'Takip durumu alınamadı.': 'Could not load follow status.',
   'Rotalar yüklenemedi': 'Could not load routes',
   'Henüz paylaşılan rota yok': 'No shared routes yet',
-  'Bu gezginin paylaştığı rotalar burada yer alacak.': 'Routes shared by this traveler will appear here.',
+  'Bu gezginin paylaştığı rotalar burada yer alacak.':
+      'Routes shared by this traveler will appear here.',
   'Profil yüklenemedi': 'Could not load profile',
   'Bu profil gizli': 'This profile is private',
   'Gezgin bulunamadı': 'Traveler not found',
-  'Bu gezgin profilini topluluğa kapatmış.': 'This traveler has made their profile private.',
-  'Bu gezgin kartı artık kullanılamıyor.': 'This traveler card is no longer available.',
+  'Bu gezgin profilini topluluğa kapatmış.':
+      'This traveler has made their profile private.',
+  'Bu gezgin kartı artık kullanılamıyor.':
+      'This traveler card is no longer available.',
   'Rotayı paylaşan': 'Shared by',
   'Rota süresi': 'Trip length',
   '1 gün': '1 day',
@@ -174,12 +228,15 @@ const mobileEnglishTranslations = <String, String>{
   'GÖRÜNÜM': 'APPEARANCE',
   'Tema': 'Theme',
   'Sana uygun görünüm': 'Make it your own',
-  'Açık, karanlık veya sistem temasını seç.': 'Choose light, dark or your system theme.',
+  'Açık, karanlık veya sistem temasını seç.':
+      'Choose light, dark or your system theme.',
   'Sistem ayarı': 'System setting',
   'Açık': 'Light',
   'Karanlık': 'Dark',
-  'Cihazının görünümüne otomatik uyum sağlar.': 'Automatically matches your device’s appearance.',
-  'Sıcak krem tonları ve aydınlık bir görünüm.': 'Warm cream tones and a bright appearance.',
+  'Cihazının görünümüne otomatik uyum sağlar.':
+      'Automatically matches your device’s appearance.',
+  'Sıcak krem tonları ve aydınlık bir görünüm.':
+      'Warm cream tones and a bright appearance.',
   'Koyu tonlar ve yumuşak kontrast.': 'Deep tones with gentle contrast.',
   'Seçimin otomatik kaydedilir.': 'Your choice is saved automatically.',
   'Cihaz izni ve bildirim durumu': 'Device permission and notification status',
@@ -232,7 +289,8 @@ const mobileEnglishTranslations = <String, String>{
   'Bildirimler kapalı': 'Notifications are off',
   'Bu cihaz bildirim almaya hazır.':
       'This device is ready to receive notifications.',
-  'Bildirimleri açtığında gerekirse sistem izni istenir.': 'Turning on notifications will ask for system permission if needed.',
+  'Bildirimleri açtığında gerekirse sistem izni istenir.':
+      'Turning on notifications will ask for system permission if needed.',
   'Bu seçim yalnızca bu cihaz içindir. Değişiklikler hemen uygulanır.': 'This choice applies only to this device. Changes take effect immediately.',
   'Bir deneme yap': 'Try it out',
   'Bildirimleri açtıktan sonra bu telefona bir test mesajı gönderebilirsin.':
@@ -379,7 +437,6 @@ const mobileEnglishTranslations = <String, String>{
   'Önemli': 'Important',
   'Hatırlatma': 'Reminder',
   'Bilgi': 'Info',
-  'Yolculuğun güncel kalsın': 'Stay on top of your trip',
   'Biletlerin, hazırlıkların ve seyahatinden son bilgiler.':
       'Your tickets, preparations and travel updates.',
   '{count} hatırlatma': '{count} reminders',

@@ -423,7 +423,6 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                               ],
                             ),
                           ),
-                          AssistantLauncher(uid: widget.uid, plan: plan),
                         ],
                       ),
                     ),
@@ -451,8 +450,13 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                                         .headlineMedium,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                AssistantLauncher(uid: widget.uid, plan: plan),
+                                if (_tab == 0) ...[
+                                  const SizedBox(width: 8),
+                                  AssistantLauncher(
+                                    uid: widget.uid,
+                                    plan: plan,
+                                  ),
+                                ],
                               ],
                             ),
                             const SizedBox(height: 6),

@@ -27,6 +27,7 @@ abstract interface class AuthRepository {
   Stream<AuthSession?> watchSession();
   Future<void> signIn({required String email, required String password});
   Future<void> signInWithGoogle();
+  Future<void> signInWithApple();
   Future<void> register({
     required String name,
     required String email,
@@ -97,6 +98,30 @@ class FirebaseAuthRepository implements AuthRepository {
     } on GoogleSignInException catch (error) {
       throw AuthFailure(_messageForGoogle(error.code));
     } on FirebaseAuthException catch (error) {
+      throw AuthFailure(_messageFor(error.code));
+    }
+  }
+
+  @override
+  Future<void> signInWithApple() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
+      throw const AuthFailure(
+        'Apple ile giriş yalnızca iPhone ve iPad’de kullanılabilir.',
+      );
+    }
+    try {
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+      final result = await _auth.signInWithProvider(provider);
+      _syncUserDocument(result.user, recordConsent: true);
+    } on FirebaseAuthException catch (error) {
+      if (error.code == 'web-context-canceled' ||
+          error.code == 'web-context-cancelled' ||
+          error.code == 'canceled' ||
+          error.code == 'cancelled') {
+        throw const AuthFailure('Apple ile giriş iptal edildi.');
+      }
       throw AuthFailure(_messageFor(error.code));
     }
   }
@@ -185,6 +210,19 @@ class FirebaseAuthRepository implements AuthRepository {
     await user.reauthenticateWithCredential(
       GoogleAuthProvider.credential(idToken: token),
     );
+  }
+
+  Future<void> reauthenticateApple(String expectedUid) async {
+    final user = _auth.currentUser;
+    if (user == null || user.uid != expectedUid) {
+      throw const AuthFailure('Oturum değişti. Yeniden giriş yap.');
+    }
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
+      throw const AuthFailure(
+        'Apple doğrulaması yalnızca iPhone ve iPad’de kullanılabilir.',
+      );
+    }
+    await user.reauthenticateWithProvider(AppleAuthProvider());
   }
 
   Future<void> _initializeGoogleSignIn() {
