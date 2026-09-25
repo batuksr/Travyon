@@ -9,6 +9,7 @@ import 'package:travyon/features/wallet/presentation/wallet_design.dart';
 import 'package:travyon/features/wallet/presentation/wallet_editor.dart';
 import 'package:travyon/features/wallet/presentation/wallet_page.dart';
 import 'package:travyon/features/wallet/presentation/wallet_pocket.dart';
+import 'package:travyon/features/wallet/presentation/wallet_trip_selector.dart';
 
 import 'community_route_design_test.dart' show host, viewport;
 import 'wallet_test.dart' show FakeWallet, flight;
@@ -91,6 +92,83 @@ Future<void> reveal(
 
 void main() {
   for (final language in ['tr', 'en']) {
+    testWidgets(
+      'flight overview uses saved fields without revealing codes ($language)',
+      (tester) async {
+        viewport(tester, const Size(320, 740));
+        const entry = WalletEntry(
+          id: 'flight-details',
+          planId: 'general',
+          category: 'flight',
+          title: 'Yolculuk bileti',
+          reference: 'PRIVATE-PNR',
+          date: '2026-10-12',
+          createdAt: 1,
+          details: {
+            'airline': 'Türk Hava Yolları',
+            'flightNumber': 'TK2004',
+            'origin': 'İstanbul Havalimanı',
+            'destination': 'Nevşehir Kapadokya Havalimanı',
+            'time': '08:45',
+            'seat': '12A',
+          },
+        );
+        var opened = 0;
+        Widget card(WalletEntry value) => host(
+          Scaffold(
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: WalletRecordCard(
+                  entry: value,
+                  highlight: true,
+                  onOpen: () => opened++,
+                ),
+              ),
+            ),
+          ),
+          language: language,
+          dark: language == 'en',
+          scale: 2,
+        );
+        await tester.pumpWidget(card(entry));
+        await tester.pumpAndSettle();
+        expect(find.text('Türk Hava Yolları'), findsOneWidget);
+        expect(find.text('TK2004'), findsOneWidget);
+        expect(find.text('Yolculuk bileti'), findsNothing);
+        expect(find.text('İstanbul Havalimanı'), findsOneWidget);
+        expect(find.text('Nevşehir Kapadokya Havalimanı'), findsOneWidget);
+        expect(find.text('08:45'), findsOneWidget);
+        expect(find.text('12A'), findsOneWidget);
+        expect(find.text('PRIVATE-PNR'), findsNothing);
+        expect(
+          find.text(language == 'en' ? 'Code saved' : 'Kod kayıtlı'),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+        final surface = tester.widget<Material>(
+          find.byKey(const ValueKey('wallet-flight-surface-flight-details')),
+        );
+        final shape = surface.shape! as RoundedRectangleBorder;
+        expect(shape.side.width, 1);
+        expect(shape.side.color, isNot(const Color(0xFFD86731)));
+        await tester.tap(find.text('Türk Hava Yolları'));
+        expect(opened, 1);
+        await tester.pumpWidget(card(flight));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('wallet-flight-route-f1')),
+          findsNothing,
+        );
+        expect(find.text('12A'), findsNothing);
+        expect(find.text('TK2004'), findsNothing);
+        expect(find.text('ABC123'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final language in ['tr', 'en']) {
     for (final dark in [false, true]) {
       for (final size in [const Size(320, 740), const Size(640, 360)]) {
         testWidgets(
@@ -165,6 +243,7 @@ void main() {
 
     final firstBenefit = find.text('Uçuşların ve rezervasyon kodların');
     final pocket = find.byKey(const ValueKey('wallet-pocket'));
+    expect(find.byIcon(Icons.account_balance_wallet_outlined), findsNothing);
     expect(find.text('Yolculuğunu cebine koy.'), findsNothing);
     expect(
       find.textContaining('Biletlerin, rezervasyonların ve notların'),
@@ -296,7 +375,7 @@ void main() {
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
       await reveal(tester, find.byKey(const ValueKey('wallet-entry-f1')));
-      expect(find.text('Code saved'), findsOneWidget);
+      expect(find.text('Code saved'), findsNothing);
       expect(find.text('ABC123'), findsNothing);
       expect(tester.takeException(), isNull);
     },
@@ -331,15 +410,11 @@ void main() {
       addTearDown(repo.changes.close);
       await tester.pumpWidget(host(page(repo, plans: plans)));
       await tester.pumpAndSettle();
-      final select = tester.widget<DropdownButton<String>>(
-        find.byType(DropdownButton<String>),
+      final select = tester.widget<WalletTripSelector>(
+        find.byType(WalletTripSelector),
       );
-      expect(select.items!.map((item) => item.value), [
-        'general',
-        'roma',
-        'deleted',
-      ]);
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      expect(select.trips.keys, ['general', 'roma', 'deleted']);
+      await tester.tap(find.byKey(const ValueKey('wallet-trip-select')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Roma, İtalya').last);
       await tester.pumpAndSettle();
@@ -362,12 +437,8 @@ void main() {
       expect(repo.saved, isEmpty);
       await tester.tap(find.byTooltip('Geri'));
       await tester.pumpAndSettle();
-      await reveal(
-        tester,
-        find.byType(DropdownButtonFormField<String>),
-        up: true,
-      );
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await reveal(tester, find.byType(WalletTripSelector), up: true);
+      await tester.tap(find.byKey(const ValueKey('wallet-trip-select')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Arşivlenmiş seyahat').last);
       await tester.pumpAndSettle();

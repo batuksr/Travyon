@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../help/presentation/help_style.dart';
 import '../data/settings_repository.dart';
 import 'account_widgets.dart';
 
@@ -145,7 +144,7 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
         Icon(
           satisfied ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
           size: 17,
-          color: satisfied ? context.colors.forest : context.colors.muted,
+          color: satisfied ? context.colors.text : context.colors.muted,
         ),
         const SizedBox(width: 9),
         Expanded(
@@ -153,7 +152,7 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
             context.tr(label),
             style: TextStyle(
               fontSize: 12,
-              color: satisfied ? context.colors.forest : context.colors.muted,
+              color: satisfied ? context.colors.text : context.colors.muted,
               height: 1.5,
             ),
           ),
@@ -175,25 +174,19 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AccountHeader(
-                  title: widget.emailMode
-                      ? 'E-postanı güncelle.'
-                      : 'Hesabını koru.',
                   subtitle: widget.emailMode
                       ? 'E-posta adresini değiştirmek için yeni adresini doğrula.'
                       : 'Güçlü bir şifre seçerek hesabını güvende tut.',
-                  icon: widget.emailMode
-                      ? Icons.alternate_email_rounded
-                      : Icons.lock_outline_rounded,
                 ),
                 if (widget.currentEmail.isNotEmpty)
-                  HelpPanel(
+                  AccountPanel(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.account_circle_outlined,
                           size: 25,
-                          color: context.colors.forest,
+                          color: context.colors.text,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -339,7 +332,7 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
           ),
   );
 
-  Widget _successPanel() => HelpPanel(
+  Widget _successPanel() => AccountPanel(
     child: Semantics(
       liveRegion: true,
       child: Column(
@@ -350,7 +343,7 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
             widget.emailMode
                 ? Icons.mark_email_read_outlined
                 : Icons.check_circle_outline_rounded,
-            color: context.colors.forest,
+            color: context.colors.text,
             size: 48,
           ),
           const SizedBox(height: 20),

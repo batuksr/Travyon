@@ -24,7 +24,7 @@ class NextStopPanel extends StatelessWidget {
     final remaining = day.stops.where((stop) => !stop.completed);
     final next = remaining.isEmpty ? null : remaining.first;
     return TravyonSurface(
-      color: context.colors.orangeTint,
+      color: context.colors.surface,
       borderRadius: 22,
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -51,7 +51,7 @@ class NextStopPanel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: context.colors.forest,
+                    color: context.colors.muted,
                   ),
                 ),
                 if (next != null) ...[
@@ -186,7 +186,7 @@ class PlanBudgetSummary extends StatelessWidget {
               value: (spent / budget).clamp(0, 1),
               color: remaining < 0
                   ? Theme.of(context).colorScheme.error
-                  : context.colors.forest,
+                  : context.colors.accent,
               backgroundColor: context.colors.divider,
               borderRadius: BorderRadius.circular(4),
               minHeight: 5,
@@ -198,7 +198,7 @@ class PlanBudgetSummary extends StatelessWidget {
             style: TextStyle(
               color: hasBudget && remaining < 0
                   ? Theme.of(context).colorScheme.error
-                  : context.colors.forest,
+                  : context.colors.text,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -220,6 +220,10 @@ class PlanBudgetSummary extends StatelessWidget {
       child: collapsible
           ? ExpansionTile(
               key: const PageStorageKey('journey-budget'),
+              textColor: context.colors.text,
+              collapsedTextColor: context.colors.text,
+              iconColor: context.colors.muted,
+              collapsedIconColor: context.colors.muted,
               tilePadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 4,
@@ -314,6 +318,10 @@ class _DayWalletPanelState extends State<DayWalletPanel> {
         borderRadius: 22,
         child: ExpansionTile(
           key: PageStorageKey('day-wallet-${widget.planId}-${widget.date}'),
+          textColor: context.colors.text,
+          collapsedTextColor: context.colors.text,
+          iconColor: context.colors.muted,
+          collapsedIconColor: context.colors.muted,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: const TravyonIconBadge(
             icon: Icons.wallet_outlined,

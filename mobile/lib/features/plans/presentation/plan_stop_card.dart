@@ -16,6 +16,7 @@ class PlanStopCard extends StatefulWidget {
     required this.onAction,
     required this.canMoveUp,
     required this.canMoveDown,
+    this.onDirections,
   });
 
   final PlanStop stop;
@@ -24,6 +25,7 @@ class PlanStopCard extends StatefulWidget {
   final VoidCallback onComplete;
   final ValueChanged<String> onAction;
   final bool canMoveUp, canMoveDown;
+  final VoidCallback? onDirections;
 
   @override
   State<PlanStopCard> createState() => _PlanStopCardState();
@@ -39,28 +41,19 @@ class _PlanStopCardState extends State<PlanStopCard> {
         .number(stop.estimated, fractionDigits: 2);
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.text.withValues(alpha: 0.035),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: Material(
         color: context.colors.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: context.colors.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -69,20 +62,20 @@ class _PlanStopCardState extends State<PlanStopCard> {
                     children: [
                       Container(
                         constraints: const BoxConstraints(
-                          minWidth: 34,
-                          minHeight: 34,
+                          minWidth: 28,
+                          minHeight: 28,
                         ),
-                        padding: const EdgeInsets.all(7),
+                        padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: context.colors.orangeTint,
-                          borderRadius: BorderRadius.circular(11),
+                          color: context.colors.background,
+                          shape: BoxShape.circle,
                         ),
                         child: Text(
                           '${stop.index + 1}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: context.colors.forest,
-                            fontSize: 14,
+                            color: context.colors.text,
+                            fontSize: 12,
                             height: 1.4,
                             fontWeight: FontWeight.w700,
                           ),
@@ -96,7 +89,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                             stop.name,
                             style: TextStyle(
                               color: context.colors.text,
-                              fontSize: 18,
+                              fontSize: 16,
                               height: 1.35,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
@@ -117,19 +110,22 @@ class _PlanStopCardState extends State<PlanStopCard> {
                           style: IconButton.styleFrom(
                             minimumSize: const Size(48, 48),
                             backgroundColor: stop.completed
-                                ? AppColors.forest
-                                : context.colors.orangeTint,
+                                ? context.colors.accent
+                                : context.colors.surface,
                             foregroundColor: stop.completed
-                                ? Colors.white
+                                ? context.colors.onAccent
                                 : context.colors.muted,
                             disabledBackgroundColor: stop.completed
-                                ? context.colors.forest.withValues(alpha: 0.5)
-                                : context.colors.orangeTint,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                                ? context.colors.accent.withValues(alpha: 0.5)
+                                : context.colors.surface,
+                            shape: const CircleBorder(),
                           ),
-                          icon: const Icon(Icons.check_rounded, size: 23),
+                          icon: Icon(
+                            stop.completed
+                                ? Icons.check_rounded
+                                : Icons.check_circle_outline_rounded,
+                            size: 23,
+                          ),
                         ),
                       ),
                     ],
@@ -137,11 +133,11 @@ class _PlanStopCardState extends State<PlanStopCard> {
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
+                      horizontal: 0,
+                      vertical: 0,
                     ),
                     decoration: BoxDecoration(
-                      color: context.colors.orangeTint,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Wrap(
@@ -182,7 +178,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: context.colors.orangeTint,
+                        color: context.colors.background,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -191,7 +187,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                           Text(
                             context.tr('Notun'),
                             style: TextStyle(
-                              color: context.colors.forest,
+                              color: context.colors.text,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
@@ -202,7 +198,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: context.colors.forest,
+                              color: context.colors.text,
                               fontSize: 13,
                               height: 1.5,
                             ),
@@ -215,6 +211,15 @@ class _PlanStopCardState extends State<PlanStopCard> {
               ),
             ),
             Divider(height: 1, color: context.colors.divider),
+            if (widget.onDirections != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: widget.onDirections,
+                  icon: const Icon(Icons.near_me_outlined, size: 17),
+                  label: Text(context.tr('Yol tarifi al')),
+                ),
+              ),
             _actions(context),
           ],
         ),
@@ -253,7 +258,7 @@ class _PlanStopCardState extends State<PlanStopCard> {
             TextButton.icon(
               onPressed: () => setState(() => _expanded = !_expanded),
               style: TextButton.styleFrom(
-                foregroundColor: context.colors.tone(const Color(0xFFA74F21)),
+                foregroundColor: context.colors.text,
                 padding: EdgeInsets.zero,
                 textStyle: const TextStyle(
                   fontFamily: AppTypography.body,
@@ -276,14 +281,14 @@ class _PlanStopCardState extends State<PlanStopCard> {
   );
 
   Widget _actions(BuildContext context) => Container(
-    color: context.colors.background,
-    padding: const EdgeInsets.all(12),
+    color: context.colors.surface,
+    padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
     child: LayoutBuilder(
       builder: (context, constraints) {
         final note = TextButton.icon(
           onPressed: widget.busy ? null : () => widget.onAction('note'),
           style: TextButton.styleFrom(
-            backgroundColor: context.colors.orangeTint,
+            backgroundColor: context.colors.background,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

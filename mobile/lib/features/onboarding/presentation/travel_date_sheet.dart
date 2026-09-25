@@ -5,7 +5,6 @@ import '../../../core/localization/app_localizations.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../data/onboarding_data.dart';
-import 'onboarding_widgets.dart';
 
 const travelMonths = [
   'Ocak',
@@ -26,6 +25,27 @@ String travelDateLabel(String raw) {
   return date == null
       ? 'Tarih seç'
       : '${date.day} ${travelMonths[date.month - 1]} ${date.year}';
+}
+
+/// Calendar constructors keep local dates stable across DST and year changes.
+Map<String, DateTimeRange> travelDateShortcuts(DateTime today) {
+  final date = DateUtils.dateOnly(today);
+  final saturday = DateTime(
+    date.year,
+    date.month,
+    date.day + (DateTime.saturday - date.weekday + 7) % 7,
+  );
+  final monday = DateTime(date.year, date.month, date.day + 8 - date.weekday);
+  return {
+    'Bu hafta sonu': DateTimeRange(
+      start: saturday,
+      end: DateTime(saturday.year, saturday.month, saturday.day + 1),
+    ),
+    'Gelecek hafta': DateTimeRange(
+      start: monday,
+      end: DateTime(monday.year, monday.month, monday.day + 6),
+    ),
+  };
 }
 
 /// A Monday-first month grid. Changes stay local until explicitly confirmed.
@@ -83,6 +103,12 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
     }
   });
 
+  void _clear() => setState(() {
+    _start = null;
+    _end = null;
+    _error = null;
+  });
+
   @override
   Widget build(BuildContext context) {
     final first = DateTime(_month.year, _month.month);
@@ -94,6 +120,25 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 8, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Seyahat tarihleri',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                IconButton(
+                  key: const ValueKey('calendar-close'),
+                  tooltip: context.tr('Kapat'),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                ),
+              ],
+            ),
+          ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
@@ -102,29 +147,82 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Seyahat tarihleri',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
                     'Önce gidiş, sonra dönüş gününü seç.',
-                    style: TextStyle(color: context.colors.muted, height: 1.5),
-                  ),
-                  const SizedBox(height: 18),
-                  OnboardingPair(
-                    first: OnboardingValueTile(
-                      title: 'Gidiş',
-                      value: _start == null
-                          ? 'Tarih seç'
-                          : travelDateLabel(dateKey(_start!)),
-                      icon: Icons.flight_takeoff_rounded,
+                    style: TextStyle(
+                      color: context.colors.muted,
+                      fontSize: 12,
+                      height: 1.5,
                     ),
-                    second: OnboardingValueTile(
-                      title: 'Dönüş',
-                      value: _end == null
-                          ? 'Tarih seç'
-                          : travelDateLabel(dateKey(_end!)),
-                      icon: Icons.flight_land_rounded,
+                  ),
+                  const SizedBox(height: 14),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final preset in travelDateShortcuts(_min).entries)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              key: ValueKey('calendar-shortcut-${preset.key}'),
+                              label: Text(preset.key),
+                              selected:
+                                  DateUtils.isSameDay(
+                                    _start,
+                                    preset.value.start,
+                                  ) &&
+                                  DateUtils.isSameDay(_end, preset.value.end),
+                              selectedColor: context.colors.greenTint,
+                              labelStyle: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge!
+                                  .copyWith(
+                                    color: context.colors.text,
+                                    fontSize: 12,
+                                  ),
+                              showCheckmark: false,
+                              shape: const StadiumBorder(),
+                              onSelected: (_) => setState(() {
+                                _start = preset.value.start;
+                                _end = preset.value.end;
+                                _month = DateTime(_start!.year, _start!.month);
+                                _error = null;
+                              }),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.background,
+                      border: Border.all(color: context.colors.divider),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 18,
+                          color: context.colors.muted,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${_start == null ? context.tr('Gidiş') : context.tr(travelDateLabel(dateKey(_start!)))} → ${_end == null ? context.tr('Dönüş') : context.tr(travelDateLabel(dateKey(_end!)))}',
+                            style: TextStyle(
+                              color: context.colors.text,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -229,9 +327,9 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                             color: edge
                                 ? context.colors.accent
                                 : inside
-                                ? context.colors.tone(const Color(0xFFFFE4D1))
+                                ? context.colors.greenTint
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(edge ? 14 : 0),
+                            borderRadius: BorderRadius.circular(edge ? 12 : 0),
                             child: InkWell(
                               key: ValueKey('calendar-${dateKey(day)}'),
                               borderRadius: BorderRadius.circular(14),
@@ -272,19 +370,12 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
                                 ? '$_count gün · ${_count - 1} gece'
                                 : 'Dönüş gününü seç',
                             style: TextStyle(
-                              color: context.colors.forest,
+                              color: context.colors.text,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _start = null;
-                          _end = null;
-                          _error = null;
-                        }),
-                        child: const Text('Temizle'),
                       ),
                     ],
                   ),
@@ -308,14 +399,22 @@ class _TravelDateSheetState extends State<TravelDateSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            child: FilledButton(
-              onPressed: _count > 0 && _count <= 31
-                  ? () => Navigator.pop(
-                      context,
-                      DateTimeRange(start: _start!, end: _end!),
-                    )
-                  : null,
-              child: const Text('Tarihleri seç'),
+            child: Row(
+              children: [
+                TextButton(onPressed: _clear, child: const Text('Temizle')),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _count > 0 && _count <= 31
+                        ? () => Navigator.pop(
+                            context,
+                            DateTimeRange(start: _start!, end: _end!),
+                          )
+                        : null,
+                    child: const Text('Tarihleri seç'),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

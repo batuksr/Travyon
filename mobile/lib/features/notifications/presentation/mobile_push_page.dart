@@ -70,9 +70,7 @@ class _MobilePushPageState extends State<MobilePushPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AccountHeader(
-            title: 'Önemli anları kaçırma.',
             subtitle: 'Yolculuk hatırlatmalarını ve topluluktan haberleri al.',
-            icon: Icons.notifications_active_outlined,
           ),
           if (busy) ...[
             const LinearProgressIndicator(minHeight: 3),

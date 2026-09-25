@@ -10,6 +10,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/preferences/unit_formatter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/plan_detail.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../../plans/presentation/plan_detail_page.dart';
@@ -255,6 +256,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final selected = await showModalBottomSheet<DateTimeRange>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
       backgroundColor: context.colors.surface,
       constraints: BoxConstraints(
@@ -313,7 +315,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 icon: const Icon(Icons.arrow_back),
               ),
               title: const Text('Yeni yolculuğun'),
-              centerTitle: true,
+              centerTitle: false,
             ),
       body: SafeArea(
         child: _generating
@@ -384,22 +386,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ? null
           : SafeArea(
               top: false,
-              minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
               child: Container(
-                decoration: BoxDecoration(
-                  color: context.colors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: context.colors.divider),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.colors.text.withValues(alpha: .07),
-                      blurRadius: 22,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: context.colors.background),
                 child: FilledButton.icon(
                   key: const ValueKey('onboarding-next'),
                   onPressed: _busy
@@ -418,6 +407,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               ? Icons.bookmark_add_outlined
                               : Icons.arrow_forward,
                         ),
+                  iconAlignment: IconAlignment.end,
                   label: Text(
                     _saving
                         ? 'Kaydediliyor…'
@@ -434,7 +424,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   );
 
   Widget _section(String title, {String? hint}) => Padding(
-    padding: const EdgeInsets.only(top: 22, bottom: 14),
+    padding: const EdgeInsets.only(top: 12, bottom: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -468,8 +458,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   List<Widget> _basics() => [
     OnboardingSection(
-      title: 'Nereyi keşfedelim?',
-      hint: 'Bir şehir yaz veya önerilerden seç.',
+      title: 'Destinasyon',
       icon: Icons.place_outlined,
       child: Autocomplete<String>(
         initialValue: TextEditingValue(text: data.destination),
@@ -500,6 +489,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
             hintText: context.tr('Örn. Roma, İtalya'),
             prefixIcon: const Icon(Icons.search),
             counterText: '',
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(32),
+              borderSide: BorderSide(color: context.colors.divider),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(32),
+              borderSide: BorderSide(color: context.colors.accent, width: 1.5),
+            ),
           ),
           onChanged: (value) => _change(() {
             data.destination = value;
@@ -543,7 +540,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Text(
                 '${data.dayCount} gün · ${data.dayCount - 1} gece',
                 style: TextStyle(
-                  color: context.colors.forest,
+                  color: context.colors.muted,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -569,30 +567,37 @@ class _OnboardingPageState extends State<OnboardingPage> {
     OnboardingSection(
       title: 'Kaç kişi gidiyorsunuz?',
       icon: Icons.people_outline_rounded,
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: context.tr('Kişi azalt'),
-            onPressed: data.peopleCount > 1
-                ? () => _change(() => data.peopleCount--)
-                : null,
-            icon: const Icon(Icons.remove_circle_outline),
-          ),
-          Expanded(
-            child: Text(
-              '${data.peopleCount} kişi',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+      child: TravyonSurface(
+        borderRadius: 20,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: context.tr('Kişi azalt'),
+              onPressed: data.peopleCount > 1
+                  ? () => _change(() => data.peopleCount--)
+                  : null,
+              icon: const Icon(Icons.remove_circle_outline),
             ),
-          ),
-          IconButton(
-            tooltip: context.tr('Kişi artır'),
-            onPressed: data.peopleCount < 15
-                ? () => _change(() => data.peopleCount++)
-                : null,
-            icon: const Icon(Icons.add_circle_outline),
-          ),
-        ],
+            Expanded(
+              child: Text(
+                '${data.peopleCount} kişi',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: context.tr('Kişi artır'),
+              onPressed: data.peopleCount < 15
+                  ? () => _change(() => data.peopleCount++)
+                  : null,
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+          ],
+        ),
       ),
     ),
     OnboardingSection(
@@ -624,10 +629,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ChoiceChip(
                   key: ValueKey('currency-${currency.key}'),
                   label: Text('${currency.key} · ${currency.value}'),
-                  labelStyle: TextStyle(
-                    color: data.currencyCode == currency.key
-                        ? context.colors.tone(const Color(0xFF8C491A))
-                        : context.colors.text,
+                  labelStyle: Theme.of(context).textTheme.labelLarge!.copyWith(
+                    color: context.colors.text,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -640,7 +643,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   selected: data.currencyCode == currency.key,
                   onSelected: (_) =>
                       _change(() => data.currencyCode = currency.key),
-                  selectedColor: context.colors.tone(const Color(0xFFFFE4D1)),
+                  selectedColor: context.colors.greenTint,
+                  shape: const StadiumBorder(),
                   showCheckmark: false,
                 ),
             ],
@@ -721,7 +725,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         side: BorderSide(color: context.colors.divider),
       ),
       tileColor: context.colors.surface,
-      secondary: const OnboardingEmoji('🌅'),
+      secondary: Icon(Icons.wb_sunny_outlined, color: context.colors.text),
+      activeTrackColor: context.colors.accent,
+      activeThumbColor: context.colors.onAccent,
       title: const Text('Erken kalkmayı severim'),
       subtitle: const Text('Sabah erken aktivite planlanabilir'),
       value: data.earlyBird,
@@ -836,24 +842,29 @@ class _OnboardingPageState extends State<OnboardingPage> {
     Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppColors.forest,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const OnboardingEmoji('🎉', size: 34),
+          TravyonIconBadge(
+            icon: Icons.check_rounded,
+            color: context.colors.text,
+            background: context.colors.background,
+            size: 44,
+          ),
           const SizedBox(height: 14),
           Text(
             'Planın hazır',
-            style: Theme.of(context).textTheme.headlineMedium
-                ?.copyWith(color: AppColors.surface),
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 10),
           Text(
             data.destination,
-            style: const TextStyle(
-              color: AppColors.surface,
+            style: TextStyle(
+              color: context.colors.text,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -861,13 +872,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 12),
           Text(
             '${data.dayCount} gün · ${data.peopleCount} kişi',
-            style: const TextStyle(color: Color(0xFFDCE5DC)),
+            style: TextStyle(color: context.colors.muted),
           ),
           const SizedBox(height: 6),
           Text(
             '${currencies[data.currencyCode]}${planNumber(_plan!['totalEstimatedCost']).toStringAsFixed(0)} tahmini toplam',
-            style: const TextStyle(
-              color: Color(0xFFE7BA8D),
+            style: TextStyle(
+              color: context.colors.text,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -914,6 +925,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
       child: ExpansionTile(
         key: ValueKey('preview-day-${day['dayNumber']}'),
+        textColor: context.colors.text,
+        collapsedTextColor: context.colors.text,
+        iconColor: context.colors.muted,
+        collapsedIconColor: context.colors.muted,
         tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
         shape: const Border(),
@@ -950,13 +965,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: context.colors.tone(const Color(0xFFFFF0E5)),
+                      color: context.colors.background,
                     ),
                     child: Text(
                       '${i + 1}',
                       textScaler: TextScaler.noScaling,
                       style: TextStyle(
-                        color: context.colors.accent,
+                        color: context.colors.text,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),

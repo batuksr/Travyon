@@ -328,6 +328,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.text('Travyon AI'), findsNothing);
+    expect(tester.widget<AppBar>(find.byType(AppBar)).toolbarHeight, 72);
+    expect(find.text('Merhaba, Traveler!'), findsNothing);
+    final heading = find.text('Nereye gidiyoruz?');
+    expect(heading, findsOneWidget);
+    expect(
+      find.ancestor(of: heading, matching: find.byType(AppBar)),
+      findsOneWidget,
+    );
+    final headingTop = tester.getTopLeft(heading).dy;
+    expect(headingTop, lessThan(tester.getBottomLeft(find.byType(AppBar)).dy));
+    final safeTop = MediaQuery.paddingOf(tester.element(heading)).top;
+    expect(headingTop - safeTop, inInclusiveRange(16, 24));
+    final search = find.byKey(const ValueKey('hub-destination-search'));
+    final searchTop = tester.getTopLeft(search).dy;
+    expect(
+      searchTop - tester.getBottomLeft(heading).dy,
+      inInclusiveRange(24, 32),
+    );
+    final menu = find.byKey(const ValueKey('home-actions-menu'));
+    expect(find.byTooltip('Asistana sor').hitTestable(), findsNothing);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Asistana sor').hitTestable(), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Nereye gidiyoruz?')).dy, headingTop);
+    expect(tester.getTopLeft(search).dy, searchTop);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Asistana sor').hitTestable(), findsNothing);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
     final assistant = find.byTooltip('Asistana sor');
     final notifications = find.byTooltip('Bildirimler');
     expect(
@@ -350,7 +380,7 @@ void main() {
     expect(find.text('Nereye gidelim?'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Planlar'));
+    await tester.tap(find.byKey(const ValueKey('nav-plans')));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Asistana sor'), findsNothing);
     expect(tester.takeException(), isNull);

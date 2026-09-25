@@ -3,19 +3,44 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/assistant_controller.dart';
 import '../data/assistant_repository.dart';
 
 const _generalQuestions = [
-  (label: 'Şehir öner', question: 'Avrupa için en iyi 3 şehir?'),
-  (label: 'Bütçe', question: '1.000€ ile nereye gidebilirim?'),
-  (label: 'İpuçları', question: 'İlk seyahatim için birkaç pratik ipucu ver.'),
+  (
+    label: 'Şehir öner',
+    question: 'Avrupa için en iyi 3 şehir?',
+    icon: Icons.travel_explore_outlined,
+  ),
+  (
+    label: 'Bütçe',
+    question: '1.000€ ile nereye gidebilirim?',
+    icon: Icons.account_balance_wallet_outlined,
+  ),
+  (
+    label: 'İpuçları',
+    question: 'İlk seyahatim için birkaç pratik ipucu ver.',
+    icon: Icons.lightbulb_outline_rounded,
+  ),
 ];
 const _planQuestions = [
-  (label: 'Günlerim', question: 'Hangi günüm en yoğun?'),
-  (label: 'Bütçe', question: 'Bu rotanın bütçesini nasıl azaltabilirim?'),
-  (label: 'İpuçları', question: 'Gitmeden bilmem gereken şeyler?'),
+  (
+    label: 'Günlerim',
+    question: 'Hangi günüm en yoğun?',
+    icon: Icons.calendar_today_outlined,
+  ),
+  (
+    label: 'Bütçe',
+    question: 'Bu rotanın bütçesini nasıl azaltabilirim?',
+    icon: Icons.account_balance_wallet_outlined,
+  ),
+  (
+    label: 'İpuçları',
+    question: 'Gitmeden bilmem gereken şeyler?',
+    icon: Icons.lightbulb_outline_rounded,
+  ),
 ];
 const _followups = [
   'Daha detay ver',
@@ -157,7 +182,7 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
             IconButton(
               tooltip: context.tr('Sohbeti temizle'),
               onPressed: _clear,
-              icon: const Icon(Icons.add_comment_outlined),
+              icon: const Icon(Icons.delete_sweep_outlined),
             ),
           const SizedBox(width: 8),
         ],
@@ -181,18 +206,7 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
                         )
                       : SliverList.list(
                           children: [
-                            if (hasPlan)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 20),
-                                child: Text(
-                                  widget.plan!.destination,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: context.colors.muted,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
+                            if (hasPlan) _PlanContext(plan: widget.plan!),
                             for (final message in messages)
                               _MessageBubble(
                                 key: ValueKey(
@@ -219,11 +233,12 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
                                           right: 8,
                                         ),
                                         child: ActionChip(
+                                          shape: const StadiumBorder(),
                                           label: Text(context.tr(question)),
                                           labelStyle: TextStyle(
                                             color: context.colors.text,
                                             fontFamily: AppTypography.body,
-                                            fontSize: 13,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                           ),
                                           backgroundColor:
@@ -251,47 +266,64 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        key: const ValueKey('assistant-input'),
-                        controller: _input,
-                        minLines: 1,
-                        maxLines: compact ? 1 : 3,
-                        maxLength: assistantQuestionLimit,
-                        textCapitalization: TextCapitalization.sentences,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _send(),
-                        onChanged: (_) => setState(() {}),
-                        style: const TextStyle(fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: context.tr(
-                            hasPlan ? 'Planın hakkında sor…' : 'Bir şey sor…',
-                          ),
-                          counterText: '',
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Container(
+                  key: const ValueKey('assistant-composer'),
+                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: BoxDecoration(
+                    color: context.colors.surface,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: context.colors.divider),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          key: const ValueKey('assistant-input'),
+                          controller: _input,
+                          minLines: 1,
+                          maxLines: compact ? 1 : 3,
+                          maxLength: assistantQuestionLimit,
+                          textCapitalization: TextCapitalization.sentences,
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) => _send(),
+                          onChanged: (_) => setState(() {}),
+                          style: const TextStyle(fontSize: 14),
+                          decoration: InputDecoration(
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintStyle: TextStyle(
+                              color: context.colors.muted,
+                              fontSize: 14,
+                            ),
+                            hintText: context.tr(
+                              hasPlan ? 'Planın hakkında sor…' : 'Bir şey sor…',
+                            ),
+                            counterText: '',
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      key: const ValueKey('assistant-send'),
-                      tooltip: context.tr('Gönder'),
-                      onPressed: canSend ? () => _send() : null,
-                      style: IconButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                        backgroundColor: context.colors.accent,
-                        foregroundColor: context.colors.onAccent,
+                      const SizedBox(width: 4),
+                      IconButton.filled(
+                        key: const ValueKey('assistant-send'),
+                        tooltip: context.tr('Gönder'),
+                        onPressed: canSend ? () => _send() : null,
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          backgroundColor: context.colors.accent,
+                          foregroundColor: context.colors.onAccent,
+                        ),
+                        icon: const Icon(Icons.arrow_upward_rounded),
                       ),
-                      icon: const Icon(Icons.arrow_upward_rounded),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -300,6 +332,35 @@ class _TravelAssistantPageState extends State<TravelAssistantPage> {
       ),
     );
   }
+}
+
+class _PlanContext extends StatelessWidget {
+  const _PlanContext({required this.plan});
+  final TravelPlanSummary plan;
+
+  @override
+  Widget build(BuildContext context) => TravyonSurface(
+    margin: const EdgeInsets.only(bottom: 20),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    borderRadius: 16,
+    child: Row(
+      children: [
+        Icon(Icons.route_outlined, size: 19, color: context.colors.muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            plan.destination,
+            style: TextStyle(
+              color: context.colors.text,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _EmptyConversation extends StatelessWidget {
@@ -311,58 +372,88 @@ class _EmptyConversation extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     key: const ValueKey('assistant-welcome'),
     mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (plan != null) ...[
-        Text(
-          plan!.destination,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: context.colors.muted,
-            fontSize: 13,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
+      if (plan != null) _PlanContext(plan: plan!),
       Text(
         context.tr(plan == null ? 'Nereye gidelim?' : 'Rotanı konuşalım.'),
-        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.headlineMedium,
+      ),
+      const SizedBox(height: 10),
+      Text(
+        context.tr(
+          plan == null
+              ? 'Şehirleri keşfet, bütçeni konuş, yolculuğunu şekillendir.'
+              : 'Günlerini, bütçeni ve duraklarını birlikte gözden geçirelim.',
+        ),
         style: TextStyle(
-          fontFamily: AppTypography.body,
-          color: context.colors.text,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
+          color: context.colors.muted,
+          fontSize: 13,
+          height: 1.6,
         ),
       ),
       const SizedBox(height: 24),
-      Wrap(
+      Column(
         key: const ValueKey('assistant-suggestions'),
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 4,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final question
               in plan == null ? _generalQuestions : _planQuestions)
-            OutlinedButton(
-              onPressed: () => onQuestion(context.tr(question.question)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.colors.muted,
-                backgroundColor: Colors.transparent,
-                minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: OutlinedButton(
+                onPressed: () => onQuestion(context.tr(question.question)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: context.colors.text,
+                  backgroundColor: context.colors.surface,
+                  padding: const EdgeInsets.all(16),
+                  side: BorderSide(color: context.colors.divider),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                 ),
-                side: BorderSide(color: context.colors.divider),
-                shape: const StadiumBorder(),
-                textStyle: const TextStyle(
-                  fontFamily: AppTypography.body,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                child: Row(
+                  children: [
+                    TravyonIconBadge(
+                      icon: question.icon,
+                      size: 36,
+                      color: context.colors.text,
+                      background: context.colors.background,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.tr(question.label),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            context.tr(question.question),
+                            style: TextStyle(
+                              color: context.colors.muted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: context.colors.muted,
+                    ),
+                  ],
                 ),
               ),
-              child: Text(context.tr(question.label)),
             ),
         ],
       ),
@@ -389,7 +480,12 @@ class _MessageBubble extends StatelessWidget {
         color: message.isUser
             ? context.colors.orangeTint
             : context.colors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: Radius.circular(message.isUser ? 20 : 6),
+          bottomRight: Radius.circular(message.isUser ? 6 : 20),
+        ),
         border: message.isUser
             ? null
             : Border.all(color: context.colors.divider),
@@ -402,8 +498,8 @@ class _MessageBubble extends StatelessWidget {
             Text(
               'Travyon AI',
               style: TextStyle(
-                color: context.colors.forest,
-                fontWeight: FontWeight.w700,
+                color: context.colors.text,
+                fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
@@ -429,7 +525,7 @@ class _MessageBubble extends StatelessWidget {
                     height: 14,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: context.colors.forest,
+                      color: context.colors.accent,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -458,6 +554,9 @@ class _MessageBubble extends StatelessWidget {
             if (onRetry != null)
               TextButton.icon(
                 onPressed: onRetry,
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.text,
+                ),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: Text(context.tr('Tekrar dene')),
               ),

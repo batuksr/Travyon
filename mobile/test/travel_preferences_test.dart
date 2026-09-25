@@ -9,6 +9,7 @@ import 'package:travyon/core/preferences/app_unit_controller.dart';
 import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/onboarding/data/onboarding_data.dart';
 import 'package:travyon/features/settings/data/settings_fields.dart';
+import 'package:travyon/features/settings/presentation/account_widgets.dart';
 import 'package:travyon/features/settings/presentation/settings_page.dart';
 
 import 'account_pages_test.dart' show AccountSettings, enter, tap;
@@ -44,6 +45,38 @@ Widget appearanceHost(
 );
 
 void main() {
+  testWidgets('settings introductions keep description and app bar title', (
+    tester,
+  ) async {
+    final repo = AccountSettings();
+    await tester.pumpWidget(host(page('passport', repo)));
+    await tester.pumpAndSettle();
+    final intro = find.byType(AccountHeader);
+    expect(intro, findsOneWidget);
+    expect(
+      find.descendant(of: intro, matching: find.byType(Text)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: intro, matching: find.byType(Icon)),
+      findsNothing,
+    );
+    expect(find.text('Yolculuk öncesi bir kontrol.'), findsNothing);
+    expect(
+      find.text('Pasaportunun son geçerlilik tarihini burada takip et.'),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(section('passport').title),
+      ),
+      findsOneWidget,
+    );
+    expect(repo.saves, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final id in ['travel', 'passport', 'timezone', 'appearance']) {
     for (final language in ['tr', 'en']) {
       for (final size in [const Size(320, 640), const Size(640, 360)]) {

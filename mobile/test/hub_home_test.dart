@@ -100,7 +100,6 @@ void main() {
         ),
         home: Scaffold(
           body: HubHome(
-            name: 'Oğuzhan',
             now: DateTime(2026, 9, 12),
             plans: failed
                 ? AsyncSnapshot.withError(
@@ -129,6 +128,8 @@ void main() {
       expect(find.text('İlk planımı oluştur'), findsOneWidget);
       expect(find.text('Henüz kayıtlı planın yok'), findsNothing);
       expect(find.text('Gezginlerden ilham al'), findsNothing);
+      expect(find.text('Popüler duraklar'), findsOneWidget);
+      expect(find.text('Tümünü gör'), findsNothing);
       await tester.tap(find.text('İlk planımı oluştur'));
       expect(calls, 1);
       expect(tester.takeException(), isNull);
@@ -172,6 +173,83 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'search selects a city, supports custom destinations and can cancel',
+    (tester) async {
+      OnboardingData? seed;
+      await home(tester, onCreate: (value) => seed = value);
+      final search = find.byKey(const ValueKey('hub-destination-search'));
+      final query = find.byKey(const ValueKey('hub-destination-query'));
+
+      await tester.tap(search);
+      await tester.pumpAndSettle();
+      await tester.enterText(query, 'izmir');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('İzmir, Türkiye'));
+      await tester.pumpAndSettle();
+      expect(seed?.destination, 'İzmir, Türkiye');
+      expect(seed?.startDate, isEmpty);
+
+      seed = null;
+      await tester.tap(search);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Kapat'));
+      await tester.pumpAndSettle();
+      expect(seed, isNull);
+
+      await tester.tap(search);
+      await tester.pumpAndSettle();
+      await tester.enterText(query, 'Datça, Türkiye');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('hub-custom-destination')));
+      await tester.pumpAndSettle();
+      expect(seed?.destination, 'Datça, Türkiye');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'category choices prefill interests without inventing travel dates',
+    (tester) async {
+      OnboardingData? seed;
+      await home(tester, onCreate: (value) => seed = value);
+      await reveal(tester, 'Doğa');
+      await tester.tap(find.text('Doğa'));
+      expect(seed?.purposes, ['nature']);
+      expect(seed?.startDate, isEmpty);
+      expect(seed?.destination, isEmpty);
+      await reveal(tester, 'Şehir Kaçamağı');
+      await tester.tap(find.text('Şehir Kaçamağı'));
+      expect(seed?.travelType, 'sehir_kacamagi');
+      expect(seed?.purposes, ['culture']);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final size in [const Size(320, 740), const Size(640, 360)]) {
+    testWidgets('destination picker fits keyboard and double text at $size', (
+      tester,
+    ) async {
+      await home(tester, width: size.width, scale: 2);
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('hub-destination-search')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('hub-destination-query')),
+        'Datça',
+      );
+      tester.view.viewInsets = const FakeViewPadding(bottom: 180);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final result = find.byKey(const ValueKey('hub-custom-destination'));
+      await tester.ensureVisible(result);
+      await tester.pumpAndSettle();
+      expect(result.hitTestable(), findsOneWidget);
+    });
+  }
+
   testWidgets('city suggestion opens preview before starting a plan', (
     tester,
   ) async {
@@ -199,8 +277,8 @@ void main() {
       onOpen: (p) => opened = p,
       onPlans: () => allPlans = true,
     );
-    expect(find.text('BUGÜNKÜ ROTAN'), findsOneWidget);
-    await tester.tap(find.text('Bugünkü planı aç'));
+    expect(find.text('Aktif seyahat'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('hub-featured-plan')));
     expect(opened, active);
     await tester.tap(find.text('Tüm planların (1)'));
     expect(allPlans, isTrue);
@@ -257,7 +335,7 @@ void main() {
     expect(find.text('İlk planımı oluştur'), findsNothing);
     expect(find.text('Planlarıma git'), findsOneWidget);
     expect(find.text('Gezginlerden ilham al'), findsNothing);
-    expect(find.text('Nereye gitmek istersin?'), findsOneWidget);
+    expect(find.text('Nereye gidiyoruz?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

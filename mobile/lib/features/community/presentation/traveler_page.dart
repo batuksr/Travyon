@@ -89,21 +89,14 @@ class _TravelerPageState extends State<TravelerPage> {
           children: [
             Text(
               context.tr('Takip durumu alınamadı.'),
-              style: TextStyle(
-                color: private ? context.colors.muted : const Color(0xFFF7EEDB),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
             ),
             TextButton.icon(
               key: const ValueKey('traveler-follow-retry'),
               onPressed: () => setState(
                 () => _following = widget.repository.following(widget.uid),
               ),
-              style: TextButton.styleFrom(
-                foregroundColor: private
-                    ? context.colors.forest
-                    : const Color(0xFFF7EEDB),
-              ),
+              style: TextButton.styleFrom(foregroundColor: context.colors.text),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(context.tr('Tekrar dene')),
             ),
@@ -120,17 +113,21 @@ class _TravelerPageState extends State<TravelerPage> {
         onPressed: waiting || _busy ? null : () => _toggle(follows),
         style: FilledButton.styleFrom(
           backgroundColor: follows
-              ? const Color(0xFF53644B)
+              ? context.colors.surface
               : context.colors.accent,
           foregroundColor: follows
-              ? const Color(0xFFF7EEDB)
+              ? context.colors.text
               : context.colors.onAccent,
-          disabledBackgroundColor: const Color(0xFF53644B),
-          disabledForegroundColor: const Color(0xFFD5DCC7),
+          disabledBackgroundColor: context.colors.surface,
+          disabledForegroundColor: context.colors.muted,
           minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          side: BorderSide(
+            color: follows || waiting || _busy
+                ? context.colors.divider
+                : Colors.transparent,
           ),
+          shape: const StadiumBorder(),
           textStyle: const TextStyle(
             fontFamily: AppTypography.body,
             fontSize: 13,
@@ -138,12 +135,12 @@ class _TravelerPageState extends State<TravelerPage> {
           ),
         ),
         icon: _busy || waiting
-            ? const SizedBox(
+            ? SizedBox(
                 width: 17,
                 height: 17,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFFF7EEDB),
+                  color: context.colors.muted,
                 ),
               )
             : Icon(
@@ -198,21 +195,13 @@ class _TravelerPageState extends State<TravelerPage> {
             followAction: widget.uid == widget.target ? null : _followAction(),
           ),
           const SizedBox(height: 28),
-          Row(
-            children: [
-              Icon(
-                Icons.public_rounded,
-                size: 20,
-                color: context.colors.forest,
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  context.tr('Paylaşılan rotalar'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            ],
+          Semantics(
+            header: true,
+            child: Text(
+              context.tr('Paylaşılan rotalar'),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
           ),
           const SizedBox(height: 14),
           if (snapshot.hasError)
@@ -256,7 +245,7 @@ class _TravelerPageState extends State<TravelerPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('Gezgin kartı'))),
+    appBar: AppBar(title: Text(context.tr('Gezgin profili'))),
     body: SafeArea(
       top: false,
       child: FutureBuilder<TravelerProfile>(

@@ -64,7 +64,7 @@ class WalletPocket extends StatelessWidget {
               bottom: 20,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF512B1D),
+                  color: const Color(0xFF3E2C22),
                   borderRadius: BorderRadius.circular(26),
                   boxShadow: [
                     BoxShadow(
@@ -145,7 +145,7 @@ class WalletPocket extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.near_me_outlined,
-                                color: Color(0xFFFFE4D1),
+                                color: Color(0xFFF7EAD9),
                                 size: 23,
                               ),
                               SizedBox(width: 8),
@@ -153,8 +153,8 @@ class WalletPocket extends StatelessWidget {
                                 'travyon',
                                 textScaler: TextScaler.noScaling,
                                 style: TextStyle(
-                                  color: Color(0xFFFFE4D1),
-                                  fontFamily: AppTypography.heading,
+                                  color: Color(0xFFF7EAD9),
+                                  fontFamily: AppTypography.logo,
                                   fontSize: 25,
                                   letterSpacing: -.7,
                                 ),
@@ -172,7 +172,7 @@ class WalletPocket extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: Color(0xFFFFE4D1),
+                                  color: Color(0xFFF7EAD9),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 1.1,
@@ -190,7 +190,7 @@ class WalletPocket extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
                                 style: const TextStyle(
-                                  color: Color(0xFFF2BE9C),
+                                  color: Color(0xFFD9C4AA),
                                   fontSize: 9,
                                   letterSpacing: .8,
                                 ),
@@ -212,9 +212,9 @@ class WalletPocket extends StatelessWidget {
                   width: 44,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB45A32),
+                    color: const Color(0xFF72513B),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE09B72)),
+                    border: Border.all(color: const Color(0xFFA1846A)),
                   ),
                   child: Center(
                     child: Container(
@@ -345,7 +345,7 @@ class _LeatherPainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFB85C33), Color(0xFF7C371F)],
+          colors: [Color(0xFF7A5944), Color(0xFF4E372B)],
         ).createShader(rect),
     );
     final path = Path()
@@ -353,7 +353,7 @@ class _LeatherPainter extends CustomPainter {
         RRect.fromRectAndRadius(rect.deflate(9), const Radius.circular(20)),
       );
     final stitch = Paint()
-      ..color = const Color(0x55E8A57C)
+      ..color = const Color(0x55D4B99A)
       ..style = PaintingStyle.stroke
       ..strokeWidth = .8;
     for (final metric in path.computeMetrics()) {

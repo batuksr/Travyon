@@ -24,14 +24,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     background: Color(0xFFFCF8F4),
     surface: Color(0xFFFFFFFF),
     text: Color(0xFF2B2521),
-    muted: Color(0xFF7A7068),
+    muted: Color(0xFF6B6661),
     forest: Color(0xFFA94B27),
     accent: Color(0xFFD86731),
-    divider: Color(0xFFEBDDD2),
+    divider: Color(0xFFE8E2DC),
     isDark: false,
   );
 
-  // Matches the website's warm dark surfaces, with readable sage accents.
+  // Warm dark surfaces retain readable text and terracotta accents.
   static const dark = AppPalette(
     background: Color(0xFF211914),
     surface: Color(0xFF2C211B),

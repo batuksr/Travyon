@@ -4,6 +4,19 @@ import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/onboarding/presentation/travel_date_sheet.dart';
 
 void main() {
+  test('date shortcuts stay in the future over Sunday and year boundaries', () {
+    final saturday = travelDateShortcuts(DateTime(2026, 9, 12, 23));
+    expect(saturday['Bu hafta sonu']!.start, DateTime(2026, 9, 12));
+    expect(saturday['Bu hafta sonu']!.end, DateTime(2026, 9, 13));
+    final sunday = travelDateShortcuts(DateTime(2026, 9, 13));
+    expect(sunday['Bu hafta sonu']!.start, DateTime(2026, 9, 19));
+    expect(sunday['Gelecek hafta']!.start, DateTime(2026, 9, 14));
+    expect(sunday['Gelecek hafta']!.end, DateTime(2026, 9, 20));
+    final december = travelDateShortcuts(DateTime(2026, 12, 31));
+    expect(december['Bu hafta sonu']!.start, DateTime(2027, 1, 2));
+    expect(december['Gelecek hafta']!.start, DateTime(2027, 1, 4));
+    expect(december['Gelecek hafta']!.end, DateTime(2027, 1, 10));
+  });
   DateTimeRange? result;
   Future<void> open(
     WidgetTester tester, {
@@ -144,4 +157,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(result, isNull);
   });
+
+  testWidgets(
+    'date shortcut is tentative until confirmed and close cancels it',
+    (tester) async {
+      await open(tester, today: DateTime(2026, 12, 31));
+      await tap(
+        tester,
+        find.byKey(const ValueKey('calendar-shortcut-Gelecek hafta')),
+      );
+      expect(result, isNull);
+      expect(find.text('7 gün · 6 gece'), findsOneWidget);
+      await tap(tester, find.byKey(const ValueKey('calendar-close')));
+      expect(result, isNull);
+      await open(tester, today: DateTime(2026, 12, 31));
+      await tap(
+        tester,
+        find.byKey(const ValueKey('calendar-shortcut-Gelecek hafta')),
+      );
+      await tester.tap(find.text('Tarihleri seç'));
+      await tester.pumpAndSettle();
+      expect(result!.start, DateTime(2027, 1, 4));
+      expect(result!.end, DateTime(2027, 1, 10));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

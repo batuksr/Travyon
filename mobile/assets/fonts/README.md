@@ -1,7 +1,13 @@
 # Bundled fonts
 
-Body text uses Inter. Headings use **Travyon Display**, a local derivative of
-Caprasimo with Turkish character support. Both are bundled for offline use.
+The mobile interface uses **Plus Jakarta Sans**, matching the shared FlutterFlow
+Designer reference. Its variable font is bundled for offline use with weights
+400–800. Source: https://github.com/google/fonts/tree/main/ofl/plusjakartasans
+License: `OFL-PlusJakartaSans.txt`.
+
+**Travyon Display**, a local derivative of Caprasimo with Turkish character
+support, is retained for the animated brand artwork and the wallet wordmark.
+Inter remains bundled for older assets.
 
 The original Caprasimo 1.001 file lacks `Ğ ğ İ Ş ş`. The derivative adds these
 five characters by combining its existing `G g I S s` outlines with its own

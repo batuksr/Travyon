@@ -8,15 +8,16 @@ abstract final class AppColors {
   static const background = Color(0xFFFCF8F4);
   static const surface = Color(0xFFFFFFFF);
   static const text = Color(0xFF2B2521);
-  static const muted = Color(0xFF7A7068);
+  static const muted = Color(0xFF6B6661);
   static const forest = Color(0xFFA94B27);
   static const accent = Color(0xFFD86731);
-  static const divider = Color(0xFFEBDDD2);
+  static const divider = Color(0xFFE8E2DC);
 }
 
 abstract final class AppTypography {
-  static const body = 'Inter';
-  static const heading = 'Travyon Display';
+  static const body = 'Plus Jakarta Sans';
+  static const heading = body;
+  static const logo = 'Travyon Display';
 }
 
 abstract final class AppMotion {
@@ -73,14 +74,14 @@ abstract final class AppTheme {
           color: colors.text,
           fontSize: 17,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        indicatorColor: colors.forest.withValues(alpha: 0.09),
+        indicatorColor: colors.orangeTint,
         height: 68,
         labelTextStyle: const WidgetStatePropertyAll(
           TextStyle(fontSize: 10, height: 1.1, fontWeight: FontWeight.w600),
@@ -104,10 +105,11 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           minimumSize: const Size(44, 44),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          foregroundColor: colors.forest,
+          foregroundColor: colors.text,
           textStyle: const TextStyle(
-            fontFamily: AppTypography.heading,
-            fontWeight: FontWeight.w400,
+            fontFamily: AppTypography.body,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -117,14 +119,15 @@ abstract final class AppTheme {
           // outlined controls placed inside horizontal scrollers (for example
           // route day selectors), so only make the touch height mandatory.
           minimumSize: const Size(0, 54),
-          foregroundColor: colors.forest,
+          foregroundColor: colors.text,
           side: BorderSide(color: colors.divider),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
-            fontFamily: AppTypography.heading,
-            fontWeight: FontWeight.w400,
+            fontFamily: AppTypography.body,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -132,56 +135,62 @@ abstract final class AppTheme {
         displayLarge: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w800,
         ),
         displayMedium: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
         ),
         displaySmall: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
         ),
         headlineLarge: TextStyle(
           color: colors.text,
-          fontSize: 31,
-          height: 1.16,
+          fontSize: 32,
+          height: 1.2,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -.8,
         ),
         headlineMedium: TextStyle(
           color: colors.text,
           fontSize: 26,
-          height: 1.18,
+          height: 1.25,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -.6,
         ),
         headlineSmall: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
+          fontSize: 24,
+          height: 1.3,
         ),
         titleLarge: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
-          fontSize: 21,
-          height: 1.22,
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          height: 1.3,
         ),
         titleMedium: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.heading,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+          height: 1.4,
         ),
         titleSmall: TextStyle(
           color: colors.text,
           fontFamily: AppTypography.body,
           fontWeight: FontWeight.w700,
         ),
-        bodyLarge: TextStyle(color: colors.muted, fontSize: 16, height: 1.5),
-        bodyMedium: TextStyle(color: colors.muted, fontSize: 14, height: 1.45),
+        bodyLarge: TextStyle(color: colors.text, fontSize: 16, height: 1.5),
+        bodyMedium: TextStyle(color: colors.text, fontSize: 14, height: 1.5),
         labelLarge: TextStyle(
           color: colors.text,
           fontSize: 14,
@@ -193,15 +202,14 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: colors.accent,
           foregroundColor: colors.onAccent,
-          minimumSize: const Size.fromHeight(56),
+          minimumSize: const Size(0, 56),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: const StadiumBorder(),
           textStyle: const TextStyle(
-            fontFamily: AppTypography.heading,
-            fontWeight: FontWeight.w400,
+            fontFamily: AppTypography.body,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

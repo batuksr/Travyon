@@ -29,6 +29,8 @@ import '../../notifications/data/firebase_mobile_push.dart';
 import '../../onboarding/data/onboarding_data.dart';
 import '../data/hub_content.dart';
 import 'hub_home.dart';
+import 'hub_navigation_bar.dart';
+import 'hub_actions_menu.dart';
 
 class MobileHubPage extends StatefulWidget {
   const MobileHubPage({
@@ -209,28 +211,56 @@ class _MobileHubPageState extends State<MobileHubPage>
           ? AppBar(
               backgroundColor: Colors.transparent,
               surfaceTintColor: Colors.transparent,
-              title: const _Wordmark(),
+              toolbarHeight:
+                  (MediaQuery.textScalerOf(context).scale(26) * 1.25 + 36)
+                      .clamp(72.0, double.infinity),
+              titleSpacing: 20,
+              centerTitle: false,
+              title: Text(
+                'Nereye gidiyoruz?',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
               actions: [
-                AssistantLauncher(uid: widget.session.uid),
-                IconButton(
-                  tooltip: context.tr('Bildirimler'),
-                  icon: const Icon(Icons.notifications_none_rounded),
-                  onPressed: _notifications,
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => SettingsPage(
-                        uid: widget.session.uid,
-                        repository: FirebaseSettingsRepository(
-                          widget.session.uid,
-                        ),
-                        onSignOut: widget.repository.signOut,
+                HubActionsMenu(
+                  children: [
+                    AssistantLauncher(uid: widget.session.uid),
+                    IconButton(
+                      tooltip: context.tr('Bildirimler'),
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
                       ),
+                      onPressed: _notifications,
                     ),
-                  ),
-                  icon: const Icon(Icons.settings_outlined),
-                  tooltip: context.tr('Ayarlar'),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => SettingsPage(
+                            uid: widget.session.uid,
+                            repository: FirebaseSettingsRepository(
+                              widget.session.uid,
+                            ),
+                            onSignOut: widget.repository.signOut,
+                          ),
+                        ),
+                      ),
+                      icon: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: context.colors.orangeTint,
+                        child: Text(
+                          name.characters.first.toUpperCase(),
+                          style: TextStyle(
+                            color: context.colors.text,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      tooltip: context.tr('Ayarlar'),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
               ],
@@ -261,7 +291,7 @@ class _MobileHubPageState extends State<MobileHubPage>
                 stream: _plans,
                 builder: (context, snapshot) {
                   return HubHome(
-                    name: name,
+                    showHeading: false,
                     plans: snapshot,
                     community: _inspiration,
                     onCreate: _create,
@@ -273,114 +303,15 @@ class _MobileHubPageState extends State<MobileHubPage>
                 },
               ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: context.colors.divider),
-            boxShadow: [
-              BoxShadow(
-                color: context.colors.text.withValues(alpha: .07),
-                blurRadius: 22,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: NavigationBar(
-            backgroundColor: Colors.transparent,
-            // The middle item is an action, not a tab. Keep the underlying tab
-            // selected so backing out of onboarding returns to the same screen.
-            selectedIndex: _selected < 2 ? _selected : _selected + 1,
-            onDestinationSelected: (index) {
-              if (index == 2) {
-                _create();
-                return;
-              }
-              setState(() {
-                if (index == 0 && _selected != 0) {
-                  _inspiration = _watchInspiration();
-                }
-                _selected = index < 2 ? index : index - 1;
-              });
-            },
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home_outlined),
-                selectedIcon: const Icon(Icons.home_rounded),
-                label: context.tr('Ana Sayfa'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.route_outlined),
-                selectedIcon: const Icon(Icons.route_rounded),
-                label: context.tr('Planlar'),
-              ),
-              NavigationDestination(
-                key: const ValueKey('nav-create-plan'),
-                icon: Semantics(
-                  label: context.tr('Yeni plan oluştur'),
-                  button: true,
-                  child: Transform.translate(
-                    offset: const Offset(0, 4),
-                    child: const ExcludeSemantics(
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppColors.accent,
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: Colors.white,
-                          size: 25,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                label: '',
-                tooltip: context.tr('Yeni plan oluştur'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-                selectedIcon: const Icon(Icons.account_balance_wallet_rounded),
-                label: context.tr('Cüzdan'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.people_outline_rounded),
-                selectedIcon: const Icon(Icons.people_rounded),
-                label: context.tr('Topluluk'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: 'trav',
-            style: TextStyle(color: context.colors.text),
-          ),
-          TextSpan(
-            text: 'yon',
-            style: TextStyle(color: context.colors.accent),
-          ),
-        ],
-      ),
-      style: TextStyle(
-        fontFamily: AppTypography.heading,
-        fontSize: 25,
-        fontWeight: FontWeight.w400,
+      bottomNavigationBar: HubNavigationBar(
+        selectedTab: _selected,
+        onCreate: _create,
+        onSelect: (index) => setState(() {
+          if (index == 0 && _selected != 0) {
+            _inspiration = _watchInspiration();
+          }
+          _selected = index;
+        }),
       ),
     );
   }

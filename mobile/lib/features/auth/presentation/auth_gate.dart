@@ -44,6 +44,8 @@ class AuthGate extends StatelessWidget {
         final session = snapshot.data;
         if (session == null) {
           return MobileBootstrapPage(
+            onGoogle: repository.signInWithGoogle,
+            onApple: repository.signInWithApple,
             onStart: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => AuthPage(repository: repository),

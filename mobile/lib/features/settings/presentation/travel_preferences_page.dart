@@ -616,12 +616,6 @@ class _TravelPreferencesPageState extends State<TravelPreferencesPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AccountHeader(
-                  title: switch (_id) {
-                    'travel' => 'Senin yolculuk tarzın.',
-                    'passport' => 'Yolculuk öncesi bir kontrol.',
-                    'timezone' => 'Saat dilimini belirle.',
-                    _ => 'Sana tanıdık gelen biçimde.',
-                  },
                   subtitle: switch (_id) {
                     'travel' => 'Bütçeni, kişi sayısını ve temponu bir kez seç; yeni planlarına hazır başla.',
                     'passport' =>
@@ -629,12 +623,6 @@ class _TravelPreferencesPageState extends State<TravelPreferencesPage> {
                     'timezone' =>
                       'Tercih ettiğin saat dilimini şehir adıyla bul.',
                     _ => 'Dilini ve ölçü birimlerini seç, nasıl görüneceğini hemen incele.',
-                  },
-                  icon: switch (_id) {
-                    'travel' => Icons.tune_rounded,
-                    'passport' => Icons.badge_outlined,
-                    'timezone' => Icons.schedule_rounded,
-                    _ => Icons.language_rounded,
                   },
                 ),
                 switch (_id) {

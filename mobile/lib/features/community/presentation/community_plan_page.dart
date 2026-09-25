@@ -103,6 +103,7 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
     children: [
       OutlinedButton.icon(
         key: const ValueKey('community-guide'),
+        style: _toolStyle(context),
         onPressed: () =>
             showPlanInformation(context, PlanGuideSheet(plan: plan.summary)),
         icon: const Icon(Icons.menu_book_outlined, size: 18),
@@ -110,12 +111,25 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
       ),
       OutlinedButton.icon(
         key: const ValueKey('community-preferences'),
+        style: _toolStyle(context),
         onPressed: () =>
             showPlanInformation(context, CommunityPreferencesSheet(plan: plan)),
         icon: const Icon(Icons.tune_rounded, size: 18),
         label: Text(context.tr('Tercihler')),
       ),
     ],
+  );
+
+  ButtonStyle _toolStyle(BuildContext context) => OutlinedButton.styleFrom(
+    foregroundColor: context.colors.text,
+    backgroundColor: context.colors.surface,
+    shape: const StadiumBorder(),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    textStyle: const TextStyle(
+      fontFamily: AppTypography.body,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+    ),
   );
 
   Widget _days(List<PlanDay> days, int selected) => CommunityRouteDays(
@@ -164,7 +178,7 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: context.colors.forest,
+                    color: context.colors.muted,
                     letterSpacing: .4,
                   ),
                 ),
@@ -257,23 +271,9 @@ class _CommunityPlanPageState extends State<CommunityPlanPage> {
       return Scaffold(
         appBar: AppBar(title: Text(context.tr('Topluluk rotası'))),
         bottomNavigationBar: ready
-            ? NavigationBar(
-                selectedIndex: _tab,
-                onDestinationSelected: (index) => setState(() => _tab = index),
-                destinations: [
-                  NavigationDestination(
-                    key: const ValueKey('community-tab-plan'),
-                    icon: const Icon(Icons.view_agenda_outlined),
-                    selectedIcon: const Icon(Icons.view_agenda_rounded),
-                    label: context.tr('Günlük plan'),
-                  ),
-                  NavigationDestination(
-                    key: const ValueKey('community-tab-map'),
-                    icon: const Icon(Icons.map_outlined),
-                    selectedIcon: const Icon(Icons.map_rounded),
-                    label: context.tr('Harita'),
-                  ),
-                ],
+            ? CommunityRouteNavigation(
+                selected: _tab,
+                onSelect: (index) => setState(() => _tab = index),
               )
             : null,
         body: SafeArea(

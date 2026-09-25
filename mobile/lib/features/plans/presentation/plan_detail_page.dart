@@ -8,7 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/travyon_ui.dart';
-import '../../assistant/presentation/assistant_launcher.dart';
 import '../../checklist/data/checklist_repository.dart';
 import '../../checklist/presentation/travel_checklist_panel.dart';
 import '../../wallet/data/wallet_repository.dart';
@@ -24,6 +23,7 @@ import 'plan_budget_panel.dart';
 import 'plan_expense_sheet.dart';
 import 'plan_route_map.dart';
 import 'plan_stop_card.dart';
+import 'plan_detail_chrome.dart';
 import 'stop_editor_sheet.dart';
 import 'travel_time_strip.dart';
 
@@ -327,32 +327,14 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         }
       },
       child: Scaffold(
-        appBar: _tab == 1
+        appBar: _tab < 2
             ? null
             : AppBar(title: const Text('Yolculuğun'), centerTitle: true),
         bottomNavigationBar: _routeFullscreen
             ? null
-            : NavigationBar(
-                selectedIndex: _tab,
-                onDestinationSelected: (value) => setState(() => _tab = value),
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.view_day_outlined),
-                    label: context.tr('Günlük plan'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.route_outlined),
-                    label: context.tr('Rota'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.account_balance_wallet_outlined),
-                    label: context.tr('Bütçe'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.checklist_rounded),
-                    label: context.tr('Hazırlık'),
-                  ),
-                ],
+            : PlanDetailNavigation(
+                selected: _tab,
+                onSelect: (value) => setState(() => _tab = value),
               ),
         body: SafeArea(
           child: StreamBuilder<List<TravelPlanSummary>>(
@@ -368,7 +350,22 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                 );
               }
               if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return Column(
+                  children: [
+                    if (_tab < 2)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          tooltip: context.tr('Geri'),
+                          onPressed: () => Navigator.maybePop(context),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                      ),
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ],
+                );
               }
               final matches = snapshot.data!.where(
                 (p) => p.id == widget.planId,
@@ -389,6 +386,57 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
               }
               final selected = _day.clamp(0, days.length - 1);
               final day = days[selected];
+              if (_tab == 0) {
+                return Column(
+                  children: [
+                    if (_saving) const LinearProgressIndicator(minHeight: 2),
+                    Expanded(
+                      child: ListView(
+                        key: ValueKey('0-$selected'),
+                        padding: const EdgeInsets.only(bottom: 24),
+                        children: [
+                          PlanDetailHero(
+                            plan: plan,
+                            day: day,
+                            uid: widget.uid,
+                            onOpenMap: () => setState(() => _tab = 1),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+                            child: _PlanHeader(
+                              title: plan.title,
+                              subtitle: plan.title == plan.destination
+                                  ? null
+                                  : plan.destination,
+                              dateRange: [plan.startDate, plan.endDate]
+                                  .where((date) => date.isNotEmpty)
+                                  .toSet()
+                                  .map((raw) {
+                                    final date = DateTime.tryParse(raw);
+                                    return date == null
+                                        ? raw
+                                        : MaterialLocalizations.of(context)
+                                              .formatShortDate(date);
+                                  })
+                                  .join(' – '),
+                              dayCount: days.length,
+                              stopCount: plan.activityCount,
+                            ),
+                          ),
+                          _daySelector(days, selected),
+                          for (final item in _itinerary(plan, day))
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              child: item,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
               return Column(
                 children: [
                   if (_tab == 1 && !_routeFullscreen)
@@ -439,47 +487,9 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                         title: plan.title,
                         dayCount: days.length,
                         stopCount: plan.activityCount,
-                        trailing: _tab == 0
-                            ? AssistantLauncher(uid: widget.uid, plan: plan)
-                            : null,
                       ),
                     ),
-                  if (_tab < 2)
-                    SizedBox(
-                      height: _tab == 1
-                          ? (MediaQuery.textScalerOf(context).scale(12) + 44)
-                                .clamp(56.0, 84.0)
-                          : 72,
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: _tab == 1 ? 12 : 20,
-                          vertical: 8,
-                        ),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: days.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 10),
-                        itemBuilder: (_, i) => ChoiceChip(
-                          selected: selected == i,
-                          labelStyle: TextStyle(
-                            fontFamily: AppTypography.body,
-                            fontSize: _tab == 1 ? 12 : null,
-                            color: selected == i
-                                ? Colors.white
-                                : context.colors.text,
-                          ),
-                          showCheckmark: false,
-                          label: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: _tab == 1 ? 0 : 5,
-                            ),
-                            child: Text(
-                              '${i + 1}. Gün  ·  ${dayDate(days[i].date)}',
-                            ),
-                          ),
-                          onSelected: (_) => setState(() => _day = i),
-                        ),
-                      ),
-                    ),
+                  if (_tab == 1) _daySelector(days, selected),
                   if (_saving) const LinearProgressIndicator(minHeight: 2),
                   Expanded(
                     child: AnimatedSwitcher(
@@ -514,9 +524,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
                                 20,
                                 28,
                               ),
-                              children: _tab == 2
-                                  ? _budget(plan)
-                                  : _itinerary(plan, day),
+                              children: _budget(plan),
                             ),
                     ),
                   ),
@@ -529,55 +537,40 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
     );
   }
 
+  Widget _daySelector(List<PlanDay> days, int selected) => SizedBox(
+    height: MediaQuery.textScalerOf(context).scale(12) + 48,
+    child: ListView.separated(
+      padding: EdgeInsets.symmetric(
+        horizontal: _tab == 1 ? 12 : 20,
+        vertical: 8,
+      ),
+      scrollDirection: Axis.horizontal,
+      itemCount: days.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 8),
+      itemBuilder: (_, i) => ChoiceChip(
+        selected: selected == i,
+        selectedColor: context.colors.accent,
+        backgroundColor: context.colors.surface,
+        shape: const StadiumBorder(),
+        side: BorderSide(
+          color: selected == i ? Colors.transparent : context.colors.divider,
+        ),
+        labelStyle: TextStyle(
+          fontFamily: AppTypography.body,
+          fontSize: 12,
+          fontWeight: selected == i ? FontWeight.w700 : FontWeight.w500,
+          color: selected == i ? context.colors.onAccent : context.colors.text,
+        ),
+        showCheckmark: false,
+        label: Text('${i + 1}. Gün  ·  ${dayDate(days[i].date)}'),
+        onSelected: (_) => setState(() => _day = i),
+      ),
+    ),
+  );
+
   List<Widget> _itinerary(TravelPlanSummary plan, PlanDay day) => [
-    Wrap(
-      spacing: 10,
-      runSpacing: 6,
-      children: [
-        OutlinedButton.icon(
-          key: const ValueKey('plan-guide'),
-          onPressed: () =>
-              showPlanInformation(context, PlanGuideSheet(plan: plan)),
-          icon: const Icon(Icons.menu_book_outlined, size: 18),
-          label: const Text('Rehber'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            backgroundColor: context.colors.surface,
-          ),
-        ),
-        OutlinedButton.icon(
-          key: const ValueKey('plan-weather'),
-          onPressed: () => showPlanInformation(
-            context,
-            PlanWeatherSheet(plan: plan, repository: _weather),
-          ),
-          icon: const Icon(Icons.cloud_outlined, size: 18),
-          label: const Text('Hava durumu'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            backgroundColor: context.colors.surface,
-          ),
-        ),
-      ],
-    ),
-    const SizedBox(height: 12),
-    PlanBudgetSummary(plan: plan, collapsible: true),
-    const SizedBox(height: 12),
+    const SizedBox(height: 8),
     _DayOverview(day: day, symbol: plan.currencySymbol),
-    const SizedBox(height: 12),
-    NextStopPanel(
-      day: day,
-      onDirections: (stop) => _directions(stop, plan.destination),
-    ),
-    const SizedBox(height: 12),
-    DayWalletPanel(
-      uid: widget.uid,
-      planId: widget.planId,
-      date: day.date,
-      repository: _wallet,
-    ),
     const SizedBox(height: 8),
     Wrap(
       alignment: WrapAlignment.spaceBetween,
@@ -597,7 +590,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         ),
       ],
     ),
-    const SizedBox(height: 22),
+    const SizedBox(height: 4),
     for (final stop in day.stops) ...[
       if (stop.index == 0 || day.stops[stop.index - 1].period != stop.period)
         Padding(
@@ -605,9 +598,10 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
           child: Text(
             stop.period.isEmpty ? 'KEŞİF ZAMANI' : stop.period,
             style: TextStyle(
-              color: context.colors.forest,
+              color: context.colors.muted,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
+              letterSpacing: .3,
             ),
           ),
         ),
@@ -620,6 +614,7 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         onAction: (action) => _stopAction(day, stop, action, plan.destination),
         canMoveUp: stop.index > 0,
         canMoveDown: stop.index < day.stops.length - 1,
+        onDirections: () => _directions(stop, plan.destination),
       ),
       const SizedBox(height: 14),
       if (stop.index + 1 < day.stops.length &&
@@ -637,6 +632,55 @@ class _PlanDetailPageState extends State<PlanDetailPage> {
         icon: Icons.coffee_outlined,
         text: 'Bu gün için durak eklenmemiş.',
       ),
+    const SizedBox(height: 16),
+    NextStopPanel(
+      day: day,
+      onDirections: (stop) => _directions(stop, plan.destination),
+    ),
+    const SizedBox(height: 20),
+    Text('Yolculuk araçları', style: Theme.of(context).textTheme.titleMedium),
+    const SizedBox(height: 12),
+    Wrap(
+      spacing: 10,
+      runSpacing: 6,
+      children: [
+        OutlinedButton.icon(
+          key: const ValueKey('plan-guide'),
+          onPressed: () =>
+              showPlanInformation(context, PlanGuideSheet(plan: plan)),
+          icon: const Icon(Icons.menu_book_outlined, size: 18),
+          label: const Text('Rehber'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            backgroundColor: context.colors.surface,
+            shape: const StadiumBorder(),
+          ),
+        ),
+        OutlinedButton.icon(
+          key: const ValueKey('plan-weather'),
+          onPressed: () => showPlanInformation(
+            context,
+            PlanWeatherSheet(plan: plan, repository: _weather),
+          ),
+          icon: const Icon(Icons.cloud_outlined, size: 18),
+          label: const Text('Hava durumu'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            backgroundColor: context.colors.surface,
+            shape: const StadiumBorder(),
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(height: 12),
+    PlanBudgetSummary(plan: plan, collapsible: true),
+    const SizedBox(height: 12),
+    DayWalletPanel(
+      uid: widget.uid,
+      planId: widget.planId,
+      date: day.date,
+      repository: _wallet,
+    ),
   ];
 
   List<Widget> _budget(TravelPlanSummary plan) {
@@ -677,20 +721,19 @@ class _PlanHeader extends StatelessWidget {
     required this.title,
     required this.dayCount,
     required this.stopCount,
-    this.trailing,
+    this.subtitle,
+    this.dateRange,
   });
 
   final String title;
   final int dayCount;
   final int stopCount;
-  final Widget? trailing;
+  final String? subtitle, dateRange;
 
   @override
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const TravyonIconBadge(icon: Icons.location_on_outlined, size: 46),
-      const SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,8 +743,15 @@ class _PlanHeader extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.headlineMedium
-                  ?.copyWith(fontSize: 28, letterSpacing: -.5),
+                  ?.copyWith(fontSize: 24, letterSpacing: -.6),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle!,
+                style: TextStyle(color: context.colors.muted, fontSize: 13),
+              ),
+            ],
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -712,12 +762,17 @@ class _PlanHeader extends StatelessWidget {
                   size: 14,
                   color: context.colors.muted,
                 ),
+                if (dateRange != null && dateRange!.isNotEmpty)
+                  Text(
+                    dateRange!,
+                    style: TextStyle(color: context.colors.muted, fontSize: 12),
+                  ),
                 Text(
                   '$dayCount gün · $stopCount durak',
                   style: TextStyle(
                     color: context.colors.muted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -725,47 +780,8 @@ class _PlanHeader extends StatelessWidget {
           ],
         ),
       ),
-      if (trailing != null) ...[const SizedBox(width: 8), trailing!],
     ],
   );
-}
-
-class _Paper extends StatelessWidget {
-  const _Paper({required this.child, this.dark = false});
-  final Widget child;
-  final bool dark;
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final radius = BorderRadius.circular(TravyonRadius.panel);
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: dark ? null : colors.surface,
-        gradient: dark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: colors.isDark
-                    ? const [Color(0xFF613523), Color(0xFF3A241A)]
-                    : const [Color(0xFFB65C32), Color(0xFF843C22)],
-              )
-            : null,
-        borderRadius: radius,
-        border: Border.all(color: dark ? Colors.transparent : colors.divider),
-        boxShadow: dark
-            ? [
-                BoxShadow(
-                  color: AppColors.text.withValues(alpha: .1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 9),
-                ),
-              ]
-            : null,
-      ),
-      child: Padding(padding: const EdgeInsets.all(20), child: child),
-    );
-  }
 }
 
 class _DayOverview extends StatelessWidget {
@@ -773,8 +789,9 @@ class _DayOverview extends StatelessWidget {
   final PlanDay day;
   final String symbol;
   @override
-  Widget build(BuildContext context) => _Paper(
-    dark: true,
+  Widget build(BuildContext context) => TravyonSurface(
+    borderRadius: 20,
+    padding: const EdgeInsets.all(16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -784,11 +801,15 @@ class _DayOverview extends StatelessWidget {
           children: [
             Text(
               '${day.completed}/${day.stops.length} durak tamamlandı',
-              style: const TextStyle(color: AppColors.surface),
+              style: TextStyle(
+                color: context.colors.text,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             Text(
               'Tahmini ${money(symbol, day.estimated)}',
-              style: const TextStyle(color: Color(0xFFFFE4D2)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
             ),
           ],
         ),
@@ -797,14 +818,14 @@ class _DayOverview extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: day.stops.isEmpty ? 0 : day.completed / day.stops.length,
-            color: const Color(0xFFFFCEAC),
-            backgroundColor: Colors.white12,
-            minHeight: 5,
+            color: context.colors.accent,
+            backgroundColor: context.colors.divider,
+            minHeight: 4,
           ),
         ),
         if (day.summary.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          _ExpandableText(text: day.summary, light: true),
+          const SizedBox(height: 12),
+          _ExpandableText(text: day.summary),
         ],
       ],
     ),
@@ -812,9 +833,8 @@ class _DayOverview extends StatelessWidget {
 }
 
 class _ExpandableText extends StatefulWidget {
-  const _ExpandableText({required this.text, this.light = false});
+  const _ExpandableText({required this.text});
   final String text;
-  final bool light;
   @override
   State<_ExpandableText> createState() => _ExpandableTextState();
 }
@@ -825,8 +845,9 @@ class _ExpandableTextState extends State<_ExpandableText> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final style = TextStyle(
-        color: widget.light ? AppColors.surface : context.colors.muted,
-        fontSize: 14,
+        color: context.colors.muted,
+        fontFamily: AppTypography.body,
+        fontSize: 13,
         height: 1.6,
       );
       final painter = TextPainter(
@@ -848,11 +869,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
           ),
           if (overflows)
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: widget.light
-                    ? const Color(0xFFFFCEAC)
-                    : context.colors.accent,
-              ),
+              style: TextButton.styleFrom(foregroundColor: context.colors.text),
               onPressed: () => setState(() => expanded = !expanded),
               child: Text(expanded ? 'Daha az' : 'Devamını oku'),
             ),
@@ -879,6 +896,12 @@ class _Status extends StatelessWidget {
           Text(text, textAlign: TextAlign.center),
           if (onRetry != null)
             TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+          if (Navigator.canPop(context))
+            TextButton.icon(
+              onPressed: () => Navigator.maybePop(context),
+              icon: const Icon(Icons.arrow_back_rounded),
+              label: const Text('Geri'),
+            ),
         ],
       ),
     ),

@@ -113,14 +113,14 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Your journey\nstarts here.'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const ValueKey('auth-switch-mode')));
     await tester.tap(find.byKey(const ValueKey('auth-switch-mode')));
     await tester.pumpAndSettle();
-    expect(find.text('Create an account'), findsOneWidget);
+    expect(find.text('Say hello to\nnew adventures.'), findsOneWidget);
     expect(find.text('Full name'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -161,7 +161,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hello, Batu!'), findsOneWidget);
+    expect(find.text('Hello, Batu!'), findsNothing);
+    expect(find.text('Where are we going?'), findsOneWidget);
     final navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(
       navigation.destinations.map(

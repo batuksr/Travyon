@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/preferences/unit_formatter.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/plan_detail.dart';
 import '../../plans/presentation/plan_information_sheet.dart';
 import '../data/community_repository.dart';
@@ -28,7 +29,7 @@ class CommunityRouteOverview extends StatelessWidget {
         Text(
           plan.destination,
           key: const ValueKey('community-destination'),
-          style: Theme.of(context).textTheme.headlineLarge,
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 14),
         Material(
@@ -42,16 +43,16 @@ class CommunityRouteOverview extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: context.colors.greenTint,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.person_outline_rounded,
-                      color: context.colors.forest,
-                      size: 22,
+                      color: context.colors.text,
+                      size: 19,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -72,7 +73,7 @@ class CommunityRouteOverview extends StatelessWidget {
                               ? plan.author
                               : context.tr('Gezgin'),
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: context.colors.text,
                           ),
@@ -92,113 +93,114 @@ class CommunityRouteOverview extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns =
-                constraints.maxWidth < 300 ||
-                    MediaQuery.textScalerOf(context).scale(12) > 18
-                ? 1
-                : 3;
-            final items = [
-              (
-                Icons.calendar_today_outlined,
-                context.tr('Rota süresi'),
-                publicRouteCount(context, summary.dayCount, 'gün'),
-              ),
-              (
-                Icons.route_outlined,
-                context.tr('Duraklar'),
-                '${summary.activityCount}',
-              ),
-              (
-                Icons.account_balance_wallet_outlined,
-                context.tr('Tahmini maliyet'),
-                publicRouteMoney(
-                  context,
-                  summary.currencySymbol,
-                  summary.estimatedCost,
+        TravyonSurface(
+          key: const ValueKey('community-route-metrics'),
+          borderRadius: 20,
+          padding: const EdgeInsets.all(4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final columns =
+                  constraints.maxWidth < 300 ||
+                      MediaQuery.textScalerOf(context).scale(12) > 18
+                  ? 1
+                  : 3;
+              final items = [
+                (
+                  Icons.calendar_today_outlined,
+                  context.tr('Rota süresi'),
+                  publicRouteCount(context, summary.dayCount, 'gün'),
                 ),
-              ),
-            ];
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final item in items)
-                  SizedBox(
-                    width: (constraints.maxWidth - (columns - 1) * 8) / columns,
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: context.colors.divider),
-                      ),
-                      child: columns == 1
-                          ? Row(
-                              children: [
-                                Icon(
-                                  item.$1,
-                                  size: 20,
-                                  color: context.colors.forest,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    item.$2,
-                                    style: TextStyle(
-                                      color: context.colors.muted,
-                                      fontSize: 12,
+                (
+                  Icons.route_outlined,
+                  context.tr('Duraklar'),
+                  '${summary.activityCount}',
+                ),
+                (
+                  Icons.account_balance_wallet_outlined,
+                  context.tr('Tahmini maliyet'),
+                  publicRouteMoney(
+                    context,
+                    summary.currencySymbol,
+                    summary.estimatedCost,
+                  ),
+                ),
+              ];
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in items)
+                    SizedBox(
+                      width:
+                          (constraints.maxWidth - (columns - 1) * 8) / columns,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: columns == 1
+                            ? Row(
+                                children: [
+                                  Icon(
+                                    item.$1,
+                                    size: 20,
+                                    color: context.colors.muted,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      item.$2,
+                                      style: TextStyle(
+                                        color: context.colors.muted,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Flexible(
-                                  child: Text(
+                                  const SizedBox(width: 12),
+                                  Flexible(
+                                    child: Text(
+                                      item.$3,
+                                      textAlign: TextAlign.end,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.colors.text,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    item.$1,
+                                    size: 19,
+                                    color: context.colors.muted,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
                                     item.$3,
-                                    textAlign: TextAlign.end,
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                       color: context.colors.text,
                                     ),
                                   ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  item.$1,
-                                  size: 19,
-                                  color: context.colors.forest,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  item.$3,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: context.colors.text,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item.$2,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      height: 1.4,
+                                      color: context.colors.muted,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.$2,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    height: 1.4,
-                                    color: context.colors.muted,
-                                  ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                      ),
                     ),
-                  ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
         if (description is String && description.trim().isNotEmpty) ...[
           const SizedBox(height: 18),
@@ -230,7 +232,7 @@ class _CommunityRouteCopyState extends State<CommunityRouteCopy> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final style = DefaultTextStyle.of(context).style
-          .copyWith(fontSize: 14, height: 1.65, color: context.colors.muted);
+          .copyWith(fontSize: 13, height: 1.6, color: context.colors.muted);
       final painter = TextPainter(
         text: TextSpan(text: widget.text, style: style),
         textDirection: Directionality.of(context),
@@ -252,7 +254,7 @@ class _CommunityRouteCopyState extends State<CommunityRouteCopy> {
             TextButton(
               onPressed: () => setState(() => expanded = !expanded),
               style: TextButton.styleFrom(
-                foregroundColor: context.colors.accent,
+                foregroundColor: context.colors.text,
                 padding: EdgeInsets.zero,
                 textStyle: const TextStyle(
                   fontFamily: AppTypography.body,
@@ -296,23 +298,19 @@ class CommunityRouteDays extends StatelessWidget {
                 onPressed: () => onSelect(day.index),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: selected == day.index
-                      ? AppColors.forest
+                      ? context.colors.orangeTint
                       : context.colors.surface,
-                  foregroundColor: selected == day.index
-                      ? Colors.white
-                      : context.colors.text,
+                  foregroundColor: context.colors.text,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
-                    vertical: 14,
+                    vertical: 12,
                   ),
                   side: BorderSide(
                     color: selected == day.index
-                        ? AppColors.forest
+                        ? context.colors.accent
                         : context.colors.divider,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  shape: const StadiumBorder(),
                   textStyle: const TextStyle(
                     fontFamily: AppTypography.body,
                     fontSize: 13,
@@ -342,12 +340,8 @@ class CommunityDaySummary extends StatelessWidget {
   final PlanDay day;
   final String symbol;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: context.colors.greenTint,
-      borderRadius: BorderRadius.circular(20),
-    ),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -359,7 +353,7 @@ class CommunityDaySummary extends StatelessWidget {
             Text(
               publicRouteCount(context, day.stops.length, 'durak'),
               style: TextStyle(
-                color: context.colors.forest,
+                color: context.colors.text,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -371,7 +365,7 @@ class CommunityDaySummary extends StatelessWidget {
                   'amount': publicRouteMoney(context, symbol, day.estimated),
                 },
               ),
-              style: TextStyle(color: context.colors.forest, fontSize: 12),
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
             ),
           ],
         ),
@@ -396,40 +390,35 @@ class CommunityRouteStop extends StatelessWidget {
   final String symbol;
   final VoidCallback onDirections;
   @override
-  Widget build(BuildContext context) => Material(
-    color: context.colors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(22),
-      side: BorderSide(color: context.colors.divider),
-    ),
-    clipBehavior: Clip.antiAlias,
+  Widget build(BuildContext context) => TravyonSurface(
+    borderRadius: 20,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
+                      minWidth: 32,
+                      minHeight: 32,
                     ),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: context.colors.orangeTint,
-                      borderRadius: BorderRadius.circular(12),
+                      color: context.colors.background,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${stop.index + 1}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.colors.tone(const Color(0xFFA74F21)),
-                        fontSize: 14,
+                        color: context.colors.text,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -439,7 +428,7 @@ class CommunityRouteStop extends StatelessWidget {
                     child: Text(
                       stop.name,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         height: 1.35,
                         fontWeight: FontWeight.w700,
                         color: context.colors.text,
@@ -449,47 +438,65 @@ class CommunityRouteStop extends StatelessWidget {
                 ],
               ),
               if (stop.description.trim().isNotEmpty) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 CommunityRouteCopy(text: stop.description),
               ],
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cost = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     context.tr('Tahmini maliyet'),
-                    style: TextStyle(fontSize: 12, color: context.colors.muted),
+                    style: TextStyle(fontSize: 11, color: context.colors.muted),
                   ),
+                  const SizedBox(height: 3),
                   Text(
                     publicRouteMoney(context, symbol, stop.estimated),
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: context.colors.text,
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-        Divider(height: 1, color: context.colors.divider),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: TextButton.icon(
-            key: ValueKey('community-directions-${stop.index}'),
-            onPressed: onDirections,
-            style: TextButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              textStyle: const TextStyle(
-                fontFamily: AppTypography.body,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            icon: const Icon(Icons.near_me_outlined, size: 18),
-            label: Text(context.tr('Yol tarifi')),
+              );
+              final directions = TextButton.icon(
+                key: ValueKey('community-directions-${stop.index}'),
+                onPressed: onDirections,
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.text,
+                  minimumSize: const Size(0, 48),
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(
+                    fontFamily: AppTypography.body,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                icon: const Icon(Icons.near_me_outlined, size: 17),
+                label: Text(context.tr('Yol tarifi')),
+              );
+              if (constraints.maxWidth < 280 ||
+                  MediaQuery.textScalerOf(context).scale(12) > 16) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [cost, const SizedBox(height: 8), directions],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: cost),
+                  const SizedBox(width: 8),
+                  directions,
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -544,14 +551,10 @@ class CommunityRouteRating extends StatelessWidget {
   final int? myRating;
   final ValueChanged<int>? onRate;
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => TravyonSurface(
     key: const ValueKey('community-rating'),
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: context.colors.divider),
-    ),
+    padding: const EdgeInsets.all(18),
+    borderRadius: 20,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -565,12 +568,12 @@ class CommunityRouteRating extends StatelessWidget {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Icon(Icons.star_rounded, color: context.colors.accent, size: 26),
+            Icon(Icons.star_rounded, color: context.colors.text, size: 22),
             if (plan.ratingCount > 0)
               Text(
                 UnitFormatter.of(context).number(plan.rating),
                 style: TextStyle(
-                  fontSize: 25,
+                  fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: context.colors.text,
                 ),
@@ -609,13 +612,15 @@ class CommunityRouteRating extends StatelessWidget {
                     onPressed: busy ? null : () => onRate!(rating),
                     style: IconButton.styleFrom(
                       minimumSize: const Size(48, 48),
-                      foregroundColor: context.colors.accent,
+                      foregroundColor: rating <= (myRating ?? 0)
+                          ? context.colors.accent
+                          : context.colors.muted,
                     ),
                     icon: Icon(
                       rating <= (myRating ?? 0)
                           ? Icons.star_rounded
                           : Icons.star_outline_rounded,
-                      size: 29,
+                      size: 27,
                     ),
                   ),
                 ),
@@ -639,6 +644,68 @@ class CommunityRouteRating extends StatelessWidget {
           ),
         ],
       ],
+    ),
+  );
+}
+
+/// The public route keeps its own two views, without adding app-level actions.
+class CommunityRouteNavigation extends StatelessWidget {
+  const CommunityRouteNavigation({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    minimum: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+    child: TravyonSurface(
+      borderRadius: 36,
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          height: 66,
+          backgroundColor: Colors.transparent,
+          indicatorColor: context.colors.orangeTint,
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              fontFamily: AppTypography.body,
+              fontSize: 12,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w600
+                  : FontWeight.w500,
+              color: context.colors.text,
+            ),
+          ),
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              size: 21,
+              color: states.contains(WidgetState.selected)
+                  ? context.colors.accent
+                  : context.colors.muted,
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: selected,
+          onDestinationSelected: onSelect,
+          destinations: [
+            NavigationDestination(
+              key: const ValueKey('community-tab-plan'),
+              icon: const Icon(Icons.format_list_bulleted_rounded),
+              label: context.tr('Günlük plan'),
+            ),
+            NavigationDestination(
+              key: const ValueKey('community-tab-map'),
+              icon: const Icon(Icons.map_outlined),
+              label: context.tr('Harita'),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }
@@ -709,7 +776,7 @@ class CommunityPreferencesSheet extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(row.$1, color: context.colors.forest, size: 21),
+                  Icon(row.$1, color: context.colors.text, size: 21),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(

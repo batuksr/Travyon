@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travyon/core/theme/app_theme.dart';
+import 'package:travyon/core/widgets/travyon_ui.dart';
 import 'package:travyon/features/community/data/community_repository.dart';
 import 'package:travyon/features/community/presentation/community_plan_page.dart';
 import 'package:travyon/features/community/presentation/traveler_page.dart';
@@ -103,6 +105,54 @@ Widget page(
 }) => TravelerPage(uid: uid, target: target, repository: repo);
 
 void main() {
+  for (final dark in [false, true]) {
+    testWidgets('neutral profile and following states dark=$dark', (
+      tester,
+    ) async {
+      viewport(tester, const Size(390, 844));
+      final repo = TravelerRepository()..currentFollowing = {'other'};
+      addTearDown(repo.close);
+      await tester.pumpWidget(host(page(repo), dark: dark));
+      await tester.pumpAndSettle();
+      final colors = tester.element(find.byType(TravelerPage)).colors;
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('traveler-name')))
+            .style!
+            .color,
+        colors.text,
+      );
+      expect(
+        tester.widget(find.byKey(const ValueKey('traveler-statistics'))),
+        isA<TravyonSurface>(),
+      );
+      final follow = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('traveler-follow')),
+      );
+      expect(follow.style!.backgroundColor!.resolve({}), colors.surface);
+      expect(follow.style!.foregroundColor!.resolve({}), colors.text);
+      expect(follow.style!.shape!.resolve({}), isA<StadiumBorder>());
+      await reveal(tester, find.text('Rotayı keşfet'));
+      expect(
+        tester.widget<Text>(find.text('Rotayı keşfet')).style!.color,
+        colors.text,
+      );
+      repo.followEvents.addError(StateError('offline'));
+      await tester.pumpAndSettle();
+      await reveal(tester, find.text('Takip durumu alınamadı.'), up: true);
+      expect(
+        tester.widget<Text>(find.text('Takip durumu alınamadı.')).style!.color,
+        colors.muted,
+      );
+      final retry = tester.widget<TextButton>(
+        find.byKey(const ValueKey('traveler-follow-retry')),
+      );
+      expect(retry.style!.foregroundColor!.resolve({}), colors.text);
+      expect(repo.mutations, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   test(
     'stats count public routes, planned days and unique normalized cities',
     () {
@@ -172,7 +222,7 @@ void main() {
     for (final dark in [false, true]) {
       for (final size in [const Size(320, 740), const Size(640, 360)]) {
         testWidgets(
-          'passport $language dark=$dark $size at 200% fits and opens routes',
+          'profile $language dark=$dark $size at 200% fits and opens routes',
           (tester) async {
             viewport(tester, size);
             final repo = TravelerRepository()

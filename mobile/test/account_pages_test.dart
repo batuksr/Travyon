@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travyon/core/localization/app_localizations.dart';
+import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/settings/data/settings_fields.dart';
 import 'package:travyon/features/settings/presentation/account_profile_page.dart';
 import 'package:travyon/features/settings/presentation/account_security_page.dart';
@@ -10,6 +11,7 @@ import 'package:travyon/features/settings/presentation/settings_page.dart';
 
 import 'settings_test.dart' show FakeSettings;
 import 'welcome_screen_test.dart' show host;
+import 'community_route_design_test.dart' as design show host, viewport;
 
 class AccountSettings extends FakeSettings {
   bool loadFails = false;
@@ -105,6 +107,40 @@ Widget routed(Widget page) => host(
 );
 
 void main() {
+  testWidgets('refreshed forms keep neutral labels in dark mode at 200%', (
+    tester,
+  ) async {
+    design.viewport(tester, const Size(320, 740));
+    for (final kind in ['profile', 'email', 'password']) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      final repo = AccountSettings();
+      await tester.pumpWidget(
+        design.host(page(kind, repo), language: 'en', dark: true, scale: 2),
+      );
+      await tester.pumpAndSettle();
+      final inputKey = kind == 'profile'
+          ? 'profile-displayName'
+          : kind == 'email'
+          ? 'account-email'
+          : 'account-new';
+      await tester.ensureVisible(find.byKey(ValueKey(inputKey)));
+      await tester.pumpAndSettle();
+      final decoration = field(tester, inputKey).decoration!;
+      expect(decoration.floatingLabelStyle!.color, AppPalette.dark.text);
+      expect(decoration.fillColor, AppPalette.dark.background);
+      await tester.ensureVisible(
+        find.byKey(
+          ValueKey(kind == 'profile' ? 'profile-save' : 'account-submit'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(repo.saves, 0);
+      expect(repo.emailChanges, isEmpty);
+      expect(repo.passwordChanges, isEmpty);
+    }
+  });
+
   for (final kind in ['profile', 'email', 'password']) {
     for (final language in ['tr', 'en']) {
       for (final size in [const Size(320, 640), const Size(640, 360)]) {
@@ -131,6 +167,17 @@ void main() {
                       ? 'E-postanı güncelle.'
                       : 'Hesabını koru.',
                 ),
+              ),
+              findsNothing,
+            );
+            expect(
+              find.text(
+                strings.text(switch (kind) {
+                  'profile' => 'Bilgilerini tek yerden düzenle; değişikliklerin hesabına kaydedilsin.',
+                  'email' =>
+                    'E-posta adresini değiştirmek için yeni adresini doğrula.',
+                  _ => 'Güçlü bir şifre seçerek hesabını güvende tut.',
+                }),
               ),
               findsOneWidget,
             );

@@ -5,6 +5,32 @@ import 'app_translations.generated.dart';
 /// Turkish remains the canonical fallback so a missing entry is readable in
 /// production and easy to detect in localization coverage tests.
 const mobileEnglishTranslations = <String, String>{
+  'Bu hafta sonu': 'This weekend',
+  'Gelecek hafta': 'Next week',
+  'Haritada aç': 'Open map',
+  'Yolculuk araçları': 'Trip tools',
+  'Durakların konumu henüz eklenmemiş.':
+      'Stop locations have not been added yet.',
+  'Harita önizlemesi şu anda kullanılamıyor.':
+      'The map preview is currently unavailable.',
+  'Yolculuğun\nburada başlıyor.': 'Your journey\nstarts here.',
+  'Yeni rotalara\nmerhaba de.': 'Say hello to\nnew adventures.',
+  'Dünyayı keşfetmek için giriş yap veya yeni bir hesap oluştur.':
+      'Sign in or create an account to discover the world.',
+  'Hesabını oluştur, bir sonraki yolculuğunu birlikte planlayalım.':
+      'Create an account and let’s plan your next journey together.',
+  'Nereye gidiyoruz?': 'Where are we going?',
+  'Şehir veya bölge ara...': 'Search for a city or region...',
+  'Senin planın': 'Your trip',
+  'Popüler duraklar': 'Popular destinations',
+  'Tümünü gör': 'See all',
+  'Kategoriler': 'Categories',
+  'Deniz & Güneş': 'Sun & Sea',
+  'Doğa': 'Nature',
+  'Şehir Kaçamağı': 'City Break',
+  'Aktif seyahat': 'Current trip',
+  'Son yolculuğun': 'Your last trip',
+  'Bu destinasyonla devam et': 'Continue with this destination',
   'Adın ve soyadın': 'Your full name',
   'Şifreni gir': 'Enter your password',
   'Hesabın yok mu?': 'New here?',
@@ -21,6 +47,10 @@ const mobileEnglishTranslations = <String, String>{
   'Kabul et ve gönder': 'Accept and send',
   'Nereye gidelim?': 'Where shall we go?',
   'Rotanı konuşalım.': 'Let’s talk about your trip.',
+  'Şehirleri keşfet, bütçeni konuş, yolculuğunu şekillendir.':
+      'Explore cities, discuss your budget and shape your journey.',
+  'Günlerini, bütçeni ve duraklarını birlikte gözden geçirelim.':
+      'Let’s look at your days, budget and stops together.',
   'Şehir öner': 'City ideas',
   'Günlerim': 'My days',
   'İpuçları': 'Tips',
@@ -192,6 +222,11 @@ const mobileEnglishTranslations = <String, String>{
   'Cüzdan yüklenemedi. Bağlantını kontrol edip tekrar dene.':
       'Could not load your wallet. Check your connection and try again.',
   'Gezgin kartı': 'Traveler card',
+  'Gezgin profili': 'Traveler profile',
+  'Yeni yerler.\nYeni hikâyeler.': 'New places.\nNew stories.',
+  'Kabul et ve devam et': 'Accept and continue',
+  'Devam etmeden önce Kullanım Koşulları ve Gizlilik Politikası’nı inceleyip kabul et.':
+      'Before continuing, review and accept the Terms of Use and Privacy Policy.',
   'Her rota, yeni bir hikâye': 'Every route, a new story',
   'Paylaşılan rota': 'Shared routes',
   'Planlanan gün': 'Planned days',
@@ -809,6 +844,7 @@ const mobileEnglishTranslations = <String, String>{
   'Yolculuğun': 'Your journey',
   'Seyahat listesi': 'Travel checklist',
   'Seyahatin': 'Your trip',
+  'Seyahat seç': 'Choose a trip',
   'Genel cüzdan': 'General wallet',
   'Arşivlenmiş seyahat': 'Archived trip',
   'İlk biletini ekle': 'Add your first ticket',
@@ -971,6 +1007,7 @@ const mobileEnglishTranslations = <String, String>{
   'Yeni bir puan seçersen önceki değerlendirmen güncellenir.':
       'Choosing a new rating updates your previous rating.',
   'Yeni plan': 'New plan',
+  'Tahmini toplam': 'Estimated total',
   'Yeni yolculuk planla': 'Plan a new journey',
   'Yeni yolculuğun': 'Your new journey',
   'Yol tarifi': 'Directions',
@@ -1304,6 +1341,7 @@ const mobileEnglishTranslations = <String, String>{
   'İşlem önkoşulları sağlanmadı. Hesap silerken aktif aboneliğin olmamalı ve yeniden doğrulama tamamlanmalı.': 'The requirements were not met. To delete your account, you must have no active subscription and complete reauthentication.',
   'Daha güçlü bir şifre seç.': 'Choose a stronger password.',
   'Biraz bekleyip tekrar dene.': 'Wait a moment and try again.',
+  'Profil': 'Profile',
   'HESABIM': 'ACCOUNT',
   'Cihazdaki pasaport hatırlatıcısı okunamadı. Mevcut kayıt değiştirilmedi.': 'The passport reminder on this device could not be read. The existing entry was not changed.',
   'Cihaz eklentisi yüklenemedi. Flutter terminalinde q ile uygulamayı kapatıp flutter run komutuyla yeniden başlat. Hot reload veya R yeterli değildir.': 'The device plugin could not be loaded. Stop the app with q in the Flutter terminal and start it again with flutter run. Hot reload or R is not enough.',

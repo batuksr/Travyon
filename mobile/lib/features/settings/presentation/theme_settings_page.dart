@@ -17,8 +17,6 @@ class ThemeSettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AccountHeader(
-            icon: Icons.palette_outlined,
-            title: 'Sana uygun görünüm',
             subtitle: 'Açık, karanlık veya sistem temasını seç.',
           ),
           for (final mode in ThemeMode.values) ...[

@@ -205,7 +205,7 @@ class _AuthPageState extends State<AuthPage> {
         fontFamily: AppTypography.body,
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: colors.muted,
+        color: colors.text,
       ),
       hintStyle: TextStyle(color: colors.muted, fontSize: 14),
       fillColor: colors.surface,
@@ -267,7 +267,7 @@ class _AuthPageState extends State<AuthPage> {
               constraints: const BoxConstraints(maxWidth: 440),
               child: SingleChildScrollView(
                 key: const ValueKey('auth-scroll'),
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
                 child: AutofillGroup(
                   child: Form(
                     key: _formKey,
@@ -277,17 +277,28 @@ class _AuthPageState extends State<AuthPage> {
                         Semantics(
                           header: true,
                           child: Text(
-                            registering ? 'Hesap oluştur' : 'Tekrar hoş geldin',
+                            registering
+                                ? 'Yeni rotalara\nmerhaba de.'
+                                : 'Yolculuğun\nburada başlıyor.',
                             key: const ValueKey('auth-title'),
                             style: TextStyle(
                               fontFamily: AppTypography.heading,
-                              fontSize: 26,
-                              height: 1.2,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -.9,
+                              height: 1.22,
                               color: colors.text,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 12),
+                        Text(
+                          registering
+                              ? 'Hesabını oluştur, bir sonraki yolculuğunu birlikte planlayalım.'
+                              : 'Dünyayı keşfetmek için giriş yap veya yeni bir hesap oluştur.',
+                          style: TextStyle(color: colors.muted, height: 1.6),
+                        ),
+                        const SizedBox(height: 36),
                         if (registering) ...[
                           TextFormField(
                             key: const ValueKey('auth-name'),
@@ -379,10 +390,11 @@ class _AuthPageState extends State<AuthPage> {
                               key: const ValueKey('auth-reset-password'),
                               onPressed: _loading ? null : _resetPassword,
                               style: TextButton.styleFrom(
+                                foregroundColor: colors.text,
                                 textStyle: buttonText.copyWith(fontSize: 12),
                               ),
                               child: _action == _AuthAction.passwordReset
-                                  ? _AuthSpinner(color: colors.forest)
+                                  ? _AuthSpinner(color: colors.text)
                                   : const Text('Şifremi unuttum'),
                             ),
                           ),
@@ -398,8 +410,8 @@ class _AuthPageState extends State<AuthPage> {
                                   ),
                             contentPadding: EdgeInsets.zero,
                             controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: colors.forest,
-                            checkColor: colors.background,
+                            activeColor: colors.accent,
+                            checkColor: colors.onAccent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -433,15 +445,13 @@ class _AuthPageState extends State<AuthPage> {
                           key: const ValueKey('auth-submit'),
                           onPressed: _loading ? null : _submit,
                           style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(54),
+                            minimumSize: const Size.fromHeight(56),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
                               vertical: 16,
                             ),
                             textStyle: buttonText,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                            shape: const StadiumBorder(),
                           ),
                           child: _action == _AuthAction.email
                               ? _AuthSpinner(color: colors.onAccent)
@@ -451,63 +461,17 @@ class _AuthPageState extends State<AuthPage> {
                                       : 'Giriş yap',
                                 ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 24),
                         const _OrDivider(),
-                        const SizedBox(height: 18),
-                        OutlinedButton.icon(
-                          key: const ValueKey('auth-google'),
-                          onPressed: _loading ? null : _signInWithGoogle,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: colors.text,
-                            backgroundColor: colors.surface,
-                            minimumSize: const Size.fromHeight(54),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            side: BorderSide(color: colors.divider),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            textStyle: buttonText,
-                          ),
-                          icon: _action == _AuthAction.google
-                              ? _AuthSpinner(color: colors.forest)
-                              : const _GoogleMark(),
-                          label: const Text(
-                            'Google ile devam et',
-                            textAlign: TextAlign.center,
-                          ),
+                        const SizedBox(height: 24),
+                        _SocialActions(
+                          showApple: showApple,
+                          loading: _loading,
+                          googleBusy: _action == _AuthAction.google,
+                          appleBusy: _action == _AuthAction.apple,
+                          onGoogle: _signInWithGoogle,
+                          onApple: _signInWithApple,
                         ),
-                        if (showApple) ...[
-                          const SizedBox(height: 12),
-                          FilledButton.icon(
-                            key: const ValueKey('auth-apple'),
-                            onPressed: _loading ? null : _signInWithApple,
-                            style: FilledButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: Colors.black,
-                              disabledForegroundColor: Colors.white70,
-                              disabledBackgroundColor: Colors.black54,
-                              minimumSize: const Size.fromHeight(54),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              textStyle: buttonText,
-                            ),
-                            icon: _action == _AuthAction.apple
-                                ? const _AuthSpinner(color: Colors.white)
-                                : const Icon(Icons.apple, size: 21),
-                            label: const Text(
-                              'Apple ile devam et',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 18),
                         Wrap(
                           alignment: WrapAlignment.center,
@@ -552,6 +516,71 @@ class _AuthPageState extends State<AuthPage> {
       ),
     );
   }
+}
+
+class _SocialActions extends StatelessWidget {
+  const _SocialActions({
+    required this.showApple,
+    required this.loading,
+    required this.googleBusy,
+    required this.appleBusy,
+    required this.onGoogle,
+    required this.onApple,
+  });
+
+  final bool showApple, loading, googleBusy, appleBusy;
+  final VoidCallback onGoogle, onApple;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final sideBySide =
+          showApple &&
+          constraints.maxWidth >= 300 &&
+          MediaQuery.textScalerOf(context).scale(14) <= 20;
+      Widget button(bool apple) => Semantics(
+        label: context.tr(apple ? 'Apple ile devam et' : 'Google ile devam et'),
+        child: OutlinedButton.icon(
+          key: ValueKey(apple ? 'auth-apple' : 'auth-google'),
+          onPressed: loading ? null : (apple ? onApple : onGoogle),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: context.colors.surface,
+            foregroundColor: context.colors.text,
+            minimumSize: const Size(0, 54),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            shape: const StadiumBorder(),
+          ),
+          icon: (apple ? appleBusy : googleBusy)
+              ? _AuthSpinner(color: context.colors.text)
+              : apple
+              ? const Icon(Icons.apple, size: 22)
+              : const _GoogleMark(),
+          label: Text(
+            sideBySide
+                ? (apple ? 'Apple' : 'Google')
+                : (apple ? 'Apple ile devam et' : 'Google ile devam et'),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+      if (sideBySide) {
+        return Row(
+          children: [
+            Expanded(child: button(false)),
+            const SizedBox(width: 12),
+            Expanded(child: button(true)),
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          button(false),
+          if (showApple) ...[const SizedBox(height: 12), button(true)],
+        ],
+      );
+    },
+  );
 }
 
 class _AuthSpinner extends StatelessWidget {

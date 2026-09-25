@@ -41,6 +41,20 @@ Map<String, dynamic> fixture() => {
 };
 
 void main() {
+  Future<void> reveal(WidgetTester tester, Finder target) async {
+    await tester.scrollUntilVisible(
+      target,
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('0-1')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
     'guide and weather open on demand and closing preserves the selected day',
     (tester) async {
@@ -63,6 +77,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(weather.calls, 0);
+      await reveal(tester, find.byKey(const ValueKey('plan-guide')));
       await tester.tap(find.byKey(const ValueKey('plan-guide')));
       await tester.pumpAndSettle();
       expect(find.byType(PlanGuideSheet), findsOneWidget);
@@ -73,6 +88,7 @@ void main() {
       await tester.tap(find.byTooltip('Kapat'));
       await tester.pumpAndSettle();
       expect(weather.calls, 0);
+      await reveal(tester, find.byKey(const ValueKey('plan-weather')));
       await tester.tap(find.byKey(const ValueKey('plan-weather')));
       await tester.pump();
       expect(weather.calls, 1);
@@ -82,6 +98,11 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(PlanWeatherSheet), findsNothing);
+      await tester.drag(
+        find.byKey(const ValueKey('0-1')),
+        const Offset(0, 2500),
+      );
+      await tester.pumpAndSettle();
       expect(
         tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).last.selected,
         isTrue,
@@ -145,12 +166,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Villa Borghese'), findsWidgets);
     final chips = tester
         .widgetList<ChoiceChip>(find.byType(ChoiceChip))
         .toList();
     expect(chips[1].selected, isTrue);
     expect(chips[0].selected, isFalse);
+    await reveal(tester, find.text('Villa Borghese'));
+    expect(find.text('Villa Borghese'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

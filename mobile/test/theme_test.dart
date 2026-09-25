@@ -172,14 +172,14 @@ void main() {
       await tester.ensureVisible(find.byKey(const ValueKey('welcome-sign-in')));
       await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
       await tester.pumpAndSettle();
-      expect(find.text('Tekrar hoş geldin'), findsOneWidget);
+      expect(find.text('Yolculuğun\nburada başlıyor.'), findsOneWidget);
       await tester.enterText(
         find.byType(TextField).first,
         'traveler@example.test',
       );
       await controller.setMode(ThemeMode.light);
       await tester.pumpAndSettle();
-      expect(find.text('Tekrar hoş geldin'), findsOneWidget);
+      expect(find.text('Yolculuğun\nburada başlıyor.'), findsOneWidget);
       expect(find.text('traveler@example.test'), findsOneWidget);
       expect(
         Theme.of(tester.element(find.byType(Scaffold).last)).brightness,
@@ -237,6 +237,13 @@ void main() {
           expect(
             find.text(
               language == 'en' ? 'Make it your own' : 'Sana uygun görünüm',
+            ),
+            findsNothing,
+          );
+          expect(
+            find.text(
+              AppLocalizations(Locale(language))
+                  .text('Açık, karanlık veya sistem temasını seç.'),
             ),
             findsOneWidget,
           );
@@ -345,10 +352,7 @@ void main() {
       );
       expect(material.color, AppPalette.dark.surface);
       final number = tester.widget<Text>(find.text('1'));
-      expect(
-        number.style!.color,
-        AppPalette.dark.tone(const Color(0xFFA74F21)),
-      );
+      expect(number.style!.color, AppPalette.dark.text);
       await tester.tap(find.text('Not ekle'));
       expect(notes, 1);
       final context = tester.element(find.byType(PlanStopCard));

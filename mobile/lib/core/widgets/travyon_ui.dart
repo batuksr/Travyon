@@ -19,6 +19,38 @@ abstract final class TravyonRadius {
   static const badge = 14.0;
 }
 
+class TravyonWordmark extends StatelessWidget {
+  const TravyonWordmark({super.key, this.size = 23});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Travyon',
+    excludeSemantics: true,
+    child: Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: 'trav',
+            style: TextStyle(color: context.colors.text),
+          ),
+          TextSpan(
+            text: 'yon',
+            style: TextStyle(color: context.colors.accent),
+          ),
+        ],
+      ),
+      style: TextStyle(
+        fontFamily: AppTypography.body,
+        fontSize: size,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -1,
+      ),
+    ),
+  );
+}
+
 class TravyonSurface extends StatelessWidget {
   const TravyonSurface({
     super.key,

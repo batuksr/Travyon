@@ -11,12 +11,12 @@ import '../../community/data/community_repository.dart';
 import '../../onboarding/data/onboarding_data.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/hub_content.dart';
+import 'hub_destination_sheet.dart';
 
 /// Presentation-only home: navigation and Firebase ownership stay in the shell.
 class HubHome extends StatelessWidget {
   const HubHome({
     super.key,
-    required this.name,
     required this.plans,
     required this.community,
     required this.onCreate,
@@ -25,8 +25,8 @@ class HubHome extends StatelessWidget {
     required this.onCommunity,
     required this.onPublicPlan,
     this.now,
+    this.showHeading = true,
   });
-  final String name;
   final AsyncSnapshot<List<TravelPlanSummary>> plans;
   final Stream<List<CommunityPlan>> community;
   final ValueChanged<OnboardingData?> onCreate;
@@ -34,6 +34,7 @@ class HubHome extends StatelessWidget {
   final VoidCallback onPlans, onCommunity;
   final ValueChanged<String> onPublicPlan;
   final DateTime? now;
+  final bool showHeading;
 
   @override
   Widget build(BuildContext context) {
@@ -42,127 +43,139 @@ class HubHome extends StatelessWidget {
     final weekend = weekendDraft(today);
     return ListView(
       key: const PageStorageKey('hub-home'),
-      padding: const EdgeInsets.fromLTRB(
-        TravyonSpace.page,
-        12,
-        TravyonSpace.page,
-        40,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        Text(
-          'Merhaba, $name!',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 7),
-        Text(
-          'Yolculuğunu planlamaya hazır mısın?',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 15),
-        ),
-        const SizedBox(height: 22),
+        if (showHeading) ...[
+          Text(
+            'Nereye gidiyoruz?',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 16),
+        ],
+        _DestinationSearch(onTap: () => _search(context)),
+        const SizedBox(height: 24),
         if (plans.hasError)
           _PlanUnavailable(onPlans: onPlans, onCreate: () => onCreate(null))
         else if (plans.connectionState == ConnectionState.waiting &&
             !plans.hasData)
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 45),
+            padding: EdgeInsets.symmetric(vertical: 36),
             child: Center(child: CircularProgressIndicator()),
           )
         else if (featured == null)
           _WelcomeCard(onCreate: () => onCreate(null))
         else ...[
+          _SectionHeading(
+            title: 'Senin planın',
+            action: 'Tüm planların (${plans.data!.length})',
+            onTap: onPlans,
+          ),
+          const SizedBox(height: 10),
           _JourneyCard(
             plan: featured,
             now: today,
             onOpen: () => onOpen(featured),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            alignment: WrapAlignment.spaceBetween,
-            children: [
-              TextButton.icon(
-                onPressed: onPlans,
-                icon: const Icon(Icons.bookmarks_outlined, size: 18),
-                label: Text('Tüm planların (${plans.data!.length})'),
-              ),
-              TextButton.icon(
-                onPressed: () => onCreate(null),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Yeni plan'),
-              ),
-            ],
-          ),
         ],
-        const SizedBox(height: TravyonSpace.section),
-        TravyonSectionHeader(
-          title: 'Nereye gitmek istersin?',
-          subtitle: 'Bir şehir seç, gerisini birlikte planlayalım.',
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height:
-              182 +
-              MediaQuery.textScalerOf(context).scale(20) * 1.5 +
-              MediaQuery.textScalerOf(context).scale(12) * 1.5 +
-              MediaQuery.textScalerOf(context).scale(11) * 2.6,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: hubCities.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final city = hubCities[index];
-              return _CityCard(
-                city: city,
-                onTap: () => onCreate(
-                  OnboardingData()
-                    ..destination = city.destinationFor(context.l10n.isEnglish),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: TravyonSpace.section),
-        const TravyonSectionHeader(title: 'Küçük bir kaçamak?'),
-        const SizedBox(height: 14),
+        const SizedBox(height: 24),
+        const _SectionHeading(title: 'Popüler duraklar'),
+        const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
-            final stacked =
-                constraints.maxWidth < 330 ||
-                MediaQuery.textScalerOf(context).scale(14) > 19;
-            final cards = [
-              _QuickCard(
-                icon: Icons.calendar_month_outlined,
-                title: 'Bu hafta sonu kaç',
-                subtitle:
-                    '${hubDate(weekend.startDate)} – ${hubDate(weekend.endDate)} · Tarihler hazır',
-                onTap: () => onCreate(weekend),
+            final cardWidth = (constraints.maxWidth - 12) / 2;
+            final scale = MediaQuery.textScalerOf(context);
+            return SizedBox(
+              height: 148 + scale.scale(16) * 1.4 + scale.scale(12) * 1.5 + 30,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: hubCities.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final city = hubCities[index];
+                  return _CityCard(
+                    city: city,
+                    width: cardWidth.clamp(148, 240),
+                    onTap: () => onCreate(
+                      OnboardingData()
+                        ..destination = city.destinationFor(
+                          context.l10n.isEnglish,
+                        ),
+                    ),
+                  );
+                },
               ),
-              _QuickCard(
-                icon: Icons.shuffle_rounded,
-                title: 'Bana şehir öner',
-                subtitle: 'Sürpriz bir yer keşfet',
-                onTap: () => _suggestCity(context),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        const _SectionHeading(title: 'Kategoriler'),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final entries = [
+              (Icons.beach_access_outlined, 'Deniz & Güneş', 'relax', ''),
+              (Icons.landscape_outlined, 'Doğa', 'nature', ''),
+              (Icons.museum_outlined, 'Kültür & Tarih', 'culture', ''),
+              (
+                Icons.location_city_outlined,
+                'Şehir Kaçamağı',
+                'culture',
+                'sehir_kacamagi',
               ),
             ];
-            if (stacked) {
-              return Column(
-                children: [cards[0], const SizedBox(height: 12), cards[1]],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[1]),
+                for (final entry in entries)
+                  SizedBox(
+                    width: (constraints.maxWidth - 12) / 2,
+                    child: _CategoryCard(
+                      icon: entry.$1,
+                      label: entry.$2,
+                      onTap: () => onCreate(
+                        OnboardingData()
+                          ..purposes.add(entry.$3)
+                          ..travelType = entry.$4,
+                      ),
+                    ),
+                  ),
               ],
             );
           },
         ),
+        const SizedBox(height: 24),
+        const _SectionHeading(title: 'Küçük bir kaçamak?'),
+        const SizedBox(height: 12),
+        _SurfaceCard(
+          onTap: () => onCreate(weekend),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: const Text('Bu hafta sonu kaç'),
+            subtitle: Text(
+              '${hubDate(weekend.startDate)} – ${hubDate(weekend.endDate)}',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _SurfaceCard(
+          onTap: () => _suggestCity(context),
+          child: const ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Icon(Icons.explore_outlined),
+            title: Text('Bana şehir öner'),
+            subtitle: Text('Sürpriz bir yer keşfet'),
+            trailing: Icon(Icons.chevron_right_rounded),
+          ),
+        ),
         StreamBuilder<List<CommunityPlan>>(
           stream: community,
           builder: (context, snapshot) {
-            // Never expose stale cards after a permission/network error.
             if (snapshot.hasError) return const SizedBox.shrink();
             final items = (snapshot.data ?? <CommunityPlan>[])
                 .where((p) => p.visible)
@@ -172,17 +185,9 @@ class HubHome extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 28),
-                Text(
-                  'Gezginlerden ilham al',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Topluluktan gerçek rotalar.',
-                  style: TextStyle(color: context.colors.muted),
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 24),
+                const _SectionHeading(title: 'Gezginlerden ilham al'),
+                const SizedBox(height: 12),
                 for (final plan in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -202,6 +207,13 @@ class HubHome extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _search(BuildContext context) async {
+    final city = await showHubDestinationPicker(context);
+    if (city != null && context.mounted) {
+      onCreate(OnboardingData()..destination = city);
+    }
   }
 
   void _suggestCity(BuildContext context) {
@@ -260,55 +272,33 @@ class HubHome extends StatelessWidget {
 class _WelcomeCard extends StatelessWidget {
   const _WelcomeCard({required this.onCreate});
   final VoidCallback onCreate;
+
   @override
-  Widget build(BuildContext context) => _ForestCard(
-    children: [
-      Wrap(
-        spacing: 12,
-        runSpacing: 10,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.flight_takeoff_rounded,
-              color: Color(0xFFFFC7A7),
-              size: 22,
-            ),
+  Widget build(BuildContext context) => TravyonSurface(
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'İlk yolculuğun\nnereden başlasın?',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Şehrini seç. Zevklerine ve tempona göre günlük rotanı birlikte hazırlayalım.',
+          style: TextStyle(
+            color: context.colors.muted,
+            fontSize: 13,
+            height: 1.5,
           ),
-          const Text(
-            'SANA ÖZEL ROTA',
-            style: TextStyle(
-              color: Color(0xFFFFE3D1),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 24),
-      Text(
-        'İlk yolculuğun\nnereden başlasın?',
-        style: Theme.of(context).textTheme.headlineSmall
-            ?.copyWith(color: AppColors.surface, height: 1.18),
-      ),
-      const SizedBox(height: 12),
-      const Text(
-        'Şehrini seç. Zevklerine ve tempona göre günlük rotanı birlikte hazırlayalım.',
-        style: TextStyle(color: Color(0xFFFFE5D4), height: 1.6),
-      ),
-      const SizedBox(height: 24),
-      SizedBox(
-        width: double.infinity,
-        child: _LightButton(label: 'İlk planımı oluştur', onTap: onCreate),
-      ),
-    ],
+        ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: onCreate,
+          child: const Text('İlk planımı oluştur'),
+        ),
+      ],
+    ),
   );
 }
 
@@ -321,204 +311,227 @@ class _JourneyCard extends StatelessWidget {
   final TravelPlanSummary plan;
   final DateTime now;
   final VoidCallback onOpen;
+
   @override
   Widget build(BuildContext context) {
-    final active = isTravelingToday(plan, now);
-    final start = plan.parsedStartDate;
-    final daysLeft = start == null
-        ? null
-        : DateTime.utc(
-            start.year,
-            start.month,
-            start.day,
-          ).difference(DateTime.utc(now.year, now.month, now.day)).inDays;
+    final known = hubCities
+        .where(
+          (city) =>
+              plan.destination == city.destination ||
+              plan.destination == city.destinationFor(true),
+        )
+        .firstOrNull;
     final dates = [
       hubDate(plan.startDate),
       hubDate(plan.endDate),
     ].where((s) => s.isNotEmpty).toSet().join(' – ');
-    return _ForestCard(
-      children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const Icon(Icons.route_outlined, color: Color(0xFFFFC9A6)),
-            Text(
-              hubTripLabel(plan, now),
-              style: const TextStyle(
-                color: Color(0xFFFFE5D4),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-              ),
+    final active = isTravelingToday(plan, now);
+    final upcoming = (plan.parsedStartDate ?? DateTime(1970)).isAfter(
+      DateTime(now.year, now.month, now.day),
+    );
+    return TravyonSurface(
+      key: const ValueKey('hub-featured-plan'),
+      semanticLabel: context.tr(active ? 'Bugünkü planı aç' : 'Planı aç'),
+      onTap: onOpen,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              width: 68,
+              height: 76,
+              child: known == null
+                  ? _TripPlaceholder(colors: context.colors)
+                  : Image.network(
+                      known.imageUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 240,
+                      errorBuilder: (_, _, _) =>
+                          _TripPlaceholder(colors: context.colors),
+                    ),
             ),
-          ],
-        ),
-        const SizedBox(height: 22),
-        Text(
-          plan.title,
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(color: AppColors.surface),
-        ),
-        if (plan.title != plan.destination) ...[
-          const SizedBox(height: 6),
-          Text(
-            plan.destination,
-            style: const TextStyle(color: Color(0xFFFFE5D4)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: context.colors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        active
+                            ? 'Aktif seyahat'
+                            : upcoming
+                            ? 'Yaklaşan yolculuk'
+                            : 'Son yolculuğun',
+                        style: TextStyle(
+                          color: context.colors.muted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  plan.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (plan.title != plan.destination) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    plan.destination,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: context.colors.muted, fontSize: 11),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  dates.isEmpty ? 'Tarih belirtilmedi' : dates,
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.colors.muted,
+            size: 20,
           ),
         ],
-        const SizedBox(height: 18),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _JourneyDetail(
-              icon: Icons.calendar_today_outlined,
-              label: dates.isEmpty ? 'Tarih belirtilmedi' : dates,
-            ),
-            _JourneyDetail(
-              icon: Icons.route_outlined,
-              label: '${plan.dayCount} gün · ${plan.activityCount} durak',
-            ),
-          ],
-        ),
-        if (!active && daysLeft != null && daysLeft > 0) ...[
-          const SizedBox(height: 10),
-          Text(
-            'Yolculuğuna $daysLeft gün kaldı',
-            style: const TextStyle(
-              color: Color(0xFFFFC9A6),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: _LightButton(
-            label: active ? 'Bugünkü planı aç' : 'Planı aç',
-            onTap: onOpen,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _ForestCard extends StatelessWidget {
-  const _ForestCard({required this.children});
-  final List<Widget> children;
+class _TripPlaceholder extends StatelessWidget {
+  const _TripPlaceholder({required this.colors});
+  final AppPalette colors;
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(24),
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFB55A31), Color(0xFF78341E)],
-      ),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: Colors.white.withValues(alpha: .10)),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xFF6E301D).withValues(alpha: .24),
-          blurRadius: 24,
-          offset: const Offset(0, 12),
+  Widget build(BuildContext context) => ColoredBox(
+    color: colors.orangeTint,
+    child: Icon(Icons.route_rounded, color: colors.text, size: 28),
+  );
+}
+
+class _DestinationSearch extends StatelessWidget {
+  const _DestinationSearch({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => TravyonSurface(
+    key: const ValueKey('hub-destination-search'),
+    onTap: onTap,
+    borderRadius: 100,
+    semanticLabel: context.tr('Şehir veya bölge ara...'),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    child: Row(
+      children: [
+        Icon(Icons.search_rounded, size: 22, color: context.colors.muted),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'Şehir veya bölge ara...',
+            style: TextStyle(color: context.colors.muted, fontSize: 13),
+          ),
         ),
+        const SizedBox(width: 8),
+        Icon(Icons.north_east_rounded, size: 18, color: context.colors.text),
       ],
     ),
-    child: Stack(
-      children: [
-        Positioned(
-          right: -70,
-          top: -88,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: .08),
-                width: 28,
+  );
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({required this.title, this.action, this.onTap});
+  final String title;
+  final String? action;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      ),
+      if (action != null)
+        Flexible(
+          child: Align(
+            alignment: Alignment.centerRight,
+            heightFactor: 1,
+            child: TextButton(
+              onPressed: onTap,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.only(left: 8),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              child: Text(action!, textAlign: TextAlign.end),
             ),
           ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
-      ],
-    ),
+    ],
   );
 }
 
-class _JourneyDetail extends StatelessWidget {
-  const _JourneyDetail({required this.icon, required this.label});
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 34),
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .10),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: const Color(0xFFFFE3D1)),
-        const SizedBox(width: 7),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFFFE5D4),
-            fontSize: 12,
-            height: 1.2,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _LightButton extends StatelessWidget {
-  const _LightButton({required this.label, required this.onTap});
   final String label;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => FilledButton(
-    style: FilledButton.styleFrom(
-      backgroundColor: context.colors.surface,
-      foregroundColor: context.colors.forest,
-    ),
-    onPressed: onTap,
-    child: Wrap(
-      spacing: 12,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
+  Widget build(BuildContext context) => TravyonSurface(
+    onTap: onTap,
+    borderRadius: 20,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+    child: Column(
       children: [
-        Text(label),
-        const Icon(Icons.arrow_forward_rounded, size: 18),
+        Icon(icon, color: context.colors.text, size: 28),
+        const SizedBox(height: 12),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: context.colors.text,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     ),
   );
 }
 
 class _CityCard extends StatelessWidget {
-  const _CityCard({required this.city, required this.onTap});
+  const _CityCard({required this.city, required this.onTap, this.width = 180});
+  final double width;
   final HubCity city;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => SizedBox(
     // Curated suggestions have explicit localized names. Saved/user-authored
     // destinations elsewhere remain verbatim.
-    width: 190,
+    width: width,
     child: Semantics(
       button: true,
       label: context.tr(
@@ -531,34 +544,35 @@ class _CityCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 130,
-              width: double.infinity,
-              child: Image.network(
-                city.imageUrl,
-                fit: BoxFit.cover,
-                cacheWidth: 600,
-                errorBuilder: (_, _, _) => ColoredBox(
-                  color: AppColors.forest,
-                  child: Center(
-                    child: Icon(
-                      Icons.location_city_rounded,
-                      color: AppColors.surface,
-                      size: 36,
+            Expanded(
+              child: SizedBox(
+                width: double.infinity,
+                child: Image.network(
+                  city.imageUrl,
+                  fit: BoxFit.cover,
+                  cacheWidth: 600,
+                  errorBuilder: (_, _, _) => ColoredBox(
+                    color: AppColors.forest,
+                    child: Center(
+                      child: Icon(
+                        Icons.location_city_rounded,
+                        color: AppColors.surface,
+                        size: 36,
+                      ),
                     ),
                   ),
-                ),
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : ColoredBox(
-                        color: context.colors.divider,
-                        child: Center(
-                          child: Icon(
-                            Icons.landscape_outlined,
-                            color: context.colors.muted,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : ColoredBox(
+                          color: context.colors.divider,
+                          child: Center(
+                            child: Icon(
+                              Icons.landscape_outlined,
+                              color: context.colors.muted,
+                            ),
                           ),
                         ),
-                      ),
+                ),
               ),
             ),
             Padding(
@@ -579,72 +593,11 @@ class _CityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: context.colors.muted, fontSize: 12),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    city.displayCaption(context.l10n.isEnglish),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.colors.forest,
-                      fontSize: 11,
-                    ),
-                  ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    ),
-  );
-}
-
-class _QuickCard extends StatelessWidget {
-  const _QuickCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String title, subtitle;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => _SurfaceCard(
-    onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TravyonIconBadge(
-                icon: icon,
-                size: 40,
-                color: context.colors.accent,
-                background: context.colors.orangeTint,
-              ),
-              Icon(
-                Icons.arrow_outward_rounded,
-                size: 18,
-                color: context.colors.muted,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: context.colors.muted,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-        ],
       ),
     ),
   );

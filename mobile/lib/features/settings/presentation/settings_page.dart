@@ -31,6 +31,7 @@ import 'account_security_page.dart';
 import 'travel_preferences_page.dart';
 import 'notification_privacy_page.dart';
 import 'theme_settings_page.dart';
+import 'settings_design.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
@@ -148,62 +149,27 @@ class _SettingsPageState extends State<SettingsPage> {
     IconData icon,
     VoidCallback action, {
     String? subtitle,
-  }) => ListTile(
-    leading: Icon(icon, color: context.colors.forest),
-    title: Text(title),
-    subtitle: subtitle == null ? null : Text(subtitle),
-    trailing: const Icon(Icons.chevron_right),
+  }) => SettingsMenuTile(
+    title: title,
+    subtitle: subtitle,
+    icon: icon,
     onTap: _busy ? null : action,
   );
-  Widget _group(String title, List<Widget> children) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(4, 12, 0, 10),
-        child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-      ),
-      CommunityPanel(child: Column(children: children)),
-    ],
-  );
+
+  Widget _group(String title, List<Widget> children) =>
+      SettingsMenuGroup(title: title, children: children);
 
   Widget _preferenceTile(
     String title,
     String subtitle,
     IconData icon,
     VoidCallback action,
-  ) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-    leading: Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: context.colors.forest.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(icon, size: 22, color: context.colors.forest),
-    ),
-    title: Text(
-      title,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-    ),
-    subtitle: Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          height: 1.5,
-          color: context.colors.muted,
-        ),
-      ),
-    ),
-    trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-    onTap: _busy ? null : action,
-  );
+  ) => _tile(title, icon, action, subtitle: subtitle);
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
     child: Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: const Text('Profil')),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _data,
         builder: (context, snapshot) {
@@ -234,71 +200,15 @@ class _SettingsPageState extends State<SettingsPage> {
           );
           final photo = data['photoURL'] as String?;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            key: const PageStorageKey('settings-scroll'),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             children: [
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.forest,
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        ClipOval(
-                          child:
-                              photo != null &&
-                                  (Uri.tryParse(photo)?.scheme == 'https' ||
-                                      photo.startsWith('http://10.0.2.2'))
-                              ? Image.network(
-                                  photo,
-                                  width: 62,
-                                  height: 62,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const Icon(
-                                    Icons.account_circle,
-                                    color: Colors.white,
-                                    size: 62,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.account_circle,
-                                  color: Colors.white,
-                                  size: 62,
-                                ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            data['displayName'] as String? ?? 'Gezgin',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      data['email'] as String? ?? '',
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: _busy ? null : _photo,
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: Text(_busy ? 'İşleniyor…' : 'Fotoğrafı değiştir'),
-                    ),
-                    const Text(
-                      'JPEG · En fazla 512 KB',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
-                ),
+              SettingsProfileHeader(
+                name: data['displayName'] as String? ?? '',
+                email: data['email'] as String? ?? '',
+                photoUrl: photo,
+                busy: _busy,
+                onPhoto: _photo,
               ),
               if (data['passportLoadError'] != null)
                 Padding(
@@ -453,23 +363,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   () => action('delete', 'Hesabımı sil'),
                 ),
               ]),
-              const SizedBox(height: 24),
+              const SizedBox(height: 4),
               OutlinedButton.icon(
                 key: const ValueKey('settings-sign-out'),
                 onPressed: _busy ? null : _signOut,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: context.colors.tone(const Color(0xFFB33E32)),
-                  backgroundColor: context.colors.tone(const Color(0xFFFFF0EB)),
-                  side: BorderSide(
-                    color: context.colors.tone(const Color(0xFFE5B8B1)),
-                  ),
+                  backgroundColor: context.colors.surface,
+                  side: BorderSide(color: context.colors.divider),
                   minimumSize: const Size.fromHeight(54),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 16,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   textStyle: const TextStyle(
                     fontFamily: AppTypography.body,

@@ -372,7 +372,7 @@ class HelpLinks extends StatelessWidget {
                 ? () => openHelpCenter(context, section: section)
                 : null,
             style: TextButton.styleFrom(
-              foregroundColor: context.colors.forest,
+              foregroundColor: context.colors.text,
               textStyle: const TextStyle(
                 fontFamily: AppTypography.body,
                 fontSize: 12,

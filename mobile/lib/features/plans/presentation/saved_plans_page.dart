@@ -137,7 +137,7 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
                 ? '${all.length} yolculuk, keşfedilecek yeni hikâyeler.'
                 : 'Bir sonraki yolculuğuna buradan devam et.',
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           if (snapshot.hasError)
             _message(
               icon: Icons.cloud_off_outlined,
@@ -165,6 +165,17 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
               controller: _search,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(32),
+                  borderSide: BorderSide(color: context.colors.divider),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(32),
+                  borderSide: BorderSide(
+                    color: context.colors.muted,
+                    width: 1.5,
+                  ),
+                ),
                 prefixIcon: const Icon(Icons.search_rounded),
                 hintText: context.tr('Şehir veya plan adı ara'),
                 suffixIcon: _search.text.isEmpty
@@ -194,14 +205,18 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
                         label: Text(title),
                         labelStyle: TextStyle(
                           fontFamily: AppTypography.body,
-                          color: _filter == value
-                              ? Colors.white
-                              : context.colors.text,
+                          color: context.colors.text,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                        selectedColor: AppColors.forest,
+                        selectedColor: context.colors.greenTint,
                         backgroundColor: context.colors.surface,
+                        side: BorderSide(
+                          color: _filter == value
+                              ? context.colors.accent
+                              : context.colors.divider,
+                        ),
+                        shape: const StadiumBorder(),
                         showCheckmark: false,
                         selected: _filter == value,
                         onSelected: (_) => setState(() => _filter = value),
@@ -266,12 +281,6 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
                   ),
                   onAction: (value) => _action(p, value),
                 ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: widget.onCreate,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Yeni yolculuk planla'),
-            ),
           ],
         ],
       );
@@ -286,13 +295,14 @@ class _SavedPlansPageState extends State<SavedPlansPage> {
     required VoidCallback onAction,
   }) => TravyonSurface(
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-    borderRadius: 28,
+    borderRadius: 20,
     child: Column(
       children: [
         TravyonIconBadge(
           icon: icon,
           size: 64,
-          background: context.colors.orangeTint,
+          background: context.colors.background,
+          color: context.colors.text,
         ),
         const SizedBox(height: 22),
         Text(
@@ -326,17 +336,22 @@ class _PlansIntro extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const TravyonIconBadge(icon: Icons.explore_outlined, size: 46),
-      const SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Planlarım', style: Theme.of(context).textTheme.headlineLarge),
+            Text(
+              'Planlarım',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: 5),
             Text(
               subtitle,
-              style: TextStyle(color: context.colors.muted, height: 1.5),
+              style: TextStyle(
+                color: context.colors.muted,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ],
         ),

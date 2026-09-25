@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../data/notification_repository.dart';
 
 class TravelNoticeCard extends StatelessWidget {
@@ -34,30 +35,15 @@ class TravelNoticeCard extends StatelessWidget {
       ),
       TravelNoticeKind.weather => (Icons.cloud_outlined, 'Hava durumu'),
     };
-    final (color, background, level) = switch (n.level) {
-      0 => (
-        context.colors.tone(const Color(0xFFA54A24)),
-        context.colors.tone(const Color(0xFFFBE7DC)),
-        'Önemli',
-      ),
-      1 => (
-        context.colors.tone(const Color(0xFF82611A)),
-        context.colors.tone(const Color(0xFFF6EDCF)),
-        'Hatırlatma',
-      ),
-      _ => (
-        context.colors.forest,
-        context.colors.tone(const Color(0xFFE8EFE8)),
-        'Bilgi',
-      ),
+    final level = switch (n.level) {
+      0 => 'Önemli',
+      1 => 'Hatırlatma',
+      _ => 'Bilgi',
     };
-    return Container(
+    final important = n.level == 0;
+    return TravyonSurface(
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: context.colors.divider),
-      ),
+      borderRadius: 20,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         child: Column(
@@ -68,10 +54,10 @@ class TravelNoticeCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: background,
+                    color: context.colors.background,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, size: 20, color: color),
+                  child: Icon(icon, size: 20, color: context.colors.text),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -86,26 +72,30 @@ class TravelNoticeCard extends StatelessWidget {
                           Text(
                             context.tr(category),
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: color,
+                              color: context.colors.text,
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
+                              horizontal: 8,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: background,
-                              borderRadius: BorderRadius.circular(6),
+                              color: important
+                                  ? context.colors.orangeTint
+                                  : context.colors.background,
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               context.tr(level),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: color,
+                                color: important
+                                    ? context.colors.text
+                                    : context.colors.muted,
                               ),
                             ),
                           ),
@@ -161,12 +151,12 @@ class TravelNoticeCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.5,
-                    color: context.colors.forest,
+                    color: context.colors.text,
                   ),
                 ),
               ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Divider(height: 1, color: context.colors.divider),
             ),
             Wrap(
@@ -174,60 +164,12 @@ class TravelNoticeCard extends StatelessWidget {
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                FilledButton(
-                  key: ValueKey('notice-action-${n.id}'),
-                  onPressed: opening ? null : onAction,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.forest,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(48, 48),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontFamily: AppTypography.body,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (opening)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else
-                        Icon(
-                          n.actionUri == null
-                              ? switch (n.destination) {
-                                  NoticeDestination.checklist =>
-                                    Icons.checklist_rounded,
-                                  NoticeDestination.budget =>
-                                    Icons.account_balance_wallet_outlined,
-                                  NoticeDestination.weather =>
-                                    Icons.cloud_outlined,
-                                  NoticeDestination.plan =>
-                                    Icons.route_outlined,
-                                }
-                              : Icons.open_in_new_rounded,
-                          size: 16,
-                        ),
-                      const SizedBox(width: 7),
-                      Flexible(child: Text(context.tr(n.actionLabel))),
-                    ],
-                  ),
-                ),
+                _NoticeAction(notice: n, onPressed: onAction, opening: opening),
                 if (onPlan != null)
                   TextButton(
                     onPressed: onPlan,
                     style: TextButton.styleFrom(
+                      foregroundColor: context.colors.text,
                       textStyle: const TextStyle(
                         fontFamily: AppTypography.body,
                         fontSize: 12,
@@ -262,6 +204,76 @@ class TravelNoticeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NoticeAction extends StatelessWidget {
+  const _NoticeAction({
+    required this.notice,
+    required this.onPressed,
+    required this.opening,
+  });
+  final TravelNotice notice;
+  final VoidCallback? onPressed;
+  final bool opening;
+
+  @override
+  Widget build(BuildContext context) {
+    final important = notice.level == 0;
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: Text(context.tr(notice.actionLabel))),
+        const SizedBox(width: 8),
+        if (opening)
+          SizedBox.square(
+            dimension: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: important ? context.colors.onAccent : context.colors.text,
+            ),
+          )
+        else
+          Icon(
+            notice.actionUri == null
+                ? Icons.arrow_forward_rounded
+                : Icons.open_in_new_rounded,
+            size: 16,
+          ),
+      ],
+    );
+    final buttonKey = ValueKey('notice-action-${notice.id}');
+    const textStyle = TextStyle(
+      fontFamily: AppTypography.body,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+    );
+    if (important) {
+      return FilledButton(
+        key: buttonKey,
+        onPressed: opening ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: context.colors.accent,
+          foregroundColor: context.colors.onAccent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          minimumSize: const Size(48, 48),
+          shape: const StadiumBorder(),
+          textStyle: textStyle,
+        ),
+        child: content,
+      );
+    }
+    return TextButton(
+      key: buttonKey,
+      onPressed: opening ? null : onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: context.colors.text,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        textStyle: textStyle,
+      ),
+      child: content,
     );
   }
 }

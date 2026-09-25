@@ -136,7 +136,7 @@ class _PlanLoadingViewState extends State<PlanLoadingView>
   Widget _wordmark() {
     final colors = context.colors;
     final style = TextStyle(
-      fontFamily: AppTypography.heading,
+      fontFamily: AppTypography.logo,
       fontSize: 40,
       fontWeight: FontWeight.w400,
       height: 1.2,

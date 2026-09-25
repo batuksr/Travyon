@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:travyon/core/localization/app_localizations.dart';
 import 'package:travyon/core/preferences/app_unit_controller.dart';
 import 'package:travyon/core/theme/app_theme.dart';
+import 'package:travyon/core/widgets/travyon_ui.dart';
 import 'package:travyon/features/community/data/community_repository.dart';
 import 'package:travyon/features/community/presentation/community_plan_page.dart';
 import 'package:travyon/features/community/presentation/community_route_widgets.dart';
@@ -161,6 +162,50 @@ void viewport(WidgetTester tester, Size size) {
 }
 
 void main() {
+  for (final dark in [false, true]) {
+    testWidgets('route uses neutral text and restrained selection dark=$dark', (
+      tester,
+    ) async {
+      viewport(tester, const Size(390, 844));
+      final repo = RouteRepository();
+      addTearDown(repo.events.close);
+      await tester.pumpWidget(
+        host(
+          CommunityPlanPage(uid: 'me', id: 'route1', repository: repo),
+          dark: dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final colors = tester.element(find.byType(CommunityPlanPage)).colors;
+      expect(
+        tester.widget(find.byKey(const ValueKey('community-route-metrics'))),
+        isA<TravyonSurface>(),
+      );
+      final guide = tester.widget<OutlinedButton>(
+        find.byKey(const ValueKey('community-guide')),
+      );
+      expect(guide.style!.foregroundColor!.resolve({}), colors.text);
+      await reveal(tester, find.byKey(const ValueKey('community-day-0')));
+      final day = tester.widget<OutlinedButton>(
+        find.byKey(const ValueKey('community-day-0')),
+      );
+      expect(day.style!.foregroundColor!.resolve({}), colors.text);
+      expect(day.style!.backgroundColor!.resolve({}), colors.orangeTint);
+      expect(day.style!.shape!.resolve({}), isA<StadiumBorder>());
+      await reveal(
+        tester,
+        find.byKey(const ValueKey('community-directions-0')),
+      );
+      final directions = tester.widget<TextButton>(
+        find.byKey(const ValueKey('community-directions-0')),
+      );
+      expect(directions.style!.foregroundColor!.resolve({}), colors.text);
+      expect(repo.ratingCalls, 0);
+      expect(repo.shares, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   test('public route title falls back to nested destination, then journey', () {
     expect(route().destination, 'Paris, Fransa');
     expect(CommunityPlan('x', {'destination': '  Roma  '}).destination, 'Roma');

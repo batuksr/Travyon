@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/travyon_ui.dart';
 import '../../../core/preferences/app_unit_controller.dart';
 import '../../../core/preferences/unit_formatter.dart';
 
@@ -305,7 +306,8 @@ class _NotificationsPageState extends State<NotificationsPage>
           : SafeArea(
               top: false,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                key: const PageStorageKey('notifications-scroll'),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
                 children: [
                   Text(
                     context.tr(
@@ -343,6 +345,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                     ),
                   if (visible.isNotEmpty) ...[
                     Wrap(
+                      alignment: WrapAlignment.spaceBetween,
                       spacing: 8,
                       runSpacing: 6,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -355,7 +358,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: context.colors.forest,
+                            color: context.colors.muted,
                           ),
                         ),
                         TextButton.icon(
@@ -366,6 +369,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                           icon: const Icon(Icons.done_all_rounded, size: 17),
                           label: Text(context.tr('Tümünü kapat')),
                           style: TextButton.styleFrom(
+                            foregroundColor: context.colors.text,
                             textStyle: const TextStyle(
                               fontFamily: AppTypography.body,
                               fontSize: 12,
@@ -378,26 +382,24 @@ class _NotificationsPageState extends State<NotificationsPage>
                     const SizedBox(height: 10),
                   ],
                   if (visible.isEmpty && _enabled)
-                    Container(
+                    TravyonSurface(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 22,
                         vertical: 32,
                       ),
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: context.colors.divider),
-                      ),
+                      borderRadius: 20,
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.notifications_active_outlined,
-                            size: 32,
-                            color: context.colors.forest,
+                          TravyonIconBadge(
+                            icon: Icons.notifications_none_rounded,
+                            size: 56,
+                            color: context.colors.text,
+                            background: context.colors.background,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             context.tr('Her şey yolunda'),
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -453,6 +455,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                       icon: const Icon(Icons.restore_rounded, size: 18),
                       label: Text(context.tr('Kapatılanları geri getir')),
                       style: TextButton.styleFrom(
+                        foregroundColor: context.colors.text,
                         textStyle: const TextStyle(
                           fontFamily: AppTypography.body,
                           fontSize: 12,
@@ -490,13 +493,10 @@ class _NoticeBanner extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => TravyonSurface(
     margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-    decoration: BoxDecoration(
-      color: context.colors.tone(const Color(0xFFF7EDD5)),
-      borderRadius: BorderRadius.circular(16),
-    ),
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+    borderRadius: 20,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -506,7 +506,7 @@ class _NoticeBanner extends StatelessWidget {
             Icon(
               Icons.info_outline_rounded,
               size: 18,
-              color: context.colors.forest,
+              color: context.colors.muted,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -524,6 +524,7 @@ class _NoticeBanner extends StatelessWidget {
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
+            foregroundColor: context.colors.text,
             textStyle: const TextStyle(
               fontFamily: AppTypography.body,
               fontSize: 12,

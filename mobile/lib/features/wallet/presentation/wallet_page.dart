@@ -8,12 +8,12 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/travyon_ui.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/wallet_repository.dart';
 import 'wallet_editor.dart';
 import 'wallet_pocket.dart';
 import 'wallet_design.dart';
+import 'wallet_trip_selector.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({
@@ -128,7 +128,7 @@ class _WalletPageState extends State<WalletPage> {
           children: [
             Row(
               children: [
-                Icon(walletIcon(entry.category), color: context.colors.forest),
+                Icon(walletIcon(entry.category), color: context.colors.text),
                 const SizedBox(width: 12),
                 Expanded(child: Text(walletCategories[entry.category]!)),
                 IconButton(
@@ -259,7 +259,7 @@ class _WalletPageState extends State<WalletPage> {
                 width: 7,
                 height: 7,
                 decoration: BoxDecoration(
-                  color: context.colors.forest,
+                  color: context.colors.muted,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -288,7 +288,7 @@ class _WalletPageState extends State<WalletPage> {
               }
             },
             style: TextButton.styleFrom(
-              foregroundColor: context.colors.forest,
+              foregroundColor: context.colors.text,
               padding: const EdgeInsets.symmetric(horizontal: 2),
               textStyle: const TextStyle(
                 fontFamily: AppTypography.body,
@@ -305,7 +305,7 @@ class _WalletPageState extends State<WalletPage> {
       key: const ValueKey('wallet-add'),
       onPressed: _busy ? null : () => _edit(null, selectedPlanId),
       style: TextButton.styleFrom(
-        foregroundColor: context.colors.accent,
+        foregroundColor: context.colors.text,
         textStyle: const TextStyle(
           fontFamily: AppTypography.body,
           fontSize: 13,
@@ -368,40 +368,16 @@ class _WalletPageState extends State<WalletPage> {
             _WalletIntro(hasEntries: entries.isNotEmpty),
             const SizedBox(height: 22),
             if (trips.length > 1) ...[
-              DropdownButtonFormField<String>(
-                key: ValueKey('wallet-trip-$selected-${trips.keys.join()}'),
-                initialValue: selected,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: context.tr('Seyahatin'),
-                  prefixIcon: const Icon(Icons.route_outlined),
-                ),
-                items: trips.entries
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e.key,
-                        child: Text(
-                          e.value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: AppTypography.body,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
+              WalletTripSelector(
+                trips: trips,
+                selected: selected,
                 onChanged: _busy
                     ? null
                     : (value) {
-                        if (value != null) {
-                          setState(() {
-                            _planId = value;
-                            _highlight = _category = null;
-                          });
-                        }
+                        setState(() {
+                          _planId = value;
+                          _highlight = _category = null;
+                        });
                       },
               ),
               const SizedBox(height: 24),
@@ -512,33 +488,21 @@ class _WalletIntro extends StatelessWidget {
   final bool hasEntries;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const TravyonIconBadge(
-        icon: Icons.account_balance_wallet_outlined,
-        size: 46,
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Cüzdan', style: Theme.of(context).textTheme.headlineLarge),
-            if (hasEntries) ...[
-              const SizedBox(height: 5),
-              Text(
-                'Bilet ve rezervasyonların, elinin altında.',
-                style: TextStyle(
-                  color: context.colors.muted,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ],
+      Text('Cüzdan', style: Theme.of(context).textTheme.headlineMedium),
+      if (hasEntries) ...[
+        const SizedBox(height: 5),
+        Text(
+          'Bilet ve rezervasyonların, elinin altında.',
+          style: TextStyle(
+            color: context.colors.muted,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
-      ),
+      ],
     ],
   );
 }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_dialog.dart';
-import '../../help/presentation/help_style.dart';
+import '../../../core/widgets/travyon_ui.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({
@@ -82,54 +82,28 @@ class _AccountScreenState extends State<AccountScreen> {
 }
 
 class AccountHeader extends StatelessWidget {
-  const AccountHeader({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-  final String title, subtitle;
-  final IconData icon;
+  const AccountHeader({super.key, required this.subtitle});
+  final String subtitle;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 24),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: context.colors.forest.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: context.colors.forest, size: 24),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Semantics(
-                header: true,
-                child: Text(
-                  context.tr(title),
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(fontSize: 23, height: 1.25),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Text(
-          context.tr(subtitle),
-          style: TextStyle(
-            color: context.colors.muted,
-            fontSize: 14,
-            height: 1.6,
-          ),
-        ),
-      ],
+    child: Text(
+      context.tr(subtitle),
+      style: TextStyle(color: context.colors.muted, fontSize: 13, height: 1.5),
     ),
+  );
+}
+
+class AccountPanel extends StatelessWidget {
+  const AccountPanel({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TravyonSurface(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
+    borderRadius: 20,
+    child: child,
   );
 }
 
@@ -144,13 +118,13 @@ class AccountCard extends StatelessWidget {
   final IconData icon;
   final List<Widget> children;
   @override
-  Widget build(BuildContext context) => HelpPanel(
+  Widget build(BuildContext context) => AccountPanel(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Icon(icon, size: 20, color: context.colors.forest),
+            Icon(icon, size: 19, color: context.colors.muted),
             const SizedBox(width: 10),
             Expanded(
               child: Semantics(
@@ -167,7 +141,7 @@ class AccountCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         ...children,
       ],
     ),
@@ -186,18 +160,19 @@ class AccountNotice extends StatelessWidget {
   final IconData icon;
   @override
   Widget build(BuildContext context) {
-    final color = error
-        ? context.colors.tone(const Color(0xFF9F3730))
-        : context.colors.forest;
+    final color = error ? context.colors.danger : context.colors.muted;
     return Semantics(
       liveRegion: true,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: error
-              ? context.colors.tone(const Color(0xFFF8E6E2))
-              : context.colors.tone(const Color(0xFFE8EFE8)),
+          color: error ? context.colors.redTint : context.colors.surface,
+          border: Border.all(
+            color: error
+                ? context.colors.danger.withValues(alpha: .3)
+                : context.colors.divider,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -242,11 +217,11 @@ class AccountSaveButton extends StatelessWidget {
       ),
     ),
     icon: busy
-        ? const SizedBox.square(
+        ? SizedBox.square(
             dimension: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Colors.white,
+              color: context.colors.onAccent,
             ),
           )
         : Icon(icon, size: 19),
@@ -264,13 +239,36 @@ InputDecoration accountInput(
   String? hint,
 }) => InputDecoration(
   labelText: context.tr(label),
+  labelStyle: TextStyle(color: context.colors.text, fontSize: 13),
+  floatingLabelStyle: TextStyle(
+    color: context.colors.text,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+  ),
   floatingLabelBehavior: FloatingLabelBehavior.always,
   alignLabelWithHint: true,
   suffixIcon: suffix,
+  suffixIconColor: context.colors.muted,
   hintText: hint == null ? null : context.tr(hint),
   hintMaxLines: 2,
   hintStyle: TextStyle(fontSize: 13, color: context.colors.muted),
   contentPadding: const EdgeInsets.all(16),
-  fillColor: context.colors.background.withValues(alpha: 0.25),
+  fillColor: context.colors.background,
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: context.colors.divider),
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: context.colors.accent, width: 1.5),
+  ),
+  errorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: context.colors.danger),
+  ),
+  focusedErrorBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: context.colors.danger, width: 1.5),
+  ),
   errorMaxLines: 3,
 );

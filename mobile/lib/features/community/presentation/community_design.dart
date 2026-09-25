@@ -24,63 +24,46 @@ class CommunityTabs extends StatelessWidget {
         'En beğenilen',
         'Paylaşımlarım',
       ];
-      const icons = [
-        Icons.explore_outlined,
-        Icons.people_outline_rounded,
-        Icons.star_outline_rounded,
-        Icons.bookmarks_outlined,
-      ];
-      final columns = constraints.maxWidth >= 600 ? 4 : 2;
       return Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           for (var i = 0; i < labels.length; i++)
-            SizedBox(
-              width: (constraints.maxWidth - (columns - 1) * 8) / columns,
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
               child: Semantics(
                 selected: selected == i,
                 child: OutlinedButton(
+                  key: ValueKey('community-filter-$i'),
                   onPressed: () => onSelect(i),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                      horizontal: 16,
+                      vertical: 10,
                     ),
                     minimumSize: const Size(48, 48),
                     backgroundColor: selected == i
-                        ? AppColors.forest
+                        ? context.colors.orangeTint
                         : context.colors.surface,
-                    foregroundColor: selected == i
-                        ? AppColors.surface
-                        : context.colors.text,
+                    foregroundColor: context.colors.text,
                     side: BorderSide(
                       color: selected == i
-                          ? context.colors.forest
+                          ? context.colors.accent
                           : context.colors.divider,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(32),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(icons[i], size: 19),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          labels[i],
-                          style: TextStyle(
-                            fontFamily: AppTypography.body,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                            color: selected == i
-                                ? AppColors.surface
-                                : context.colors.text,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    labels[i],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppTypography.body,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: context.colors.text,
+                    ),
                   ),
                 ),
               ),
@@ -108,13 +91,14 @@ class CommunityEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TravyonSurface(
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-    borderRadius: 24,
+    borderRadius: 20,
     child: Column(
       children: [
         TravyonIconBadge(
           icon: icon,
           size: 64,
-          background: context.colors.orangeTint,
+          background: context.colors.background,
+          color: context.colors.text,
         ),
         const SizedBox(height: 18),
         Text(
@@ -134,7 +118,7 @@ class CommunityEmptyState extends StatelessWidget {
         ),
         if (onAction != null && actionLabel != null) ...[
           const SizedBox(height: 20),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: onAction,
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
             label: Text(actionLabel!),
@@ -153,7 +137,7 @@ class CommunityMetric extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 16, color: context.colors.forest),
+      Icon(icon, size: 15, color: context.colors.muted),
       const SizedBox(width: 6),
       Flexible(
         child: Text(

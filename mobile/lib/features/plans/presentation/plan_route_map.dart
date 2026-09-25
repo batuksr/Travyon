@@ -44,6 +44,7 @@ class PlanRouteMap extends StatelessWidget {
     this.mapBuilder,
     this.fullscreen = false,
     this.onToggleFullscreen,
+    this.preview = false,
   });
   final PlanDay day;
   final String destination;
@@ -51,6 +52,9 @@ class PlanRouteMap extends StatelessWidget {
   final MobilePlacesRepository? placesRepository;
   final bool fullscreen;
   final VoidCallback? onToggleFullscreen;
+
+  /// A non-interactive overview embedded in the itinerary's scroll view.
+  final bool preview;
 
   /// Allows tests to exercise markers without a native platform view.
   final Widget Function(GoogleMap)? mapBuilder;
@@ -66,6 +70,7 @@ class PlanRouteMap extends StatelessWidget {
     mapBuilder: mapBuilder,
     fullscreen: fullscreen,
     onToggleFullscreen: onToggleFullscreen,
+    preview: preview,
   );
 }
 
@@ -76,6 +81,7 @@ class _RouteCanvas extends StatefulWidget {
     required this.destination,
     required this.places,
     required this.fullscreen,
+    required this.preview,
     this.onToggleFullscreen,
     this.mapBuilder,
   });
@@ -83,6 +89,7 @@ class _RouteCanvas extends StatefulWidget {
   final String destination;
   final MobilePlacesRepository places;
   final bool fullscreen;
+  final bool preview;
   final VoidCallback? onToggleFullscreen;
   final Widget Function(GoogleMap)? mapBuilder;
 
@@ -160,9 +167,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
     picture.dispose();
     image.dispose();
     return bytes == null
-        ? BitmapDescriptor.defaultMarkerWithHue(
-            selected ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueOrange,
-          )
+        ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange)
         : BitmapDescriptor.bytes(
             bytes.buffer.asUint8List(),
             width: selected ? 34 : 28,
@@ -362,7 +367,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.stops.isEmpty) {
+    if (widget.stops.isEmpty && !widget.preview) {
       return Column(
         children: [
           if (widget.fullscreen && widget.onToggleFullscreen != null)
@@ -385,21 +390,25 @@ class _RouteCanvasState extends State<_RouteCanvas> {
     final located = _located;
     final available = located.isNotEmpty && _configured;
     return Padding(
-      padding: widget.fullscreen
+      padding: widget.fullscreen || widget.preview
           ? EdgeInsets.zero
           : const EdgeInsets.fromLTRB(10, 0, 10, 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final largeText = MediaQuery.textScalerOf(context).scale(14) > 20;
-          final panelHeight = (largeText ? 144.0 : 112.0).clamp(
-            0.0,
-            constraints.maxHeight * 0.32,
-          );
-          final mapPadding = EdgeInsets.fromLTRB(12, 64, 60, panelHeight + 28);
+          final panelHeight = widget.preview
+              ? 0.0
+              : (largeText ? 144.0 : 112.0).clamp(
+                  0.0,
+                  constraints.maxHeight * 0.32,
+                );
+          final mapPadding = widget.preview
+              ? const EdgeInsets.fromLTRB(12, 44, 12, 48)
+              : EdgeInsets.fromLTRB(12, 64, 60, panelHeight + 28);
           Widget map;
           if (!available) {
             map = ColoredBox(
-              color: context.colors.tone(const Color(0xFFE9EEE5)),
+              color: context.colors.background,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(20, 64, 20, panelHeight + 16),
                 child: Center(
@@ -409,19 +418,23 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                       children: [
                         Icon(
                           Icons.map_outlined,
-                          color: context.colors.forest,
+                          color: context.colors.muted,
                           size: 32,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           context.tr(
-                            located.isEmpty
+                            widget.preview
+                                ? (located.isEmpty
+                                      ? 'Durakların konumu henüz eklenmemiş.'
+                                      : 'Harita önizlemesi şu anda kullanılamıyor.')
+                                : located.isEmpty
                                 ? 'Bu günün duraklarında konum bilgisi yok.\nDurak kartına dokunarak mekân detaylarını açabilirsin.'
                                 : 'Harita şu anda gösterilemiyor. Durak listesinden devam edebilirsin.',
                           ),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: context.colors.forest,
+                            color: context.colors.muted,
                             fontSize: 13,
                             height: 1.5,
                           ),
@@ -452,11 +465,16 @@ class _RouteCanvasState extends State<_RouteCanvas> {
               tiltGesturesEnabled: false,
               rotateGesturesEnabled: false,
               compassEnabled: false,
-              gestureRecognizers: {
-                Factory<OneSequenceGestureRecognizer>(
-                  () => EagerGestureRecognizer(),
-                ),
-              },
+              scrollGesturesEnabled: !widget.preview,
+              zoomGesturesEnabled: !widget.preview,
+              liteModeEnabled: widget.preview,
+              gestureRecognizers: widget.preview
+                  ? {}
+                  : {
+                      Factory<OneSequenceGestureRecognizer>(
+                        () => EagerGestureRecognizer(),
+                      ),
+                    },
               markers: {
                 for (final place in located)
                   Marker(
@@ -468,16 +486,14 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                             ? _icons[place.index]?.selected
                             : _icons[place.index]?.normal) ??
                         BitmapDescriptor.defaultMarkerWithHue(
-                          _selected == place.index
-                              ? BitmapDescriptor.hueGreen
-                              : BitmapDescriptor.hueOrange,
+                          BitmapDescriptor.hueOrange,
                         ),
                     zIndexInt: _selected == place.index ? 2 : 1,
                     infoWindow: InfoWindow(
                       title: '${place.index + 1}. ${place.name}',
                     ),
                     consumeTapEvents: true,
-                    onTap: () => _select(place.index),
+                    onTap: widget.preview ? null : () => _select(place.index),
                   ),
               },
               polylines: {
@@ -490,7 +506,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         _point(widget.stops[i - 1]),
                         _point(widget.stops[i]),
                       ],
-                      color: context.colors.forest.withValues(alpha: 0.75),
+                      color: context.colors.accent.withValues(alpha: 0.85),
                       width: 2,
                       patterns: [PatternItem.dot, PatternItem.gap(10)],
                     ),
@@ -499,73 +515,78 @@ class _RouteCanvasState extends State<_RouteCanvas> {
             map = widget.mapBuilder?.call(googleMap) ?? googleMap;
           }
           return ClipRRect(
-            key: const ValueKey('route-map-viewport'),
-            borderRadius: BorderRadius.circular(widget.fullscreen ? 0 : 24),
+            key: ValueKey(
+              widget.preview ? 'plan-map-preview' : 'route-map-viewport',
+            ),
+            borderRadius: BorderRadius.circular(
+              widget.fullscreen || widget.preview ? 0 : 24,
+            ),
             child: Stack(
               fit: StackFit.expand,
               children: [
                 map,
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  right: 10,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Material(
-                            color: context.colors.surface,
-                            elevation: 2,
-                            shadowColor: Colors.black12,
-                            borderRadius: BorderRadius.circular(16),
-                            child: TextButton.icon(
-                              onPressed: _chooseStop,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                if (!widget.preview)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Material(
+                              color: context.colors.surface,
+                              elevation: 2,
+                              shadowColor: Colors.black12,
+                              borderRadius: BorderRadius.circular(16),
+                              child: TextButton.icon(
+                                onPressed: _chooseStop,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontFamily: AppTypography.body,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                                textStyle: const TextStyle(
-                                  fontFamily: AppTypography.body,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                icon: const Icon(
+                                  Icons.format_list_numbered_rounded,
+                                  size: 19,
                                 ),
-                              ),
-                              icon: const Icon(
-                                Icons.format_list_numbered_rounded,
-                                size: 19,
-                              ),
-                              label: Text(
-                                context.tr('Duraklar'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                label: Text(
+                                  context.tr('Duraklar'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _control(
-                        'Rota bilgisi',
-                        Icons.info_outline_rounded,
-                        _routeInfo,
-                      ),
-                      if (widget.onToggleFullscreen != null) ...[
                         const SizedBox(width: 8),
                         _control(
-                          widget.fullscreen
-                              ? 'Tam ekrandan çık'
-                              : 'Tam ekran harita',
-                          widget.fullscreen
-                              ? Icons.fullscreen_exit_rounded
-                              : Icons.fullscreen_rounded,
-                          widget.onToggleFullscreen,
+                          'Rota bilgisi',
+                          Icons.info_outline_rounded,
+                          _routeInfo,
                         ),
+                        if (widget.onToggleFullscreen != null) ...[
+                          const SizedBox(width: 8),
+                          _control(
+                            widget.fullscreen
+                                ? 'Tam ekrandan çık'
+                                : 'Tam ekran harita',
+                            widget.fullscreen
+                                ? Icons.fullscreen_exit_rounded
+                                : Icons.fullscreen_rounded,
+                            widget.onToggleFullscreen,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                if (available)
+                if (available && !widget.preview)
                   Positioned(
                     top: 68,
                     right: 10,
@@ -593,13 +614,14 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                       ],
                     ),
                   ),
-                Positioned(
-                  left: 10,
-                  right: 10,
-                  bottom: 10,
-                  height: panelHeight,
-                  child: _stopPanel(),
-                ),
+                if (!widget.preview)
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
+                    height: panelHeight,
+                    child: _stopPanel(),
+                  ),
               ],
             ),
           );
@@ -619,7 +641,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
           onPressed: onPressed,
           style: IconButton.styleFrom(
             minimumSize: const Size(48, 48),
-            foregroundColor: context.colors.forest,
+            foregroundColor: context.colors.text,
           ),
           icon: Icon(icon, size: 22),
         ),
@@ -680,7 +702,7 @@ class _RouteCanvasState extends State<_RouteCanvas> {
                         ),
                         style: TextStyle(
                           fontSize: 11,
-                          color: context.colors.forest,
+                          color: context.colors.text,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

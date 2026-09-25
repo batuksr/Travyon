@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travyon/app/travyon_app.dart';
 import 'package:travyon/core/firebase/auth_repository.dart';
+import 'package:travyon/core/widgets/travyon_ui.dart';
 import 'package:travyon/features/plans/data/travel_plans_repository.dart';
 import 'package:travyon/features/plans/data/plan_detail.dart';
 import 'package:travyon/features/onboarding/presentation/onboarding_page.dart';
@@ -29,6 +30,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(bar.labelBehavior, NavigationDestinationLabelBehavior.alwaysHide);
       expect(bar.destinations.map((w) => (w as NavigationDestination).label), [
         'Ana Sayfa',
         'Planlar',
@@ -47,7 +49,7 @@ void main() {
         0,
       );
 
-      await tester.tap(find.text('Planlar'));
+      await tester.tap(find.byKey(const ValueKey('nav-plans')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('nav-create-plan')));
       await tester.pumpAndSettle();
@@ -89,7 +91,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('welcome-sign-in')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Tekrar hoş geldin'), findsOneWidget);
+    expect(find.text('Yolculuğun\nburada başlıyor.'), findsOneWidget);
+    expect(find.byType(TravyonWordmark), findsNothing);
     expect(find.text('Giriş yap'), findsOneWidget);
     expect(find.text('Google ile devam et'), findsOneWidget);
 
@@ -97,7 +100,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('auth-switch-mode')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hesap oluştur'), findsOneWidget);
+    expect(find.text('Yeni rotalara\nmerhaba de.'), findsOneWidget);
+    expect(find.byType(TravyonWordmark), findsNothing);
     expect(find.text('Ad soyad'), findsOneWidget);
   });
 
@@ -138,7 +142,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Merhaba, Batu!'), findsOneWidget);
+    expect(find.text('Merhaba, Batu!'), findsNothing);
+    expect(find.text('Nereye gidiyoruz?'), findsOneWidget);
     expect(find.text('Planlar'), findsOneWidget);
     expect(find.text('İlk planımı oluştur'), findsOneWidget);
   });
@@ -181,10 +186,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('YAKLAŞAN YOLCULUK'), findsOneWidget);
+    expect(find.text('Yaklaşan yolculuk'), findsOneWidget);
     expect(find.text('Endülüs Kaçamağı'), findsWidgets);
     expect(find.text('Sevilla, İspanya'), findsWidgets);
-    expect(find.textContaining('12 durak'), findsOneWidget);
+    expect(find.byKey(const ValueKey('hub-featured-plan')), findsOneWidget);
   });
 
   testWidgets('shows a safe state when Firebase initialization fails', (
@@ -202,7 +207,7 @@ void main() {
     );
     expect(
       tester
-          .widget<FilledButton>(find.byKey(const ValueKey('welcome-sign-in')))
+          .widget<TextButton>(find.byKey(const ValueKey('welcome-sign-in')))
           .onPressed,
       isNull,
     );

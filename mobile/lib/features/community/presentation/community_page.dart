@@ -6,6 +6,7 @@ import '../../../core/widgets/app_dialog.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/travyon_ui.dart';
+import '../../hub/data/hub_content.dart';
 import '../../plans/data/travel_plans_repository.dart';
 import '../data/community_repository.dart';
 import 'community_plan_page.dart';
@@ -111,7 +112,7 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   Widget build(BuildContext context) => ListView(
     key: const PageStorageKey('community-feed'),
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
     children: [
       const _CommunityIntro(),
       const SizedBox(height: 20),
@@ -119,7 +120,15 @@ class _CommunityPageState extends State<CommunityPage> {
         controller: _search,
         onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
         decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(Icons.search_rounded, color: context.colors.muted),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(32),
+            borderSide: BorderSide(color: context.colors.divider),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(32),
+            borderSide: BorderSide(color: context.colors.muted, width: 1.5),
+          ),
           hintText: context.tr('Şehir veya gezgin ara'),
           suffixIcon: _query.isEmpty
               ? null
@@ -134,8 +143,13 @@ class _CommunityPageState extends State<CommunityPage> {
       CommunityTabs(selected: _tab, onSelect: _selectTab),
       const SizedBox(height: 24),
       if (_tab == 3) ...[
-        const Text(
+        Text(
           'Paylaşmak istediğin kayıtlı planı seç. Değiştirdiğin bir planı yeniden paylaşarak güncelleyebilirsin.',
+          style: TextStyle(
+            color: context.colors.muted,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 14),
         StreamBuilder<List<CommunityPlan>>(
@@ -183,12 +197,17 @@ class _CommunityPageState extends State<CommunityPage> {
                               titles[id] ?? published[id]!.destination,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
+                            const SizedBox(height: 6),
                             Text(
                               published[id] == null
                                   ? 'Yalnızca sende'
                                   : published[id]!.visible
                                   ? 'Toplulukta paylaşılıyor'
                                   : 'Bağlantıya özel',
+                              style: TextStyle(
+                                color: context.colors.muted,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Wrap(
@@ -199,7 +218,10 @@ class _CommunityPageState extends State<CommunityPage> {
                                     onPressed: _busy
                                         ? null
                                         : () => _share(id, false),
-                                    icon: const Icon(Icons.public),
+                                    icon: const Icon(
+                                      Icons.ios_share_rounded,
+                                      size: 18,
+                                    ),
                                     label: Text(
                                       published[id] == null
                                           ? 'Paylaş'
@@ -309,7 +331,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   _tab == 2
                       ? 'Son 50 paylaşım arasından en beğenilen rotalar'
                       : 'Gezginlerden en yeni rotalar',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 12),
                 for (final plan in plans)
@@ -332,26 +354,17 @@ class _CommunityIntro extends StatelessWidget {
   const _CommunityIntro();
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const TravyonIconBadge(icon: Icons.people_alt_outlined, size: 46),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Topluluk', style: Theme.of(context).textTheme.headlineLarge),
-            const SizedBox(height: 5),
-            Text(
-              'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
-              style: TextStyle(
-                color: context.colors.muted,
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ],
+      Text('Topluluk', style: Theme.of(context).textTheme.headlineMedium),
+      const SizedBox(height: 5),
+      Text(
+        'Yeni rotalar keşfet, kendi hikâyeni paylaş.',
+        style: TextStyle(
+          color: context.colors.muted,
+          fontSize: 13,
+          height: 1.5,
         ),
       ),
     ],
@@ -368,155 +381,225 @@ class CommunityPlanCard extends StatelessWidget {
   final CommunityPlan plan;
   final VoidCallback onOpen;
   final VoidCallback? onProfile;
+
   @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-    key: ValueKey(plan.id),
-    tween: Tween(begin: 0, end: 1),
-    duration: const Duration(milliseconds: 280),
-    builder: (context, value, child) => Opacity(
-      opacity: MediaQuery.disableAnimationsOf(context) ? 1 : value,
-      child: child,
-    ),
-    child: TravyonSurface(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: EdgeInsets.zero,
-      borderRadius: 24,
+  Widget build(BuildContext context) {
+    final summary = plan.summary;
+    final city = hubCities
+        .where(
+          (city) => [
+            city.name,
+            city.englishName,
+            city.destination,
+            city.destinationFor(true),
+          ].any((name) => name.toLowerCase() == plan.destination.toLowerCase()),
+        )
+        .firstOrNull;
+    final author = TextButton.icon(
+      key: ValueKey('community-profile-${plan.id}'),
+      onPressed: plan.profilePublic ? onProfile : null,
+      style: TextButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        padding: EdgeInsets.zero,
+        foregroundColor: context.colors.text,
+        disabledForegroundColor: context.colors.text,
+      ),
+      icon: CircleAvatar(
+        radius: 17,
+        backgroundColor: context.colors.background,
+        child: Icon(
+          Icons.person_outline_rounded,
+          size: 20,
+          color: context.colors.text,
+        ),
+      ),
+      label: Text(
+        plan.author,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: context.colors.text,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+    final rating = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          plan.ratingCount == 0
+              ? Icons.star_outline_rounded
+              : Icons.star_rounded,
+          size: 16,
+          color: context.colors.muted,
+        ),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            plan.ratingCount == 0
+                ? 'Henüz değerlendirme yok'
+                : '${plan.rating.toStringAsFixed(1)} · ${context.tr('{count} değerlendirme', values: {'count': plan.ratingCount})}',
+            style: TextStyle(color: context.colors.muted, fontSize: 11),
+          ),
+        ),
+      ],
+    );
+    return TravyonSurface(
+      key: ValueKey('community-card-${plan.id}'),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      borderRadius: 20,
+      onTap: onOpen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Material(
-            color: context.colors.orangeTint,
-            child: InkWell(
-              onTap: onOpen,
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
+          LayoutBuilder(
+            builder: (context, bounds) {
+              if (MediaQuery.textScalerOf(context).scale(13) > 16 ||
+                  bounds.maxWidth < 280) {
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        TravyonIconBadge(
-                          icon: Icons.route_rounded,
-                          size: 38,
-                          background: context.colors.surface.withValues(
-                            alpha: .72,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            plan.purpose.isEmpty
-                                ? 'Topluluk rotası'
-                                : plan.purpose,
-                            style: TextStyle(
-                              color: context.colors.forest,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.north_east_rounded,
-                          size: 20,
-                          color: context.colors.forest,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      plan.destination,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ],
-                ),
-              ),
+                  children: [author, const SizedBox(height: 4), rating],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: author),
+                  const SizedBox(width: 10),
+                  Flexible(child: rating),
+                ],
+              );
+            },
+          ),
+          if (city != null) ...[
+            const SizedBox(height: 10),
+            _CommunityCover(city: city),
+          ],
+          const SizedBox(height: 14),
+          Text(
+            plan.destination,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    CommunityMetric(
-                      icon: Icons.calendar_today_outlined,
-                      label: '${plan.summary.dayCount} gün',
-                    ),
-                    CommunityMetric(
-                      icon: Icons.place_outlined,
-                      label: '${plan.summary.activityCount} durak',
-                    ),
-                    CommunityMetric(
-                      icon: Icons.account_balance_wallet_outlined,
-                      label:
-                          '${plan.summary.currencySymbol}${plan.summary.estimatedCost.toStringAsFixed(0)} tahmini',
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Divider(),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: onProfile,
-                        style: TextButton.styleFrom(
-                          alignment: Alignment.centerLeft,
-                          padding: EdgeInsets.zero,
-                          textStyle: const TextStyle(
-                            fontFamily: AppTypography.body,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        icon: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: context.colors.tone(
-                            const Color(0xFFF5E9DB),
-                          ),
-                          child: Icon(
-                            Icons.person_outline_rounded,
-                            size: 20,
-                            color: context.colors.accent,
-                          ),
-                        ),
-                        label: Text(
-                          plan.author,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: context.colors.text),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  plan.ratingCount == 0
-                      ? 'Henüz değerlendirme yok'
-                      : '★ ${plan.rating.toStringAsFixed(1)} · ${plan.ratingCount} değerlendirme',
-                  style: TextStyle(color: context.colors.muted, fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onOpen,
-                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                    label: const Text('Rotayı keşfet'),
+          const SizedBox(height: 5),
+          Text(
+            plan.purpose.isEmpty ? 'Topluluk rotası' : plan.purpose,
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            children: [
+              CommunityMetric(
+                icon: Icons.calendar_today_outlined,
+                label: '${summary.dayCount} gün',
+              ),
+              CommunityMetric(
+                icon: Icons.place_outlined,
+                label: '${summary.activityCount} durak',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Divider(height: 1, color: context.colors.divider),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (context, bounds) {
+              final cost = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tahmini toplam',
+                    style: TextStyle(color: context.colors.muted, fontSize: 11),
                   ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${summary.currencySymbol}${summary.estimatedCost.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: context.colors.text,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              );
+              final open = TextButton.icon(
+                key: ValueKey('community-open-${plan.id}'),
+                onPressed: onOpen,
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+                label: const Text('Rotayı keşfet'),
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.text,
                 ),
-              ],
-            ),
+              );
+              if (MediaQuery.textScalerOf(context).scale(13) > 16 ||
+                  bounds.maxWidth < 280) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 6),
+                    cost,
+                    Align(alignment: Alignment.centerRight, child: open),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: cost),
+                  const SizedBox(width: 8),
+                  open,
+                ],
+              );
+            },
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+}
+
+/// Destination inspiration, not a photograph uploaded by the route's author.
+/// Only exact matches from the existing city catalog receive a cover image.
+class _CommunityCover extends StatelessWidget {
+  const _CommunityCover({required this.city});
+  final HubCity city;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = ColoredBox(
+      color: context.colors.background,
+      child: Center(
+        child: Icon(
+          Icons.landscape_outlined,
+          size: 40,
+          color: context.colors.muted,
+        ),
+      ),
+    );
+    return ExcludeSemantics(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: double.infinity,
+          height: 152,
+          child: Image.network(
+            city.imageUrl,
+            fit: BoxFit.cover,
+            cacheWidth: 720,
+            frameBuilder: (_, image, frame, synchronous) =>
+                synchronous || frame != null ? image : fallback,
+            errorBuilder: (_, _, _) => fallback,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _FollowingPeople extends StatefulWidget {
@@ -654,9 +737,7 @@ class _CommunityPrivacyPageState extends State<CommunityPrivacyPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const AccountHeader(
-          title: 'Ne paylaşacağına sen karar ver.',
           subtitle: 'Profilinin görünürlüğünü, rota paylaşımını ve kimlerin seni takip edebileceğini seç.',
-          icon: Icons.visibility_outlined,
         ),
         if (_error != null && _values == null)
           CommunityStatus(
@@ -735,7 +816,7 @@ class CommunityPanel extends StatelessWidget {
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
       color: context.colors.surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       border: Border.all(color: context.colors.divider),
     ),
     child: Material(color: Colors.transparent, child: child),
@@ -751,7 +832,7 @@ class CommunityStatus extends StatelessWidget {
     padding: const EdgeInsets.all(24),
     child: Column(
       children: [
-        Icon(Icons.explore_outlined, size: 36, color: context.colors.forest),
+        Icon(Icons.explore_outlined, size: 36, color: context.colors.muted),
         const SizedBox(height: 12),
         Text(message, textAlign: TextAlign.center),
         if (onRetry != null)

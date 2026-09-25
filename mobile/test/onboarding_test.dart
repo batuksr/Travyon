@@ -9,7 +9,6 @@ import 'package:travyon/core/theme/app_theme.dart';
 import 'package:travyon/features/onboarding/data/onboarding_data.dart';
 import 'package:travyon/features/onboarding/data/plan_creation_repository.dart';
 import 'package:travyon/features/onboarding/presentation/onboarding_page.dart';
-import 'package:travyon/features/onboarding/presentation/onboarding_widgets.dart';
 
 import 'widget_test.dart' show FakeTravelPlansRepository;
 
@@ -158,12 +157,9 @@ void main() {
         final label = find.text('${entry.key} · ${entry.value}');
         final paragraph = tester.renderObject<RenderParagraph>(label);
         final color = paragraph.text.style!.color!;
-        expect(
-          color,
-          entry.key == 'EUR' ? const Color(0xFF8C491A) : AppColors.text,
-        );
+        expect(color, AppColors.text);
         final background = entry.key == 'EUR'
-            ? const Color(0xFFFFE4D1)
+            ? AppPalette.light.greenTint
             : AppColors.surface;
         final contrast =
             (background.computeLuminance() + .05) /
@@ -186,7 +182,7 @@ void main() {
       await next(tester);
       expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
       await next(tester);
-      expect(find.byType(OnboardingEmoji), findsNothing);
+      expect(find.byIcon(Icons.key_outlined), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

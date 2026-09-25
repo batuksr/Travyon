@@ -68,7 +68,7 @@ void main() {
         AppUnitScope(
           controller: units,
           child: MaterialApp(
-            theme: AppTheme.light,
+            theme: english ? AppTheme.dark : AppTheme.light,
             locale: Locale(english ? 'en' : 'tr'),
             supportedLocales: const [Locale('tr'), Locale('en')],
             localizationsDelegates: const [

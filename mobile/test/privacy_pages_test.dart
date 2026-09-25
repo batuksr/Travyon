@@ -111,6 +111,16 @@ void main() {
           };
           expect(
             find.text(AppLocalizations(Locale(language)).text(title)),
+            findsNothing,
+          );
+          final description = switch (kind) {
+            'community' => 'Profilinin görünürlüğünü, rota paylaşımını ve kimlerin seni takip edebileceğini seç.',
+            'push' => 'Yolculuk hatırlatmalarını ve topluluktan haberleri al.',
+            'notifications' => 'İlgilendiğin haberleri seç, bildirimlerini kendine göre düzenle.',
+            _ => 'Kullanım verileri ve konum hakkında tercihlerini yönet.',
+          };
+          expect(
+            find.text(AppLocalizations(Locale(language)).text(description)),
             findsOneWidget,
           );
           final switches = find.byType(PrivacyToggleCard);

@@ -106,15 +106,9 @@ class _NotificationPrivacyPageState extends State<NotificationPrivacyPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AccountHeader(
-                title: _notifications
-                    ? 'Sana neyi hatırlatalım?'
-                    : 'Verilerin, senin kontrolünde.',
                 subtitle: _notifications
                     ? 'İlgilendiğin haberleri seç, bildirimlerini kendine göre düzenle.'
                     : 'Kullanım verileri ve konum hakkında tercihlerini yönet.',
-                icon: _notifications
-                    ? Icons.notifications_none_rounded
-                    : Icons.shield_outlined,
               ),
               if (_notifications) ...[
                 const PrivacySectionHeading(title: 'Uygulama bildirimleri'),

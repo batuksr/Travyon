@@ -4,8 +4,13 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/wallet_repository.dart';
 import 'wallet_pocket.dart';
+import 'wallet_flight_card.dart';
 
-String walletDisplayDate(BuildContext context, String value) {
+String walletDisplayDate(
+  BuildContext context,
+  String value, {
+  bool compact = false,
+}) {
   final parts = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
   if (parts == null) return value;
   final year = int.parse(parts[1]!);
@@ -14,7 +19,10 @@ String walletDisplayDate(BuildContext context, String value) {
   final date = DateTime(year, month, day);
   if (date.year != year || date.month != month || date.day != day) return value;
   final locale = MaterialLocalizations.of(context);
-  return '${locale.formatMediumDate(date)} ${locale.formatYear(date)}';
+  final dayLabel = compact
+      ? locale.formatShortMonthDay(date)
+      : locale.formatMediumDate(date);
+  return '$dayLabel ${locale.formatYear(date)}';
 }
 
 class WalletRecordCard extends StatelessWidget {
@@ -29,107 +37,112 @@ class WalletRecordCard extends StatelessWidget {
   final bool highlight;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: context.colors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-      side: BorderSide(
-        color: highlight ? context.colors.forest : context.colors.divider,
-      ),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      key: ValueKey('wallet-entry-${entry.id}'),
-      onTap: onOpen,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.colors.greenTint,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    walletIcon(entry.category),
-                    color: context.colors.forest,
-                    size: 21,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr(walletCategories[entry.category] ?? 'Diğer'),
-                        style: TextStyle(
-                          color: context.colors.muted,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.title,
-                        style: TextStyle(
-                          color: context.colors.text,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: context.colors.muted,
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 14,
-              runSpacing: 8,
-              children: [
-                _detail(
-                  context,
-                  Icons.calendar_today_outlined,
-                  entry.date.isEmpty
-                      ? context.tr('Tarih eklenmedi')
-                      : walletDisplayDate(context, entry.date),
-                ),
-                if (entry.details['time']?.isNotEmpty == true)
-                  _detail(
-                    context,
-                    Icons.schedule_rounded,
-                    entry.details['time']!,
-                  ),
-                if (entry.reference.isNotEmpty)
-                  _detail(
-                    context,
-                    Icons.confirmation_number_outlined,
-                    context.tr('Kod kayıtlı'),
-                  ),
-              ],
-            ),
-          ],
+  Widget build(BuildContext context) {
+    if (entry.category == 'flight') {
+      return WalletFlightCard(
+        entry: entry,
+        onOpen: onOpen,
+        dateLabel: entry.date.isEmpty
+            ? '—'
+            : walletDisplayDate(context, entry.date, compact: true),
+      );
+    }
+    return Material(
+      color: context.colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: highlight ? context.colors.accent : context.colors.divider,
+          width: highlight ? 1.5 : 1,
         ),
       ),
-    ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: ValueKey('wallet-entry-${entry.id}'),
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: context.colors.greenTint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  walletIcon(entry.category),
+                  color: context.colors.text,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.tr(walletCategories[entry.category] ?? 'Diğer'),
+                      style: TextStyle(
+                        color: context.colors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      entry.title,
+                      style: TextStyle(
+                        color: context.colors.text,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _metadata(context),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: context.colors.muted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _metadata(BuildContext context) => Wrap(
+    spacing: 12,
+    runSpacing: 6,
+    children: [
+      _detail(
+        context,
+        Icons.calendar_today_outlined,
+        entry.date.isEmpty
+            ? context.tr('Tarih eklenmedi')
+            : walletDisplayDate(context, entry.date),
+      ),
+      if (entry.details['time']?.isNotEmpty == true)
+        _detail(context, Icons.schedule_rounded, entry.details['time']!),
+      if (entry.reference.isNotEmpty)
+        _detail(
+          context,
+          Icons.confirmation_number_outlined,
+          context.tr('Kod kayıtlı'),
+        ),
+    ],
   );
 
   Widget _detail(BuildContext context, IconData icon, String text) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14, color: context.colors.muted),
+      Icon(icon, size: 13, color: context.colors.muted),
       const SizedBox(width: 5),
       Flexible(
         child: Text(
@@ -179,17 +192,13 @@ class WalletCategories extends StatelessWidget {
                   backgroundColor: selected == category
                       ? context.colors.greenTint
                       : context.colors.surface,
-                  foregroundColor: selected == category
-                      ? context.colors.forest
-                      : context.colors.muted,
+                  foregroundColor: context.colors.text,
                   side: BorderSide(
                     color: selected == category
-                        ? context.colors.forest
+                        ? context.colors.accent
                         : context.colors.divider,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: const StadiumBorder(),
                   minimumSize: const Size(48, 44),
                   textStyle: const TextStyle(
                     fontFamily: AppTypography.body,
@@ -264,7 +273,7 @@ class _WalletBenefit extends StatelessWidget {
           borderRadius: BorderRadius.circular(11),
           border: Border.all(color: context.colors.divider),
         ),
-        child: Icon(icon, size: 20, color: context.colors.forest),
+        child: Icon(icon, size: 20, color: context.colors.text),
       ),
       const SizedBox(width: 12),
       Expanded(
@@ -299,7 +308,7 @@ class WalletLoadError extends StatelessWidget {
     ),
     child: Column(
       children: [
-        Icon(Icons.cloud_off_outlined, color: context.colors.forest, size: 28),
+        Icon(Icons.cloud_off_outlined, color: context.colors.muted, size: 28),
         const SizedBox(height: 12),
         Text(
           context.tr(message),

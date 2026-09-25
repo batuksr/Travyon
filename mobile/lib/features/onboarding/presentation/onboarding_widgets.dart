@@ -4,7 +4,6 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/travyon_ui.dart';
 
 const _choiceIcons = <String, IconData>{
   // Travel type — mirrors the Lucide icon language used by the web app.
@@ -53,26 +52,6 @@ const _choiceIcons = <String, IconData>{
   'car': Icons.directions_car_outlined,
 };
 
-/// Uses system emoji rendering, not the decorative heading font.
-class OnboardingEmoji extends StatelessWidget {
-  const OnboardingEmoji(this.emoji, {super.key, this.size = 28});
-  final String emoji;
-  final double size;
-  @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: Text(
-      emoji,
-      style: TextStyle(
-        fontFamily: 'Noto Color Emoji',
-        fontFamilyFallback: const ['Apple Color Emoji', 'Segoe UI Emoji'],
-        fontSize: size,
-        height: 1.3,
-      ),
-      textScaler: TextScaler.noScaling,
-    ),
-  );
-}
-
 class OnboardingProgress extends StatelessWidget {
   const OnboardingProgress({
     super.key,
@@ -83,55 +62,32 @@ class OnboardingProgress extends StatelessWidget {
   final List<String> labels;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            AnimatedContainer(
-              duration: MediaQuery.disableAnimationsOf(context)
-                  ? Duration.zero
-                  : AppMotion.quick,
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.colors.forest,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Expanded(
               child: Text(
-                '${step + 1}',
-                textScaler: TextScaler.noScaling,
+                'Adım ${step + 1} / ${labels.length}',
                 style: TextStyle(
-                  color: context.colors.onAccent,
-                  fontWeight: FontWeight.w800,
+                  color: context.colors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 11),
+            const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Adım ${step + 1} / ${labels.length}',
-                    style: TextStyle(
-                      color: context.colors.muted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    labels[step],
-                    style: TextStyle(
-                      color: context.colors.forest,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              child: Text(
+                labels[step],
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  color: context.colors.text,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -155,7 +111,7 @@ class OnboardingProgress extends StatelessWidget {
                     duration: MediaQuery.disableAnimationsOf(context)
                         ? Duration.zero
                         : AppMotion.quick,
-                    height: 5,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: i <= step
                           ? context.colors.accent
@@ -187,18 +143,16 @@ class OnboardingSection extends StatelessWidget {
   final Widget child;
   final IconData? icon;
   @override
-  Widget build(BuildContext context) => TravyonSurface(
-    margin: const EdgeInsets.only(bottom: 18),
-    padding: const EdgeInsets.all(18),
-    borderRadius: 22,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 28),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             if (icon != null) ...[
-              TravyonIconBadge(icon: icon!, size: 40),
-              const SizedBox(width: 12),
+              Icon(icon!, size: 20, color: context.colors.muted),
+              const SizedBox(width: 10),
             ],
             Expanded(
               child: Text(
@@ -219,7 +173,7 @@ class OnboardingSection extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         child,
       ],
     ),
@@ -245,7 +199,8 @@ class OnboardingChoices extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, bounds) {
       final columns =
-          bounds.maxWidth >= 280 &&
+          !const {'pace', 'food', 'meal', 'reservation'}.contains(field) &&
+              bounds.maxWidth >= 280 &&
               MediaQuery.textScalerOf(context).scale(14) < 20
           ? 2
           : 1;
@@ -260,10 +215,10 @@ class OnboardingChoices extends StatelessWidget {
                 selected: selected.contains(entry.key),
                 child: Material(
                   color: selected.contains(entry.key)
-                      ? context.colors.tone(const Color(0xFFFFF0E5))
+                      ? context.colors.greenTint
                       : context.colors.surface,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
                       color: selected.contains(entry.key)
                           ? context.colors.accent
@@ -277,80 +232,13 @@ class OnboardingChoices extends StatelessWidget {
                     onTap: () => onSelect(entry.key),
                     child: Padding(
                       padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              if (_choiceIcons[entry.key] != null)
-                                TravyonIconBadge(
-                                  icon: _choiceIcons[entry.key]!,
-                                  size: 40,
-                                  color: selected.contains(entry.key)
-                                      ? context.colors.onAccent
-                                      : context.colors.forest,
-                                  background: selected.contains(entry.key)
-                                      ? context.colors.accent
-                                      : context.colors.orangeTint,
-                                ),
-                              const Spacer(),
-                              if (selected.contains(entry.key))
-                                Container(
-                                  width: 22,
-                                  height: 22,
-                                  alignment: Alignment.center,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.accent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: ranked
-                                      ? Text(
-                                          '${selected.indexOf(entry.key) + 1}',
-                                          textScaler: TextScaler.noScaling,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.check_rounded,
-                                          size: 15,
-                                          color: Colors.white,
-                                        ),
-                                )
-                              else
-                                Icon(
-                                  Icons.circle_outlined,
-                                  size: 22,
-                                  color: context.colors.divider,
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            entry.value,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              height: 1.4,
-                              color: selected.contains(entry.key)
-                                  ? context.colors.tone(const Color(0xFF8C491A))
-                                  : context.colors.text,
-                            ),
-                          ),
-                          if (hints[entry.key] != null) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              hints[entry.key]!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: context.colors.muted,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ],
+                      child: _ChoiceContent(
+                        label: entry.value,
+                        hint: hints[entry.key],
+                        icon: _choiceIcons[entry.key],
+                        selected: selected.contains(entry.key),
+                        rank: ranked ? selected.indexOf(entry.key) + 1 : null,
+                        horizontal: columns == 1,
                       ),
                     ),
                   ),
@@ -361,6 +249,104 @@ class OnboardingChoices extends StatelessWidget {
       );
     },
   );
+}
+
+class _ChoiceContent extends StatelessWidget {
+  const _ChoiceContent({
+    required this.label,
+    this.hint,
+    this.icon,
+    required this.selected,
+    this.rank,
+    required this.horizontal,
+  });
+  final String label;
+  final String? hint;
+  final IconData? icon;
+  final bool selected, horizontal;
+  final int? rank;
+
+  @override
+  Widget build(BuildContext context) {
+    final marker = selected
+        ? Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: context.colors.accent,
+              shape: BoxShape.circle,
+            ),
+            child: rank != null
+                ? Text(
+                    '$rank',
+                    textScaler: TextScaler.noScaling,
+                    style: TextStyle(
+                      color: context.colors.onAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                : Icon(
+                    Icons.check_rounded,
+                    size: 15,
+                    color: context.colors.onAccent,
+                  ),
+          )
+        : Icon(Icons.circle_outlined, size: 22, color: context.colors.divider);
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: context.colors.text,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 1.4,
+          ),
+        ),
+        if (hint != null) ...[
+          const SizedBox(height: 5),
+          Text(
+            hint!,
+            style: TextStyle(
+              color: context.colors.muted,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ],
+    );
+    if (horizontal) {
+      return Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 24, color: context.colors.text),
+            const SizedBox(width: 14),
+          ],
+          Expanded(child: copy),
+          const SizedBox(width: 12),
+          marker,
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (icon != null) Icon(icon, size: 25, color: context.colors.text),
+            const Spacer(),
+            marker,
+          ],
+        ),
+        const SizedBox(height: 16),
+        copy,
+      ],
+    );
+  }
 }
 
 class OnboardingValueTile extends StatelessWidget {
@@ -376,7 +362,7 @@ class OnboardingValueTile extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Material(
-    color: context.colors.orangeTint,
+    color: context.colors.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
       side: BorderSide(color: context.colors.divider),
@@ -390,13 +376,19 @@ class OnboardingValueTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: context.colors.forest, size: 20),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(fontSize: 11, color: context.colors.muted),
+            Row(
+              children: [
+                Icon(icon, color: context.colors.muted, size: 17),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 11, color: context.colors.muted),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Text(
               value,
               style: const TextStyle(

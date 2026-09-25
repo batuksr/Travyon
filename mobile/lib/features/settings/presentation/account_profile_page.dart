@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../onboarding/data/onboarding_data.dart';
-import '../../help/presentation/help_style.dart';
 import '../data/settings_fields.dart';
 import '../data/settings_repository.dart';
 import 'account_widgets.dart';
@@ -208,7 +207,7 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
                   ],
                 )
               : null,
-        ),
+        ).copyWith(counterText: ''),
         onTap: field.date && !_busy ? _birthDate : null,
         onChanged: (_) => _changed(),
         validator: (value) {
@@ -231,23 +230,23 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
         _name.trim().isEmpty
             ? '?'
             : _name.trim().characters.first.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 24,
-          color: Colors.white,
+        style: TextStyle(
+          fontSize: 20,
+          color: context.colors.onAccent,
           fontWeight: FontWeight.w600,
         ),
       ),
     );
-    return HelpPanel(
+    return AccountPanel(
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 44,
+            height: 44,
             clipBehavior: Clip.antiAlias,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.forest,
+              color: context.colors.accent,
             ),
             child: hasPhoto
                 ? Image.network(
@@ -261,7 +260,11 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
           Expanded(
             child: Text(
               _name.isEmpty ? context.tr('Gezgin') : _name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: context.colors.text,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -296,9 +299,7 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const AccountHeader(
-                  title: 'Profilini güncel tut.',
                   subtitle: 'Bilgilerini tek yerden düzenle; değişikliklerin hesabına kaydedilsin.',
-                  icon: Icons.person_outline_rounded,
                 ),
                 _identity(),
                 AccountCard(

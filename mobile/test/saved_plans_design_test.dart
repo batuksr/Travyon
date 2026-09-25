@@ -20,14 +20,16 @@ void main() {
     ValueChanged<TravelPlanSummary>? onOpen,
     FakeManagement? manager,
     Locale locale = const Locale('tr'),
+    Size size = const Size(360, 800),
+    bool dark = false,
   }) async {
-    tester.view.physicalSize = const Size(360, 800);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: dark ? AppTheme.dark : AppTheme.light,
         locale: locale,
         supportedLocales: const [Locale('tr'), Locale('en')],
         localizationsDelegates: const [
@@ -51,6 +53,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('saved-plans-create')), findsNothing);
+    expect(find.byIcon(Icons.add_rounded), findsNothing);
+    expect(find.text('Yeni yolculuk planla'), findsNothing);
     expect(find.byIcon(Icons.refresh_rounded), findsNothing);
     expect(find.byTooltip('Planları yenile'), findsNothing);
   }
@@ -119,10 +124,7 @@ void main() {
     await mount(tester, [fixture()]);
     for (final label in ['Tümü', 'Favoriler']) {
       final text = tester.renderObject<RenderParagraph>(find.text(label));
-      expect(
-        text.text.style!.color,
-        label == 'Tümü' ? Colors.white : AppColors.text,
-      );
+      expect(text.text.style!.color, AppColors.text);
     }
     await tester.tap(find.text('Favoriler'));
     await tester.pumpAndSettle();
@@ -133,7 +135,7 @@ void main() {
           .text
           .style!
           .color,
-      Colors.white,
+      AppColors.text,
     );
     await reveal(tester, find.text('Tüm planları göster'));
     await tester.tap(find.text('Tüm planları göster'));
@@ -160,6 +162,7 @@ void main() {
     await tester.tap(find.byTooltip('Favorilere ekle'));
     await tester.pumpAndSettle();
     expect(manager.favoriteValue, isTrue);
+    expect(opened, isNull); // Nested favorite action must not open the card.
     await reveal(tester, find.text('Planı aç'));
     await tester.tap(find.text('Planı aç'));
     expect(opened, plan);
@@ -172,6 +175,30 @@ void main() {
     expect(find.text('İlk planımı oluştur').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final size in [const Size(320, 740), const Size(640, 360)]) {
+    testWidgets('compact library fits dark English $size at 200%', (
+      tester,
+    ) async {
+      final manager = FakeManagement();
+      await mount(
+        tester,
+        [fixture(city: 'Uzun bir seyahat adı ve hafta sonu rotası')],
+        scale: 2,
+        size: size,
+        dark: true,
+        locale: const Locale('en'),
+        manager: manager,
+      );
+      await reveal(tester, find.byTooltip('Add to favorites'));
+      await tester.tap(find.byTooltip('Add to favorites'));
+      await tester.pumpAndSettle();
+      expect(manager.favoriteValue, isTrue);
+      await reveal(tester, find.text('Open plan'));
+      expect(find.text('Open plan').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   test('card dates and status reflect real travel dates', () {
     expect(savedPlanDate('2026-09-13'), '13 Eyl 2026');
