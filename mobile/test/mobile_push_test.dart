@@ -174,6 +174,14 @@ void main() {
       expect(controller.enabled, false);
     },
   );
+  test('logout cleanup succeeds without a registered token on iOS', () async {
+    device.failDelete = true;
+    expect(await controller.disable('alice'), true);
+    expect(await store.consent('alice'), false);
+    expect(store.saved, isNull);
+    expect(controller.enabled, false);
+    expect(store.registrations, 0);
+  });
   testWidgets('local rollout is disabled without touching device or store', (
     tester,
   ) async {

@@ -117,15 +117,15 @@ class MobilePushController extends ChangeNotifier {
     }
     _check(uid);
     await store.setConsent(uid, false);
+    final token = await store.lastToken();
     bool removed = false, revoked = false;
-    try {
-      final token = await store.lastToken();
-      if (token != null) {
+    if (token != null) {
+      try {
         await store.unregister(uid, token);
         removed = true;
+      } catch (_) {
+        /* Token revocation below also makes delivery impossible. */
       }
-    } catch (_) {
-      /* Token revocation below also makes delivery impossible. */
     }
     try {
       await device.deleteToken();
@@ -133,7 +133,10 @@ class MobilePushController extends ChangeNotifier {
     } catch (_) {
       /* Successful server removal is sufficient for our sender. */
     }
-    if (!removed && !revoked) {
+    // No saved token means this account has no known device registration.
+    // Some iOS devices reject deleteToken before APNs/FCM setup; that must not
+    // trap a user in their account when there is nothing to unregister.
+    if (token != null && !removed && !revoked) {
       throw StateError(
         'Cihaz kaydı kapatılamadı. İnternete bağlanıp tekrar dene; çıkıştan önce bildirim kaydı temizlenmeli.',
       );
